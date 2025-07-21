@@ -1,0 +1,253 @@
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
+import {
+	createConnection as CriarConexao,
+	TextDocuments as DocumentosDeTexto,
+	Diagnostic as Diagnóstico,
+	DiagnosticSeverity as SeveridadeDoDiagnóstico,
+	ProposedFeatures as RecursosPropostos,
+	InitializeParams as InicializarParametros,
+	DidChangeConfigurationNotification as NotificacaoDeMudancaDeConfiguracao,
+	CompletionItem as ItemDeConclusao,
+	CompletionItemKind as TipoDeItemDeConclusao,
+	TextDocumentPositionParams as ParametrosDePosicaoDoDocumento,
+	TextDocumentSyncKind as TipoDeSincronizacaoDoDocumento,
+	InitializeResult as ResultadoDeInicializacao,
+	DocumentDiagnosticReportKind as TipoDeRelatórioDeDiagnósticoDoDocumento,
+	type DocumentDiagnosticReport as RelatórioDeDiagnósticoDoDocumento
+} from 'vscode-languageserver/node';
+
+import {
+	TextDocument as DocumentoDeTexto,
+} from 'vscode-languageserver-textdocument';
+
+// Create a connection for the server, using Node's IPC as a transport.
+// Also include all preview / proposed LSP features.
+const conexão = CriarConexao(RecursosPropostos.all);
+
+// Create a simple text document manager.
+const documentos = new DocumentosDeTexto(DocumentoDeTexto);
+
+let possuiCapacidadeDeConfiguração = false;
+let possuiCapacidadeDeEspaçoDeTrabalho = false;
+let possuiCapacidadedeInformaçõesDeDiagnósticoRelacionadas = false;
+
+conexão.onInitialize((parâmetros: InicializarParametros) => {
+	const capacidades = parâmetros.capabilities;
+
+	// Does the client support the `workspace/configuration` request?
+	// If not, we fall back using global settings.
+	possuiCapacidadeDeConfiguração = !!(
+		capacidades.workspace && !!capacidades.workspace.configuration
+	);
+	possuiCapacidadeDeEspaçoDeTrabalho = !!(
+		capacidades.workspace && !!capacidades.workspace.workspaceFolders
+	);
+	possuiCapacidadedeInformaçõesDeDiagnósticoRelacionadas = !!(
+		capacidades.textDocument &&
+		capacidades.textDocument.publishDiagnostics &&
+		capacidades.textDocument.publishDiagnostics.relatedInformation
+	);
+
+	const resultado: ResultadoDeInicializacao = {
+		capacidades: {
+			textDocumentSync: TipoDeSincronizacaoDoDocumento.Incremental,
+			// Tell the client that this server supports code completion.
+			completionProvider: {
+				resolveProvider: true
+			},
+			diagnosticProvider: {
+				interFileDependencies: false,
+				workspaceDiagnostics: false
+			}
+		}
+	};
+	if (possuiCapacidadeDeEspaçoDeTrabalho) {
+		resultado.capabilities.workspace = {
+			workspaceFolders: {
+				supported: true
+			}
+		};
+	}
+	return resultado;
+});
+
+conexão.onInitialized(() => {
+	if (possuiCapacidadeDeConfiguração) {
+		// Register for all configuration changes.
+		conexão.client.register(NotificacaoDeMudancaDeConfiguracao.type, undefined);
+	}
+	if (possuiCapacidadeDeEspaçoDeTrabalho) {
+		conexão.workspace.onDidChangeWorkspaceFolders(_event => {
+			conexão.console.log('Recebido evento de alteração de Espaço de Trabalho.');
+		});
+	}
+});
+
+// The example settings
+interface ExampleSettings {
+	maxNumberOfProblems: number;
+}
+
+// The global settings, used when the `workspace/configuration` request is not supported by the client.
+// Please note that this is not the case when using this server with the client provided in this example
+// but could happen with other clients.
+const configuraçõesPadrão: ExampleSettings = { maxNumberOfProblems: 1000 };
+let configuraçõesGlobais: ExampleSettings = configuraçõesPadrão;
+
+// Cache the settings of all open documents
+const configuraçõesDoDocumento = new Map<string, Thenable<ExampleSettings>>();
+
+conexão.onDidChangeConfiguration(alteração => {
+	if (possuiCapacidadeDeConfiguração) {
+		// Reset all cached document settings
+		configuraçõesDoDocumento.clear();
+	} else {
+		configuraçõesGlobais = (
+			(alteração.settings.languageServerExample || configuraçõesPadrão)
+		);
+	}
+	// Refresh the diagnostics since the `maxNumberOfProblems` could have changed.
+	// We could optimize things here and re-fetch the setting first can compare it
+	// to the existing setting, but this is out of scope for this example.
+	conexão.languages.diagnostics.refresh();
+});
+
+function obtémConfiguraçõesDoDocumento(recurso: string): Thenable<ExampleSettings> {
+	if (!possuiCapacidadeDeConfiguração) {
+		return Promise.resolve(configuraçõesGlobais);
+	}
+	let resultado = configuraçõesDoDocumento.get(recurso);
+	if (!resultado) {
+		resultado = conexão.workspace.getConfiguration({
+			scopeUri: recurso,
+			section: 'languageServerExample'
+		});
+		configuraçõesDoDocumento.set(recurso, resultado);
+	}
+	return resultado;
+}
+
+// Only keep settings for open documents
+documentos.onDidClose(e => {
+	configuraçõesDoDocumento.delete(e.document.uri);
+});
+
+
+conexão.languages.diagnostics.on(async (parâmetros) => {
+	const documento = documentos.get(parâmetros.textDocument.uri);
+	if (documento !== undefined) {
+		return {
+			kind: TipoDeRelatórioDeDiagnósticoDoDocumento.Full,
+			items: await validateTextDocument(documento)
+		} satisfies RelatórioDeDiagnósticoDoDocumento;
+	} else {
+		// We don't know the document. We can either try to read it from disk
+		// or we don't report problems for it.
+		return {
+			kind: TipoDeRelatórioDeDiagnósticoDoDocumento.Full,
+			items: []
+		} satisfies RelatórioDeDiagnósticoDoDocumento;
+	}
+});
+
+// The content of a text document has changed. This event is emitted
+// when the text document first opened or when its content has changed.
+documentos.onDidChangeContent(alteração => {
+	validateTextDocument(alteração.document);
+});
+
+async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
+	// In this simple example we get the settings for every validate run.
+	const configurações = await obtémConfiguraçõesDoDocumento(documentoDeTexto.uri);
+
+	// The validator creates diagnostics for all uppercase words length 2 and more
+	const texto = documentoDeTexto.getText();
+	const padrão = /\b[A-Z]{2,}\b/g;
+	let correspondência: RegExpExecArray | null;
+
+	let problemas = 0;
+	const diagnostics: Diagnóstico[] = [];
+	while ((correspondência = padrão.exec(texto)) && problemas < configurações.maxNumberOfProblems) {
+		problemas++;
+		const diagnostic: Diagnóstico = {
+			severity: SeveridadeDoDiagnóstico.Warning,
+			range: {
+				start: documentoDeTexto.positionAt(correspondência.index),
+				end: documentoDeTexto.positionAt(correspondência.index + correspondência[0].length)
+			},
+			message: `${correspondência[0]} está escrito em letras maísculas.`,
+			source: 'ex'
+		};
+		if (possuiCapacidadedeInformaçõesDeDiagnósticoRelacionadas) {
+			diagnostic.relatedInformation = [
+				{
+					location: {
+						uri: documentoDeTexto.uri,
+						range: Object.assign({}, diagnostic.range)
+					},
+					message: 'Verifique a ortografia'
+				},
+				{
+					location: {
+						uri: documentoDeTexto.uri,
+						range: Object.assign({}, diagnostic.range)
+					},
+					message: 'Principalmente se for usado em nomes de variáveis'
+				}
+			];
+		}
+		diagnostics.push(diagnostic);
+	}
+	return diagnostics;
+}
+
+conexão.onDidChangeWatchedFiles(_change => {
+	// Monitored files have change in VSCode
+	conexão.console.log('Recebido evento de alteração de arquivos.');
+});
+
+// This handler provides the initial list of the completion items.
+conexão.onCompletion(
+	(_textDocumentPosition: ParametrosDePosicaoDoDocumento): ItemDeConclusao[] => {
+		// The pass parameter contains the position of the text document in
+		// which code complete got requested. For the example we ignore this
+		// info and always provide the same completion items.
+		return [
+			{
+				label: 'TypeScript',
+				kind: TipoDeItemDeConclusao.Text,
+				data: 1
+			},
+			{
+				label: 'JavaScript',
+				kind: TipoDeItemDeConclusao.Text,
+				data: 2
+			}
+		];
+	}
+);
+
+// This handler resolves additional information for the item selected in
+// the completion list.
+conexão.onCompletionResolve(
+	(item: ItemDeConclusao): ItemDeConclusao => {
+		if (item.data === 1) {
+			item.detail = 'Detalhes do TypeScript';
+			item.documentation = 'Documentação do TypeScript';
+		} else if (item.data === 2) {
+			item.detail = 'Detalhes do JavaScript';
+			item.documentation = 'Documentação do JavaScript';
+		}
+		return item;
+	}
+);
+
+// Make the text document manager listen on the connection
+// for open, change and close text document events
+documentos.listen(conexão);
+
+// Listen on the connection
+conexão.listen();
