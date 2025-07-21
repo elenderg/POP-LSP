@@ -296,8 +296,7 @@ conexão.onHover(
 );
 
 // Handler para Goto Definition
-conexão.onDefinition(
-    /*(_params: ParametrosDeDefinicao): Localizacao[] => {
+/*(_params: ParametrosDeDefinicao): Localizacao[] => {
         // Retorna uma localização simulada (sempre aponta para o início do documento)
         return [{
             uri: _params.textDocument.uri,
@@ -307,6 +306,8 @@ conexão.onDefinition(
             }
         }];
     }*/
+
+conexão.onDefinition(    
    (params: ParametrosDeDefinicao): Localizacao[] => {
         const documento = documentos.get(params.textDocument.uri);
         if (!documento) return [];
