@@ -25,7 +25,9 @@ import {
     ImplementationParams as ParametrosDeImplementacao,
     HoverParams as ParametrosDeHover,
     Position as Posicao,
-	type DocumentDiagnosticReport as RelatórioDeDiagnósticoDoDocumento
+	Range as Intervalo,
+	type DocumentDiagnosticReport as RelatórioDeDiagnósticoDoDocumento,
+	
 
 } from 'vscode-languageserver/node';
 
@@ -332,12 +334,37 @@ conexão.onHover(
         }];
     }*/
 
+
+conexão.onRequest('selecaoTexto', (
+	parâmetros: { 
+		uri: string, 
+		range: Intervalo, 
+		texto: string 
+	}) => {
+			conexão.console.log(`Texto recebido: "${parâmetros.texto}"`);
+			return `O servidor recebeu ${parâmetros.texto.length} caracteres`;
+});
+
+function ObtémTextoSelecionado(): string {
+	// Obtém o texto selecionado no editor
+
+	
+
+	return ''; // Retorna o texto selecionado
+}
+
+
+
+
 conexão.onDefinition(    
-   (params: ParametrosDeDefinicao): Localizacao[] => {
-        const documento = documentos.get(params.textDocument.uri);
+   (parâmetros: ParametrosDeDefinicao): Localizacao[] => {
+	/*
+	const documento = documentos.get(parâmetros.textDocument.uri);
+	let textoSelecionado = ObtémTextoSelecionado();
+
         if (!documento) return [];
 
-        const posição = params.position;
+        const posição = parâmetros.position;
         const texto = documento.getText();
         const linhas = texto.split(/\r?\n/g);
 
@@ -393,7 +420,7 @@ conexão.onDefinition(
                     const idx = linha.indexOf(palavra);
                     if (idx !== -1) {
                         return [{
-                            uri: params.textDocument.uri,
+                            uri: parâmetros.textDocument.uri,
                             range: {
                                 start: { line: i, character: idx },
                                 end: { line: i, character: idx + palavra.length }
@@ -403,7 +430,7 @@ conexão.onDefinition(
                 }
             }
         }
-
+		console.log(Localizacao);*/
         return [];
     }
 );

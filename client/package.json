@@ -4,6 +4,11 @@
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"version": "0.0.1",
+	"main": "./out/extension.js",
+	"scripts": {
+		"build": "tsc",
+		"watch": "tsc -w"
+	},
 	"publisher": "vscode",
 	"repository": {
 		"type": "git",
@@ -20,4 +25,17 @@
 		"@types/vscode": "^1.75.1",
 		"@vscode/test-electron": "^2.3.9"
 	}
+	,
+	"contributes": {
+		"commands": [
+		{
+			"command": "meuLsp.enviarSelecao",
+			"title": "Enviar Seleção para o Servidor"
+		}
+		]
+	},
+	"activationEvents": [
+		"onCommand:meuLsp.enviarSelecao"
+	]
+
 }

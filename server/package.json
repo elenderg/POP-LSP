@@ -1,5 +1,6 @@
 {
 	"name": "lsp-sample-server",
+	
 	"description": "Example implementation of a language server in node.",
 	"version": "1.0.0",
 	"author": "Microsoft Corporation",
@@ -15,5 +16,10 @@
 		"vscode-languageserver": "^9.0.1",
 		"vscode-languageserver-textdocument": "^1.0.11"
 	},
-	"scripts": {}
+	"scripts": {
+		"compile": "tsc -b",
+    	"watch": "tsc -b -w",
+    	"start": "node ./client/out/extension.js"
+	},
+  "workspaces": ["client", "server"]
 }
