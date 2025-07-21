@@ -177,6 +177,11 @@ documentos.onDidChangeContent(alteração => {
 });
 
 function analisarLexico(texto: string): Diagnóstico[] {
+
+	if( !texto || texto.length === 0) {
+		return []; // Retorna um array vazio se o texto estiver vazio
+	};
+
 	// Simula a análise léxica e retorna erros lexicos
 	const errosLexicos: Diagnóstico[] = [];
 
@@ -187,7 +192,10 @@ function analisarLexico(texto: string): Diagnóstico[] {
 	// Os erros lexicos devem ser retornados como um array de Diagnóstico.
 }
 
-function tentarParsear(texto: string): { valida: boolean; erros: Diagnóstico[] } {
+function tentarParsear(texto: string): { válida: boolean; erros: Diagnóstico[] } {
+	if( !texto || texto.length === 0) {
+		return { válida: false, erros: [] }; // Retorna inválido se o texto estiver vazio
+	};
 	// Simula a análise sintática e retorna erros sintáticos
 	const errosSintaticos: Diagnóstico[] = [];
 	// Aqui você implementaria a lógica de análise sintática real.
@@ -195,12 +203,16 @@ function tentarParsear(texto: string): { valida: boolean; erros: Diagnóstico[] 
 	// para construir uma árvore de sintaxe abstrata (AST) e identificar erros.
 	// Os erros sintáticos devem ser retornados como um array de Diagnóstico.
 	return {
-		valida: errosSintaticos.length === 0,
+		válida: errosSintaticos.length === 0,
 		erros: errosSintaticos
 	};
 }
 
-function analisarSemantica(arvore: { valida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
+function analisarSemantica(arvore: { válida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
+	if (!arvore) {
+		return []; // Retorna um array vazio se a árvore não for válida
+	};
+
 	// Simula a análise semântica e retorna erros semânticos
 	const errosSemanticos: Diagnóstico[] = [];
 	// Aqui você implementaria a lógica de análise semântica real.
@@ -210,7 +222,11 @@ function analisarSemantica(arvore: { valida: boolean; erros: Diagnóstico[] }): 
 	return errosSemanticos;
 }
 
-function verificarBoasPraticas(arvore: { valida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
+function verificarBoasPraticas(arvore: { válida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
+	if (!arvore || !arvore.válida) {
+		return []; // Retorna um array vazio se a árvore não for válida
+	};
+
 	// Simula a verificação de boas práticas e retorna avisos
 	const avisos: Diagnóstico[] = [];
 	// Aqui você implementaria a lógica de verificação de boas práticas real.
@@ -233,7 +249,7 @@ async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise
 
 	// 2. Etapa sintática
 	const arvore = tentarParsear(texto);
-	if (!arvore.valida) {
+	if (!arvore.válida) {
 		diagnostics.push(...arvore.erros);
 		return diagnostics; // não continua se a sintaxe estiver errada
 	}
