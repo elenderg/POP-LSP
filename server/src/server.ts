@@ -383,6 +383,88 @@ conexão.onDefinition(
     }
 );
 
+/*
+
+conexão.onDefinition(
+    (params: ParametrosDeDefinicao): Localizacao[] => {
+        const documento = documentos.get(params.textDocument.uri);
+        if (!documento) return [];
+
+        const posição = params.position;
+        const texto = documento.getText();
+        const linhas = texto.split(/\r?\n/g);
+
+        // Determina o intervalo de seleção
+        // Se não houver seleção, início e fim são iguais à posição do cursor
+        const selectionStart = (params as any).selection && (params as any).selection.start
+            ? (params as any).selection.start
+            : posição;
+        const selectionEnd = (params as any).selection && (params as any).selection.end
+            ? (params as any).selection.end
+            : posição;
+
+        const linhaAtual = linhas[selectionStart.line];
+        if (!linhaAtual) return [];
+
+        const regexPalavra = /\w+/g;
+        let correspondência: RegExpExecArray | null;
+        let palavrasSelecionadas: string[] = [];
+
+        // Percorre todas as palavras da linha e seleciona as que estão dentro do intervalo da seleção
+        while ((correspondência = regexPalavra.exec(linhaAtual))) {
+            const inicioPalavra = correspondência.index;
+            const fimPalavra = regexPalavra.lastIndex;
+            // Verifica se a palavra se sobrepõe ao intervalo da seleção
+            if (
+                fimPalavra > selectionStart.character &&
+                inicioPalavra < selectionEnd.character
+            ) {
+                palavrasSelecionadas.push(correspondência[0]);
+            }
+        }
+
+        if (palavrasSelecionadas.length === 0) return [];
+
+        // Regex para definição exata conforme solicitado
+        const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\w\s]+)\s+(é|são)\s+(um|uma|uns|umas)\s+([\w\s]+)\.$/;
+
+        const localizacoes: Localizacao[] = [];
+
+        for (let i = 0; i < linhas.length; i++) {
+            const linha = linhas[i];
+            // Garante que não há vírgula, ponto e vírgula ou dois pontos
+            if (linha.includes(',') || linha.includes(';') || linha.includes(':')) continue;
+
+            const resultado = regexDefinicao.exec(linha);
+            if (resultado) {
+                const nomeVariavel = resultado[2].trim();
+                const tipoBase = resultado[5].trim();
+                const palavrasVariavel = nomeVariavel.split(/\s+/);
+
+                for (const palavra of palavrasSelecionadas) {
+                    if (palavrasVariavel.includes(palavra) || tipoBase === palavra) {
+                        const idx = linha.indexOf(palavra);
+                        if (idx !== -1) {
+                            localizacoes.push({
+                                uri: params.textDocument.uri,
+                                range: {
+                                    start: { line: i, character: idx },
+                                    end: { line: i, character: idx + palavra.length }
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        return localizacoes;
+    }
+);
+
+*/
+
+
 // Handler para Goto Type Definition
 conexão.onTypeDefinition(
     (_params: ParametrosDeDefinicaoDeTipo): Localizacao[] => {
