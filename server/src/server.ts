@@ -27,6 +27,7 @@ import {
     Position as Posicao,
 	Range as Intervalo,
 	type DocumentDiagnosticReport as RelatórioDeDiagnósticoDoDocumento,
+	Range,
 	
 
 } from 'vscode-languageserver/node';
@@ -358,6 +359,29 @@ function ObtémTextoSelecionado(): string {
 
 conexão.onDefinition(    
    (parâmetros: ParametrosDeDefinicao): Localizacao[] => {
+	const documento = documentos.get(parâmetros.textDocument.uri);
+	if (!documento) {
+		return []; // Retorna um array vazio se o documento não for encontrado
+	}
+	const posição = parâmetros.position;
+	const texto = documento.getText();
+	const linhas = texto.split(/\r?\n/g);
+	if (linhas.length === 0) {
+		return []; // Retorna um array vazio se não houver linhas
+	}
+	// Obtém todo o conteúdo da linha atual
+	const linhaAtual = linhas[posição.line];
+	if (!linhaAtual) {
+		return []; // Retorna um array vazio se a linha atual não existir
+	}
+
+	console.log(`Linha atual: "${linhaAtual}"`); // Log para depuração
+
+	
+
+	return []; // Retorna a localização da linha atual
+
+
 	/*
 	const documento = documentos.get(parâmetros.textDocument.uri);
 	let textoSelecionado = ObtémTextoSelecionado();
