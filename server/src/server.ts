@@ -219,24 +219,76 @@ async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise
 		}
 		diagnostics.push(diagnostic);
 	}*/
-	const texto = documentoDeTexto.getText();
-    const textoSemEspacos = texto.replace(/[\s\r\n]+$/g, ''); // Remove espaços e quebras de linha do final
+	const texto = documentoDeTexto.getText();    
     const diagnostics: Diagnóstico[] = [];
+	//const textoSemEspacos = texto.replace(/[\s\r\n]+$/g, ''); // Remove espaços e quebras de linha do final
+	
+	// verifica a última linha do texto que não esteja vazia
+	const linhas = texto.split(/\r?\n/);
+	let ultimaLinha = linhas[linhas.length - 1].trim();
+	if (linhas.length === 0) {
+		// Se não houver linhas, não há diagnósticos a serem gerados
+		return diagnostics;
+	}
+
+	for (let i = 0; i < linhas.length - 1; i++) {
+		if 
+		(	ultimaLinha.length === 0   || // Se a última linha estiver vazia, 
+			ultimaLinha.includes('\\') || // Se a última linha contiver uma barra invertida,
+			ultimaLinha.includes('[')	  // Se a última linha contiver colchetes
+		)
+		{	// Atribuímos a última linha como a última linha válida
+			ultimaLinha = linhas[linhas.length - 1] ? linhas[linhas.length - 1].trim() : '';
+		}
+	};
+	
 	/*
-    if (textoSemEspacos.length > 0 && !textoSemEspacos.endsWith('.')) {
+
+	if (!ultimaLinha.includes('.'))	{
+        const posição = texto.length;
+        const range = {
+            start: documentoDeTexto.positionAt(posição > 0 ? posição - 1 : 0),
+            end: documentoDeTexto.positionAt(posição)
+        };
+        diagnostics.push({
+            severity: SeveridadeDoDiagnóstico.Information,
+            range,
+            message: 'O documento deve terminar com ponto final.',
+            source: 'Origem: Rotina de Validação.'
+        });
+	}
+	
+	*/
+    
+	
+	
+	/*
+	if (textoSemEspacos.length === 0) {
+		// Se o texto estiver vazio, não há diagnósticos a serem gerados
+		return diagnostics;
+	}
+	// Remove comentários de linha única. 
+	// Comentários de linha única começam com \ e vão até o final da linha.
+	const textoSemComentarios = textoSemEspacos.replace(/\/\/.*$/gm, '');
+	// Remove comentários de bloco.
+	// Comentários de bloco começam com [] e terminam com].
+	const textoSemComentariosDeBloco = textoSemComentarios.replace(/\/\*[\s\S]*?\*\//g, '');
+
+	
+    if (!textoSemComentariosDeBloco.endsWith('.')) {
         const pos = texto.length;
         const range = {
             start: documentoDeTexto.positionAt(pos > 0 ? pos - 1 : 0),
             end: documentoDeTexto.positionAt(pos)
         };
         diagnostics.push({
-            severity: SeveridadeDoDiagnóstico.Warning,
+            severity: SeveridadeDoDiagnóstico.Information,
             range,
             message: 'O documento deve terminar com ponto final.',
-            source: 'validação'
+            source: 'Origem: Rotina de Validação.'
         });
-    }*/
-
+    }
+	*/
 	return diagnostics;
 }
 
