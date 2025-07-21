@@ -179,7 +179,7 @@ documentos.onDidChangeContent(alteração => {
 async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
 	// In this simple example we get the settings for every validate run.
 	const configurações = await obtémConfiguraçõesDoDocumento(documentoDeTexto.uri);
-
+	/*
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	const texto = documentoDeTexto.getText();
 	const padrão = /\b[A-Z]{2,}\b/g;
@@ -187,6 +187,7 @@ async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise
 
 	let problemas = 0;
 	const diagnostics: Diagnóstico[] = [];
+	
 	while ((correspondência = padrão.exec(texto)) && problemas < configurações.maxNumberOfProblems) {
 		problemas++;
 		const diagnostic: Diagnóstico = {
@@ -217,7 +218,25 @@ async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise
 			];
 		}
 		diagnostics.push(diagnostic);
-	}
+	}*/
+	const texto = documentoDeTexto.getText();
+    const textoSemEspacos = texto.replace(/[\s\r\n]+$/g, ''); // Remove espaços e quebras de linha do final
+    const diagnostics: Diagnóstico[] = [];
+	/*
+    if (textoSemEspacos.length > 0 && !textoSemEspacos.endsWith('.')) {
+        const pos = texto.length;
+        const range = {
+            start: documentoDeTexto.positionAt(pos > 0 ? pos - 1 : 0),
+            end: documentoDeTexto.positionAt(pos)
+        };
+        diagnostics.push({
+            severity: SeveridadeDoDiagnóstico.Warning,
+            range,
+            message: 'O documento deve terminar com ponto final.',
+            source: 'validação'
+        });
+    }*/
+
 	return diagnostics;
 }
 
@@ -319,7 +338,7 @@ conexão.onDefinition(
         //          "O nome do usuário é uma string."
         //          "As aspas duplas são um caractere."
         const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\w\s]+)\s+(é|são)\s+(um|uma|uns|umas)\s+([\w\s]+)\.$/;
-		//const x            = /^(A|O|As|Os|Um|Uma|Uns|Umas)[\s\S]+?(é|são)[\s\S]+?(um|uma|uns|umas)[\s\S]+?\.$/m;
+		//const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)[\s\S]+?(é|são)[\s\S]+?(um|uma|uns|umas)[\s\S]+?\.$/m;
 		// Regex para capturar definições de variáveis
 		// ^(A|O|As|Os|Um|Uma|Uns|Umas) captura o artigo inicial
 		// \s+([\w\s]+) captura o nome da variável (permitindo espaços)
