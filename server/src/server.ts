@@ -176,11 +176,77 @@ documentos.onDidChangeContent(alteração => {
 	validateTextDocument(alteração.document);
 });
 
+function analisarLexico(texto: string): Diagnóstico[] {
+	// Simula a análise léxica e retorna erros lexicos
+	const errosLexicos: Diagnóstico[] = [];
+
+	return errosLexicos;
+	// Aqui você implementaria a lógica de análise léxica real.
+	// Por exemplo, você poderia usar uma biblioteca de análise léxica
+	// para identificar tokens inválidos, palavras-chave desconhecidas, etc.
+	// Os erros lexicos devem ser retornados como um array de Diagnóstico.
+}
+
+function tentarParsear(texto: string): { valida: boolean; erros: Diagnóstico[] } {
+	// Simula a análise sintática e retorna erros sintáticos
+	const errosSintaticos: Diagnóstico[] = [];
+	// Aqui você implementaria a lógica de análise sintática real.
+	// Por exemplo, você poderia usar uma biblioteca de análise sintática
+	// para construir uma árvore de sintaxe abstrata (AST) e identificar erros.
+	// Os erros sintáticos devem ser retornados como um array de Diagnóstico.
+	return {
+		valida: errosSintaticos.length === 0,
+		erros: errosSintaticos
+	};
+}
+
+function analisarSemantica(arvore: { valida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
+	// Simula a análise semântica e retorna erros semânticos
+	const errosSemanticos: Diagnóstico[] = [];
+	// Aqui você implementaria a lógica de análise semântica real.
+	// Por exemplo, você poderia verificar tipos, escopos, variáveis não declaradas
+	// e outros aspectos semânticos do código.
+	// Os erros semânticos devem ser retornados como um array de Diagnóstico.
+	return errosSemanticos;
+}
+
+function verificarBoasPraticas(arvore: { valida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
+	// Simula a verificação de boas práticas e retorna avisos
+	const avisos: Diagnóstico[] = [];
+	// Aqui você implementaria a lógica de verificação de boas práticas real.
+	// Por exemplo, você poderia verificar se o código segue convenções de estilo,
+	// se há código morto, se as variáveis são usadas corretamente, etc.
+	// Os avisos devem ser retornados como um array de Diagnóstico.
+	return avisos;
+}
+
+
 async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
    
     const diagnostics: Diagnóstico[] = [];	
+
+	// No momento apenas um template, falta definir o que é um documento válido.
+	// 1. Etapa léxica
+	const texto = documentoDeTexto.getText();
+	const errosLexicos = analisarLexico(texto);
+	diagnostics.push(...errosLexicos);
+
+	// 2. Etapa sintática
+	const arvore = tentarParsear(texto);
+	if (!arvore.valida) {
+		diagnostics.push(...arvore.erros);
+		return diagnostics; // não continua se a sintaxe estiver errada
+	}
+
+	// 3. Etapa semântica
+	const errosSemanticos = analisarSemantica(arvore);
+	diagnostics.push(...errosSemanticos);
+
+	// 4. Avisos e boas práticas
+	const avisos = verificarBoasPraticas(arvore);
+	diagnostics.push(...avisos);
+
 	return diagnostics;
-	// No momento em branco, falta definir o que é um documento válido.
 }
 
 conexão.onDidChangeWatchedFiles(_change => {
