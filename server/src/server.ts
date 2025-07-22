@@ -374,6 +374,67 @@ conexão.onDefinition(
 	if (!linhaAtual) {
 		return []; // Retorna um array vazio se a linha atual não existir
 	}
+	
+	// Divide a linha em palavras, removendo espaços em branco e sinais de pontuação
+	let conjuntoDePalavras = linhaAtual.toLowerCase().split(/[\s.,!?;:"'()]+/).filter(Boolean);
+
+	//conjuntoDePalavras = conjuntoDePalavras.filter(palavra => palavra.length > 0); // Remove palavras vazias
+	//conjuntoDePalavras = conjuntoDePalavras.map(palavra => palavra.trim()); // Remove espaços em branco
+	// Remove o artigo inicial da linha, se houver
+	const artigos = new Set(['a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas']);
+
+	if (conjuntoDePalavras.length > 0 && artigos.has(conjuntoDePalavras[0])) {
+  		conjuntoDePalavras.shift(); // Remove o primeiro elemento se for um artigo
+	}
+
+
+	const palavrasChave = new Set([
+	'não', 'desse', 'desses', 'deste', 'destes', 'dessa', 'dessas',
+	'desta', 'destas', 'cabe', 'couber', 'começa', 'começar', 'conter',
+	'contiver', 'contém', 'deve', 'devem', 'deveria', 'deveriam',
+	'estamos', 'estar', 'estará', 'estarão', 'estava', 'estavam',
+	'estiver', 'estiverem', 'está', 'estão', 'excede', 'excedem',
+	'existe', 'existem', 'existir', 'finaliza', 'finalizar', 'é', 'foi',
+	'for', 'foram', 'forem', 'há', 'houver', 'inicia', 'iniciar',
+	'necessita', 'necessitar', 'parece', 'pode', 'podem', 'podemos',
+	'poderia', 'possuem', 'possui', 'possuir', 'puder', 'puderem',
+	'requer', 'ser', 'será', 'serão', 'supera', 'superam', 'superar',
+	'são', 'tem', 'ter', 'termina', 'terminar', 'tiver', 'têm',
+	'mais' , 'menos' , 'vezes' , 'multiplicado' , 'dividido',
+	'junto', 'seguido', 'partir', 'partindo', 'abaixo',  'ante', 
+	'perante', 'antes', 'debaixo', 'sob', 'acerca', 'cerca', 
+	'cuja', 'cujo', 'cujas', 'cujos', 'próximo', 'perto', 'com', 
+	'tal', 'como', 'contra', 'dada', 'dado', 'dando', 'gerando', 
+	'resultando', 'retornando', 'desde', 'depois', 'após', 'durante',
+	'em', 'entre', 'dentre', 'até', 'mediante', 'para', 'via', 'segundo', 
+	'acordo', 'sem', 'então', 'sobre', 'usando', 'versus', 'enquanto',
+	'aproximadamente', 'através', 'algum', 'sob', 'debaixo', 
+	'entre', 'por', 'usando', 'referente', 'pertencente', 
+	'pertinente', 'relativo', 'relativa', 'concernente', 
+	'atinente', 'pertinente', 'retornando', 'começando', 
+	'começando', 'iniciando', 'usando', 'via', 'com', 'aproada', 
+	'aproado', 'aproando', 'orientada', 'orientado', 'orientando', 
+	'orientando-se', 'voltada', 'voltado', 'virada', 'virado', 'virando', 
+	'virando-se', 'tão', 'tanto', 'quanto', 'quão', 'qual', 
+	'regressivamente', 'dentro', 'parecida', 'parecido', 'semelhante', 
+	'similar', 'só', 'somente', 'unicamente', 'exclusivamente', 'apenas', 
+	'fora', 'menores', 'alta', 'alto', 'comprido', 'comprida', 'largo', 'larga', 
+	'chamado', 'chamados', 'chamada', 'chamadas',
+	'denominado', 'denominados', 'denominada', 'denominadas' 
+	]);
+
+	const indicePalavraChave = conjuntoDePalavras.findIndex(palavra =>
+  		palavrasChave.has(palavra)
+	);
+
+	if (indicePalavraChave !== -1) {
+		conjuntoDePalavras = conjuntoDePalavras.slice(0, indicePalavraChave);
+	}
+
+	//console.log(`Conjunto de palavras: ${conjuntoDePalavras}`); // Log para depuração
+	const termo = conjuntoDePalavras.join(' ');
+	console.log(`Termo atual: "${termo}"`); // Log para depuração
+
 
 	console.log(`Linha atual: "${linhaAtual}"`); // Log para depuração
 
