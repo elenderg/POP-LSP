@@ -374,6 +374,11 @@ conexão.onDefinition(
 	if (!linhaAtual) {
 		return []; // Retorna um array vazio se a linha atual não existir
 	}
+
+	
+	
+
+
 	
 	// Divide a linha em palavras, removendo espaços em branco e sinais de pontuação
 	let conjuntoDePalavras = linhaAtual.toLowerCase().split(/[\s.,!?;:"'()]+/).filter(Boolean);
@@ -381,11 +386,25 @@ conexão.onDefinition(
 	//conjuntoDePalavras = conjuntoDePalavras.filter(palavra => palavra.length > 0); // Remove palavras vazias
 	//conjuntoDePalavras = conjuntoDePalavras.map(palavra => palavra.trim()); // Remove espaços em branco
 	// Remove o artigo inicial da linha, se houver
-	const artigos = new Set(['a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas']);
+	const palavrasIndesejadas = new Set([
+		'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
+		'se', 'itere', 'pare', 'retorne',
+		'no', 'na', 'nos', 'nas', 'ao', 'aos', 'à', 'às',
+		'num', 'nuns', 'numa', 'numas']);
+	
+	indicePalavraIndesejada =conjuntoDePalavras.findIndex(palavra =>
+  		palavrasIndesejadas.has(palavra)
+	);
 
-	if (conjuntoDePalavras.length > 0 && artigos.has(conjuntoDePalavras[0])) {
-  		conjuntoDePalavras.shift(); // Remove o primeiro elemento se for um artigo
+	// remove os itens indesejados do início do conjunto de palavras
+	if (indicePalavraIndesejada !== -1) {
+		conjuntoDePalavras = conjuntoDePalavras.slice(indicePalavraIndesejada + 1);
 	}
+
+	/*
+	while(conjuntoDePalavras.length > 0 && palavrasIndesejadas.has(conjuntoDePalavras[0])) {
+  		conjuntoDePalavras.shift(); // Remove o primeiro elemento se for um artigo
+	}*/
 
 
 	const palavrasChave = new Set([
@@ -420,7 +439,9 @@ conexão.onDefinition(
 	'similar', 'só', 'somente', 'unicamente', 'exclusivamente', 'apenas', 
 	'fora', 'menores', 'alta', 'alto', 'comprido', 'comprida', 'largo', 'larga', 
 	'chamado', 'chamados', 'chamada', 'chamadas',
-	'denominado', 'denominados', 'denominada', 'denominadas' 
+	'denominado', 'denominados', 'denominada', 'denominadas',
+	'e', 'ou', 'nem'
+
 	]);
 
 	const indicePalavraChave = conjuntoDePalavras.findIndex(palavra =>
@@ -429,42 +450,29 @@ conexão.onDefinition(
 
 	if (indicePalavraChave !== -1) {
 		conjuntoDePalavras = conjuntoDePalavras.slice(0, indicePalavraChave);
+		// Remove as palavras-chave indesejadas do final do conjunto de palavras
 	}
 
 	//console.log(`Conjunto de palavras: ${conjuntoDePalavras}`); // Log para depuração
-	const termo = conjuntoDePalavras.join(' ');
-	console.log(`Termo atual: "${termo}"`); // Log para depuração
+	const termoSelecionado = conjuntoDePalavras.join(' ');
+	console.log(`Termo atual: "${termoSelecionado}"`); // Log para depuração
 
 
-	console.log(`Linha atual: "${linhaAtual}"`); // Log para depuração
+	//console.log(`Linha atual: "${linhaAtual}"`); // Log para depuração
 
 	
 
-	return []; // Retorna a localização da linha atual
-
-
-	/*
-	const documento = documentos.get(parâmetros.textDocument.uri);
-	let textoSelecionado = ObtémTextoSelecionado();
-
-        if (!documento) return [];
-
-        const posição = parâmetros.position;
-        const texto = documento.getText();
-        const linhas = texto.split(/\r?\n/g);
-
-        // Extrai a palavra sob o cursor
-        const linhaAtual = linhas[posição.line];
-        if (!linhaAtual) return [];
-
-        const regexPalavra = /\w+/g; 
-		// Regex para capturar palavras. 
-		// \w+ captura uma sequência de caracteres alfanuméricos (incluindo _).
-		// O /g permite capturar todas as ocorrências na linha.
-        let correspondência: RegExpExecArray | null; 
-        let palavra = '';
-        while ((correspondência = regexPalavra.exec(linhaAtual))) {
-            if (correspondência.index <= posição.character && regexPalavra.lastIndex >= posição.character) {
+	//return []; // Retorna a localização da linha atual
+	
+    
+	const regexPalavra = /\w+/g; 
+	// Regex para capturar palavras. 
+	// \w+ captura uma sequência de caracteres alfanuméricos (incluindo _).
+	// O /g permite capturar todas as ocorrências na linha.
+    let correspondência: RegExpExecArray | null; 
+    let palavra = '';
+    while ((correspondência = regexPalavra.exec(termoSelecionado))) {
+		if (correspondência.index <= posição.character && regexPalavra.lastIndex >= posição.character) {
                 palavra = correspondência[0];
                 break;
             }
@@ -515,7 +523,7 @@ conexão.onDefinition(
                 }
             }
         }
-		console.log(Localizacao);*/
+		//console.log(Localizacao);
         return [];
     }
 );
