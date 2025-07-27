@@ -409,11 +409,11 @@ const listaDeArtigos = new Set([
   'dessa', 'dessas', 'desta', 'destas'
 ]);
 
-const padraoContexto = palavrasContexto.join('|');
-const expressao = new RegExp(`\\b(?:${padraoContexto})\\s+(\\w+)\\s+(?:${padraoContexto})\\b`, 'gi');
+//const padraoContexto = palavrasContexto.join('|');
+//const expressao = new RegExp(`\\b(?:${padraoContexto})\\s+(\\w+)\\s+(?:${padraoContexto})\\b`, 'gi');
 
 // Função auxiliar para extrair a palavra anterior ao índice
-function palavraAnterior(linha: string, indice: number): string {
+function extraiPalavraAnterior(linha: string, indice: number): string {
   // o índice corresponde ao caractere atual, então precisamos olhar para trás
   if (indice <= 0) { // Se o índice for menor ou igual a zero, então não há palavra anterior
     return '';  
@@ -437,7 +437,7 @@ function palavraAnterior(linha: string, indice: number): string {
 }
 
 // Função auxiliar para extrair a próxima palavra a partir do índice
-function proximaPalavra(linha: string, indice: number): string {
+function extraiPalavraPosterior(linha: string, indice: number): string {
   // o índice corresponde ao caractere atual, então precisamos olhar para trás
   if (indice <= 0) { // Se o índice for menor ou igual a zero, então não há palavra anterior
     return '';  
@@ -461,7 +461,7 @@ function proximaPalavra(linha: string, indice: number): string {
 }
 
 
-function obterPalavraSobCursor(linha: string, posicao: number): string {
+function obtémPalavraSobCursor(linha: string, posicao: number): string {
   const regexPalavra = /\w+/g;
   let correspondência: RegExpExecArray | null; // RegExpExecArray é o tipo usado em correspondências de regex
   while ((correspondência = regexPalavra.exec(linha))) { 
@@ -475,35 +475,36 @@ function obterPalavraSobCursor(linha: string, posicao: number): string {
   return '';
 }
 
-function avancarAteArtigoInicial(linhaAtual: string, inicio: number): number {
-  while (inicio > 0) {
-    const anterior = palavraAnterior(linhaAtual, inicio);
-    if (listaDeArtigos.has(anterior)) {
-      const índiceDoArtigo = linhaAtual.lastIndexOf(anterior, inicio - 1);
-      if (índiceDoArtigo !== -1 && (índiceDoArtigo === 0 || /\s/.test(linhaAtual[índiceDoArtigo - 1]))) {
-        return índiceDoArtigo + anterior.length; // Ajusta o início para o final do artigo
+function recuaAtéEncontrarArtigoInicial(linhaAtual: string, posiçãoAtual: number): number {
+  while (posiçãoAtual > 0) {
+    const artigoMaisPróximo = extraiPalavraAnterior(linhaAtual, posiçãoAtual); // Extrai a palavra anterior à palavra atual
+    if (listaDeArtigos.has(artigoMaisPróximo)) { // Verifica se a palavra anterior é um artigo
+      const índiceDoArtigo = linhaAtual.lastIndexOf(artigoMaisPróximo, posiçãoAtual - 1); // Encontra o índice do artigo na linha atual
+      if (índiceDoArtigo !== -1 && (índiceDoArtigo === 0 || /\s/.test(linhaAtual[índiceDoArtigo - 1]))) { 
+				// Verifica se o artigo está no início da linha ou precedido por um espaço
+        return índiceDoArtigo + artigoMaisPróximo.length; // Ajusta o início para o final do artigo
       }
     }
-    inicio--;
+    posiçãoAtual--;
   }
-  return inicio;
+  return posiçãoAtual;
 }
 
-function avancarAteFimDoTermo(linhaAtual: string, fim: number): number {
-  while (fim < linhaAtual.length) {
-    const proxima = proximaPalavra(linhaAtual, fim);
-    if (listaDeArtigos.has(proxima)) {
-      const índiceDoArtigo = linhaAtual.indexOf(proxima, fim);
+function avançaProFimDoTermoAtual(linhaAtual: string, posiçãoAtual: number): number {
+  while (posiçãoAtual < linhaAtual.length) {
+    const próximoTermo = extraiPalavraPosterior(linhaAtual, posiçãoAtual);
+    if (conjuntoDePalavrasContexto.has(próximoTermo)) {
+      const índiceDoÚltimoTermo = linhaAtual.indexOf(próximoTermo, posiçãoAtual);
       if (
-        índiceDoArtigo !== -1 &&
-        (índiceDoArtigo + proxima.length === linhaAtual.length || /\s/.test(linhaAtual[índiceDoArtigo + proxima.length]))
+        índiceDoÚltimoTermo !== -1 &&
+        (índiceDoÚltimoTermo + próximoTermo.length === linhaAtual.length || /\s/.test(linhaAtual[índiceDoÚltimoTermo + próximoTermo.length]))
       ) {
-        return índiceDoArtigo - (proxima.length + 1);
+        return índiceDoÚltimoTermo - (próximoTermo.length + 1);
       }
     }
-    fim++;
+    posiçãoAtual++;
   }
-  return fim;
+  return posiçãoAtual;
 }
 
 function encontrarDefinicaoNasLinhas(
@@ -554,7 +555,7 @@ conexão.onDefinition((parâmetros: ParametrosDeDefinição): Localização[] =>
   const linhaAtual = linhas[posição.line];  
   if (!linhaAtual) {return [];} 
   
-  let palavra = obterPalavraSobCursor(linhaAtual, posição.character);
+  let palavra = obtémPalavraSobCursor(linhaAtual, posição.character);
   if (!palavra) {return [];}
   console.log(`Palavra atual: "${palavra}"`);
 
@@ -563,8 +564,8 @@ conexão.onDefinition((parâmetros: ParametrosDeDefinição): Localização[] =>
   let fim = posiçãoDaPalavra + palavra.length;
   console.log(`Início: ${inicio}, Fim: ${fim}`);
 
-  inicio = avancarAteArtigoInicial(linhaAtual, inicio);
-  fim = avancarAteFimDoTermo(linhaAtual, fim);
+  inicio = recuaAtéEncontrarArtigoInicial(linhaAtual, inicio);
+  fim = avançaProFimDoTermoAtual(linhaAtual, fim);
 
   const palavraCompleta = linhaAtual.substring(inicio, fim).trim();
   console.log(`Palavra completa: "${palavraCompleta}"`);
