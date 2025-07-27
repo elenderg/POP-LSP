@@ -358,17 +358,12 @@ conexão.onRequest('selecaoTexto', (
       return `O servidor recebeu ${parâmetros.texto.length} caracteres`;
 });
 
-function ObtémTextoSelecionado(): string {
-  // Obtém o texto selecionado no editor
 
-  
-
-  return ''; // Retorna o texto selecionado
-}
 
 const palavrasContexto = [
-  'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
-  'se', 'itere', 'pare', 'retorne', 'no', 'na', 'nos', 'nas',
+  //'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
+  //'se', 'itere', 'pare', 'retorne', 
+	'no', 'na', 'nos', 'nas',
   'ao', 'aos', 'à', 'às', 'num', 'nuns', 'numa', 'numas', 'não',
   'desse', 'desses', 'deste', 'destes', 'dessa', 'dessas', 'desta', 'destas',
   'cabe', 'couber', 'começa', 'começar', 'conter', 'contiver', 'contém',
@@ -385,7 +380,8 @@ const palavrasContexto = [
   'cujas', 'cujos', 'próximo', 'perto', 'com', 'tal', 'como', 'contra', 'dada',
   'dado', 'dando', 'gerando', 'resultando', 'retornando', 'desde', 'depois',
   'após', 'durante', 'em', 'entre', 'dentre', 'até', 'mediante', 'para', 'via',
-  'segundo', 'acordo', 'sem', 'então', 'sobre', 'usando', 'versus', 'enquanto',
+  //'segundo', 
+	'acordo', 'sem', 'então', 'sobre', 'usando', 'versus', 'enquanto',
   'aproximadamente', 'através', 'algum', 'referente', 'pertencente', 'pertinente',
   'relativo', 'relativa', 'concernente', 'atinente', 'começando', 'iniciando',
   'orientada', 'orientado', 'orientando', 'orientando-se', 'voltada', 'voltado',
@@ -394,7 +390,7 @@ const palavrasContexto = [
   'similar', 'só', 'somente', 'unicamente', 'exclusivamente', 'apenas', 'fora',
   'menores', 'alta', 'alto', 'comprido', 'comprida', 'largo', 'larga',
   'chamado', 'chamados', 'chamada', 'chamadas', 'denominado', 'denominados',
-  'denominada', 'denominadas', 'e', 'ou', 'nem'
+  'denominada', 'denominadas', 'e', 'ou', 'nem', ',', '.', ';', ':'
 ];
 
 const conjuntoDePalavrasContexto = new Set(palavrasContexto.map(palavra => palavra.toLowerCase()));
@@ -405,6 +401,7 @@ const listaDeArtigos = new Set([
   'ao', 'aos', 'à', 'às', 
   'num', 'nuns', 'numa', 'numas',
   'no', 'na', 'nos', 'nas',
+	//'pro', 'pros', 'pra', 'pras',
   'desse', 'desses', 'deste', 'destes', 
   'dessa', 'dessas', 'desta', 'destas'
 ]);
@@ -476,7 +473,7 @@ function obtémPalavraSobCursor(linha: string, posicao: number): string {
 }
 
 function recuaAtéEncontrarArtigoInicial(linhaAtual: string, posiçãoAtual: number): number {
-  while (posiçãoAtual > 0) {
+  while (posiçãoAtual > 0) { // Enquanto estivermos na linha atual
     const artigoMaisPróximo = extraiPalavraAnterior(linhaAtual, posiçãoAtual); // Extrai a palavra anterior à palavra atual
     if (listaDeArtigos.has(artigoMaisPróximo)) { // Verifica se a palavra anterior é um artigo
       const índiceDoArtigo = linhaAtual.lastIndexOf(artigoMaisPróximo, posiçãoAtual - 1); // Encontra o índice do artigo na linha atual
@@ -491,7 +488,7 @@ function recuaAtéEncontrarArtigoInicial(linhaAtual: string, posiçãoAtual: num
 }
 
 function avançaProFimDoTermoAtual(linhaAtual: string, posiçãoAtual: number): number {
-  while (posiçãoAtual < linhaAtual.length) {
+  while (posiçãoAtual < linhaAtual.length) { // Enquanto estivermos na linha atual
     const próximoTermo = extraiPalavraPosterior(linhaAtual, posiçãoAtual);
     if (conjuntoDePalavrasContexto.has(próximoTermo)) {
       const índiceDoÚltimoTermo = linhaAtual.indexOf(próximoTermo, posiçãoAtual);
@@ -508,12 +505,10 @@ function avançaProFimDoTermoAtual(linhaAtual: string, posiçãoAtual: number): 
 }
 
 function encontrarDefinicaoNasLinhas(
-  linhas: string[],
-  regexDefinicao: RegExp,
-  palavra: string,
-  palavraCompleta: string,
-  parâmetros: ParametrosDeDefinição
-): Localização[] {
+  linhas: string[], regexDefinicao: RegExp,
+  palavra: string, palavraCompleta: string,
+  parâmetros: ParametrosDeDefinição): Localização[] 
+{
   for (let i = 0; i < linhas.length; i++) {
     const linha = linhas[i];
     if (linha.includes(',') || linha.includes(';') || linha.includes(':')) continue;
@@ -549,13 +544,13 @@ conexão.onDefinition((parâmetros: ParametrosDeDefinição): Localização[] =>
   const documento = documentos.get(parâmetros.textDocument.uri);
   if (!documento) {return [];}
   const texto = documento.getText();
-  const posição = parâmetros.position;    
+  const posição = parâmetros.position;
   const linhas = texto.split(/\r?\n/g);
   // Extrai a palavra sob o cursor
-  const linhaAtual = linhas[posição.line];  
+  const linhaAtual = linhas[posição.line];
   if (!linhaAtual) {return [];} 
   
-  let palavra = obtémPalavraSobCursor(linhaAtual, posição.character);
+  let palavra = obtémPalavraSobCursor(linhaAtual, posição.character); // OK
   if (!palavra) {return [];}
   console.log(`Palavra atual: "${palavra}"`);
 
@@ -571,7 +566,11 @@ conexão.onDefinition((parâmetros: ParametrosDeDefinição): Localização[] =>
   console.log(`Palavra completa: "${palavraCompleta}"`);
 
   // Regex para definição exata conforme solicitado
-  const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\w\s]+)\s+(é|são)\s+(um|uma|uns|umas)\s+([\w\s]+)\.$/;
+  //const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\w\s]+)\s+(é|são)\s+(um|uma|uns|umas)\s+([\w\s]+)(\.|com)$/;
+	const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\wÀ-ÿ\s\-]+?)\s+(é|são)\s+(um|uma|uns|umas)\s+([\wÀ-ÿ\s\-]+)(\.| com)?$/i;
+	const regexDefinicaoTipo = /^(Um|Uma|Uns|Umas)\s+([\wÀ-ÿ\s\-]+)\s+é\s+(um|uma|uns|umas)\s+([\wÀ-ÿ\s\-]+)\.$/i;
+
+	// Uma string denominada abc,
 
   const localizacao = encontrarDefinicaoNasLinhas(linhas, regexDefinicao, palavra, palavraCompleta, parâmetros);
   if (localizacao.length > 0) {return localizacao;}  
@@ -580,6 +579,17 @@ conexão.onDefinition((parâmetros: ParametrosDeDefinição): Localização[] =>
 );
 
 
+function avançaAtéVerboSer(linhaAtual: string, posiçãoAtual: number): number {
+  const regexVerbo = /\b(é|são)\b/gi;
+  let correspondencia;
+  while ((correspondencia = regexVerbo.exec(linhaAtual)) !== null) {
+    if (correspondencia.index >= posiçãoAtual) {
+      return correspondencia.index;
+    }
+  }
+  // Se não encontrar, vai até o fim da linha
+  return linhaAtual.length;
+}
 
 
 
