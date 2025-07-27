@@ -29,7 +29,7 @@
 					"scope": "resource",
 					"type": "number",
 					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
+					"description": "Controla o número de problemas exibidos."
 				},
 				"languageServerExample.trace.server": {
 					"scope": "window",
@@ -40,7 +40,7 @@
 						"verbose"
 					],
 					"default": "off",
-					"description": "Traces the communication between VS Code and the language server."
+					"description": "Rastreia a comunicação entre o VS Code e o servidor de linguagem."
 				}
 			}
 		}
