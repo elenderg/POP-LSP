@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "PoP",
+  "name": "Português Puro",
   "patterns": [
     {  "include": "#arguments"     },
     {  "include": "#constant"      },
