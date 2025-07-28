@@ -33,9 +33,8 @@ export function activate(contexto: ContextoDeExtensão) {
   // Options to control the language client
   const opçõesDoCliente: OpçõesDoClienteDeLinguagem = {
     // Register the server for plain text documents
-    documentSelector: [
-      {scheme: 'file', language: 'plaintext'},
-      { scheme: 'file',language: 'PoP'}
+    documentSelector: [      
+      { scheme: 'file',language: 'pop'}
     ],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace

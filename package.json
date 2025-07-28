@@ -27,8 +27,7 @@
 		"vscode": "^1.75.0"
 	},
 	"activationEvents": [
-		"onLanguage:PoP",
-		"onLanguage:plaintext"
+		"onLanguage:pop",
 	],
 	"main": "./client/out/extension",
 	"contributes": {
