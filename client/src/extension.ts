@@ -5,81 +5,82 @@
 
 import * as endereço from 'path';
 import { 
-	workspace as espaçoDeTrabalho, 
-	ExtensionContext as ContextoDeExtensão
+  workspace as espaçoDeTrabalho, 
+  ExtensionContext as ContextoDeExtensão
 } from 'vscode';
 import * as vscode from 'vscode';
 import {
-	LanguageClient as ClienteDeLinguagem,
-	LanguageClientOptions as OpçõesDeClienteDeLinguagem,
-	ServerOptions as OpçõesDoServidor,
-	TransportKind as TipoDeTrasporte
+  LanguageClient as ClienteDeLinguagem,
+  LanguageClientOptions as OpçõesDoClienteDeLinguagem,
+  ServerOptions as OpçõesDoServidor,
+  TransportKind as TipoDeTransporte
 } from 'vscode-languageclient/node';
 
 let cliente: ClienteDeLinguagem;
 
 export function activate(contexto: ContextoDeExtensão) {
-	// The server is implemented in node
-	const executávelDoServidor = contexto.asAbsolutePath(endereço.join('server', 'out', 'server.js'));
+  console.log('Extensão do cliente foi ativada!');
+  // The server is implemented in node
+  const executávelDoServidor = contexto.asAbsolutePath(endereço.join('server', 'out', 'server.js'));
 
-	// If the extension is launched in debug mode then the debug server options are used
-	// Otherwise the run options are used
-	const opçõesDoServidor: OpçõesDoServidor = {
-		run: 	{module: executávelDoServidor,transport: TipoDeTrasporte.ipc},
-		debug: 	{module: executávelDoServidor,transport: TipoDeTrasporte.ipc,}
-	};
+  // If the extension is launched in debug mode then the debug server options are used
+  // Otherwise the run options are used
+  const opçõesDoServidor: OpçõesDoServidor = {
+    run:   {module: executávelDoServidor,transport: TipoDeTransporte.ipc},
+    debug:   {module: executávelDoServidor,transport: TipoDeTransporte.ipc,}
+  };
 
-	// Options to control the language client
-	const opçõesDoCliente: OpçõesDeClienteDeLinguagem = {
-		// Register the server for plain text documents
-		documentSelector: [
-			{scheme: 'file', language: 'plaintext'},
-    		{ scheme: 'file',language: 'PoP'}
-		],
-		synchronize: {
-			// Notify the server about file changes to '.clientrc files contained in the workspace
-			fileEvents: espaçoDeTrabalho.createFileSystemWatcher('**/.clientrc')
-		}
-	};
+  // Options to control the language client
+  const opçõesDoCliente: OpçõesDoClienteDeLinguagem = {
+    // Register the server for plain text documents
+    documentSelector: [
+      {scheme: 'file', language: 'plaintext'},
+      { scheme: 'file',language: 'PoP'}
+    ],
+    synchronize: {
+      // Notify the server about file changes to '.clientrc files contained in the workspace
+      fileEvents: espaçoDeTrabalho.createFileSystemWatcher('**/.clientrc')
+    }
+  };
 
-	// Create the language client and start the client.
-	cliente = new ClienteDeLinguagem(
-		'languageServerExample',
-		'Language Server Example',
-		opçõesDoServidor,
-		opçõesDoCliente
-	);
+  // Create the language client and start the client.
+  cliente = new ClienteDeLinguagem(
+    'languageServerExample',
+    'Language Server Example',
+    opçõesDoServidor,
+    opçõesDoCliente
+  );
 
 
-	// Comando personalizado
-	contexto.subscriptions.push(
-		vscode.commands.registerCommand(
-			'meuLsp.enviarSelecao', async () => {
-				const editor = vscode.window.activeTextEditor;
-				if (!editor) {return;}
+  // Comando personalizado
+  contexto.subscriptions.push(
+    vscode.commands.registerCommand(
+      'meuLsp.enviarSelecao', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {return;}
 
-				const selecao = editor.selection;
-				const textoSelecionado = editor.document.getText(selecao);
+        const selecao = editor.selection;
+        const textoSelecionado = editor.document.getText(selecao);
 
-				const resposta = await cliente.sendRequest(
-					'selecaoTexto', {
-						uri: editor.document.uri.toString(),
-						range: {
-							start: selecao.start,
-							end: selecao.end,
-							},
-						texto: textoSelecionado,
-					}
-				);
+        const resposta = await cliente.sendRequest(
+          'selecaoTexto', {
+            uri: editor.document.uri.toString(),
+            range: {
+              start: selecao.start,
+              end: selecao.end,
+              },
+            texto: textoSelecionado,
+          }
+        );
 
-				vscode.window.showInformationMessage('Resposta do servidor: ' + resposta);
-			}
-		)
-	);
-	
+        vscode.window.showInformationMessage('Resposta do servidor: ' + resposta);
+      }
+    )
+  );
+  
 
-	// Start the client. This will also launch the server
-	cliente.start();
+  // Start the client. This will also launch the server
+  cliente.start();
 }
 
 
@@ -90,10 +91,10 @@ export function activate(contexto: ContextoDeExtensão) {
 
 
 export function deactivate(): Thenable<void> | undefined {
-	if (!cliente) {
-		return undefined;
-	}
-	return cliente.stop();
+  if (!cliente) {
+    return undefined;
+  }
+  return cliente.stop();
 }
 
 

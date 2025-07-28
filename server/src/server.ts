@@ -46,6 +46,7 @@ let possuiCapacidadeDeEspaçoDeTrabalho = false;
 let possuiCapacidadedeInformaçõesDeDiagnósticoRelacionadas = false;
 
 conexão.onInitialize((parâmetros: InicializarParâmetros) => {
+  console.log('Servidor de Linguagem para PoP iniciado.');
   const capacidades = parâmetros.capabilities;
 
   // Verifica se o cliente suporta as capacidades de configuração e espaço de trabalho.

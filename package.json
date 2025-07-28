@@ -1,22 +1,33 @@
 {
 	"name": "lsp-sample",
-	"description": "A language server example",
-	"author": "Microsoft Corporation",
-	"license": "MIT",
-	"version": "1.0.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
-	},
-	"publisher": "vscode-samples",
-	"categories": [],
-	"keywords": [
-		"multi-root ready"
-	],
+  "description": "Servidor de Linguagem para a Linguagem de Programação Português Puro (PoP)",
+  "author": "Elender Góis Gallas",
+  "license": "MIT",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elenderg/Portugues-Puro"
+  },
+	"publisher": "elender",
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "language-server",
+    "lsp",
+    "portugues-puro",
+    "pop",
+    "language-service",
+    "syntax-highlighting",
+    "intellisense",
+    "multi-root ready"
+  ],
 	"engines": {
 		"vscode": "^1.75.0"
 	},
 	"activationEvents": [
+		"onLanguage:PoP",
 		"onLanguage:plaintext"
 	],
 	"main": "./client/out/extension",
@@ -43,7 +54,27 @@
 					"description": "Rastreia a comunicação entre o VS Code e o servidor de linguagem."
 				}
 			}
-		}
+		},	
+    "languages": [
+      {
+        "id": "pop",
+        "aliases": [
+          "PoP",
+          "Português Puro"
+        ],
+        "extensions": [
+          ".pop"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+		 "grammars": [
+      {
+        "language": "pop",
+        "scopeName": "source.escopo.portugues",
+        "path": "./syntaxes/pop.tmLanguage.json"
+      }
+    ]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -56,11 +87,19 @@
 	"devDependencies": {
 		"@eslint/js": "^9.13.0",
 		"@stylistic/eslint-plugin": "^2.9.0",
+		"@types/glob": "^8.1.0",
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^20",
+		"@vscode/test-electron": "^2.5.2",
 		"eslint": "^9.13.0",
 		"mocha": "^10.3.0",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.26.0"
-	}
+	},
+	"dependencies": {
+    "glob": "^11.0.3",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  }
 }
