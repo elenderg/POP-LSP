@@ -13,7 +13,7 @@
   "publisher": "elender",
   "repository": {
     "type": "git",
-    "url": "https://github.com/elenderg/Extensao-Portugues-Puro-VS-Code"
+    "url": "https://github.com/elenderg/POP-LSP"
   },
   "engines": {
     "vscode": "^1.75.0"
