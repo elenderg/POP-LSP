@@ -108,5 +108,5 @@ Encontre informações sobre a API utilizada em https://code.visualstudio.com/ap
 - Alterne para a visualização Executar e Depurar na barra lateral (Ctrl+Shift+D).
 - Selecione `Launch Client` no menu suspenso (se ainda não estiver).
 - Pressione ▷ para executar a configuração de inicialização (F5).
-- Na instância [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) do VSCode, abra um documento no modo de linguagem "texto simples".
+- Na instância [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) do VSCode, abra um documento no modo de linguagem "Português Puro".
 
