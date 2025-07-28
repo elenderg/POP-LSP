@@ -68,6 +68,17 @@ function adicionaSimboloParaAST(linha: string, linhaÍndice: number, documentoÍ
 
 
 
+type Expressão = | { tipo: 'literal', valor: numeroLiteral | stringLiteral | booleanLiteral | nullLiteral | valorHexadecimal }
+	| { tipo: 'variável', nome: string }
+	| { tipo: 'chamada_função', nome: string, argumentos: Expressão[] }
+	| { tipo: 'atribuição', nome: string, valor: Expressão };
+
+type numeroLiteral = { tipo: 'numero', valor: number };
+type stringLiteral = { tipo: 'string', valor: string };	
+type booleanLiteral = { tipo: 'booleano', valor: boolean };
+type nullLiteral = { tipo: 'nulo', valor: null };
+type valorHexadecimal = { tipo: 'hexadecimal', valor: string }; // Exemplo de valor hexadecimal: $DEADBEEF
+
 
 
 
