@@ -1,5 +1,5 @@
 import { ParseTree } from 'antlr4ts/tree';
-//import { PortuguesPuroParserVisitor } from '../antlr/PortuguesPuroVisitor'
+import { PortuguesPuroParserVisitor } from '../antlr/PortuguesPuroParserVisitor'
 import { PortuguesPuroParser } from '../antlr/PortuguesPuroParser';
 import { ASTNode } from './ASTNode';
 
