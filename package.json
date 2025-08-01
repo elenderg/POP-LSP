@@ -1,32 +1,31 @@
 {
 	"name": "lsp-sample",
-  "description": "Servidor de Linguagem para a Linguagem de Programação Português Puro (PoP)",
-  "author": "Elender Góis Gallas",
-  "license": "MIT",
-  "version": "1.0.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/elenderg/POP-LSP"
-  },
+	"description": "Servidor de Linguagem para a Linguagem de Programação Português Puro (PoP)",
+	"author": "Elender Góis Gallas",
+	"license": "MIT",
+	"version": "1.0.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/elenderg/POP-LSP"
+	},
 	"publisher": "elender",
-  "categories": [
-    "Programming Languages",
-    "Other"
-  ],
-  "keywords": [
-    "language-server",
-    "lsp",
-    "portugues-puro",
-    "pop",
-    "language-service",
-    "syntax-highlighting",
-    "intellisense",
-    "multi-root ready"
-  ],
+	"categories": [
+		"Programming Languages",
+		"Other"
+	],
+	"keywords": [
+		"language-server",
+		"lsp",
+		"portugues-puro",
+		"pop",
+		"language-service",
+		"syntax-highlighting",
+		"intellisense",
+		"multi-root ready"
+	],
 	"engines": {
 		"vscode": "^1.75.0"
 	},
-	
 	"main": "./client/out/extension",
 	"contributes": {
 		"configuration": {
@@ -51,27 +50,27 @@
 					"description": "Rastreia a comunicação entre o VS Code e o servidor de linguagem."
 				}
 			}
-		},	
-    "languages": [
-      {
-        "id": "pop",
-        "aliases": [          
-          "Português Puro",
+		},
+		"languages": [
+			{
+				"id": "pop",
+				"aliases": [
+					"Português Puro",
 					"PoP"
-        ],
-        "extensions": [
-          ".pop"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-		 "grammars": [
-      {
-        "language": "pop",
-        "scopeName": "source.escopo.portugues",
-        "path": "./syntaxes/pop.tmLanguage.json"
-      }
-    ]
+				],
+				"extensions": [
+					".pop"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "pop",
+				"scopeName": "source.escopo.portugues",
+				"path": "./syntaxes/pop.tmLanguage.json"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -88,15 +87,18 @@
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^20",
 		"@vscode/test-electron": "^2.5.2",
+		"antlr4ts-cli": "^0.5.0-alpha.4",
 		"eslint": "^9.13.0",
 		"mocha": "^10.3.0",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.26.0"
 	},
 	"dependencies": {
-    "glob": "^11.0.3",
-    "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver": "^9.0.1",
-    "vscode-languageserver-textdocument": "^1.0.12"
-  }
+		"antlr4": "^4.13.2",
+		"antlr4ts": "^0.5.0-alpha.4",
+		"glob": "^11.0.3",
+		"vscode-languageclient": "^9.0.1",
+		"vscode-languageserver": "^9.0.1",
+		"vscode-languageserver-textdocument": "^1.0.12"
+	}
 }

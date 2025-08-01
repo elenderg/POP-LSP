@@ -1,0 +1,106 @@
+import { ParseTree } from 'antlr4ts/tree/ParseTree';
+import { ParseTreeVisitor } from 'antlr4ts/tree/ParseTreeVisitor';
+import { Token } from 'antlr4ts/Token';
+import { ParserRuleContext } from 'antlr4ts/ParserRuleContext';
+import PortuguesPuroVisitor from './antlr4/PortuguesPuroVisitor';
+import {
+    ProgramaContext,
+    TipoContext,
+    Variavel_globalContext,
+    RotinaContext,
+    NomeContext
+} from './antlr4/PortuguesPuroParser';
+
+interface ASTNode {
+    type: string;
+    name?: string;
+    line?: number;
+    column?: number;
+    file?: string;
+    children?: ASTNode[];
+}
+
+
+
+
+export class ASTBuilder implements PortuguesPuroVisitor<ASTNode> {
+
+    visitPrograma(ctx: ProgramaContext): ASTNode {
+        const children: ASTNode[] = [];
+
+        const tipoCtxList = ctx.tipo();
+        for (const tipoCtx of tipoCtxList) {
+            children.push(this.visit(tipoCtx as ParseTree));
+        }
+
+        const variavelCtxList = ctx.variavel_global();
+        for (const variavelCtx of variavelCtxList) {
+            children.push(this.visit(variavelCtx as ParseTree));
+        }
+
+        const rotinaCtxList = ctx.rotina();
+        for (const rotinaCtx of rotinaCtxList) {
+            children.push(this.visit(rotinaCtx as ParseTree));
+        }
+
+        return {
+            type: 'Programa',
+            children
+        };
+    }
+
+    visitTipo(ctx: TipoContext): ASTNode {
+        const nomeCtxList = ctx.nome();
+        const nomeCtx = nomeCtxList.length > 0 ? nomeCtxList[0] : undefined;
+        const tipoToken = ctx.start as Token;
+
+        return {
+            type: 'Tipo',
+            name: nomeCtx ? (nomeCtx as ParserRuleContext).getText() : undefined,
+            line: tipoToken.line,
+            column: tipoToken.charPositionInLine
+        };
+    }
+
+    visitVariavel_global(ctx: Variavel_globalContext): ASTNode {
+        const nomeCtxList = ctx.nome();
+        const nomeCtx = nomeCtxList.length > 0 ? nomeCtxList[0] : undefined;
+        const varToken = ctx.start as Token;
+
+        return {
+            type: 'VariavelGlobal',
+            name: nomeCtx ? (nomeCtx as ParserRuleContext).getText() : undefined,
+            line: varToken.line,
+            column: varToken.charPositionInLine
+        };
+    }
+
+    visitRotina(ctx: RotinaContext): ASTNode {
+        const nomeDaRotinaCtx = ctx.nomeDaRotina();
+        const rotinaToken = ctx.start as Token;
+
+        return {
+            type: 'Rotina',
+            name: nomeDaRotinaCtx ? (nomeDaRotinaCtx as ParserRuleContext).getText() : undefined,
+            line: rotinaToken.line,
+            column: rotinaToken.charPositionInLine
+        };
+    }
+
+    // Métodos padrão para o Visitor Interface
+    visit(tree: ParseTree): ASTNode {
+        return tree.accept(this);
+    }
+
+    visitChildren(node: ParseTree): ASTNode {
+        return { type: 'UnknownNode' };
+    }
+
+    visitTerminal(node: ParseTree): ASTNode {
+        return { type: 'TerminalNode' };
+    }
+
+    visitErrorNode(node: ParseTree): ASTNode {
+        return { type: 'ErrorNode' };
+    }
+}
