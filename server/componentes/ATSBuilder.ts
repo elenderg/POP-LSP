@@ -6,7 +6,7 @@ import PortuguesPuroVisitor from './antlr4/PortuguesPuroVisitor';
 import {
     ProgramaContext,
     TipoContext,
-    Variavel_globalContext,
+    Variável_globalContext,
     RotinaContext,
     NomeContext
 } from './antlr4/PortuguesPuroParser';
@@ -25,15 +25,21 @@ interface ASTNode {
 
 export class ASTBuilder implements PortuguesPuroVisitor<ASTNode> {
 
+
+
+/*
     visitPrograma(ctx: ProgramaContext): ASTNode {
         const children: ASTNode[] = [];
 
         const tipoCtxList = ctx.tipo();
+        
+				// Visit each TipoContext and add to children				}
+        
         for (const tipoCtx of tipoCtxList) {
             children.push(this.visit(tipoCtx as ParseTree));
         }
 
-        const variavelCtxList = ctx.variavel_global();
+        const variavelCtxList = ctx.variável_global();
         for (const variavelCtx of variavelCtxList) {
             children.push(this.visit(variavelCtx as ParseTree));
         }
@@ -102,5 +108,4 @@ export class ASTBuilder implements PortuguesPuroVisitor<ASTNode> {
 
     visitErrorNode(node: ParseTree): ASTNode {
         return { type: 'ErrorNode' };
-    }
-}
+    }*/

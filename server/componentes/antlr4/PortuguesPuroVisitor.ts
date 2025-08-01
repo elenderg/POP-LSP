@@ -1,134 +1,135 @@
-// Generated from PortuguesPuro.g4 by ANTLR 4.9.0-SNAPSHOT
+// Generated from PortuguesPuro.g4 by ANTLR 4.13.2
+
+import {ParseTreeVisitor} from 'antlr4';
 
 
-import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
+import { Regra_espaçoContext } from "./PortuguesPuroParser.ts";
+import { PalavraContext } from "./PortuguesPuroParser.ts";
+import { Possessivo_inglêsContext } from "./PortuguesPuroParser.ts";
+import { ArtigoContext } from "./PortuguesPuroParser.ts";
+import { Artigo_definidoContext } from "./PortuguesPuroParser.ts";
+import { Artigo_indefinidoContext } from "./PortuguesPuroParser.ts";
+import { AdjacentesContext } from "./PortuguesPuroParser.ts";
+import { AbrangentesContext } from "./PortuguesPuroParser.ts";
+import { ContraçõesContext } from "./PortuguesPuroParser.ts";
+import { Atribuidores_de_posseContext } from "./PortuguesPuroParser.ts";
+import { P1Context } from "./PortuguesPuroParser.ts";
+import { P2Context } from "./PortuguesPuroParser.ts";
+import { Operadores_de_comparaçãoContext } from "./PortuguesPuroParser.ts";
+import { Palavras_reservadasContext } from "./PortuguesPuroParser.ts";
+import { DenominaçõesContext } from "./PortuguesPuroParser.ts";
+import { VerbosContext } from "./PortuguesPuroParser.ts";
+import { Caracteres_ignoráveisContext } from "./PortuguesPuroParser.ts";
+import { ComentárioContext } from "./PortuguesPuroParser.ts";
+import { Comentário_de_linhaContext } from "./PortuguesPuroParser.ts";
+import { Comentário_de_blocoContext } from "./PortuguesPuroParser.ts";
+import { TokenContext } from "./PortuguesPuroParser.ts";
+import { AglomeradoContext } from "./PortuguesPuroParser.ts";
+import { Caractere_aglomerávelContext } from "./PortuguesPuroParser.ts";
+import { Iniciador_de_aglomeradoContext } from "./PortuguesPuroParser.ts";
+import { Possessivo_novoContext } from "./PortuguesPuroParser.ts";
+import { QualificadorContext } from "./PortuguesPuroParser.ts";
+import { Caractere_não_aglomerávelContext } from "./PortuguesPuroParser.ts";
+import { Sinal_de_pontuaçãoContext } from "./PortuguesPuroParser.ts";
+import { Símbolos_especiaisContext } from "./PortuguesPuroParser.ts";
+import { RuídoContext } from "./PortuguesPuroParser.ts";
+import { Número_inteiroContext } from "./PortuguesPuroParser.ts";
+import { Número_decimalContext } from "./PortuguesPuroParser.ts";
+import { Número_fracionárioContext } from "./PortuguesPuroParser.ts";
+import { Número_mistoContext } from "./PortuguesPuroParser.ts";
+import { Número_hexadecimalContext } from "./PortuguesPuroParser.ts";
+import { String_literalContext } from "./PortuguesPuroParser.ts";
+import { ProgramaContext } from "./PortuguesPuroParser.ts";
+import { Tipos_primitivosContext } from "./PortuguesPuroParser.ts";
+import { TipoContext } from "./PortuguesPuroParser.ts";
+import { NomeContext } from "./PortuguesPuroParser.ts";
+import { Nome_do_tipoContext } from "./PortuguesPuroParser.ts";
+import { Informação_opcionalContext } from "./PortuguesPuroParser.ts";
+import { CamposContext } from "./PortuguesPuroParser.ts";
+import { BytesContext } from "./PortuguesPuroParser.ts";
+import { ReferênciaContext } from "./PortuguesPuroParser.ts";
+import { CampoContext } from "./PortuguesPuroParser.ts";
+import { PausaContext } from "./PortuguesPuroParser.ts";
+import { PausasContext } from "./PortuguesPuroParser.ts";
+import { ConjunçõesContext } from "./PortuguesPuroParser.ts";
+import { PreposiçõesContext } from "./PortuguesPuroParser.ts";
+import { ÉContext } from "./PortuguesPuroParser.ts";
+import { EstruturaContext } from "./PortuguesPuroParser.ts";
+import { Igual_aContext } from "./PortuguesPuroParser.ts";
+import { Variável_globalContext } from "./PortuguesPuroParser.ts";
+import { RotinaContext } from "./PortuguesPuroParser.ts";
+import { ProcedimentoContext } from "./PortuguesPuroParser.ts";
+import { Determine_seContext } from "./PortuguesPuroParser.ts";
+import { DecisorContext } from "./PortuguesPuroParser.ts";
+import { Função2Context } from "./PortuguesPuroParser.ts";
+import { AtribuaContext } from "./PortuguesPuroParser.ts";
+import { FunçãoContext } from "./PortuguesPuroParser.ts";
+import { ParaContext } from "./PortuguesPuroParser.ts";
+import { Que_seContext } from "./PortuguesPuroParser.ts";
+import { Rotina2Context } from "./PortuguesPuroParser.ts";
+import { CompativelmenteContext } from "./PortuguesPuroParser.ts";
+import { RetroinvocaçãoContext } from "./PortuguesPuroParser.ts";
+import { Nome_da_rotinaContext } from "./PortuguesPuroParser.ts";
+import { Unidade_semânticaContext } from "./PortuguesPuroParser.ts";
+import { ParâmetroContext } from "./PortuguesPuroParser.ts";
+import { FraseContext } from "./PortuguesPuroParser.ts";
+import { InstruçõesContext } from "./PortuguesPuroParser.ts";
+import { InstruçãoContext } from "./PortuguesPuroParser.ts";
+import { PreserveContext } from "./PortuguesPuroParser.ts";
+import { PreservaçãoContext } from "./PortuguesPuroParser.ts";
+import { IteraçãoContext } from "./PortuguesPuroParser.ts";
+import { SeContext } from "./PortuguesPuroParser.ts";
+import { CondicionalContext } from "./PortuguesPuroParser.ts";
+import { Expressão_decisoraContext } from "./PortuguesPuroParser.ts";
+import { IncondicionalContext } from "./PortuguesPuroParser.ts";
+import { InterrupçãoContext } from "./PortuguesPuroParser.ts";
+import { InvocaçãoContext } from "./PortuguesPuroParser.ts";
+import { Invocação_internaContext } from "./PortuguesPuroParser.ts";
+import { Invocação_externaContext } from "./PortuguesPuroParser.ts";
+import { Aspas_duplasContext } from "./PortuguesPuroParser.ts";
+import { Nome_da_DLLContext } from "./PortuguesPuroParser.ts";
+import { Nome_da_funçãoContext } from "./PortuguesPuroParser.ts";
+import { ProcesseContext } from "./PortuguesPuroParser.ts";
+import { ComContext } from "./PortuguesPuroParser.ts";
+import { EContext } from "./PortuguesPuroParser.ts";
+import { RetornandoContext } from "./PortuguesPuroParser.ts";
+import { Invocação_indiretaContext } from "./PortuguesPuroParser.ts";
+import { RetornoContext } from "./PortuguesPuroParser.ts";
+import { DecodifiqueContext } from "./PortuguesPuroParser.ts";
+import { DecodificaçãoContext } from "./PortuguesPuroParser.ts";
+import { AponteContext } from "./PortuguesPuroParser.ts";
+import { Para_rotinaContext } from "./PortuguesPuroParser.ts";
+import { IndireçãoContext } from "./PortuguesPuroParser.ts";
+import { PushContext } from "./PortuguesPuroParser.ts";
+import { EmpilhamentoContext } from "./PortuguesPuroParser.ts";
+import { ReiteraçãoContext } from "./PortuguesPuroParser.ts";
+import { DigaContext } from "./PortuguesPuroParser.ts";
+import { Retorno_booleanoContext } from "./PortuguesPuroParser.ts";
+import { ExpressãoContext } from "./PortuguesPuroParser.ts";
+import { Operadores_comunsContext } from "./PortuguesPuroParser.ts";
+import { BooleanoContext } from "./PortuguesPuroParser.ts";
+import { NuloContext } from "./PortuguesPuroParser.ts";
+import { Termo_constanteContext } from "./PortuguesPuroParser.ts";
+import { Termo_constante_negativoContext } from "./PortuguesPuroParser.ts";
+import { Termo_constante_positivoContext } from "./PortuguesPuroParser.ts";
+import { NúmeroContext } from "./PortuguesPuroParser.ts";
+import { LiteralContext } from "./PortuguesPuroParser.ts";
+import { TermoContext } from "./PortuguesPuroParser.ts";
+import { Sinal_de_divisãoContext } from "./PortuguesPuroParser.ts";
+import { ComoContext } from "./PortuguesPuroParser.ts";
+import { Termo_negativoContext } from "./PortuguesPuroParser.ts";
+import { Termo_positivoContext } from "./PortuguesPuroParser.ts";
+import { Variável_localContext } from "./PortuguesPuroParser.ts";
+import { VariávelContext } from "./PortuguesPuroParser.ts";
+import { Termo_literalContext } from "./PortuguesPuroParser.ts";
+import { ConteúdoContext } from "./PortuguesPuroParser.ts";
+import { MagnitudeContext } from "./PortuguesPuroParser.ts";
+import { EndereçamentoContext } from "./PortuguesPuroParser.ts";
+import { Possessivos_inglêsContext } from "./PortuguesPuroParser.ts";
+import { Possessivo_inglês_antigoContext } from "./PortuguesPuroParser.ts";
+import { Possessivo_portuguêsContext } from "./PortuguesPuroParser.ts";
+import { ApóstrofoContext } from "./PortuguesPuroParser.ts";
 
-import { Regra_espacoContext } from "./PortuguesPuroParser";
-import { PalavraContext } from "./PortuguesPuroParser";
-import { Possessivo_inglï¿½sContext } from "./PortuguesPuroParser";
-import { ArtigoContext } from "./PortuguesPuroParser";
-import { Artigo_definidoContext } from "./PortuguesPuroParser";
-import { Artigo_indefinidoContext } from "./PortuguesPuroParser";
-import { AdjacentesContext } from "./PortuguesPuroParser";
-import { AbrangentesContext } from "./PortuguesPuroParser";
-import { ContracoesContext } from "./PortuguesPuroParser";
-import { Atribuidores_de_posseContext } from "./PortuguesPuroParser";
-import { P1Context } from "./PortuguesPuroParser";
-import { P2Context } from "./PortuguesPuroParser";
-import { Operadores_de_comparacaoContext } from "./PortuguesPuroParser";
-import { Palavras_reservadasContext } from "./PortuguesPuroParser";
-import { DenominacoesContext } from "./PortuguesPuroParser";
-import { VerbosContext } from "./PortuguesPuroParser";
-import { Caracteres_ignoraveisContext } from "./PortuguesPuroParser";
-import { ComentarioContext } from "./PortuguesPuroParser";
-import { Comentario_de_linhaContext } from "./PortuguesPuroParser";
-import { Comentario_de_blocoContext } from "./PortuguesPuroParser";
-import { TokenContext } from "./PortuguesPuroParser";
-import { AglomeradoContext } from "./PortuguesPuroParser";
-import { Caractere_aglomeravelContext } from "./PortuguesPuroParser";
-import { Iniciador_de_aglomeradoContext } from "./PortuguesPuroParser";
-import { Possessivo_novoContext } from "./PortuguesPuroParser";
-import { QualificadorContext } from "./PortuguesPuroParser";
-import { Caractere_nao_aglomeravelContext } from "./PortuguesPuroParser";
-import { Sinal_de_pontuacaoContext } from "./PortuguesPuroParser";
-import { Simbolos_especiaisContext } from "./PortuguesPuroParser";
-import { NoiseContext } from "./PortuguesPuroParser";
-import { Numero_inteiroContext } from "./PortuguesPuroParser";
-import { Numero_decimalContext } from "./PortuguesPuroParser";
-import { Numero_fracionarioContext } from "./PortuguesPuroParser";
-import { Numero_mistoContext } from "./PortuguesPuroParser";
-import { Numero_hexadecimalContext } from "./PortuguesPuroParser";
-import { String_literalContext } from "./PortuguesPuroParser";
-import { ProgramaContext } from "./PortuguesPuroParser";
-import { Tipos_primitivosContext } from "./PortuguesPuroParser";
-import { TipoContext } from "./PortuguesPuroParser";
-import { NomeContext } from "./PortuguesPuroParser";
-import { Nome_do_tipoContext } from "./PortuguesPuroParser";
-import { Informacao_opcionalContext } from "./PortuguesPuroParser";
-import { CamposContext } from "./PortuguesPuroParser";
-import { BytesContext } from "./PortuguesPuroParser";
-import { Referï¿½nciaContext } from "./PortuguesPuroParser";
-import { CampoContext } from "./PortuguesPuroParser";
-import { PausaContext } from "./PortuguesPuroParser";
-import { PausasContext } from "./PortuguesPuroParser";
-import { ConjuncoesContext } from "./PortuguesPuroParser";
-import { PreposicoesContext } from "./PortuguesPuroParser";
-import { ï¿½Context } from "./PortuguesPuroParser";
-import { EstruturaContext } from "./PortuguesPuroParser";
-import { Igual_aContext } from "./PortuguesPuroParser";
-import { Variavel_globalContext } from "./PortuguesPuroParser";
-import { RotinaContext } from "./PortuguesPuroParser";
-import { ProcedimentoContext } from "./PortuguesPuroParser";
-import { Determine_seContext } from "./PortuguesPuroParser";
-import { DecisorContext } from "./PortuguesPuroParser";
-import { Funï¿½ï¿½o2Context } from "./PortuguesPuroParser";
-import { AtribuaContext } from "./PortuguesPuroParser";
-import { FuncaoContext } from "./PortuguesPuroParser";
-import { ParaContext } from "./PortuguesPuroParser";
-import { Que_seContext } from "./PortuguesPuroParser";
-import { Rotina2Context } from "./PortuguesPuroParser";
-import { CompativelmenteContext } from "./PortuguesPuroParser";
-import { RetroinvocacaoContext } from "./PortuguesPuroParser";
-import { Nome_da_rotinaContext } from "./PortuguesPuroParser";
-import { Unidade_semanticaContext } from "./PortuguesPuroParser";
-import { ParametroContext } from "./PortuguesPuroParser";
-import { FraseContext } from "./PortuguesPuroParser";
-import { InstrucoesContext } from "./PortuguesPuroParser";
-import { InstrucaoContext } from "./PortuguesPuroParser";
-import { PreserveContext } from "./PortuguesPuroParser";
-import { PreservacaoContext } from "./PortuguesPuroParser";
-import { IteracaoContext } from "./PortuguesPuroParser";
-import { SeContext } from "./PortuguesPuroParser";
-import { CondicionalContext } from "./PortuguesPuroParser";
-import { Expressao_decisoraContext } from "./PortuguesPuroParser";
-import { IncondicionalContext } from "./PortuguesPuroParser";
-import { InterrupcaoContext } from "./PortuguesPuroParser";
-import { InvocacaoContext } from "./PortuguesPuroParser";
-import { Invocacao_internaContext } from "./PortuguesPuroParser";
-import { Invocacao_externaContext } from "./PortuguesPuroParser";
-import { Aspas_duplasContext } from "./PortuguesPuroParser";
-import { Nome_da_DLLContext } from "./PortuguesPuroParser";
-import { Nome_da_funcaoContext } from "./PortuguesPuroParser";
-import { ProcesseContext } from "./PortuguesPuroParser";
-import { ComContext } from "./PortuguesPuroParser";
-import { EContext } from "./PortuguesPuroParser";
-import { RetornandoContext } from "./PortuguesPuroParser";
-import { Invocacao_indiretaContext } from "./PortuguesPuroParser";
-import { RetornoContext } from "./PortuguesPuroParser";
-import { DecodifiqueContext } from "./PortuguesPuroParser";
-import { DecodificacaoContext } from "./PortuguesPuroParser";
-import { AponteContext } from "./PortuguesPuroParser";
-import { Para_rotinaContext } from "./PortuguesPuroParser";
-import { IndirecaoContext } from "./PortuguesPuroParser";
-import { PushContext } from "./PortuguesPuroParser";
-import { EmpilhamentoContext } from "./PortuguesPuroParser";
-import { ReiteracaoContext } from "./PortuguesPuroParser";
-import { DigaContext } from "./PortuguesPuroParser";
-import { Retorno_booleanoContext } from "./PortuguesPuroParser";
-import { Expressï¿½oContext } from "./PortuguesPuroParser";
-import { Operadores_comunsContext } from "./PortuguesPuroParser";
-import { BooleanoContext } from "./PortuguesPuroParser";
-import { NuloContext } from "./PortuguesPuroParser";
-import { Termo_constanteContext } from "./PortuguesPuroParser";
-import { Termo_constante_negativoContext } from "./PortuguesPuroParser";
-import { Termo_constante_positivoContext } from "./PortuguesPuroParser";
-import { NumeroContext } from "./PortuguesPuroParser";
-import { LiteralContext } from "./PortuguesPuroParser";
-import { TermoContext } from "./PortuguesPuroParser";
-import { Sinal_de_divisï¿½oContext } from "./PortuguesPuroParser";
-import { ComoContext } from "./PortuguesPuroParser";
-import { Termo_negativoContext } from "./PortuguesPuroParser";
-import { Termo_positivoContext } from "./PortuguesPuroParser";
-import { Variavel_localContext } from "./PortuguesPuroParser";
-import { VariavelContext } from "./PortuguesPuroParser";
-import { Termo_literalContext } from "./PortuguesPuroParser";
-import { Conteï¿½doContext } from "./PortuguesPuroParser";
-import { MagnitudeContext } from "./PortuguesPuroParser";
-import { Endereï¿½amentoContext } from "./PortuguesPuroParser";
-import { Possessivos_inglï¿½sContext } from "./PortuguesPuroParser";
-import { Possessivo_inglï¿½s_antigoContext } from "./PortuguesPuroParser";
-import { Possessivo_portuguï¿½sContext } from "./PortuguesPuroParser";
-import { ApostrofoContext } from "./PortuguesPuroParser";
 
 
 /**
@@ -138,887 +139,763 @@ import { ApostrofoContext } from "./PortuguesPuroParser";
  * @param <Result> The return type of the visit operation. Use `void` for
  * operations with no return type.
  */
-export interface PortuguesPuroVisitor<Result> extends ParseTreeVisitor<Result> {
+export default class PortuguesPuroVisitor<Result> extends ParseTreeVisitor<Result> {
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.regra_espaco`.
+   * 
+	 * Visit a parse tree produced by `PortuguesPuroParser.regra_espaço`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitRegra_espaco?: (ctx: Regra_espacoContext) => Result;
-
+	visitRegra_espaço?: (ctx: Regra_espaçoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.palavra`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPalavra?: (ctx: PalavraContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.possessivo_inglï¿½s`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.possessivo_inglês`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitPossessivo_inglï¿½s?: (ctx: Possessivo_inglï¿½sContext) => Result;
-
+	visitPossessivo_inglês?: (ctx: Possessivo_inglêsContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.artigo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitArtigo?: (ctx: ArtigoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.artigo_definido`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitArtigo_definido?: (ctx: Artigo_definidoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.artigo_indefinido`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitArtigo_indefinido?: (ctx: Artigo_indefinidoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.adjacentes`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAdjacentes?: (ctx: AdjacentesContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.abrangentes`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAbrangentes?: (ctx: AbrangentesContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.contracoes`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.contrações`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitContracoes?: (ctx: ContracoesContext) => Result;
-
+	visitContrações?: (ctx: ContraçõesContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.atribuidores_de_posse`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAtribuidores_de_posse?: (ctx: Atribuidores_de_posseContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.p1`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitP1?: (ctx: P1Context) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.p2`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitP2?: (ctx: P2Context) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.operadores_de_comparacao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.operadores_de_comparação`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitOperadores_de_comparacao?: (ctx: Operadores_de_comparacaoContext) => Result;
-
+	visitOperadores_de_comparação?: (ctx: Operadores_de_comparaçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.palavras_reservadas`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPalavras_reservadas?: (ctx: Palavras_reservadasContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.denominacoes`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.denominações`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitDenominacoes?: (ctx: DenominacoesContext) => Result;
-
+	visitDenominações?: (ctx: DenominaçõesContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.verbos`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitVerbos?: (ctx: VerbosContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.caracteres_ignoraveis`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.caracteres_ignoráveis`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitCaracteres_ignoraveis?: (ctx: Caracteres_ignoraveisContext) => Result;
-
+	visitCaracteres_ignoráveis?: (ctx: Caracteres_ignoráveisContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.comentario`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.comentário`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitComentario?: (ctx: ComentarioContext) => Result;
-
+	visitComentário?: (ctx: ComentárioContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.comentario_de_linha`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.comentário_de_linha`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitComentario_de_linha?: (ctx: Comentario_de_linhaContext) => Result;
-
+	visitComentário_de_linha?: (ctx: Comentário_de_linhaContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.comentario_de_bloco`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.comentário_de_bloco`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitComentario_de_bloco?: (ctx: Comentario_de_blocoContext) => Result;
-
+	visitComentário_de_bloco?: (ctx: Comentário_de_blocoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.token`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitToken?: (ctx: TokenContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.aglomerado`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAglomerado?: (ctx: AglomeradoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.caractere_aglomeravel`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.caractere_aglomerável`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitCaractere_aglomeravel?: (ctx: Caractere_aglomeravelContext) => Result;
-
+	visitCaractere_aglomerável?: (ctx: Caractere_aglomerávelContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.iniciador_de_aglomerado`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitIniciador_de_aglomerado?: (ctx: Iniciador_de_aglomeradoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.possessivo_novo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPossessivo_novo?: (ctx: Possessivo_novoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.qualificador`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitQualificador?: (ctx: QualificadorContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.caractere_nao_aglomeravel`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.caractere_não_aglomerável`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitCaractere_nao_aglomeravel?: (ctx: Caractere_nao_aglomeravelContext) => Result;
-
+	visitCaractere_não_aglomerável?: (ctx: Caractere_não_aglomerávelContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.sinal_de_pontuacao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.sinal_de_pontuação`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitSinal_de_pontuacao?: (ctx: Sinal_de_pontuacaoContext) => Result;
-
+	visitSinal_de_pontuação?: (ctx: Sinal_de_pontuaçãoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.simbolos_especiais`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.símbolos_especiais`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitSimbolos_especiais?: (ctx: Simbolos_especiaisContext) => Result;
-
+	visitSímbolos_especiais?: (ctx: Símbolos_especiaisContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.noise`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.ruído`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNoise?: (ctx: NoiseContext) => Result;
-
+	visitRuído?: (ctx: RuídoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.numero_inteiro`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.número_inteiro`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNumero_inteiro?: (ctx: Numero_inteiroContext) => Result;
-
+	visitNúmero_inteiro?: (ctx: Número_inteiroContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.numero_decimal`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.número_decimal`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNumero_decimal?: (ctx: Numero_decimalContext) => Result;
-
+	visitNúmero_decimal?: (ctx: Número_decimalContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.numero_fracionario`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.número_fracionário`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNumero_fracionario?: (ctx: Numero_fracionarioContext) => Result;
-
+	visitNúmero_fracionário?: (ctx: Número_fracionárioContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.numero_misto`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.número_misto`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNumero_misto?: (ctx: Numero_mistoContext) => Result;
-
+	visitNúmero_misto?: (ctx: Número_mistoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.numero_hexadecimal`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.número_hexadecimal`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNumero_hexadecimal?: (ctx: Numero_hexadecimalContext) => Result;
-
+	visitNúmero_hexadecimal?: (ctx: Número_hexadecimalContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.string_literal`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitString_literal?: (ctx: String_literalContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.programa`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPrograma?: (ctx: ProgramaContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.tipos_primitivos`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTipos_primitivos?: (ctx: Tipos_primitivosContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.tipo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTipo?: (ctx: TipoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.nome`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitNome?: (ctx: NomeContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.nome_do_tipo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitNome_do_tipo?: (ctx: Nome_do_tipoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.informacao_opcional`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.informação_opcional`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInformacao_opcional?: (ctx: Informacao_opcionalContext) => Result;
-
+	visitInformação_opcional?: (ctx: Informação_opcionalContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.campos`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitCampos?: (ctx: CamposContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.bytes`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitBytes?: (ctx: BytesContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.referï¿½ncia`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.referência`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitReferï¿½ncia?: (ctx: Referï¿½nciaContext) => Result;
-
+	visitReferência?: (ctx: ReferênciaContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.campo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitCampo?: (ctx: CampoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.pausa`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPausa?: (ctx: PausaContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.pausas`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPausas?: (ctx: PausasContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.conjuncoes`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.conjunções`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitConjuncoes?: (ctx: ConjuncoesContext) => Result;
-
+	visitConjunções?: (ctx: ConjunçõesContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.preposicoes`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.preposições`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitPreposicoes?: (ctx: PreposicoesContext) => Result;
-
+	visitPreposições?: (ctx: PreposiçõesContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.ï¿½`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.é`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitï¿½?: (ctx: ï¿½Context) => Result;
-
+	visitÉ?: (ctx: ÉContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.estrutura`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitEstrutura?: (ctx: EstruturaContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.igual_a`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitIgual_a?: (ctx: Igual_aContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.variavel_global`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.variável_global`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitVariavel_global?: (ctx: Variavel_globalContext) => Result;
-
+	visitVariável_global?: (ctx: Variável_globalContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.rotina`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitRotina?: (ctx: RotinaContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.procedimento`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitProcedimento?: (ctx: ProcedimentoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.determine_se`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitDetermine_se?: (ctx: Determine_seContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.decisor`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitDecisor?: (ctx: DecisorContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.funï¿½ï¿½o2`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.função2`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitFunï¿½ï¿½o2?: (ctx: Funï¿½ï¿½o2Context) => Result;
-
+	visitFunção2?: (ctx: Função2Context) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.atribua`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAtribua?: (ctx: AtribuaContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.funcao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.função`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitFuncao?: (ctx: FuncaoContext) => Result;
-
+	visitFunção?: (ctx: FunçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.para`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPara?: (ctx: ParaContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.que_se`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitQue_se?: (ctx: Que_seContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.rotina2`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitRotina2?: (ctx: Rotina2Context) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.compativelmente`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitCompativelmente?: (ctx: CompativelmenteContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.retroinvocacao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.retroinvocação`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitRetroinvocacao?: (ctx: RetroinvocacaoContext) => Result;
-
+	visitRetroinvocação?: (ctx: RetroinvocaçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.nome_da_rotina`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitNome_da_rotina?: (ctx: Nome_da_rotinaContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.unidade_semantica`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.unidade_semântica`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitUnidade_semantica?: (ctx: Unidade_semanticaContext) => Result;
-
+	visitUnidade_semântica?: (ctx: Unidade_semânticaContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.parametro`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.parâmetro`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParametro?: (ctx: ParametroContext) => Result;
-
+	visitParâmetro?: (ctx: ParâmetroContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.frase`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitFrase?: (ctx: FraseContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.instrucoes`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.instruções`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInstrucoes?: (ctx: InstrucoesContext) => Result;
-
+	visitInstruções?: (ctx: InstruçõesContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.instrucao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.instrução`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInstrucao?: (ctx: InstrucaoContext) => Result;
-
+	visitInstrução?: (ctx: InstruçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.preserve`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPreserve?: (ctx: PreserveContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.preservacao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.preservação`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitPreservacao?: (ctx: PreservacaoContext) => Result;
-
+	visitPreservação?: (ctx: PreservaçãoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.iteracao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.iteração`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitIteracao?: (ctx: IteracaoContext) => Result;
-
+	visitIteração?: (ctx: IteraçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.se`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitSe?: (ctx: SeContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.condicional`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitCondicional?: (ctx: CondicionalContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.expressao_decisora`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.expressão_decisora`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitExpressao_decisora?: (ctx: Expressao_decisoraContext) => Result;
-
+	visitExpressão_decisora?: (ctx: Expressão_decisoraContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.incondicional`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitIncondicional?: (ctx: IncondicionalContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.interrupcao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.interrupção`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInterrupcao?: (ctx: InterrupcaoContext) => Result;
-
+	visitInterrupção?: (ctx: InterrupçãoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.invocacao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.invocação`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInvocacao?: (ctx: InvocacaoContext) => Result;
-
+	visitInvocação?: (ctx: InvocaçãoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.invocacao_interna`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.invocação_interna`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInvocacao_interna?: (ctx: Invocacao_internaContext) => Result;
-
+	visitInvocação_interna?: (ctx: Invocação_internaContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.invocacao_externa`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.invocação_externa`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInvocacao_externa?: (ctx: Invocacao_externaContext) => Result;
-
+	visitInvocação_externa?: (ctx: Invocação_externaContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.aspas_duplas`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAspas_duplas?: (ctx: Aspas_duplasContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.nome_da_DLL`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitNome_da_DLL?: (ctx: Nome_da_DLLContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.nome_da_funcao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.nome_da_função`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNome_da_funcao?: (ctx: Nome_da_funcaoContext) => Result;
-
+	visitNome_da_função?: (ctx: Nome_da_funçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.processe`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitProcesse?: (ctx: ProcesseContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.com`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitCom?: (ctx: ComContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.e`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitE?: (ctx: EContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.retornando`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitRetornando?: (ctx: RetornandoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.invocacao_indireta`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.invocação_indireta`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInvocacao_indireta?: (ctx: Invocacao_indiretaContext) => Result;
-
+	visitInvocação_indireta?: (ctx: Invocação_indiretaContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.retorno`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitRetorno?: (ctx: RetornoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.decodifique`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitDecodifique?: (ctx: DecodifiqueContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.decodificacao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.decodificação`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitDecodificacao?: (ctx: DecodificacaoContext) => Result;
-
+	visitDecodificação?: (ctx: DecodificaçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.aponte`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAponte?: (ctx: AponteContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.para_rotina`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPara_rotina?: (ctx: Para_rotinaContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.indirecao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.indireção`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitIndirecao?: (ctx: IndirecaoContext) => Result;
-
+	visitIndireção?: (ctx: IndireçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.push`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitPush?: (ctx: PushContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.empilhamento`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitEmpilhamento?: (ctx: EmpilhamentoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.reiteracao`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.reiteração`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitReiteracao?: (ctx: ReiteracaoContext) => Result;
-
+	visitReiteração?: (ctx: ReiteraçãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.diga`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitDiga?: (ctx: DigaContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.retorno_booleano`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitRetorno_booleano?: (ctx: Retorno_booleanoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.expressï¿½o`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.expressão`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitExpressï¿½o?: (ctx: Expressï¿½oContext) => Result;
-
+	visitExpressão?: (ctx: ExpressãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.operadores_comuns`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitOperadores_comuns?: (ctx: Operadores_comunsContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.booleano`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitBooleano?: (ctx: BooleanoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.nulo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitNulo?: (ctx: NuloContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.termo_constante`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTermo_constante?: (ctx: Termo_constanteContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.termo_constante_negativo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTermo_constante_negativo?: (ctx: Termo_constante_negativoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.termo_constante_positivo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTermo_constante_positivo?: (ctx: Termo_constante_positivoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.numero`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.número`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitNumero?: (ctx: NumeroContext) => Result;
-
+	visitNúmero?: (ctx: NúmeroContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.literal`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitLiteral?: (ctx: LiteralContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.termo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTermo?: (ctx: TermoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.sinal_de_divisï¿½o`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.sinal_de_divisão`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitSinal_de_divisï¿½o?: (ctx: Sinal_de_divisï¿½oContext) => Result;
-
+	visitSinal_de_divisão?: (ctx: Sinal_de_divisãoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.como`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitComo?: (ctx: ComoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.termo_negativo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTermo_negativo?: (ctx: Termo_negativoContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.termo_positivo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTermo_positivo?: (ctx: Termo_positivoContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.variavel_local`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.variável_local`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitVariavel_local?: (ctx: Variavel_localContext) => Result;
-
+	visitVariável_local?: (ctx: Variável_localContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.variavel`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.variável`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitVariavel?: (ctx: VariavelContext) => Result;
-
+	visitVariável?: (ctx: VariávelContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.termo_literal`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTermo_literal?: (ctx: Termo_literalContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.conteï¿½do`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.conteúdo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitConteï¿½do?: (ctx: Conteï¿½doContext) => Result;
-
+	visitConteúdo?: (ctx: ConteúdoContext) => Result;
 	/**
 	 * Visit a parse tree produced by `PortuguesPuroParser.magnitude`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitMagnitude?: (ctx: MagnitudeContext) => Result;
-
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.endereï¿½amento`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.endereçamento`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitEndereï¿½amento?: (ctx: Endereï¿½amentoContext) => Result;
-
+	visitEndereçamento?: (ctx: EndereçamentoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.possessivos_inglï¿½s`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.possessivos_inglês`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitPossessivos_inglï¿½s?: (ctx: Possessivos_inglï¿½sContext) => Result;
-
+	visitPossessivos_inglês?: (ctx: Possessivos_inglêsContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.possessivo_inglï¿½s_antigo`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.possessivo_inglês_antigo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitPossessivo_inglï¿½s_antigo?: (ctx: Possessivo_inglï¿½s_antigoContext) => Result;
-
+	visitPossessivo_inglês_antigo?: (ctx: Possessivo_inglês_antigoContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.possessivo_portuguï¿½s`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.possessivo_português`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitPossessivo_portuguï¿½s?: (ctx: Possessivo_portuguï¿½sContext) => Result;
-
+	visitPossessivo_português?: (ctx: Possessivo_portuguêsContext) => Result;
 	/**
-	 * Visit a parse tree produced by `PortuguesPuroParser.apostrofo`.
+	 * Visit a parse tree produced by `PortuguesPuroParser.apóstrofo`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitApostrofo?: (ctx: ApostrofoContext) => Result;
+	visitApóstrofo?: (ctx: ApóstrofoContext) => Result;
 }
 

@@ -1,33 +1,24 @@
-// Generated from PortuguesPuro.g4 by ANTLR 4.9.0-SNAPSHOT
+// Generated from PortuguesPuro.g4 by ANTLR 4.13.2
+// noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
+import {
+	ATN,
+	ATNDeserializer, DecisionState, DFA, FailedPredicateException,
+	RecognitionException, NoViableAltException, BailErrorStrategy,
+	Parser, ParserATNSimulator,
+	RuleContext, ParserRuleContext, PredictionMode, PredictionContextCache,
+	TerminalNode, RuleNode,
+	Token, TokenStream,
+	Interval, IntervalSet
+} from 'antlr4';
+import PortuguesPuroListener from "./PortuguesPuroListener.ts";
+import PortuguesPuroVisitor from "./PortuguesPuroVisitor.ts";
 
-import { ATN } from "antlr4ts/atn/ATN";
-import { ATNDeserializer } from "antlr4ts/atn/ATNDeserializer";
-import { FailedPredicateException } from "antlr4ts/FailedPredicateException";
-import { NotNull } from "antlr4ts/Decorators";
-import { NoViableAltException } from "antlr4ts/NoViableAltException";
-import { Override } from "antlr4ts/Decorators";
-import { Parser } from "antlr4ts/Parser";
-import { ParserRuleContext } from "antlr4ts/ParserRuleContext";
-import { ParserATNSimulator } from "antlr4ts/atn/ParserATNSimulator";
-import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
-import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
-import { RecognitionException } from "antlr4ts/RecognitionException";
-import { RuleContext } from "antlr4ts/RuleContext";
-//import { RuleVersion } from "antlr4ts/RuleVersion";
-import { TerminalNode } from "antlr4ts/tree/TerminalNode";
-import { Token } from "antlr4ts/Token";
-import { TokenStream } from "antlr4ts/TokenStream";
-import { Vocabulary } from "antlr4ts/Vocabulary";
-import { VocabularyImpl } from "antlr4ts/VocabularyImpl";
+// for running tests with parameters, TODO: discuss strategy for typed parameters in CI
+// eslint-disable-next-line no-unused-vars
+type int = number;
 
-import * as Utils from "antlr4ts/misc/Utils";
-
-import { PortuguesPuroListener } from "./PortuguesPuroListener";
-import { PortuguesPuroVisitor } from "./PortuguesPuroVisitor";
-
-
-export class PortuguesPuroParser extends Parser {
+export default class PortuguesPuroParser extends Parser {
 	public static readonly T__0 = 1;
 	public static readonly T__1 = 2;
 	public static readonly T__2 = 3;
@@ -210,268 +201,442 @@ export class PortuguesPuroParser extends Parser {
 	public static readonly T__179 = 180;
 	public static readonly T__180 = 181;
 	public static readonly LETRA = 182;
-	public static readonly DIGITO = 183;
-	public static readonly SIMBOLO = 184;
-	public static readonly ESPACO = 185;
-	public static readonly APOSTROFO = 186;
+	public static readonly DÍGITO = 183;
+	public static readonly SÍMBOLO = 184;
+	public static readonly ESPAÇO = 185;
+	public static readonly APÓSTROFO = 186;
 	public static readonly ASPAS_DUPLAS = 187;
-	public static readonly HIFEN = 188;
-	public static readonly CIFRAO = 189;
-	public static readonly ESPACO_EM_BRANCO = 190;
-	public static readonly ESPACO_RIGIDO = 191;
+	public static readonly HÍFEN = 188;
+	public static readonly CIFRÃO = 189;
+	public static readonly ESPAÇO_EM_BRANCO = 190;
+	public static readonly ESPAÇO_RÍGIDO = 191;
 	public static readonly QUEBRA_DE_LINHA = 192;
 	public static readonly BARRA_INCLINADA = 193;
 	public static readonly BARRA_INVERTIDA = 194;
-	public static readonly SINAL_DE_ADICAO = 195;
+	public static readonly SINAL_DE_ADIÇÃO = 195;
 	public static readonly PONTO = 196;
-	public static readonly VIRGULA = 197;
-	public static readonly PONTO_E_VIRGULA = 198;
+	public static readonly VÍRGULA = 197;
+	public static readonly PONTO_E_VÍRGULA = 198;
 	public static readonly DOIS_PONTOS = 199;
-	public static readonly ABRE_PARENTESES = 200;
-	public static readonly FECHA_PARENTESES = 201;
+	public static readonly ABRE_PARÊNTESES = 200;
+	public static readonly FECHA_PARÊNTESES = 201;
 	public static readonly ABRE_COLCHETES = 202;
 	public static readonly FECHA_COLCHETES = 203;
-	public static readonly CARACTERES_IMPRIMIVEIS = 204;
+	public static readonly CARACTERES_IMPRIMÍVEIS = 204;
 	public static readonly CARACTERES_DE_CONTROLE = 205;
-	public static readonly RULE_regra_espaco = 0;
+	public static override readonly EOF = Token.EOF;
+	public static readonly RULE_regra_espaço = 0;
 	public static readonly RULE_palavra = 1;
-	public static readonly RULE_possessivo_inglï¿½s = 2;
+	public static readonly RULE_possessivo_inglês = 2;
 	public static readonly RULE_artigo = 3;
 	public static readonly RULE_artigo_definido = 4;
 	public static readonly RULE_artigo_indefinido = 5;
 	public static readonly RULE_adjacentes = 6;
 	public static readonly RULE_abrangentes = 7;
-	public static readonly RULE_contracoes = 8;
+	public static readonly RULE_contrações = 8;
 	public static readonly RULE_atribuidores_de_posse = 9;
 	public static readonly RULE_p1 = 10;
 	public static readonly RULE_p2 = 11;
-	public static readonly RULE_operadores_de_comparacao = 12;
+	public static readonly RULE_operadores_de_comparação = 12;
 	public static readonly RULE_palavras_reservadas = 13;
-	public static readonly RULE_denominacoes = 14;
+	public static readonly RULE_denominações = 14;
 	public static readonly RULE_verbos = 15;
-	public static readonly RULE_caracteres_ignoraveis = 16;
-	public static readonly RULE_comentario = 17;
-	public static readonly RULE_comentario_de_linha = 18;
-	public static readonly RULE_comentario_de_bloco = 19;
+	public static readonly RULE_caracteres_ignoráveis = 16;
+	public static readonly RULE_comentário = 17;
+	public static readonly RULE_comentário_de_linha = 18;
+	public static readonly RULE_comentário_de_bloco = 19;
 	public static readonly RULE_token = 20;
 	public static readonly RULE_aglomerado = 21;
-	public static readonly RULE_caractere_aglomeravel = 22;
+	public static readonly RULE_caractere_aglomerável = 22;
 	public static readonly RULE_iniciador_de_aglomerado = 23;
 	public static readonly RULE_possessivo_novo = 24;
 	public static readonly RULE_qualificador = 25;
-	public static readonly RULE_caractere_nao_aglomeravel = 26;
-	public static readonly RULE_sinal_de_pontuacao = 27;
-	public static readonly RULE_simbolos_especiais = 28;
-	public static readonly RULE_noise = 29;
-	public static readonly RULE_numero_inteiro = 30;
-	public static readonly RULE_numero_decimal = 31;
-	public static readonly RULE_numero_fracionario = 32;
-	public static readonly RULE_numero_misto = 33;
-	public static readonly RULE_numero_hexadecimal = 34;
+	public static readonly RULE_caractere_não_aglomerável = 26;
+	public static readonly RULE_sinal_de_pontuação = 27;
+	public static readonly RULE_símbolos_especiais = 28;
+	public static readonly RULE_ruído = 29;
+	public static readonly RULE_número_inteiro = 30;
+	public static readonly RULE_número_decimal = 31;
+	public static readonly RULE_número_fracionário = 32;
+	public static readonly RULE_número_misto = 33;
+	public static readonly RULE_número_hexadecimal = 34;
 	public static readonly RULE_string_literal = 35;
 	public static readonly RULE_programa = 36;
 	public static readonly RULE_tipos_primitivos = 37;
 	public static readonly RULE_tipo = 38;
 	public static readonly RULE_nome = 39;
 	public static readonly RULE_nome_do_tipo = 40;
-	public static readonly RULE_informacao_opcional = 41;
+	public static readonly RULE_informação_opcional = 41;
 	public static readonly RULE_campos = 42;
 	public static readonly RULE_bytes = 43;
-	public static readonly RULE_referï¿½ncia = 44;
+	public static readonly RULE_referência = 44;
 	public static readonly RULE_campo = 45;
 	public static readonly RULE_pausa = 46;
 	public static readonly RULE_pausas = 47;
-	public static readonly RULE_conjuncoes = 48;
-	public static readonly RULE_preposicoes = 49;
-	public static readonly RULE_ï¿½ = 50;
+	public static readonly RULE_conjunções = 48;
+	public static readonly RULE_preposições = 49;
+	public static readonly RULE_é = 50;
 	public static readonly RULE_estrutura = 51;
 	public static readonly RULE_igual_a = 52;
-	public static readonly RULE_variavel_global = 53;
+	public static readonly RULE_variável_global = 53;
 	public static readonly RULE_rotina = 54;
 	public static readonly RULE_procedimento = 55;
 	public static readonly RULE_determine_se = 56;
 	public static readonly RULE_decisor = 57;
-	public static readonly RULE_funï¿½ï¿½o2 = 58;
+	public static readonly RULE_função2 = 58;
 	public static readonly RULE_atribua = 59;
-	public static readonly RULE_funcao = 60;
+	public static readonly RULE_função = 60;
 	public static readonly RULE_para = 61;
 	public static readonly RULE_que_se = 62;
 	public static readonly RULE_rotina2 = 63;
 	public static readonly RULE_compativelmente = 64;
-	public static readonly RULE_retroinvocacao = 65;
+	public static readonly RULE_retroinvocação = 65;
 	public static readonly RULE_nome_da_rotina = 66;
-	public static readonly RULE_unidade_semantica = 67;
-	public static readonly RULE_parametro = 68;
+	public static readonly RULE_unidade_semântica = 67;
+	public static readonly RULE_parâmetro = 68;
 	public static readonly RULE_frase = 69;
-	public static readonly RULE_instrucoes = 70;
-	public static readonly RULE_instrucao = 71;
+	public static readonly RULE_instruções = 70;
+	public static readonly RULE_instrução = 71;
 	public static readonly RULE_preserve = 72;
-	public static readonly RULE_preservacao = 73;
-	public static readonly RULE_iteracao = 74;
+	public static readonly RULE_preservação = 73;
+	public static readonly RULE_iteração = 74;
 	public static readonly RULE_se = 75;
 	public static readonly RULE_condicional = 76;
-	public static readonly RULE_expressao_decisora = 77;
+	public static readonly RULE_expressão_decisora = 77;
 	public static readonly RULE_incondicional = 78;
-	public static readonly RULE_interrupcao = 79;
-	public static readonly RULE_invocacao = 80;
-	public static readonly RULE_invocacao_interna = 81;
-	public static readonly RULE_invocacao_externa = 82;
+	public static readonly RULE_interrupção = 79;
+	public static readonly RULE_invocação = 80;
+	public static readonly RULE_invocação_interna = 81;
+	public static readonly RULE_invocação_externa = 82;
 	public static readonly RULE_aspas_duplas = 83;
 	public static readonly RULE_nome_da_DLL = 84;
-	public static readonly RULE_nome_da_funcao = 85;
+	public static readonly RULE_nome_da_função = 85;
 	public static readonly RULE_processe = 86;
 	public static readonly RULE_com = 87;
 	public static readonly RULE_e = 88;
 	public static readonly RULE_retornando = 89;
-	public static readonly RULE_invocacao_indireta = 90;
+	public static readonly RULE_invocação_indireta = 90;
 	public static readonly RULE_retorno = 91;
 	public static readonly RULE_decodifique = 92;
-	public static readonly RULE_decodificacao = 93;
+	public static readonly RULE_decodificação = 93;
 	public static readonly RULE_aponte = 94;
 	public static readonly RULE_para_rotina = 95;
-	public static readonly RULE_indirecao = 96;
+	public static readonly RULE_indireção = 96;
 	public static readonly RULE_push = 97;
 	public static readonly RULE_empilhamento = 98;
-	public static readonly RULE_reiteracao = 99;
+	public static readonly RULE_reiteração = 99;
 	public static readonly RULE_diga = 100;
 	public static readonly RULE_retorno_booleano = 101;
-	public static readonly RULE_expressï¿½o = 102;
+	public static readonly RULE_expressão = 102;
 	public static readonly RULE_operadores_comuns = 103;
 	public static readonly RULE_booleano = 104;
 	public static readonly RULE_nulo = 105;
 	public static readonly RULE_termo_constante = 106;
 	public static readonly RULE_termo_constante_negativo = 107;
 	public static readonly RULE_termo_constante_positivo = 108;
-	public static readonly RULE_numero = 109;
+	public static readonly RULE_número = 109;
 	public static readonly RULE_literal = 110;
 	public static readonly RULE_termo = 111;
-	public static readonly RULE_sinal_de_divisï¿½o = 112;
+	public static readonly RULE_sinal_de_divisão = 112;
 	public static readonly RULE_como = 113;
 	public static readonly RULE_termo_negativo = 114;
 	public static readonly RULE_termo_positivo = 115;
-	public static readonly RULE_variavel_local = 116;
-	public static readonly RULE_variavel = 117;
+	public static readonly RULE_variável_local = 116;
+	public static readonly RULE_variável = 117;
 	public static readonly RULE_termo_literal = 118;
-	public static readonly RULE_conteï¿½do = 119;
+	public static readonly RULE_conteúdo = 119;
 	public static readonly RULE_magnitude = 120;
-	public static readonly RULE_endereï¿½amento = 121;
-	public static readonly RULE_possessivos_inglï¿½s = 122;
-	public static readonly RULE_possessivo_inglï¿½s_antigo = 123;
-	public static readonly RULE_possessivo_portuguï¿½s = 124;
-	public static readonly RULE_apostrofo = 125;
+	public static readonly RULE_endereçamento = 121;
+	public static readonly RULE_possessivos_inglês = 122;
+	public static readonly RULE_possessivo_inglês_antigo = 123;
+	public static readonly RULE_possessivo_português = 124;
+	public static readonly RULE_apóstrofo = 125;
+	public static readonly literalNames: (string | null)[] = [ null, "' '", 
+                                                            "'o'", "'a'", 
+                                                            "'os'", "'as'", 
+                                                            "'um'", "'uma'", 
+                                                            "'uns'", "'umas'", 
+                                                            "'este'", "'esta'", 
+                                                            "'estes'", "'estas'", 
+                                                            "'esse'", "'essa'", 
+                                                            "'esses'", "'essas'", 
+                                                            "'ao'", "'\\u00E0'", 
+                                                            "'aos'", "'\\u00E0s'", 
+                                                            "'no'", "'na'", 
+                                                            "'nos'", "'nas'", 
+                                                            "'pelo'", "'pela'", 
+                                                            "'pelos'", "'pelas'", 
+                                                            "'num'", "'numa'", 
+                                                            "'nuns'", "'numas'", 
+                                                            "'dum'", "'duma'", 
+                                                            "'duns'", "'dumas'", 
+                                                            "'desse'", "'dessa'", 
+                                                            "'desses'", 
+                                                            "'dessas'", 
+                                                            "'deste'", "'desta'", 
+                                                            "'destes'", 
+                                                            "'destas'", 
+                                                            "'igual a'", 
+                                                            "'diferente de'", 
+                                                            "'maior que'", 
+                                                            "'maior do que'", 
+                                                            "'maior ou igual a'", 
+                                                            "'menor que'", 
+                                                            "'menor do que'", 
+                                                            "'menor ou igual a'", 
+                                                            "'Se'", "'Itere'", 
+                                                            "'Reitere'", 
+                                                            "'Pare'", "'Retorne'", 
+                                                            "'Preserve'", 
+                                                            "'Diga'", "'sim'", 
+                                                            "'n\\u00E3o'", 
+                                                            "'original'", 
+                                                            "'Decodifique'", 
+                                                            "'Processe'", 
+                                                            "'retornando'", 
+                                                            "'Push'", "'Pop'", 
+                                                            "'nulo'", "'vazio'", 
+                                                            "'inexistente'", 
+                                                            "'denominado'", 
+                                                            "'denominada'", 
+                                                            "'denominados'", 
+                                                            "'denominadas'", 
+                                                            "'chamado'", 
+                                                            "'chamada'", 
+                                                            "'chamados'", 
+                                                            "'chamadas'", 
+                                                            "'\\u00E9'", 
+                                                            "'est\\u00E1'", 
+                                                            "'estiver'", 
+                                                            "'for'", "'forem'", 
+                                                            "'s\\u00E3o'", 
+                                                            "'est\\u00E3o'", 
+                                                            "'estiverem'", 
+                                                            "'ser'", "'serem'", 
+                                                            "'estar'", "'poder'", 
+                                                            "'puder'", "'foi'", 
+                                                            "'estamos'", 
+                                                            "'h\\u00E1'", 
+                                                            "'pode'", "'existe'", 
+                                                            "'existir'", 
+                                                            "'cont\\u00E9m'", 
+                                                            "'contiver'", 
+                                                            "'possui'", 
+                                                            "'possuir'", 
+                                                            "'~'", "'@'", 
+                                                            "'#'", "'%'", 
+                                                            "'_'", "'&'", 
+                                                            "'!'", "'?'", 
+                                                            "'|'", "'*'", 
+                                                            "'^'", "'<'", 
+                                                            "'>'", "'{'", 
+                                                            "'}'", "'byte'", 
+                                                            "'caractere'", 
+                                                            "'word'", "'n\\u00FAmero'", 
+                                                            "'sinalizador'", 
+                                                            "'ponteiro'", 
+                                                            "'estrutura'", 
+                                                            "'string'", 
+                                                            "'subtexto'", 
+                                                            "'texto hexadecimal'", 
+                                                            "'lista'", "'lista estruturada'", 
+                                                            "'listas'", 
+                                                            "'propor\\u00E7\\u00E3o'", 
+                                                            "'fra\\u00E7\\u00E3o'", 
+                                                            "'numerador'", 
+                                                            "'denominador'", 
+                                                            "'bytes'", "'(refer\\u00EAncia)'", 
+                                                            "'sob'", "'e'", 
+                                                            "'ou'", "'nem'", 
+                                                            "'usando'", 
+                                                            "'com'", "'por'", 
+                                                            "'contendo'", 
+                                                            "'desde'", "'entre'", 
+                                                            "'sobre'", "'cima'", 
+                                                            "'embaixo'", 
+                                                            "'abaixo'", 
+                                                            "'antes'", "'depois'", 
+                                                            "'ap\\u00F3s'", 
+                                                            "'cerca'", "'pr\\u00F3ximo'", 
+                                                            "'at\\u00E9'", 
+                                                            "'aproximadamente'", 
+                                                            "'como'", "'determine se'", 
+                                                            "'Fun\\u00E7\\u00E3o'", 
+                                                            "'atribua'", 
+                                                            "'para'", "'que se'", 
+                                                            "'Rotina'", 
+                                                            "'compativelmente'", 
+                                                            "'Aponte'", 
+                                                            "'para a rotina'", 
+                                                            "'Empilhe'", 
+                                                            "'mais'", "'menos'", 
+                                                            "'vezes'", "'multiplicado por'", 
+                                                            "'dividido por'", 
+                                                            "'junto com'", 
+                                                            "'seguido de'", 
+                                                            "'acompanhado de'", 
+                                                            "'tal como'", 
+                                                            "'conte\\u00FAdo'", 
+                                                            "'magnitude'", 
+                                                            "'endere\\u00E7amento'", 
+                                                            "''s'", null, 
+                                                            null, null, 
+                                                            null, "'''", 
+                                                            "'\\\"'", "'-'", 
+                                                            "'$'", null, 
+                                                            "'\\u00A0'", 
+                                                            null, "'/'", 
+                                                            "'\\'", "'+'", 
+                                                            "'.'", "','", 
+                                                            "';'", "':'", 
+                                                            "'('", "')'", 
+                                                            "'['", "']'" ];
+	public static readonly symbolicNames: (string | null)[] = [ null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             "LETRA", "D\u0001GITO", 
+                                                             "S\u0001MBOLO", 
+                                                             "ESPA\u0004O", 
+                                                             "AP\u0002STROFO", 
+                                                             "ASPAS_DUPLAS", 
+                                                             "H\u0001FEN", 
+                                                             "CIFR\u0004O", 
+                                                             "ESPA\u0004O_EM_BRANCO", 
+                                                             "ESPA\u0004O_R\u0008GIDO", 
+                                                             "QUEBRA_DE_LINHA", 
+                                                             "BARRA_INCLINADA", 
+                                                             "BARRA_INVERTIDA", 
+                                                             "SINAL_DE_ADI\u000C\u000DO", 
+                                                             "PONTO", "V\u0001RGULA", 
+                                                             "PONTO_E_V\u0009RGULA", 
+                                                             "DOIS_PONTOS", 
+                                                             "ABRE_PAR\u0008NTESES", 
+                                                             "FECHA_PAR\u0009NTESES", 
+                                                             "ABRE_COLCHETES", 
+                                                             "FECHA_COLCHETES", 
+                                                             "CARACTERES_IMPRIM\u0011VEIS", 
+                                                             "CARACTERES_DE_CONTROLE" ];
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
-		"regra_espaco", "palavra", "possessivo_inglï¿½s", "artigo", "artigo_definido", 
-		"artigo_indefinido", "adjacentes", "abrangentes", "contracoes", "atribuidores_de_posse", 
-		"p1", "p2", "operadores_de_comparacao", "palavras_reservadas", "denominacoes", 
-		"verbos", "caracteres_ignoraveis", "comentario", "comentario_de_linha", 
-		"comentario_de_bloco", "token", "aglomerado", "caractere_aglomeravel", 
-		"iniciador_de_aglomerado", "possessivo_novo", "qualificador", "caractere_nao_aglomeravel", 
-		"sinal_de_pontuacao", "simbolos_especiais", "noise", "numero_inteiro", 
-		"numero_decimal", "numero_fracionario", "numero_misto", "numero_hexadecimal", 
+		"regra_espaço", "palavra", "possessivo_inglês", "artigo", "artigo_definido", 
+		"artigo_indefinido", "adjacentes", "abrangentes", "contrações", "atribuidores_de_posse", 
+		"p1", "p2", "operadores_de_comparação", "palavras_reservadas", "denominações", 
+		"verbos", "caracteres_ignoráveis", "comentário", "comentário_de_linha", 
+		"comentário_de_bloco", "token", "aglomerado", "caractere_aglomerável", 
+		"iniciador_de_aglomerado", "possessivo_novo", "qualificador", "caractere_não_aglomerável", 
+		"sinal_de_pontuação", "símbolos_especiais", "ruído", "número_inteiro", 
+		"número_decimal", "número_fracionário", "número_misto", "número_hexadecimal", 
 		"string_literal", "programa", "tipos_primitivos", "tipo", "nome", "nome_do_tipo", 
-		"informacao_opcional", "campos", "bytes", "referï¿½ncia", "campo", "pausa", 
-		"pausas", "conjuncoes", "preposicoes", "ï¿½", "estrutura", "igual_a", "variavel_global", 
-		"rotina", "procedimento", "determine_se", "decisor", "funï¿½ï¿½o2", "atribua", 
-		"funcao", "para", "que_se", "rotina2", "compativelmente", "retroinvocacao", 
-		"nome_da_rotina", "unidade_semantica", "parametro", "frase", "instrucoes", 
-		"instrucao", "preserve", "preservacao", "iteracao", "se", "condicional", 
-		"expressao_decisora", "incondicional", "interrupcao", "invocacao", "invocacao_interna", 
-		"invocacao_externa", "aspas_duplas", "nome_da_DLL", "nome_da_funcao", 
-		"processe", "com", "e", "retornando", "invocacao_indireta", "retorno", 
-		"decodifique", "decodificacao", "aponte", "para_rotina", "indirecao", 
-		"push", "empilhamento", "reiteracao", "diga", "retorno_booleano", "expressï¿½o", 
+		"informação_opcional", "campos", "bytes", "referência", "campo", "pausa", 
+		"pausas", "conjunções", "preposições", "é", "estrutura", "igual_a", "variável_global", 
+		"rotina", "procedimento", "determine_se", "decisor", "função2", "atribua", 
+		"função", "para", "que_se", "rotina2", "compativelmente", "retroinvocação", 
+		"nome_da_rotina", "unidade_semântica", "parâmetro", "frase", "instruções", 
+		"instrução", "preserve", "preservação", "iteração", "se", "condicional", 
+		"expressão_decisora", "incondicional", "interrupção", "invocação", "invocação_interna", 
+		"invocação_externa", "aspas_duplas", "nome_da_DLL", "nome_da_função", 
+		"processe", "com", "e", "retornando", "invocação_indireta", "retorno", 
+		"decodifique", "decodificação", "aponte", "para_rotina", "indireção", 
+		"push", "empilhamento", "reiteração", "diga", "retorno_booleano", "expressão", 
 		"operadores_comuns", "booleano", "nulo", "termo_constante", "termo_constante_negativo", 
-		"termo_constante_positivo", "numero", "literal", "termo", "sinal_de_divisï¿½o", 
-		"como", "termo_negativo", "termo_positivo", "variavel_local", "variavel", 
-		"termo_literal", "conteï¿½do", "magnitude", "endereï¿½amento", "possessivos_inglï¿½s", 
-		"possessivo_inglï¿½s_antigo", "possessivo_portuguï¿½s", "apostrofo",
+		"termo_constante_positivo", "número", "literal", "termo", "sinal_de_divisão", 
+		"como", "termo_negativo", "termo_positivo", "variável_local", "variável", 
+		"termo_literal", "conteúdo", "magnitude", "endereçamento", "possessivos_inglês", 
+		"possessivo_inglês_antigo", "possessivo_português", "apóstrofo",
 	];
-
-	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
-		undefined, "' '", "'o'", "'a'", "'os'", "'as'", "'um'", "'uma'", "'uns'", 
-		"'umas'", "'este'", "'esta'", "'estes'", "'estas'", "'esse'", "'essa'", 
-		"'esses'", "'essas'", "'ao'", "'\uFFFD'", "'aos'", "'\uFFFDs'", "'no'", 
-		"'na'", "'nos'", "'nas'", "'pelo'", "'pela'", "'pelos'", "'pelas'", "'num'", 
-		"'numa'", "'nuns'", "'numas'", "'dum'", "'duma'", "'duns'", "'dumas'", 
-		"'desse'", "'dessa'", "'desses'", "'dessas'", "'deste'", "'desta'", "'destes'", 
-		"'destas'", "'igual a'", "'diferente de'", "'maior que'", "'maior do que'", 
-		"'maior ou igual a'", "'menor que'", "'menor do que'", "'menor ou igual a'", 
-		"'Se'", "'Itere'", "'Reitere'", "'Pare'", "'Retorne'", "'Preserve'", "'Diga'", 
-		"'sim'", "'n\uFFFDo'", "'original'", "'Decodifique'", "'Processe'", "'retornando'", 
-		"'Push'", "'Pop'", "'nulo'", "'vazio'", "'inexistente'", "'denominado'", 
-		"'denominada'", "'denominados'", "'denominadas'", "'chamado'", "'chamada'", 
-		"'chamados'", "'chamadas'", "'est\uFFFD'", "'estiver'", "'for'", "'forem'", 
-		"'s\uFFFDo'", "'est\uFFFDo'", "'estiverem'", "'ser'", "'serem'", "'estar'", 
-		"'poder'", "'puder'", "'foi'", "'estamos'", "'h\uFFFD'", "'pode'", "'existe'", 
-		"'existir'", "'cont\uFFFDm'", "'contiver'", "'possui'", "'possuir'", "'~'", 
-		"'@'", "'#'", "'%'", "'_'", "'&'", "'!'", "'?'", "'|'", "'*'", "'^'", 
-		"'<'", "'>'", "'{'", "'}'", "'byte'", "'caractere'", "'word'", "'n\uFFFDmero'", 
-		"'sinalizador'", "'ponteiro'", "'estrutura'", "'string'", "'subtexto'", 
-		"'texto hexadecimal'", "'lista'", "'lista estruturada'", "'listas'", "'propor\uFFFD\uFFFDo'", 
-		"'fra\uFFFD\uFFFDo'", "'numerador'", "'denominador'", "'bytes'", "'(refer\uFFFDncia)'", 
-		"'sob'", "'e'", "'ou'", "'nem'", "'usando'", "'com'", "'por'", "'contendo'", 
-		"'desde'", "'entre'", "'sobre'", "'cima'", "'embaixo'", "'abaixo'", "'antes'", 
-		"'depois'", "'ap\uFFFDs'", "'cerca'", "'pr\uFFFDximo'", "'at\uFFFD'", 
-		"'aproximadamente'", "'como'", "'determine se'", "'Fun\uFFFD\uFFFDo'", 
-		"'atribua'", "'para'", "'que se'", "'Rotina'", "'compativelmente'", "'Itere.'", 
-		"'Aponte'", "'para a rotina'", "'Empilhe'", "'mais'", "'menos'", "'vezes'", 
-		"'multiplicado por'", "'dividido por'", "'junto com'", "'seguido de'", 
-		"'acompanhado de'", "'tal como'", "'conte\uFFFDdo'", "'magnitude'", "'endere\uFFFDamento'", 
-		"'''", undefined, undefined, undefined, undefined, "'''", "'\\'", "'-'", 
-		"'$'", undefined, "'\u00A0'", undefined, "'/'", "'\\'", "'+'", "'.'", 
-		"','", "';'", "':'", "'('", "')'", "'['", "']'",
-	];
-	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		"LETRA", "DIGITO", "SIMBOLO", "ESPACO", "APOSTROFO", "ASPAS_DUPLAS", "HIFEN", 
-		"CIFRAO", "ESPACO_EM_BRANCO", "ESPACO_RIGIDO", "QUEBRA_DE_LINHA", "BARRA_INCLINADA", 
-		"BARRA_INVERTIDA", "SINAL_DE_ADICAO", "PONTO", "VIRGULA", "PONTO_E_VIRGULA", 
-		"DOIS_PONTOS", "ABRE_PARENTESES", "FECHA_PARENTESES", "ABRE_COLCHETES", 
-		"FECHA_COLCHETES", "CARACTERES_IMPRIMIVEIS", "CARACTERES_DE_CONTROLE",
-	];
-	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(PortuguesPuroParser._LITERAL_NAMES, PortuguesPuroParser._SYMBOLIC_NAMES, []);
-
-	// @Override
-	// @NotNull
-	public get vocabulary(): Vocabulary {
-		return PortuguesPuroParser.VOCABULARY;
-	}
-	// tslint:enable:no-trailing-whitespace
-
-	// @Override
 	public get grammarFileName(): string { return "PortuguesPuro.g4"; }
-
-	// @Override
+	public get literalNames(): (string | null)[] { return PortuguesPuroParser.literalNames; }
+	public get symbolicNames(): (string | null)[] { return PortuguesPuroParser.symbolicNames; }
 	public get ruleNames(): string[] { return PortuguesPuroParser.ruleNames; }
-
-	// @Override
-	public get serializedATN(): string { return PortuguesPuroParser._serializedATN; }
+	public get serializedATN(): number[] { return PortuguesPuroParser._serializedATN; }
 
 	protected createFailedPredicateException(predicate?: string, message?: string): FailedPredicateException {
 		return new FailedPredicateException(this, predicate, message);
@@ -479,14 +644,14 @@ export class PortuguesPuroParser extends Parser {
 
 	constructor(input: TokenStream) {
 		super(input);
-		this._interp = new ParserATNSimulator(PortuguesPuroParser._ATN, this);
+		this._interp = new ParserATNSimulator(this, PortuguesPuroParser._ATN, PortuguesPuroParser.DecisionsToDFA, new PredictionContextCache());
 	}
 	// @RuleVersion(0)
-	public regra_espaco(): Regra_espacoContext {
-		let _localctx: Regra_espacoContext = new Regra_espacoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 0, PortuguesPuroParser.RULE_regra_espaco);
+	public regra_espaço(): Regra_espaçoContext {
+		let localctx: Regra_espaçoContext = new Regra_espaçoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 0, PortuguesPuroParser.RULE_regra_espaço);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 252;
 			this.match(PortuguesPuroParser.T__0);
@@ -494,7 +659,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -504,15 +669,15 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public palavra(): PalavraContext {
-		let _localctx: PalavraContext = new PalavraContext(this._ctx, this.state);
-		this.enterRule(_localctx, 2, PortuguesPuroParser.RULE_palavra);
+		let localctx: PalavraContext = new PalavraContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 2, PortuguesPuroParser.RULE_palavra);
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 255;
 			this._errHandler.sync(this);
@@ -523,7 +688,7 @@ export class PortuguesPuroParser extends Parser {
 					{
 					{
 					this.state = 254;
-					this.match(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
+					this.match(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
 					}
 					}
 					break;
@@ -532,13 +697,13 @@ export class PortuguesPuroParser extends Parser {
 				}
 				this.state = 257;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 0, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 0, this._ctx);
 			} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -548,24 +713,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public possessivo_inglï¿½s(): Possessivo_inglï¿½sContext {
-		let _localctx: Possessivo_inglï¿½sContext = new Possessivo_inglï¿½sContext(this._ctx, this.state);
-		this.enterRule(_localctx, 4, PortuguesPuroParser.RULE_possessivo_inglï¿½s);
+	public possessivo_inglês(): Possessivo_inglêsContext {
+		let localctx: Possessivo_inglêsContext = new Possessivo_inglêsContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 4, PortuguesPuroParser.RULE_possessivo_inglês);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 259;
 			this.palavra();
 			this.state = 260;
-			this.match(PortuguesPuroParser.APOSTROFO);
+			this.match(PortuguesPuroParser.APÓSTROFO);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -575,39 +740,39 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public artigo(): ArtigoContext {
-		let _localctx: ArtigoContext = new ArtigoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 6, PortuguesPuroParser.RULE_artigo);
+		let localctx: ArtigoContext = new ArtigoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 6, PortuguesPuroParser.RULE_artigo);
 		try {
 			this.state = 264;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__1:
-			case PortuguesPuroParser.T__2:
-			case PortuguesPuroParser.T__3:
-			case PortuguesPuroParser.T__4:
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
-				this.enterOuterAlt(_localctx, 1);
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 262;
 				this.artigo_definido();
 				}
 				break;
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
-				this.enterOuterAlt(_localctx, 2);
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 263;
 				this.artigo_indefinido();
@@ -619,7 +784,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -629,49 +794,49 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public artigo_definido(): Artigo_definidoContext {
-		let _localctx: Artigo_definidoContext = new Artigo_definidoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 8, PortuguesPuroParser.RULE_artigo_definido);
+		let localctx: Artigo_definidoContext = new Artigo_definidoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 8, PortuguesPuroParser.RULE_artigo_definido);
 		try {
 			this.state = 271;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__1:
-				this.enterOuterAlt(_localctx, 1);
+			case 2:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 266;
 				this.match(PortuguesPuroParser.T__1);
 				}
 				break;
-			case PortuguesPuroParser.T__2:
-				this.enterOuterAlt(_localctx, 2);
+			case 3:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 267;
 				this.match(PortuguesPuroParser.T__2);
 				}
 				break;
-			case PortuguesPuroParser.T__3:
-				this.enterOuterAlt(_localctx, 3);
+			case 4:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 268;
 				this.match(PortuguesPuroParser.T__3);
 				}
 				break;
-			case PortuguesPuroParser.T__4:
-				this.enterOuterAlt(_localctx, 4);
+			case 5:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 269;
 				this.match(PortuguesPuroParser.T__4);
 				}
 				break;
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
-				this.enterOuterAlt(_localctx, 5);
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 270;
 				this.adjacentes();
@@ -683,7 +848,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -693,49 +858,49 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public artigo_indefinido(): Artigo_indefinidoContext {
-		let _localctx: Artigo_indefinidoContext = new Artigo_indefinidoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 10, PortuguesPuroParser.RULE_artigo_indefinido);
+		let localctx: Artigo_indefinidoContext = new Artigo_indefinidoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 10, PortuguesPuroParser.RULE_artigo_indefinido);
 		try {
 			this.state = 278;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__5:
-				this.enterOuterAlt(_localctx, 1);
+			case 6:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 273;
 				this.match(PortuguesPuroParser.T__5);
 				}
 				break;
-			case PortuguesPuroParser.T__6:
-				this.enterOuterAlt(_localctx, 2);
+			case 7:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 274;
 				this.match(PortuguesPuroParser.T__6);
 				}
 				break;
-			case PortuguesPuroParser.T__7:
-				this.enterOuterAlt(_localctx, 3);
+			case 8:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 275;
 				this.match(PortuguesPuroParser.T__7);
 				}
 				break;
-			case PortuguesPuroParser.T__8:
-				this.enterOuterAlt(_localctx, 4);
+			case 9:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 276;
 				this.match(PortuguesPuroParser.T__8);
 				}
 				break;
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
-				this.enterOuterAlt(_localctx, 5);
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 277;
 				this.abrangentes();
@@ -747,7 +912,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -757,33 +922,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public adjacentes(): AdjacentesContext {
-		let _localctx: AdjacentesContext = new AdjacentesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 12, PortuguesPuroParser.RULE_adjacentes);
+		let localctx: AdjacentesContext = new AdjacentesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 12, PortuguesPuroParser.RULE_adjacentes);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 280;
 			_la = this._input.LA(1);
-			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << PortuguesPuroParser.T__9) | (1 << PortuguesPuroParser.T__10) | (1 << PortuguesPuroParser.T__11) | (1 << PortuguesPuroParser.T__12))) !== 0))) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 15360) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -793,33 +955,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public abrangentes(): AbrangentesContext {
-		let _localctx: AbrangentesContext = new AbrangentesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 14, PortuguesPuroParser.RULE_abrangentes);
+		let localctx: AbrangentesContext = new AbrangentesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 14, PortuguesPuroParser.RULE_abrangentes);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 282;
 			_la = this._input.LA(1);
-			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << PortuguesPuroParser.T__13) | (1 << PortuguesPuroParser.T__14) | (1 << PortuguesPuroParser.T__15) | (1 << PortuguesPuroParser.T__16))) !== 0))) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 245760) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -829,153 +988,153 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public contracoes(): ContracoesContext {
-		let _localctx: ContracoesContext = new ContracoesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 16, PortuguesPuroParser.RULE_contracoes);
+	public contrações(): ContraçõesContext {
+		let localctx: ContraçõesContext = new ContraçõesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 16, PortuguesPuroParser.RULE_contrações);
 		try {
 			this.state = 303;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__17:
-				this.enterOuterAlt(_localctx, 1);
+			case 18:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 284;
 				this.match(PortuguesPuroParser.T__17);
 				}
 				break;
-			case PortuguesPuroParser.T__18:
-				this.enterOuterAlt(_localctx, 2);
+			case 19:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 285;
 				this.match(PortuguesPuroParser.T__18);
 				}
 				break;
-			case PortuguesPuroParser.T__19:
-				this.enterOuterAlt(_localctx, 3);
+			case 20:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 286;
 				this.match(PortuguesPuroParser.T__19);
 				}
 				break;
-			case PortuguesPuroParser.T__20:
-				this.enterOuterAlt(_localctx, 4);
+			case 21:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 287;
 				this.match(PortuguesPuroParser.T__20);
 				}
 				break;
-			case PortuguesPuroParser.T__21:
-				this.enterOuterAlt(_localctx, 5);
+			case 22:
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 288;
 				this.match(PortuguesPuroParser.T__21);
 				}
 				break;
-			case PortuguesPuroParser.T__22:
-				this.enterOuterAlt(_localctx, 6);
+			case 23:
+				this.enterOuterAlt(localctx, 6);
 				{
 				this.state = 289;
 				this.match(PortuguesPuroParser.T__22);
 				}
 				break;
-			case PortuguesPuroParser.T__23:
-				this.enterOuterAlt(_localctx, 7);
+			case 24:
+				this.enterOuterAlt(localctx, 7);
 				{
 				this.state = 290;
 				this.match(PortuguesPuroParser.T__23);
 				}
 				break;
-			case PortuguesPuroParser.T__24:
-				this.enterOuterAlt(_localctx, 8);
+			case 25:
+				this.enterOuterAlt(localctx, 8);
 				{
 				this.state = 291;
 				this.match(PortuguesPuroParser.T__24);
 				}
 				break;
-			case PortuguesPuroParser.T__25:
-				this.enterOuterAlt(_localctx, 9);
+			case 26:
+				this.enterOuterAlt(localctx, 9);
 				{
 				this.state = 292;
 				this.match(PortuguesPuroParser.T__25);
 				}
 				break;
-			case PortuguesPuroParser.T__26:
-				this.enterOuterAlt(_localctx, 10);
+			case 27:
+				this.enterOuterAlt(localctx, 10);
 				{
 				this.state = 293;
 				this.match(PortuguesPuroParser.T__26);
 				}
 				break;
-			case PortuguesPuroParser.T__27:
-				this.enterOuterAlt(_localctx, 11);
+			case 28:
+				this.enterOuterAlt(localctx, 11);
 				{
 				this.state = 294;
 				this.match(PortuguesPuroParser.T__27);
 				}
 				break;
-			case PortuguesPuroParser.T__28:
-				this.enterOuterAlt(_localctx, 12);
+			case 29:
+				this.enterOuterAlt(localctx, 12);
 				{
 				this.state = 295;
 				this.match(PortuguesPuroParser.T__28);
 				}
 				break;
-			case PortuguesPuroParser.T__29:
-				this.enterOuterAlt(_localctx, 13);
+			case 30:
+				this.enterOuterAlt(localctx, 13);
 				{
 				this.state = 296;
 				this.match(PortuguesPuroParser.T__29);
 				}
 				break;
-			case PortuguesPuroParser.T__30:
-				this.enterOuterAlt(_localctx, 14);
+			case 31:
+				this.enterOuterAlt(localctx, 14);
 				{
 				this.state = 297;
 				this.match(PortuguesPuroParser.T__30);
 				}
 				break;
-			case PortuguesPuroParser.T__31:
-				this.enterOuterAlt(_localctx, 15);
+			case 32:
+				this.enterOuterAlt(localctx, 15);
 				{
 				this.state = 298;
 				this.match(PortuguesPuroParser.T__31);
 				}
 				break;
-			case PortuguesPuroParser.T__32:
-				this.enterOuterAlt(_localctx, 16);
+			case 33:
+				this.enterOuterAlt(localctx, 16);
 				{
 				this.state = 299;
 				this.match(PortuguesPuroParser.T__32);
 				}
 				break;
-			case PortuguesPuroParser.T__33:
-			case PortuguesPuroParser.T__34:
-			case PortuguesPuroParser.T__35:
-			case PortuguesPuroParser.T__36:
-				this.enterOuterAlt(_localctx, 17);
+			case 34:
+			case 35:
+			case 36:
+			case 37:
+				this.enterOuterAlt(localctx, 17);
 				{
 				this.state = 300;
 				this.atribuidores_de_posse();
 				}
 				break;
-			case PortuguesPuroParser.T__37:
-			case PortuguesPuroParser.T__38:
-			case PortuguesPuroParser.T__39:
-			case PortuguesPuroParser.T__40:
-				this.enterOuterAlt(_localctx, 18);
+			case 38:
+			case 39:
+			case 40:
+			case 41:
+				this.enterOuterAlt(localctx, 18);
 				{
 				this.state = 301;
 				this.p1();
 				}
 				break;
-			case PortuguesPuroParser.T__41:
-			case PortuguesPuroParser.T__42:
-			case PortuguesPuroParser.T__43:
-			case PortuguesPuroParser.T__44:
-				this.enterOuterAlt(_localctx, 19);
+			case 42:
+			case 43:
+			case 44:
+			case 45:
+				this.enterOuterAlt(localctx, 19);
 				{
 				this.state = 302;
 				this.p2();
@@ -987,7 +1146,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -997,33 +1156,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public atribuidores_de_posse(): Atribuidores_de_posseContext {
-		let _localctx: Atribuidores_de_posseContext = new Atribuidores_de_posseContext(this._ctx, this.state);
-		this.enterRule(_localctx, 18, PortuguesPuroParser.RULE_atribuidores_de_posse);
+		let localctx: Atribuidores_de_posseContext = new Atribuidores_de_posseContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 18, PortuguesPuroParser.RULE_atribuidores_de_posse);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 305;
 			_la = this._input.LA(1);
-			if (!(((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & ((1 << (PortuguesPuroParser.T__33 - 34)) | (1 << (PortuguesPuroParser.T__34 - 34)) | (1 << (PortuguesPuroParser.T__35 - 34)) | (1 << (PortuguesPuroParser.T__36 - 34)))) !== 0))) {
+			if(!(((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & 15) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1033,33 +1189,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public p1(): P1Context {
-		let _localctx: P1Context = new P1Context(this._ctx, this.state);
-		this.enterRule(_localctx, 20, PortuguesPuroParser.RULE_p1);
+		let localctx: P1Context = new P1Context(this, this._ctx, this.state);
+		this.enterRule(localctx, 20, PortuguesPuroParser.RULE_p1);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 307;
 			_la = this._input.LA(1);
-			if (!(((((_la - 38)) & ~0x1F) === 0 && ((1 << (_la - 38)) & ((1 << (PortuguesPuroParser.T__37 - 38)) | (1 << (PortuguesPuroParser.T__38 - 38)) | (1 << (PortuguesPuroParser.T__39 - 38)) | (1 << (PortuguesPuroParser.T__40 - 38)))) !== 0))) {
+			if(!(((((_la - 38)) & ~0x1F) === 0 && ((1 << (_la - 38)) & 15) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1069,33 +1222,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public p2(): P2Context {
-		let _localctx: P2Context = new P2Context(this._ctx, this.state);
-		this.enterRule(_localctx, 22, PortuguesPuroParser.RULE_p2);
+		let localctx: P2Context = new P2Context(this, this._ctx, this.state);
+		this.enterRule(localctx, 22, PortuguesPuroParser.RULE_p2);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 309;
 			_la = this._input.LA(1);
-			if (!(((((_la - 42)) & ~0x1F) === 0 && ((1 << (_la - 42)) & ((1 << (PortuguesPuroParser.T__41 - 42)) | (1 << (PortuguesPuroParser.T__42 - 42)) | (1 << (PortuguesPuroParser.T__43 - 42)) | (1 << (PortuguesPuroParser.T__44 - 42)))) !== 0))) {
+			if(!(((((_la - 42)) & ~0x1F) === 0 && ((1 << (_la - 42)) & 15) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1105,73 +1255,73 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public operadores_de_comparacao(): Operadores_de_comparacaoContext {
-		let _localctx: Operadores_de_comparacaoContext = new Operadores_de_comparacaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 24, PortuguesPuroParser.RULE_operadores_de_comparacao);
+	public operadores_de_comparação(): Operadores_de_comparaçãoContext {
+		let localctx: Operadores_de_comparaçãoContext = new Operadores_de_comparaçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 24, PortuguesPuroParser.RULE_operadores_de_comparação);
 		try {
 			this.state = 320;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.EOF:
-				this.enterOuterAlt(_localctx, 1);
+			case -1:
+				this.enterOuterAlt(localctx, 1);
 				// tslint:disable-next-line:no-empty
 				{
 				}
 				break;
-			case PortuguesPuroParser.T__45:
-				this.enterOuterAlt(_localctx, 2);
+			case 46:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 312;
 				this.match(PortuguesPuroParser.T__45);
 				}
 				break;
-			case PortuguesPuroParser.T__46:
-				this.enterOuterAlt(_localctx, 3);
+			case 47:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 313;
 				this.match(PortuguesPuroParser.T__46);
 				}
 				break;
-			case PortuguesPuroParser.T__47:
-				this.enterOuterAlt(_localctx, 4);
+			case 48:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 314;
 				this.match(PortuguesPuroParser.T__47);
 				}
 				break;
-			case PortuguesPuroParser.T__48:
-				this.enterOuterAlt(_localctx, 5);
+			case 49:
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 315;
 				this.match(PortuguesPuroParser.T__48);
 				}
 				break;
-			case PortuguesPuroParser.T__49:
-				this.enterOuterAlt(_localctx, 6);
+			case 50:
+				this.enterOuterAlt(localctx, 6);
 				{
 				this.state = 316;
 				this.match(PortuguesPuroParser.T__49);
 				}
 				break;
-			case PortuguesPuroParser.T__50:
-				this.enterOuterAlt(_localctx, 7);
+			case 51:
+				this.enterOuterAlt(localctx, 7);
 				{
 				this.state = 317;
 				this.match(PortuguesPuroParser.T__50);
 				}
 				break;
-			case PortuguesPuroParser.T__51:
-				this.enterOuterAlt(_localctx, 8);
+			case 52:
+				this.enterOuterAlt(localctx, 8);
 				{
 				this.state = 318;
 				this.match(PortuguesPuroParser.T__51);
 				}
 				break;
-			case PortuguesPuroParser.T__52:
-				this.enterOuterAlt(_localctx, 9);
+			case 53:
+				this.enterOuterAlt(localctx, 9);
 				{
 				this.state = 319;
 				this.match(PortuguesPuroParser.T__52);
@@ -1183,7 +1333,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1193,154 +1343,154 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public palavras_reservadas(): Palavras_reservadasContext {
-		let _localctx: Palavras_reservadasContext = new Palavras_reservadasContext(this._ctx, this.state);
-		this.enterRule(_localctx, 26, PortuguesPuroParser.RULE_palavras_reservadas);
+		let localctx: Palavras_reservadasContext = new Palavras_reservadasContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 26, PortuguesPuroParser.RULE_palavras_reservadas);
 		try {
 			this.state = 341;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__53:
-				this.enterOuterAlt(_localctx, 1);
+			case 54:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 322;
 				this.match(PortuguesPuroParser.T__53);
 				}
 				break;
-			case PortuguesPuroParser.T__54:
-				this.enterOuterAlt(_localctx, 2);
+			case 55:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 323;
 				this.match(PortuguesPuroParser.T__54);
 				}
 				break;
-			case PortuguesPuroParser.T__55:
-				this.enterOuterAlt(_localctx, 3);
+			case 56:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 324;
 				this.match(PortuguesPuroParser.T__55);
 				}
 				break;
-			case PortuguesPuroParser.T__56:
-				this.enterOuterAlt(_localctx, 4);
+			case 57:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 325;
 				this.match(PortuguesPuroParser.T__56);
 				}
 				break;
-			case PortuguesPuroParser.T__57:
-				this.enterOuterAlt(_localctx, 5);
+			case 58:
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 326;
 				this.match(PortuguesPuroParser.T__57);
 				}
 				break;
-			case PortuguesPuroParser.T__58:
-				this.enterOuterAlt(_localctx, 6);
+			case 59:
+				this.enterOuterAlt(localctx, 6);
 				{
 				this.state = 327;
 				this.match(PortuguesPuroParser.T__58);
 				}
 				break;
-			case PortuguesPuroParser.T__59:
-				this.enterOuterAlt(_localctx, 7);
+			case 60:
+				this.enterOuterAlt(localctx, 7);
 				{
 				this.state = 328;
 				this.match(PortuguesPuroParser.T__59);
 				}
 				break;
-			case PortuguesPuroParser.T__60:
-				this.enterOuterAlt(_localctx, 8);
+			case 61:
+				this.enterOuterAlt(localctx, 8);
 				{
 				this.state = 329;
 				this.match(PortuguesPuroParser.T__60);
 				}
 				break;
-			case PortuguesPuroParser.T__61:
-				this.enterOuterAlt(_localctx, 9);
+			case 62:
+				this.enterOuterAlt(localctx, 9);
 				{
 				this.state = 330;
 				this.match(PortuguesPuroParser.T__61);
 				}
 				break;
-			case PortuguesPuroParser.T__62:
-				this.enterOuterAlt(_localctx, 10);
+			case 63:
+				this.enterOuterAlt(localctx, 10);
 				{
 				this.state = 331;
 				this.match(PortuguesPuroParser.T__62);
 				}
 				break;
-			case PortuguesPuroParser.T__63:
-				this.enterOuterAlt(_localctx, 11);
+			case 64:
+				this.enterOuterAlt(localctx, 11);
 				{
 				this.state = 332;
 				this.match(PortuguesPuroParser.T__63);
 				}
 				break;
-			case PortuguesPuroParser.T__64:
-				this.enterOuterAlt(_localctx, 12);
+			case 65:
+				this.enterOuterAlt(localctx, 12);
 				{
 				this.state = 333;
 				this.match(PortuguesPuroParser.T__64);
 				}
 				break;
-			case PortuguesPuroParser.T__65:
-				this.enterOuterAlt(_localctx, 13);
+			case 66:
+				this.enterOuterAlt(localctx, 13);
 				{
 				this.state = 334;
 				this.match(PortuguesPuroParser.T__65);
 				}
 				break;
-			case PortuguesPuroParser.T__66:
-				this.enterOuterAlt(_localctx, 14);
+			case 67:
+				this.enterOuterAlt(localctx, 14);
 				{
 				this.state = 335;
 				this.match(PortuguesPuroParser.T__66);
 				}
 				break;
-			case PortuguesPuroParser.T__67:
-				this.enterOuterAlt(_localctx, 15);
+			case 68:
+				this.enterOuterAlt(localctx, 15);
 				{
 				this.state = 336;
 				this.match(PortuguesPuroParser.T__67);
 				}
 				break;
-			case PortuguesPuroParser.T__68:
-				this.enterOuterAlt(_localctx, 16);
+			case 69:
+				this.enterOuterAlt(localctx, 16);
 				{
 				this.state = 337;
 				this.match(PortuguesPuroParser.T__68);
 				}
 				break;
-			case PortuguesPuroParser.T__69:
-				this.enterOuterAlt(_localctx, 17);
+			case 70:
+				this.enterOuterAlt(localctx, 17);
 				{
 				this.state = 338;
 				this.match(PortuguesPuroParser.T__69);
 				}
 				break;
-			case PortuguesPuroParser.T__70:
-				this.enterOuterAlt(_localctx, 18);
+			case 71:
+				this.enterOuterAlt(localctx, 18);
 				{
 				this.state = 339;
 				this.match(PortuguesPuroParser.T__70);
 				}
 				break;
-			case PortuguesPuroParser.T__71:
-			case PortuguesPuroParser.T__72:
-			case PortuguesPuroParser.T__73:
-			case PortuguesPuroParser.T__74:
-			case PortuguesPuroParser.T__75:
-			case PortuguesPuroParser.T__76:
-			case PortuguesPuroParser.T__77:
-			case PortuguesPuroParser.T__78:
-				this.enterOuterAlt(_localctx, 19);
+			case 72:
+			case 73:
+			case 74:
+			case 75:
+			case 76:
+			case 77:
+			case 78:
+			case 79:
+				this.enterOuterAlt(localctx, 19);
 				{
 				this.state = 340;
-				this.denominacoes();
+				this.denominações();
 				}
 				break;
 			default:
@@ -1349,7 +1499,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1359,33 +1509,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public denominacoes(): DenominacoesContext {
-		let _localctx: DenominacoesContext = new DenominacoesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 28, PortuguesPuroParser.RULE_denominacoes);
+	public denominações(): DenominaçõesContext {
+		let localctx: DenominaçõesContext = new DenominaçõesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 28, PortuguesPuroParser.RULE_denominações);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 343;
 			_la = this._input.LA(1);
-			if (!(((((_la - 72)) & ~0x1F) === 0 && ((1 << (_la - 72)) & ((1 << (PortuguesPuroParser.T__71 - 72)) | (1 << (PortuguesPuroParser.T__72 - 72)) | (1 << (PortuguesPuroParser.T__73 - 72)) | (1 << (PortuguesPuroParser.T__74 - 72)) | (1 << (PortuguesPuroParser.T__75 - 72)) | (1 << (PortuguesPuroParser.T__76 - 72)) | (1 << (PortuguesPuroParser.T__77 - 72)) | (1 << (PortuguesPuroParser.T__78 - 72)))) !== 0))) {
+			if(!(((((_la - 72)) & ~0x1F) === 0 && ((1 << (_la - 72)) & 255) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1395,33 +1542,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public verbos(): VerbosContext {
-		let _localctx: VerbosContext = new VerbosContext(this._ctx, this.state);
-		this.enterRule(_localctx, 30, PortuguesPuroParser.RULE_verbos);
+		let localctx: VerbosContext = new VerbosContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 30, PortuguesPuroParser.RULE_verbos);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 345;
 			_la = this._input.LA(1);
-			if (!(_la === PortuguesPuroParser.T__18 || ((((_la - 80)) & ~0x1F) === 0 && ((1 << (_la - 80)) & ((1 << (PortuguesPuroParser.T__79 - 80)) | (1 << (PortuguesPuroParser.T__80 - 80)) | (1 << (PortuguesPuroParser.T__81 - 80)) | (1 << (PortuguesPuroParser.T__82 - 80)) | (1 << (PortuguesPuroParser.T__83 - 80)) | (1 << (PortuguesPuroParser.T__84 - 80)) | (1 << (PortuguesPuroParser.T__85 - 80)) | (1 << (PortuguesPuroParser.T__86 - 80)) | (1 << (PortuguesPuroParser.T__87 - 80)) | (1 << (PortuguesPuroParser.T__88 - 80)) | (1 << (PortuguesPuroParser.T__89 - 80)) | (1 << (PortuguesPuroParser.T__90 - 80)) | (1 << (PortuguesPuroParser.T__91 - 80)) | (1 << (PortuguesPuroParser.T__92 - 80)) | (1 << (PortuguesPuroParser.T__93 - 80)) | (1 << (PortuguesPuroParser.T__94 - 80)) | (1 << (PortuguesPuroParser.T__95 - 80)) | (1 << (PortuguesPuroParser.T__96 - 80)) | (1 << (PortuguesPuroParser.T__97 - 80)) | (1 << (PortuguesPuroParser.T__98 - 80)) | (1 << (PortuguesPuroParser.T__99 - 80)) | (1 << (PortuguesPuroParser.T__100 - 80)))) !== 0))) {
+			if(!(((((_la - 80)) & ~0x1F) === 0 && ((1 << (_la - 80)) & 8388607) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1431,33 +1575,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public caracteres_ignoraveis(): Caracteres_ignoraveisContext {
-		let _localctx: Caracteres_ignoraveisContext = new Caracteres_ignoraveisContext(this._ctx, this.state);
-		this.enterRule(_localctx, 32, PortuguesPuroParser.RULE_caracteres_ignoraveis);
+	public caracteres_ignoráveis(): Caracteres_ignoráveisContext {
+		let localctx: Caracteres_ignoráveisContext = new Caracteres_ignoráveisContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 32, PortuguesPuroParser.RULE_caracteres_ignoráveis);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 347;
 			_la = this._input.LA(1);
-			if (!(((((_la - 190)) & ~0x1F) === 0 && ((1 << (_la - 190)) & ((1 << (PortuguesPuroParser.ESPACO_EM_BRANCO - 190)) | (1 << (PortuguesPuroParser.ESPACO_RIGIDO - 190)) | (1 << (PortuguesPuroParser.CARACTERES_DE_CONTROLE - 190)))) !== 0))) {
+			if(!(((((_la - 190)) & ~0x1F) === 0 && ((1 << (_la - 190)) & 32771) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1467,28 +1608,28 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public comentario(): ComentarioContext {
-		let _localctx: ComentarioContext = new ComentarioContext(this._ctx, this.state);
-		this.enterRule(_localctx, 34, PortuguesPuroParser.RULE_comentario);
+	public comentário(): ComentárioContext {
+		let localctx: ComentárioContext = new ComentárioContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 34, PortuguesPuroParser.RULE_comentário);
 		try {
 			this.state = 351;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.BARRA_INVERTIDA:
-				this.enterOuterAlt(_localctx, 1);
+			case 194:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 349;
-				this.comentario_de_linha();
+				this.comentário_de_linha();
 				}
 				break;
-			case PortuguesPuroParser.ABRE_COLCHETES:
-				this.enterOuterAlt(_localctx, 2);
+			case 202:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 350;
-				this.comentario_de_bloco();
+				this.comentário_de_bloco();
 				}
 				break;
 			default:
@@ -1497,7 +1638,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1507,26 +1648,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public comentario_de_linha(): Comentario_de_linhaContext {
-		let _localctx: Comentario_de_linhaContext = new Comentario_de_linhaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 36, PortuguesPuroParser.RULE_comentario_de_linha);
+	public comentário_de_linha(): Comentário_de_linhaContext {
+		let localctx: Comentário_de_linhaContext = new Comentário_de_linhaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 36, PortuguesPuroParser.RULE_comentário_de_linha);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 353;
 			this.match(PortuguesPuroParser.BARRA_INVERTIDA);
 			this.state = 357;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === PortuguesPuroParser.CARACTERES_IMPRIMIVEIS) {
+			while (_la===204) {
 				{
 				{
 				this.state = 354;
-				this.match(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
+				this.match(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
 				}
 				}
 				this.state = 359;
@@ -1539,7 +1680,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1549,26 +1690,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public comentario_de_bloco(): Comentario_de_blocoContext {
-		let _localctx: Comentario_de_blocoContext = new Comentario_de_blocoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 38, PortuguesPuroParser.RULE_comentario_de_bloco);
+	public comentário_de_bloco(): Comentário_de_blocoContext {
+		let localctx: Comentário_de_blocoContext = new Comentário_de_blocoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 38, PortuguesPuroParser.RULE_comentário_de_bloco);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 362;
 			this.match(PortuguesPuroParser.ABRE_COLCHETES);
 			this.state = 366;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === PortuguesPuroParser.CARACTERES_IMPRIMIVEIS) {
+			while (_la===204) {
 				{
 				{
 				this.state = 363;
-				this.match(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
+				this.match(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
 				}
 				}
 				this.state = 368;
@@ -1581,7 +1722,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1591,48 +1732,48 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public token(): TokenContext {
-		let _localctx: TokenContext = new TokenContext(this._ctx, this.state);
-		this.enterRule(_localctx, 40, PortuguesPuroParser.RULE_token);
+		let localctx: TokenContext = new TokenContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 40, PortuguesPuroParser.RULE_token);
 		try {
 			this.state = 375;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__101:
-			case PortuguesPuroParser.T__102:
-			case PortuguesPuroParser.T__103:
-			case PortuguesPuroParser.T__104:
-			case PortuguesPuroParser.T__105:
-			case PortuguesPuroParser.T__106:
-			case PortuguesPuroParser.LETRA:
-			case PortuguesPuroParser.DIGITO:
-			case PortuguesPuroParser.APOSTROFO:
-			case PortuguesPuroParser.CIFRAO:
-				this.enterOuterAlt(_localctx, 1);
+			case 103:
+			case 104:
+			case 105:
+			case 106:
+			case 107:
+			case 108:
+			case 182:
+			case 183:
+			case 186:
+			case 189:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 371;
 				this.aglomerado();
 				}
 				break;
-			case PortuguesPuroParser.CARACTERES_IMPRIMIVEIS:
-				this.enterOuterAlt(_localctx, 2);
+			case 204:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 372;
-				this.possessivo_inglï¿½s();
+				this.possessivo_inglês();
 				}
 				break;
-			case PortuguesPuroParser.ABRE_PARENTESES:
-				this.enterOuterAlt(_localctx, 3);
+			case 200:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 373;
 				this.qualificador();
 				}
 				break;
-			case PortuguesPuroParser.ASPAS_DUPLAS:
-				this.enterOuterAlt(_localctx, 4);
+			case 187:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 374;
 				this.string_literal();
@@ -1644,7 +1785,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1654,26 +1795,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public aglomerado(): AglomeradoContext {
-		let _localctx: AglomeradoContext = new AglomeradoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 42, PortuguesPuroParser.RULE_aglomerado);
+		let localctx: AglomeradoContext = new AglomeradoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 42, PortuguesPuroParser.RULE_aglomerado);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 377;
 			this.iniciador_de_aglomerado();
 			{
 			this.state = 378;
-			this.caractere_aglomeravel();
+			this.caractere_aglomerável();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1683,33 +1824,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public caractere_aglomeravel(): Caractere_aglomeravelContext {
-		let _localctx: Caractere_aglomeravelContext = new Caractere_aglomeravelContext(this._ctx, this.state);
-		this.enterRule(_localctx, 44, PortuguesPuroParser.RULE_caractere_aglomeravel);
+	public caractere_aglomerável(): Caractere_aglomerávelContext {
+		let localctx: Caractere_aglomerávelContext = new Caractere_aglomerávelContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 44, PortuguesPuroParser.RULE_caractere_aglomerável);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 380;
 			_la = this._input.LA(1);
-			if (!(((((_la - 102)) & ~0x1F) === 0 && ((1 << (_la - 102)) & ((1 << (PortuguesPuroParser.T__101 - 102)) | (1 << (PortuguesPuroParser.T__102 - 102)) | (1 << (PortuguesPuroParser.T__103 - 102)) | (1 << (PortuguesPuroParser.T__104 - 102)) | (1 << (PortuguesPuroParser.T__105 - 102)) | (1 << (PortuguesPuroParser.T__106 - 102)))) !== 0) || ((((_la - 182)) & ~0x1F) === 0 && ((1 << (_la - 182)) & ((1 << (PortuguesPuroParser.LETRA - 182)) | (1 << (PortuguesPuroParser.DIGITO - 182)) | (1 << (PortuguesPuroParser.HIFEN - 182)) | (1 << (PortuguesPuroParser.CIFRAO - 182)) | (1 << (PortuguesPuroParser.BARRA_INCLINADA - 182)) | (1 << (PortuguesPuroParser.SINAL_DE_ADICAO - 182)))) !== 0))) {
+			if(!(((((_la - 103)) & ~0x1F) === 0 && ((1 << (_la - 103)) & 63) !== 0) || ((((_la - 182)) & ~0x1F) === 0 && ((1 << (_la - 182)) & 10435) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1719,33 +1857,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public iniciador_de_aglomerado(): Iniciador_de_aglomeradoContext {
-		let _localctx: Iniciador_de_aglomeradoContext = new Iniciador_de_aglomeradoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 46, PortuguesPuroParser.RULE_iniciador_de_aglomerado);
+		let localctx: Iniciador_de_aglomeradoContext = new Iniciador_de_aglomeradoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 46, PortuguesPuroParser.RULE_iniciador_de_aglomerado);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 382;
 			_la = this._input.LA(1);
-			if (!(((((_la - 102)) & ~0x1F) === 0 && ((1 << (_la - 102)) & ((1 << (PortuguesPuroParser.T__101 - 102)) | (1 << (PortuguesPuroParser.T__102 - 102)) | (1 << (PortuguesPuroParser.T__103 - 102)) | (1 << (PortuguesPuroParser.T__104 - 102)) | (1 << (PortuguesPuroParser.T__105 - 102)) | (1 << (PortuguesPuroParser.T__106 - 102)))) !== 0) || ((((_la - 182)) & ~0x1F) === 0 && ((1 << (_la - 182)) & ((1 << (PortuguesPuroParser.LETRA - 182)) | (1 << (PortuguesPuroParser.DIGITO - 182)) | (1 << (PortuguesPuroParser.APOSTROFO - 182)) | (1 << (PortuguesPuroParser.CIFRAO - 182)))) !== 0))) {
+			if(!(((((_la - 103)) & ~0x1F) === 0 && ((1 << (_la - 103)) & 63) !== 0) || ((((_la - 182)) & ~0x1F) === 0 && ((1 << (_la - 182)) & 147) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1755,24 +1890,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public possessivo_novo(): Possessivo_novoContext {
-		let _localctx: Possessivo_novoContext = new Possessivo_novoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 48, PortuguesPuroParser.RULE_possessivo_novo);
+		let localctx: Possessivo_novoContext = new Possessivo_novoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 48, PortuguesPuroParser.RULE_possessivo_novo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 384;
-			this.apostrofo();
+			this.apóstrofo();
 			this.state = 385;
-			this.caractere_nao_aglomeravel();
+			this.caractere_não_aglomerável();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1782,26 +1917,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public qualificador(): QualificadorContext {
-		let _localctx: QualificadorContext = new QualificadorContext(this._ctx, this.state);
-		this.enterRule(_localctx, 50, PortuguesPuroParser.RULE_qualificador);
+		let localctx: QualificadorContext = new QualificadorContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 50, PortuguesPuroParser.RULE_qualificador);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 387;
-			this.match(PortuguesPuroParser.ABRE_PARENTESES);
+			this.match(PortuguesPuroParser.ABRE_PARÊNTESES);
 			this.state = 391;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === PortuguesPuroParser.CARACTERES_IMPRIMIVEIS) {
+			while (_la===204) {
 				{
 				{
 				this.state = 388;
-				this.match(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
+				this.match(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
 				}
 				}
 				this.state = 393;
@@ -1809,12 +1944,12 @@ export class PortuguesPuroParser extends Parser {
 				_la = this._input.LA(1);
 			}
 			this.state = 394;
-			this.match(PortuguesPuroParser.FECHA_PARENTESES);
+			this.match(PortuguesPuroParser.FECHA_PARÊNTESES);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1824,229 +1959,182 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public caractere_nao_aglomeravel(): Caractere_nao_aglomeravelContext {
-		let _localctx: Caractere_nao_aglomeravelContext = new Caractere_nao_aglomeravelContext(this._ctx, this.state);
-		this.enterRule(_localctx, 52, PortuguesPuroParser.RULE_caractere_nao_aglomeravel);
+	public caractere_não_aglomerável(): Caractere_não_aglomerávelContext {
+		let localctx: Caractere_não_aglomerávelContext = new Caractere_não_aglomerávelContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 52, PortuguesPuroParser.RULE_caractere_não_aglomerável);
 		let _la: number;
 		try {
 			this.state = 408;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 12, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 12, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 396;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.LETRA)) {
+				if(_la<=0 || _la===182) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 397;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.DIGITO)) {
+				if(_la<=0 || _la===183) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 398;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.T__101)) {
+				if(_la<=0 || _la===103) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 399;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.T__102)) {
+				if(_la<=0 || _la===104) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 5:
-				this.enterOuterAlt(_localctx, 5);
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 400;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.T__103)) {
+				if(_la<=0 || _la===105) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 6:
-				this.enterOuterAlt(_localctx, 6);
+				this.enterOuterAlt(localctx, 6);
 				{
 				this.state = 401;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.T__104)) {
+				if(_la<=0 || _la===106) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 7:
-				this.enterOuterAlt(_localctx, 7);
+				this.enterOuterAlt(localctx, 7);
 				{
 				this.state = 402;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.T__105)) {
+				if(_la<=0 || _la===107) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 8:
-				this.enterOuterAlt(_localctx, 8);
+				this.enterOuterAlt(localctx, 8);
 				{
 				this.state = 403;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.CIFRAO)) {
+				if(_la<=0 || _la===189) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 9:
-				this.enterOuterAlt(_localctx, 9);
+				this.enterOuterAlt(localctx, 9);
 				{
 				this.state = 404;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.T__106)) {
+				if(_la<=0 || _la===108) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 10:
-				this.enterOuterAlt(_localctx, 10);
+				this.enterOuterAlt(localctx, 10);
 				{
 				this.state = 405;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.HIFEN)) {
+				if(_la<=0 || _la===188) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 11:
-				this.enterOuterAlt(_localctx, 11);
+				this.enterOuterAlt(localctx, 11);
 				{
 				this.state = 406;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.SINAL_DE_ADICAO)) {
+				if(_la<=0 || _la===195) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-
 			case 12:
-				this.enterOuterAlt(_localctx, 12);
+				this.enterOuterAlt(localctx, 12);
 				{
 				this.state = 407;
 				_la = this._input.LA(1);
-				if (_la <= 0 || (_la === PortuguesPuroParser.BARRA_INCLINADA)) {
+				if(_la<=0 || _la===193) {
 				this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
@@ -2054,7 +2142,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2064,33 +2152,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public sinal_de_pontuacao(): Sinal_de_pontuacaoContext {
-		let _localctx: Sinal_de_pontuacaoContext = new Sinal_de_pontuacaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 54, PortuguesPuroParser.RULE_sinal_de_pontuacao);
+	public sinal_de_pontuação(): Sinal_de_pontuaçãoContext {
+		let localctx: Sinal_de_pontuaçãoContext = new Sinal_de_pontuaçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 54, PortuguesPuroParser.RULE_sinal_de_pontuação);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 410;
 			_la = this._input.LA(1);
-			if (!(_la === PortuguesPuroParser.T__107 || _la === PortuguesPuroParser.T__108 || ((((_la - 196)) & ~0x1F) === 0 && ((1 << (_la - 196)) & ((1 << (PortuguesPuroParser.PONTO - 196)) | (1 << (PortuguesPuroParser.VIRGULA - 196)) | (1 << (PortuguesPuroParser.PONTO_E_VIRGULA - 196)) | (1 << (PortuguesPuroParser.DOIS_PONTOS - 196)))) !== 0))) {
+			if(!(_la===109 || _la===110 || ((((_la - 196)) & ~0x1F) === 0 && ((1 << (_la - 196)) & 15) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2100,33 +2185,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public simbolos_especiais(): Simbolos_especiaisContext {
-		let _localctx: Simbolos_especiaisContext = new Simbolos_especiaisContext(this._ctx, this.state);
-		this.enterRule(_localctx, 56, PortuguesPuroParser.RULE_simbolos_especiais);
+	public símbolos_especiais(): Símbolos_especiaisContext {
+		let localctx: Símbolos_especiaisContext = new Símbolos_especiaisContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 56, PortuguesPuroParser.RULE_símbolos_especiais);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 412;
 			_la = this._input.LA(1);
-			if (!(((((_la - 110)) & ~0x1F) === 0 && ((1 << (_la - 110)) & ((1 << (PortuguesPuroParser.T__109 - 110)) | (1 << (PortuguesPuroParser.T__110 - 110)) | (1 << (PortuguesPuroParser.T__111 - 110)) | (1 << (PortuguesPuroParser.T__112 - 110)) | (1 << (PortuguesPuroParser.T__113 - 110)) | (1 << (PortuguesPuroParser.T__114 - 110)) | (1 << (PortuguesPuroParser.T__115 - 110)))) !== 0) || ((((_la - 188)) & ~0x1F) === 0 && ((1 << (_la - 188)) & ((1 << (PortuguesPuroParser.HIFEN - 188)) | (1 << (PortuguesPuroParser.BARRA_INCLINADA - 188)) | (1 << (PortuguesPuroParser.SINAL_DE_ADICAO - 188)))) !== 0))) {
+			if(!(((((_la - 111)) & ~0x1F) === 0 && ((1 << (_la - 111)) & 127) !== 0) || ((((_la - 188)) & ~0x1F) === 0 && ((1 << (_la - 188)) & 161) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2136,35 +2218,35 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public noise(): NoiseContext {
-		let _localctx: NoiseContext = new NoiseContext(this._ctx, this.state);
-		this.enterRule(_localctx, 58, PortuguesPuroParser.RULE_noise);
+	public ruído(): RuídoContext {
+		let localctx: RuídoContext = new RuídoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 58, PortuguesPuroParser.RULE_ruído);
 		try {
 			this.state = 417;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.ESPACO_EM_BRANCO:
-			case PortuguesPuroParser.ESPACO_RIGIDO:
-			case PortuguesPuroParser.CARACTERES_DE_CONTROLE:
-				this.enterOuterAlt(_localctx, 1);
+			case 190:
+			case 191:
+			case 205:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 414;
-				this.caracteres_ignoraveis();
+				this.caracteres_ignoráveis();
 				}
 				break;
-			case PortuguesPuroParser.BARRA_INVERTIDA:
-			case PortuguesPuroParser.ABRE_COLCHETES:
-				this.enterOuterAlt(_localctx, 2);
+			case 194:
+			case 202:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 415;
-				this.comentario();
+				this.comentário();
 				}
 				break;
-			case PortuguesPuroParser.ABRE_PARENTESES:
-				this.enterOuterAlt(_localctx, 3);
+			case 200:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 416;
 				this.qualificador();
@@ -2176,7 +2258,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2186,15 +2268,15 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public numero_inteiro(): Numero_inteiroContext {
-		let _localctx: Numero_inteiroContext = new Numero_inteiroContext(this._ctx, this.state);
-		this.enterRule(_localctx, 60, PortuguesPuroParser.RULE_numero_inteiro);
+	public número_inteiro(): Número_inteiroContext {
+		let localctx: Número_inteiroContext = new Número_inteiroContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 60, PortuguesPuroParser.RULE_número_inteiro);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 420;
 			this._errHandler.sync(this);
@@ -2203,18 +2285,18 @@ export class PortuguesPuroParser extends Parser {
 				{
 				{
 				this.state = 419;
-				this.match(PortuguesPuroParser.DIGITO);
+				this.match(PortuguesPuroParser.DÍGITO);
 				}
 				}
 				this.state = 422;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while (_la === PortuguesPuroParser.DIGITO);
+			} while (_la===183);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2224,33 +2306,33 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public numero_decimal(): Numero_decimalContext {
-		let _localctx: Numero_decimalContext = new Numero_decimalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 62, PortuguesPuroParser.RULE_numero_decimal);
+	public número_decimal(): Número_decimalContext {
+		let localctx: Número_decimalContext = new Número_decimalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 62, PortuguesPuroParser.RULE_número_decimal);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 425;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === PortuguesPuroParser.HIFEN) {
+			if (_la===188) {
 				{
 				this.state = 424;
-				this.match(PortuguesPuroParser.HIFEN);
+				this.match(PortuguesPuroParser.HÍFEN);
 				}
 			}
 
 			this.state = 427;
-			this.numero_inteiro();
+			this.número_inteiro();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2260,26 +2342,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public numero_fracionario(): Numero_fracionarioContext {
-		let _localctx: Numero_fracionarioContext = new Numero_fracionarioContext(this._ctx, this.state);
-		this.enterRule(_localctx, 64, PortuguesPuroParser.RULE_numero_fracionario);
+	public número_fracionário(): Número_fracionárioContext {
+		let localctx: Número_fracionárioContext = new Número_fracionárioContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 64, PortuguesPuroParser.RULE_número_fracionário);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 429;
-			this.numero_decimal();
+			this.número_decimal();
 			this.state = 430;
 			this.match(PortuguesPuroParser.BARRA_INCLINADA);
 			this.state = 431;
-			this.numero_inteiro();
+			this.número_inteiro();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2289,26 +2371,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public numero_misto(): Numero_mistoContext {
-		let _localctx: Numero_mistoContext = new Numero_mistoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 66, PortuguesPuroParser.RULE_numero_misto);
+	public número_misto(): Número_mistoContext {
+		let localctx: Número_mistoContext = new Número_mistoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 66, PortuguesPuroParser.RULE_número_misto);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 433;
-			this.numero_decimal();
+			this.número_decimal();
 			this.state = 434;
-			this.match(PortuguesPuroParser.SINAL_DE_ADICAO);
+			this.match(PortuguesPuroParser.SINAL_DE_ADIÇÃO);
 			this.state = 435;
-			this.numero_fracionario();
+			this.número_fracionário();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2318,24 +2400,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public numero_hexadecimal(): Numero_hexadecimalContext {
-		let _localctx: Numero_hexadecimalContext = new Numero_hexadecimalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 68, PortuguesPuroParser.RULE_numero_hexadecimal);
+	public número_hexadecimal(): Número_hexadecimalContext {
+		let localctx: Número_hexadecimalContext = new Número_hexadecimalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 68, PortuguesPuroParser.RULE_número_hexadecimal);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 437;
-			this.match(PortuguesPuroParser.CIFRAO);
+			this.match(PortuguesPuroParser.CIFRÃO);
 			this.state = 438;
-			this.numero_inteiro();
+			this.número_inteiro();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2345,26 +2427,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public string_literal(): String_literalContext {
-		let _localctx: String_literalContext = new String_literalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 70, PortuguesPuroParser.RULE_string_literal);
+		let localctx: String_literalContext = new String_literalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 70, PortuguesPuroParser.RULE_string_literal);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 440;
 			this.match(PortuguesPuroParser.ASPAS_DUPLAS);
 			this.state = 444;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === PortuguesPuroParser.CARACTERES_IMPRIMIVEIS) {
+			while (_la===204) {
 				{
 				{
 				this.state = 441;
-				this.match(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
+				this.match(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
 				}
 				}
 				this.state = 446;
@@ -2377,7 +2459,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2387,49 +2469,49 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public programa(): ProgramaContext {
-		let _localctx: ProgramaContext = new ProgramaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 72, PortuguesPuroParser.RULE_programa);
+		let localctx: ProgramaContext = new ProgramaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 72, PortuguesPuroParser.RULE_programa);
 		try {
 			this.state = 452;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
-				this.enterOuterAlt(_localctx, 1);
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 449;
 				this.tipo();
 				}
 				break;
-			case PortuguesPuroParser.EOF:
-			case PortuguesPuroParser.T__1:
-			case PortuguesPuroParser.T__2:
-			case PortuguesPuroParser.T__3:
-			case PortuguesPuroParser.T__4:
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
-				this.enterOuterAlt(_localctx, 2);
+			case -1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 450;
-				this.variavel_global();
+				this.variável_global();
 				}
 				break;
-			case PortuguesPuroParser.T__158:
-			case PortuguesPuroParser.T__160:
-			case PortuguesPuroParser.T__162:
-				this.enterOuterAlt(_localctx, 3);
+			case 160:
+			case 162:
+			case 164:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 451;
 				this.rotina();
@@ -2441,7 +2523,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2451,33 +2533,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public tipos_primitivos(): Tipos_primitivosContext {
-		let _localctx: Tipos_primitivosContext = new Tipos_primitivosContext(this._ctx, this.state);
-		this.enterRule(_localctx, 74, PortuguesPuroParser.RULE_tipos_primitivos);
+		let localctx: Tipos_primitivosContext = new Tipos_primitivosContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 74, PortuguesPuroParser.RULE_tipos_primitivos);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 454;
 			_la = this._input.LA(1);
-			if (!(((((_la - 117)) & ~0x1F) === 0 && ((1 << (_la - 117)) & ((1 << (PortuguesPuroParser.T__116 - 117)) | (1 << (PortuguesPuroParser.T__117 - 117)) | (1 << (PortuguesPuroParser.T__118 - 117)) | (1 << (PortuguesPuroParser.T__119 - 117)) | (1 << (PortuguesPuroParser.T__120 - 117)) | (1 << (PortuguesPuroParser.T__121 - 117)) | (1 << (PortuguesPuroParser.T__122 - 117)) | (1 << (PortuguesPuroParser.T__123 - 117)) | (1 << (PortuguesPuroParser.T__124 - 117)) | (1 << (PortuguesPuroParser.T__125 - 117)) | (1 << (PortuguesPuroParser.T__126 - 117)) | (1 << (PortuguesPuroParser.T__127 - 117)) | (1 << (PortuguesPuroParser.T__128 - 117)) | (1 << (PortuguesPuroParser.T__129 - 117)) | (1 << (PortuguesPuroParser.T__130 - 117)) | (1 << (PortuguesPuroParser.T__131 - 117)) | (1 << (PortuguesPuroParser.T__132 - 117)))) !== 0))) {
+			if(!(((((_la - 118)) & ~0x1F) === 0 && ((1 << (_la - 118)) & 131071) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2487,26 +2566,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public tipo(): TipoContext {
-		let _localctx: TipoContext = new TipoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 76, PortuguesPuroParser.RULE_tipo);
+		let localctx: TipoContext = new TipoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 76, PortuguesPuroParser.RULE_tipo);
 		let _la: number;
 		try {
 			this.state = 482;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 19, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 19, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 456;
 				this.artigo_indefinido();
 				this.state = 457;
 				this.nome();
 				this.state = 458;
-				this.ï¿½();
+				this.é();
 				this.state = 459;
 				this.artigo_indefinido();
 				this.state = 460;
@@ -2514,10 +2593,10 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 462;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__140 || _la === PortuguesPuroParser.T__160) {
+				if (_la===142 || _la===162) {
 					{
 					this.state = 461;
-					this.informacao_opcional();
+					this.informação_opcional();
 					}
 				}
 
@@ -2525,16 +2604,15 @@ export class PortuguesPuroParser extends Parser {
 				this.match(PortuguesPuroParser.PONTO);
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 466;
 				this.artigo_indefinido();
 				this.state = 467;
 				this.nome();
 				this.state = 468;
-				this.ï¿½();
+				this.é();
 				this.state = 469;
 				this.artigo_indefinido();
 				this.state = 470;
@@ -2547,18 +2625,17 @@ export class PortuguesPuroParser extends Parser {
 				this.match(PortuguesPuroParser.PONTO);
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 475;
 				this.artigo_indefinido();
 				this.state = 476;
 				this.nome();
 				this.state = 477;
-				this.ï¿½();
+				this.é();
 				this.state = 478;
-				this.numero_inteiro();
+				this.número_inteiro();
 				this.state = 479;
 				this.nome_do_tipo();
 				this.state = 480;
@@ -2569,7 +2646,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2579,14 +2656,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public nome(): NomeContext {
-		let _localctx: NomeContext = new NomeContext(this._ctx, this.state);
-		this.enterRule(_localctx, 78, PortuguesPuroParser.RULE_nome);
+		let localctx: NomeContext = new NomeContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 78, PortuguesPuroParser.RULE_nome);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 484;
 			this.palavra();
@@ -2594,7 +2671,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2604,14 +2681,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public nome_do_tipo(): Nome_do_tipoContext {
-		let _localctx: Nome_do_tipoContext = new Nome_do_tipoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 80, PortuguesPuroParser.RULE_nome_do_tipo);
+		let localctx: Nome_do_tipoContext = new Nome_do_tipoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 80, PortuguesPuroParser.RULE_nome_do_tipo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 486;
 			this.nome();
@@ -2619,7 +2696,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2629,18 +2706,18 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public informacao_opcional(): Informacao_opcionalContext {
-		let _localctx: Informacao_opcionalContext = new Informacao_opcionalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 82, PortuguesPuroParser.RULE_informacao_opcional);
+	public informação_opcional(): Informação_opcionalContext {
+		let localctx: Informação_opcionalContext = new Informação_opcionalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 82, PortuguesPuroParser.RULE_informação_opcional);
 		try {
 			this.state = 495;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__160:
-				this.enterOuterAlt(_localctx, 1);
+			case 162:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 488;
 				this.para();
@@ -2650,8 +2727,8 @@ export class PortuguesPuroParser extends Parser {
 				this.nome_do_tipo();
 				}
 				break;
-			case PortuguesPuroParser.T__140:
-				this.enterOuterAlt(_localctx, 2);
+			case 142:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 492;
 				this.com();
@@ -2665,7 +2742,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2675,22 +2752,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public campos(): CamposContext {
-		let _localctx: CamposContext = new CamposContext(this._ctx, this.state);
-		this.enterRule(_localctx, 84, PortuguesPuroParser.RULE_campos);
+		let localctx: CamposContext = new CamposContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 84, PortuguesPuroParser.RULE_campos);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 497;
 			this.campo();
 			this.state = 503;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === PortuguesPuroParser.T__136 || _la === PortuguesPuroParser.T__137 || _la === PortuguesPuroParser.VIRGULA || _la === PortuguesPuroParser.PONTO_E_VIRGULA) {
+			while (_la===138 || _la===139 || _la===197 || _la===198) {
 				{
 				{
 				this.state = 498;
@@ -2707,7 +2784,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2717,47 +2794,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public bytes(): BytesContext {
-		let _localctx: BytesContext = new BytesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 86, PortuguesPuroParser.RULE_bytes);
+		let localctx: BytesContext = new BytesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 86, PortuguesPuroParser.RULE_bytes);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 506;
-			this.match(PortuguesPuroParser.T__133);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public referï¿½ncia(): Referï¿½nciaContext {
-		let _localctx: Referï¿½nciaContext = new Referï¿½nciaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 88, PortuguesPuroParser.RULE_referï¿½ncia);
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 508;
 			this.match(PortuguesPuroParser.T__134);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2767,35 +2819,60 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public referência(): ReferênciaContext {
+		let localctx: ReferênciaContext = new ReferênciaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 88, PortuguesPuroParser.RULE_referência);
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 508;
+			this.match(PortuguesPuroParser.T__135);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public campo(): CampoContext {
-		let _localctx: CampoContext = new CampoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 90, PortuguesPuroParser.RULE_campo);
+		let localctx: CampoContext = new CampoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 90, PortuguesPuroParser.RULE_campo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 514;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
 				{
 				this.state = 510;
 				this.artigo_indefinido();
 				}
 				break;
-			case PortuguesPuroParser.DIGITO:
+			case 183:
 				{
 				this.state = 511;
-				this.numero_inteiro();
+				this.número_inteiro();
 				this.state = 512;
 				this.bytes();
 				}
@@ -2806,42 +2883,42 @@ export class PortuguesPuroParser extends Parser {
 			this.state = 524;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__71:
-			case PortuguesPuroParser.T__72:
-			case PortuguesPuroParser.T__73:
-			case PortuguesPuroParser.T__74:
-			case PortuguesPuroParser.T__75:
-			case PortuguesPuroParser.T__76:
-			case PortuguesPuroParser.T__77:
-			case PortuguesPuroParser.T__78:
+			case 72:
+			case 73:
+			case 74:
+			case 75:
+			case 76:
+			case 77:
+			case 78:
+			case 79:
 				{
 				this.state = 516;
-				this.denominacoes();
+				this.denominações();
 				this.state = 517;
 				this.nome();
 				}
 				break;
-			case PortuguesPuroParser.T__135:
+			case 137:
 				{
 				this.state = 519;
-				this.match(PortuguesPuroParser.T__135);
+				this.match(PortuguesPuroParser.T__136);
 				this.state = 520;
 				this.artigo_definido();
 				this.state = 521;
 				this.nome();
 				}
 				break;
-			case PortuguesPuroParser.T__134:
+			case 136:
 				{
 				this.state = 523;
-				this.referï¿½ncia();
+				this.referência();
 				}
 				break;
-			case PortuguesPuroParser.T__136:
-			case PortuguesPuroParser.T__137:
-			case PortuguesPuroParser.PONTO:
-			case PortuguesPuroParser.VIRGULA:
-			case PortuguesPuroParser.PONTO_E_VIRGULA:
+			case 138:
+			case 139:
+			case 196:
+			case 197:
+			case 198:
 				break;
 			default:
 				break;
@@ -2850,7 +2927,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2860,33 +2937,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public pausa(): PausaContext {
-		let _localctx: PausaContext = new PausaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 92, PortuguesPuroParser.RULE_pausa);
+		let localctx: PausaContext = new PausaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 92, PortuguesPuroParser.RULE_pausa);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 526;
 			_la = this._input.LA(1);
-			if (!(_la === PortuguesPuroParser.T__136 || _la === PortuguesPuroParser.T__137 || _la === PortuguesPuroParser.VIRGULA || _la === PortuguesPuroParser.PONTO_E_VIRGULA)) {
+			if(!(_la===138 || _la===139 || _la===197 || _la===198)) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2896,15 +2970,15 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public pausas(): PausasContext {
-		let _localctx: PausasContext = new PausasContext(this._ctx, this.state);
-		this.enterRule(_localctx, 94, PortuguesPuroParser.RULE_pausas);
+		let localctx: PausasContext = new PausasContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 94, PortuguesPuroParser.RULE_pausas);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 529;
 			this._errHandler.sync(this);
@@ -2919,12 +2993,12 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 531;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while (_la === PortuguesPuroParser.T__136 || _la === PortuguesPuroParser.T__137 || _la === PortuguesPuroParser.VIRGULA || _la === PortuguesPuroParser.PONTO_E_VIRGULA);
+			} while (_la===138 || _la===139 || _la===197 || _la===198);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2934,33 +3008,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public conjuncoes(): ConjuncoesContext {
-		let _localctx: ConjuncoesContext = new ConjuncoesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 96, PortuguesPuroParser.RULE_conjuncoes);
+	public conjunções(): ConjunçõesContext {
+		let localctx: ConjunçõesContext = new ConjunçõesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 96, PortuguesPuroParser.RULE_conjunções);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 533;
 			_la = this._input.LA(1);
-			if (!(((((_la - 137)) & ~0x1F) === 0 && ((1 << (_la - 137)) & ((1 << (PortuguesPuroParser.T__136 - 137)) | (1 << (PortuguesPuroParser.T__137 - 137)) | (1 << (PortuguesPuroParser.T__138 - 137)))) !== 0))) {
+			if(!(((((_la - 138)) & ~0x1F) === 0 && ((1 << (_la - 138)) & 7) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2970,33 +3041,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public preposicoes(): PreposicoesContext {
-		let _localctx: PreposicoesContext = new PreposicoesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 98, PortuguesPuroParser.RULE_preposicoes);
+	public preposições(): PreposiçõesContext {
+		let localctx: PreposiçõesContext = new PreposiçõesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 98, PortuguesPuroParser.RULE_preposições);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 535;
 			_la = this._input.LA(1);
-			if (!(_la === PortuguesPuroParser.T__25 || _la === PortuguesPuroParser.T__26 || ((((_la - 136)) & ~0x1F) === 0 && ((1 << (_la - 136)) & ((1 << (PortuguesPuroParser.T__135 - 136)) | (1 << (PortuguesPuroParser.T__139 - 136)) | (1 << (PortuguesPuroParser.T__140 - 136)) | (1 << (PortuguesPuroParser.T__141 - 136)) | (1 << (PortuguesPuroParser.T__142 - 136)) | (1 << (PortuguesPuroParser.T__143 - 136)) | (1 << (PortuguesPuroParser.T__144 - 136)) | (1 << (PortuguesPuroParser.T__145 - 136)) | (1 << (PortuguesPuroParser.T__146 - 136)) | (1 << (PortuguesPuroParser.T__147 - 136)) | (1 << (PortuguesPuroParser.T__148 - 136)) | (1 << (PortuguesPuroParser.T__149 - 136)) | (1 << (PortuguesPuroParser.T__150 - 136)) | (1 << (PortuguesPuroParser.T__151 - 136)) | (1 << (PortuguesPuroParser.T__152 - 136)) | (1 << (PortuguesPuroParser.T__153 - 136)) | (1 << (PortuguesPuroParser.T__154 - 136)) | (1 << (PortuguesPuroParser.T__155 - 136)) | (1 << (PortuguesPuroParser.T__156 - 136)))) !== 0))) {
+			if(!(_la===26 || _la===27 || ((((_la - 137)) & ~0x1F) === 0 && ((1 << (_la - 137)) & 4194289) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3006,33 +3074,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public ï¿½(): ï¿½Context {
-		let _localctx: ï¿½Context = new ï¿½Context(this._ctx, this.state);
-		this.enterRule(_localctx, 100, PortuguesPuroParser.RULE_ï¿½);
+	public é(): ÉContext {
+		let localctx: ÉContext = new ÉContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 100, PortuguesPuroParser.RULE_é);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 537;
 			_la = this._input.LA(1);
-			if (!(_la === PortuguesPuroParser.T__18 || _la === PortuguesPuroParser.T__83)) {
+			if(!(_la===80 || _la===85)) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3042,22 +3107,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public estrutura(): EstruturaContext {
-		let _localctx: EstruturaContext = new EstruturaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 102, PortuguesPuroParser.RULE_estrutura);
+		let localctx: EstruturaContext = new EstruturaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 102, PortuguesPuroParser.RULE_estrutura);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 539;
-			this.match(PortuguesPuroParser.T__122);
+			this.match(PortuguesPuroParser.T__123);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3067,14 +3132,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public igual_a(): Igual_aContext {
-		let _localctx: Igual_aContext = new Igual_aContext(this._ctx, this.state);
-		this.enterRule(_localctx, 104, PortuguesPuroParser.RULE_igual_a);
+		let localctx: Igual_aContext = new Igual_aContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 104, PortuguesPuroParser.RULE_igual_a);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 541;
 			this.match(PortuguesPuroParser.T__45);
@@ -3082,7 +3147,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3092,26 +3157,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public variavel_global(): Variavel_globalContext {
-		let _localctx: Variavel_globalContext = new Variavel_globalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 106, PortuguesPuroParser.RULE_variavel_global);
+	public variável_global(): Variável_globalContext {
+		let localctx: Variável_globalContext = new Variável_globalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 106, PortuguesPuroParser.RULE_variável_global);
 		let _la: number;
 		try {
 			this.state = 577;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 26, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 26, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 543;
 				this.artigo_definido();
 				this.state = 544;
 				this.nome();
 				this.state = 545;
-				this.ï¿½();
+				this.é();
 				this.state = 546;
 				this.artigo_indefinido();
 				this.state = 547;
@@ -3119,10 +3184,10 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 549;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__140 || _la === PortuguesPuroParser.T__160) {
+				if (_la===142 || _la===162) {
 					{
 					this.state = 548;
-					this.informacao_opcional();
+					this.informação_opcional();
 					}
 				}
 
@@ -3130,16 +3195,15 @@ export class PortuguesPuroParser extends Parser {
 				this.match(PortuguesPuroParser.PONTO);
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 553;
 				this.artigo_definido();
 				this.state = 554;
 				this.nome();
 				this.state = 555;
-				this.ï¿½();
+				this.é();
 				this.state = 556;
 				this.artigo_indefinido();
 				this.state = 557;
@@ -3152,16 +3216,15 @@ export class PortuguesPuroParser extends Parser {
 				this.match(PortuguesPuroParser.PONTO);
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 562;
 				this.artigo_definido();
 				this.state = 563;
 				this.nome();
 				this.state = 564;
-				this.ï¿½();
+				this.é();
 				this.state = 565;
 				this.artigo_indefinido();
 				this.state = 566;
@@ -3177,16 +3240,15 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 571;
 				this.nome();
 				this.state = 572;
-				this.ï¿½();
+				this.é();
 				this.state = 573;
 				this.termo_constante();
 				this.state = 574;
 				this.match(PortuguesPuroParser.PONTO);
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				// tslint:disable-next-line:no-empty
 				{
 				}
@@ -3195,7 +3257,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3205,52 +3267,49 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public rotina(): RotinaContext {
-		let _localctx: RotinaContext = new RotinaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 108, PortuguesPuroParser.RULE_rotina);
+		let localctx: RotinaContext = new RotinaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 108, PortuguesPuroParser.RULE_rotina);
 		try {
 			this.state = 583;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 27, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 27, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 579;
 				this.procedimento();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 580;
 				this.decisor();
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 581;
-				this.funcao();
+				this.função();
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 582;
-				this.retroinvocacao();
+				this.retroinvocação();
 				}
 				break;
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3260,25 +3319,25 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public procedimento(): ProcedimentoContext {
-		let _localctx: ProcedimentoContext = new ProcedimentoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 110, PortuguesPuroParser.RULE_procedimento);
+		let localctx: ProcedimentoContext = new ProcedimentoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 110, PortuguesPuroParser.RULE_procedimento);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 601;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 30, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 30, this._ctx) ) {
 			case 1:
 				{
 				this.state = 586;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__162) {
+				if (_la===164) {
 					{
 					this.state = 585;
 					this.rotina2();
@@ -3292,16 +3351,15 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 590;
 				this.nome_da_rotina();
 				this.state = 591;
-				this.match(PortuguesPuroParser.PONTO_E_VIRGULA);
+				this.match(PortuguesPuroParser.PONTO_E_VÍRGULA);
 				}
 				break;
-
 			case 2:
 				{
 				this.state = 594;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__162) {
+				if (_la===164) {
 					{
 					this.state = 593;
 					this.rotina2();
@@ -3320,12 +3378,12 @@ export class PortuguesPuroParser extends Parser {
 				break;
 			}
 			this.state = 603;
-			this.instrucoes();
+			this.instruções();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3335,22 +3393,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public determine_se(): Determine_seContext {
-		let _localctx: Determine_seContext = new Determine_seContext(this._ctx, this.state);
-		this.enterRule(_localctx, 112, PortuguesPuroParser.RULE_determine_se);
+		let localctx: Determine_seContext = new Determine_seContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 112, PortuguesPuroParser.RULE_determine_se);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 605;
-			this.match(PortuguesPuroParser.T__157);
+			this.match(PortuguesPuroParser.T__158);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3360,27 +3418,27 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public decisor(): DecisorContext {
-		let _localctx: DecisorContext = new DecisorContext(this._ctx, this.state);
-		this.enterRule(_localctx, 114, PortuguesPuroParser.RULE_decisor);
+		let localctx: DecisorContext = new DecisorContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 114, PortuguesPuroParser.RULE_decisor);
 		let _la: number;
 		try {
 			this.state = 625;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 33, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 33, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 608;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__162) {
+				if (_la===160) {
 					{
 					this.state = 607;
-					this.rotina2();
+					this.função2();
 					}
 				}
 
@@ -3393,20 +3451,19 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 613;
 				this.nome_da_rotina();
 				this.state = 614;
-				this.match(PortuguesPuroParser.PONTO_E_VIRGULA);
+				this.match(PortuguesPuroParser.PONTO_E_VÍRGULA);
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 617;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__162) {
+				if (_la===160) {
 					{
 					this.state = 616;
-					this.rotina2();
+					this.função2();
 					}
 				}
 
@@ -3426,7 +3483,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3436,47 +3493,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public funï¿½ï¿½o2(): Funï¿½ï¿½o2Context {
-		let _localctx: Funï¿½ï¿½o2Context = new Funï¿½ï¿½o2Context(this._ctx, this.state);
-		this.enterRule(_localctx, 116, PortuguesPuroParser.RULE_funï¿½ï¿½o2);
+	public função2(): Função2Context {
+		let localctx: Função2Context = new Função2Context(this, this._ctx, this.state);
+		this.enterRule(localctx, 116, PortuguesPuroParser.RULE_função2);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 627;
-			this.match(PortuguesPuroParser.T__158);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public atribua(): AtribuaContext {
-		let _localctx: AtribuaContext = new AtribuaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 118, PortuguesPuroParser.RULE_atribua);
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 629;
 			this.match(PortuguesPuroParser.T__159);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3486,28 +3518,53 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public funcao(): FuncaoContext {
-		let _localctx: FuncaoContext = new FuncaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 120, PortuguesPuroParser.RULE_funcao);
+	public atribua(): AtribuaContext {
+		let localctx: AtribuaContext = new AtribuaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 118, PortuguesPuroParser.RULE_atribua);
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 629;
+			this.match(PortuguesPuroParser.T__160);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public função(): FunçãoContext {
+		let localctx: FunçãoContext = new FunçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 120, PortuguesPuroParser.RULE_função);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 661;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 36, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 36, this._ctx) ) {
 			case 1:
 				{
 				this.state = 632;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__158) {
+				if (_la===160) {
 					{
 					this.state = 631;
-					this.funï¿½ï¿½o2();
+					this.função2();
 					}
 				}
 
@@ -3532,19 +3589,18 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 643;
 				this.nome_do_tipo();
 				this.state = 644;
-				this.match(PortuguesPuroParser.PONTO_E_VIRGULA);
+				this.match(PortuguesPuroParser.PONTO_E_VÍRGULA);
 				}
 				break;
-
 			case 2:
 				{
 				this.state = 647;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__158) {
+				if (_la===160) {
 					{
 					this.state = 646;
-					this.funï¿½ï¿½o2();
+					this.função2();
 					}
 				}
 
@@ -3574,12 +3630,12 @@ export class PortuguesPuroParser extends Parser {
 				break;
 			}
 			this.state = 663;
-			this.instrucoes();
+			this.instruções();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3589,47 +3645,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public para(): ParaContext {
-		let _localctx: ParaContext = new ParaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 122, PortuguesPuroParser.RULE_para);
+		let localctx: ParaContext = new ParaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 122, PortuguesPuroParser.RULE_para);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 665;
-			this.match(PortuguesPuroParser.T__160);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public que_se(): Que_seContext {
-		let _localctx: Que_seContext = new Que_seContext(this._ctx, this.state);
-		this.enterRule(_localctx, 124, PortuguesPuroParser.RULE_que_se);
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 667;
 			this.match(PortuguesPuroParser.T__161);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3639,22 +3670,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public rotina2(): Rotina2Context {
-		let _localctx: Rotina2Context = new Rotina2Context(this._ctx, this.state);
-		this.enterRule(_localctx, 126, PortuguesPuroParser.RULE_rotina2);
+	public que_se(): Que_seContext {
+		let localctx: Que_seContext = new Que_seContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 124, PortuguesPuroParser.RULE_que_se);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 669;
+			this.state = 667;
 			this.match(PortuguesPuroParser.T__162);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3664,22 +3695,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public compativelmente(): CompativelmenteContext {
-		let _localctx: CompativelmenteContext = new CompativelmenteContext(this._ctx, this.state);
-		this.enterRule(_localctx, 128, PortuguesPuroParser.RULE_compativelmente);
+	public rotina2(): Rotina2Context {
+		let localctx: Rotina2Context = new Rotina2Context(this, this._ctx, this.state);
+		this.enterRule(localctx, 126, PortuguesPuroParser.RULE_rotina2);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 671;
+			this.state = 669;
 			this.match(PortuguesPuroParser.T__163);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3689,25 +3720,50 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public retroinvocacao(): RetroinvocacaoContext {
-		let _localctx: RetroinvocacaoContext = new RetroinvocacaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 130, PortuguesPuroParser.RULE_retroinvocacao);
+	public compativelmente(): CompativelmenteContext {
+		let localctx: CompativelmenteContext = new CompativelmenteContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 128, PortuguesPuroParser.RULE_compativelmente);
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 671;
+			this.match(PortuguesPuroParser.T__164);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public retroinvocação(): RetroinvocaçãoContext {
+		let localctx: RetroinvocaçãoContext = new RetroinvocaçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 130, PortuguesPuroParser.RULE_retroinvocação);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 691;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 39, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 39, this._ctx) ) {
 			case 1:
 				{
 				this.state = 674;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__162) {
+				if (_la===164) {
 					{
 					this.state = 673;
 					this.rotina2();
@@ -3723,16 +3779,15 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 679;
 				this.nome_da_rotina();
 				this.state = 680;
-				this.match(PortuguesPuroParser.PONTO_E_VIRGULA);
+				this.match(PortuguesPuroParser.PONTO_E_VÍRGULA);
 				}
 				break;
-
 			case 2:
 				{
 				this.state = 683;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__162) {
+				if (_la===164) {
 					{
 					this.state = 682;
 					this.rotina2();
@@ -3753,12 +3808,12 @@ export class PortuguesPuroParser extends Parser {
 				break;
 			}
 			this.state = 693;
-			this.instrucoes();
+			this.instruções();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3768,54 +3823,54 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public nome_da_rotina(): Nome_da_rotinaContext {
-		let _localctx: Nome_da_rotinaContext = new Nome_da_rotinaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 132, PortuguesPuroParser.RULE_nome_da_rotina);
+		let localctx: Nome_da_rotinaContext = new Nome_da_rotinaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 132, PortuguesPuroParser.RULE_nome_da_rotina);
 		let _la: number;
 		try {
 			this.state = 701;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.CARACTERES_IMPRIMIVEIS:
-				this.enterOuterAlt(_localctx, 1);
+			case 204:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 695;
-				this.unidade_semantica();
+				this.unidade_semântica();
 				}
 				break;
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
-				this.enterOuterAlt(_localctx, 2);
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 696;
-				this.parametro();
+				this.parâmetro();
 				}
 				break;
-			case PortuguesPuroParser.T__1:
-			case PortuguesPuroParser.T__2:
-			case PortuguesPuroParser.T__3:
-			case PortuguesPuroParser.T__4:
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
-				this.enterOuterAlt(_localctx, 3);
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 697;
 				this.frase();
 				this.state = 699;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.ABRE_PARENTESES) {
+				if (_la===200) {
 					{
 					this.state = 698;
 					this.qualificador();
@@ -3830,7 +3885,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3840,14 +3895,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public unidade_semantica(): Unidade_semanticaContext {
-		let _localctx: Unidade_semanticaContext = new Unidade_semanticaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 134, PortuguesPuroParser.RULE_unidade_semantica);
+	public unidade_semântica(): Unidade_semânticaContext {
+		let localctx: Unidade_semânticaContext = new Unidade_semânticaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 134, PortuguesPuroParser.RULE_unidade_semântica);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 703;
 			this.palavra();
@@ -3855,7 +3910,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3865,15 +3920,15 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public parametro(): ParametroContext {
-		let _localctx: ParametroContext = new ParametroContext(this._ctx, this.state);
-		this.enterRule(_localctx, 136, PortuguesPuroParser.RULE_parametro);
+	public parâmetro(): ParâmetroContext {
+		let localctx: ParâmetroContext = new ParâmetroContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 136, PortuguesPuroParser.RULE_parâmetro);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 705;
 			this.artigo_indefinido();
@@ -3882,10 +3937,10 @@ export class PortuguesPuroParser extends Parser {
 			this.state = 710;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (((((_la - 72)) & ~0x1F) === 0 && ((1 << (_la - 72)) & ((1 << (PortuguesPuroParser.T__71 - 72)) | (1 << (PortuguesPuroParser.T__72 - 72)) | (1 << (PortuguesPuroParser.T__73 - 72)) | (1 << (PortuguesPuroParser.T__74 - 72)) | (1 << (PortuguesPuroParser.T__75 - 72)) | (1 << (PortuguesPuroParser.T__76 - 72)) | (1 << (PortuguesPuroParser.T__77 - 72)) | (1 << (PortuguesPuroParser.T__78 - 72)))) !== 0)) {
+			if (((((_la - 72)) & ~0x1F) === 0 && ((1 << (_la - 72)) & 255) !== 0)) {
 				{
 				this.state = 707;
-				this.denominacoes();
+				this.denominações();
 				this.state = 708;
 				this.nome();
 				}
@@ -3895,7 +3950,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3905,14 +3960,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public frase(): FraseContext {
-		let _localctx: FraseContext = new FraseContext(this._ctx, this.state);
-		this.enterRule(_localctx, 138, PortuguesPuroParser.RULE_frase);
+		let localctx: FraseContext = new FraseContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 138, PortuguesPuroParser.RULE_frase);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 712;
 			this.artigo_definido();
@@ -3922,7 +3977,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3932,15 +3987,15 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public instrucoes(): InstrucoesContext {
-		let _localctx: InstrucoesContext = new InstrucoesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 140, PortuguesPuroParser.RULE_instrucoes);
+	public instruções(): InstruçõesContext {
+		let localctx: InstruçõesContext = new InstruçõesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 140, PortuguesPuroParser.RULE_instruções);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 716;
 			this._errHandler.sync(this);
@@ -3949,18 +4004,18 @@ export class PortuguesPuroParser extends Parser {
 				{
 				{
 				this.state = 715;
-				this.instrucao();
+				this.instrução();
 				}
 				}
 				this.state = 718;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << PortuguesPuroParser.T__1) | (1 << PortuguesPuroParser.T__2) | (1 << PortuguesPuroParser.T__3) | (1 << PortuguesPuroParser.T__4) | (1 << PortuguesPuroParser.T__5) | (1 << PortuguesPuroParser.T__6) | (1 << PortuguesPuroParser.T__7) | (1 << PortuguesPuroParser.T__8) | (1 << PortuguesPuroParser.T__9) | (1 << PortuguesPuroParser.T__10) | (1 << PortuguesPuroParser.T__11) | (1 << PortuguesPuroParser.T__12) | (1 << PortuguesPuroParser.T__13) | (1 << PortuguesPuroParser.T__14) | (1 << PortuguesPuroParser.T__15) | (1 << PortuguesPuroParser.T__16))) !== 0) || ((((_la - 54)) & ~0x1F) === 0 && ((1 << (_la - 54)) & ((1 << (PortuguesPuroParser.T__53 - 54)) | (1 << (PortuguesPuroParser.T__55 - 54)) | (1 << (PortuguesPuroParser.T__56 - 54)) | (1 << (PortuguesPuroParser.T__57 - 54)) | (1 << (PortuguesPuroParser.T__58 - 54)) | (1 << (PortuguesPuroParser.T__59 - 54)) | (1 << (PortuguesPuroParser.T__60 - 54)) | (1 << (PortuguesPuroParser.T__61 - 54)) | (1 << (PortuguesPuroParser.T__63 - 54)) | (1 << (PortuguesPuroParser.T__64 - 54)) | (1 << (PortuguesPuroParser.T__66 - 54)) | (1 << (PortuguesPuroParser.T__68 - 54)) | (1 << (PortuguesPuroParser.T__69 - 54)) | (1 << (PortuguesPuroParser.T__70 - 54)))) !== 0) || ((((_la - 165)) & ~0x1F) === 0 && ((1 << (_la - 165)) & ((1 << (PortuguesPuroParser.T__164 - 165)) | (1 << (PortuguesPuroParser.T__165 - 165)) | (1 << (PortuguesPuroParser.T__167 - 165)) | (1 << (PortuguesPuroParser.DIGITO - 165)) | (1 << (PortuguesPuroParser.ASPAS_DUPLAS - 165)) | (1 << (PortuguesPuroParser.HIFEN - 165)) | (1 << (PortuguesPuroParser.CIFRAO - 165)) | (1 << (PortuguesPuroParser.SINAL_DE_ADICAO - 165)))) !== 0) || _la === PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
+			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 262140) !== 0) || ((((_la - 54)) & ~0x1F) === 0 && ((1 << (_la - 54)) & 241151) !== 0) || ((((_la - 166)) & ~0x1F) === 0 && ((1 << (_la - 166)) & 551682053) !== 0) || _la===204);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3970,79 +4025,79 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public instrucao(): InstrucaoContext {
-		let _localctx: InstrucaoContext = new InstrucaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 142, PortuguesPuroParser.RULE_instrucao);
+	public instrução(): InstruçãoContext {
+		let localctx: InstruçãoContext = new InstruçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 142, PortuguesPuroParser.RULE_instrução);
 		try {
 			this.state = 726;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__58:
-				this.enterOuterAlt(_localctx, 1);
+			case 59:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 720;
-				this.preservacao();
+				this.preservação();
 				}
 				break;
-			case PortuguesPuroParser.T__164:
-				this.enterOuterAlt(_localctx, 2);
+			case 55:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 721;
-				this.iteracao();
+				this.iteração();
 				}
 				break;
-			case PortuguesPuroParser.T__53:
-				this.enterOuterAlt(_localctx, 3);
+			case 54:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 722;
 				this.condicional();
 				}
 				break;
-			case PortuguesPuroParser.T__1:
-			case PortuguesPuroParser.T__2:
-			case PortuguesPuroParser.T__3:
-			case PortuguesPuroParser.T__4:
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
-			case PortuguesPuroParser.T__55:
-			case PortuguesPuroParser.T__56:
-			case PortuguesPuroParser.T__57:
-			case PortuguesPuroParser.T__59:
-			case PortuguesPuroParser.T__60:
-			case PortuguesPuroParser.T__61:
-			case PortuguesPuroParser.T__63:
-			case PortuguesPuroParser.T__64:
-			case PortuguesPuroParser.T__66:
-			case PortuguesPuroParser.T__68:
-			case PortuguesPuroParser.T__69:
-			case PortuguesPuroParser.T__70:
-			case PortuguesPuroParser.T__165:
-			case PortuguesPuroParser.T__167:
-			case PortuguesPuroParser.DIGITO:
-			case PortuguesPuroParser.ASPAS_DUPLAS:
-			case PortuguesPuroParser.HIFEN:
-			case PortuguesPuroParser.CIFRAO:
-			case PortuguesPuroParser.SINAL_DE_ADICAO:
-			case PortuguesPuroParser.CARACTERES_IMPRIMIVEIS:
-				this.enterOuterAlt(_localctx, 4);
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+			case 56:
+			case 57:
+			case 58:
+			case 60:
+			case 61:
+			case 62:
+			case 64:
+			case 65:
+			case 67:
+			case 69:
+			case 70:
+			case 71:
+			case 166:
+			case 168:
+			case 183:
+			case 187:
+			case 188:
+			case 189:
+			case 195:
+			case 204:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 723;
 				this.incondicional();
 				this.state = 724;
-				this.match(PortuguesPuroParser.VIRGULA);
+				this.match(PortuguesPuroParser.VÍRGULA);
 				}
 				break;
 			default:
@@ -4051,7 +4106,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4061,14 +4116,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public preserve(): PreserveContext {
-		let _localctx: PreserveContext = new PreserveContext(this._ctx, this.state);
-		this.enterRule(_localctx, 144, PortuguesPuroParser.RULE_preserve);
+		let localctx: PreserveContext = new PreserveContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 144, PortuguesPuroParser.RULE_preserve);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 728;
 			this.match(PortuguesPuroParser.T__58);
@@ -4076,7 +4131,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4086,24 +4141,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public preservacao(): PreservacaoContext {
-		let _localctx: PreservacaoContext = new PreservacaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 146, PortuguesPuroParser.RULE_preservacao);
+	public preservação(): PreservaçãoContext {
+		let localctx: PreservaçãoContext = new PreservaçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 146, PortuguesPuroParser.RULE_preservação);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 730;
 			this.preserve();
 			this.state = 731;
-			this.parametro();
+			this.parâmetro();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4113,22 +4168,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public iteracao(): IteracaoContext {
-		let _localctx: IteracaoContext = new IteracaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 148, PortuguesPuroParser.RULE_iteracao);
+	public iteração(): IteraçãoContext {
+		let localctx: IteraçãoContext = new IteraçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 148, PortuguesPuroParser.RULE_iteração);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 733;
-			this.match(PortuguesPuroParser.T__164);
+			this.match(PortuguesPuroParser.T__54);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4138,14 +4193,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public se(): SeContext {
-		let _localctx: SeContext = new SeContext(this._ctx, this.state);
-		this.enterRule(_localctx, 150, PortuguesPuroParser.RULE_se);
+		let localctx: SeContext = new SeContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 150, PortuguesPuroParser.RULE_se);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 735;
 			this.match(PortuguesPuroParser.T__53);
@@ -4153,7 +4208,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4163,32 +4218,32 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public condicional(): CondicionalContext {
-		let _localctx: CondicionalContext = new CondicionalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 152, PortuguesPuroParser.RULE_condicional);
+		let localctx: CondicionalContext = new CondicionalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 152, PortuguesPuroParser.RULE_condicional);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 737;
 			this.se();
 			this.state = 738;
-			this.expressao_decisora();
+			this.expressão_decisora();
 			this.state = 739;
-			this.match(PortuguesPuroParser.VIRGULA);
+			this.match(PortuguesPuroParser.VÍRGULA);
 			this.state = 740;
 			this.incondicional();
 			this.state = 745;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === PortuguesPuroParser.PONTO_E_VIRGULA) {
+			while (_la===198) {
 				{
 				{
 				this.state = 741;
-				this.match(PortuguesPuroParser.PONTO_E_VIRGULA);
+				this.match(PortuguesPuroParser.PONTO_E_VÍRGULA);
 				this.state = 742;
 				this.incondicional();
 				}
@@ -4203,7 +4258,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4213,16 +4268,16 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public expressao_decisora(): Expressao_decisoraContext {
-		let _localctx: Expressao_decisoraContext = new Expressao_decisoraContext(this._ctx, this.state);
-		this.enterRule(_localctx, 154, PortuguesPuroParser.RULE_expressao_decisora);
+	public expressão_decisora(): Expressão_decisoraContext {
+		let localctx: Expressão_decisoraContext = new Expressão_decisoraContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 154, PortuguesPuroParser.RULE_expressão_decisora);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 751;
 			this._errHandler.sync(this);
@@ -4242,12 +4297,12 @@ export class PortuguesPuroParser extends Parser {
 				}
 				this.state = 753;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 46, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 46, this._ctx);
 			} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
 			this.state = 756;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === PortuguesPuroParser.T__18 || ((((_la - 80)) & ~0x1F) === 0 && ((1 << (_la - 80)) & ((1 << (PortuguesPuroParser.T__79 - 80)) | (1 << (PortuguesPuroParser.T__80 - 80)) | (1 << (PortuguesPuroParser.T__81 - 80)) | (1 << (PortuguesPuroParser.T__82 - 80)) | (1 << (PortuguesPuroParser.T__83 - 80)) | (1 << (PortuguesPuroParser.T__84 - 80)) | (1 << (PortuguesPuroParser.T__85 - 80)) | (1 << (PortuguesPuroParser.T__86 - 80)) | (1 << (PortuguesPuroParser.T__87 - 80)) | (1 << (PortuguesPuroParser.T__88 - 80)) | (1 << (PortuguesPuroParser.T__89 - 80)) | (1 << (PortuguesPuroParser.T__90 - 80)) | (1 << (PortuguesPuroParser.T__91 - 80)) | (1 << (PortuguesPuroParser.T__92 - 80)) | (1 << (PortuguesPuroParser.T__93 - 80)) | (1 << (PortuguesPuroParser.T__94 - 80)) | (1 << (PortuguesPuroParser.T__95 - 80)) | (1 << (PortuguesPuroParser.T__96 - 80)) | (1 << (PortuguesPuroParser.T__97 - 80)) | (1 << (PortuguesPuroParser.T__98 - 80)) | (1 << (PortuguesPuroParser.T__99 - 80)) | (1 << (PortuguesPuroParser.T__100 - 80)))) !== 0)) {
+			if (((((_la - 80)) & ~0x1F) === 0 && ((1 << (_la - 80)) & 8388607) !== 0)) {
 				{
 				this.state = 755;
 				this.verbos();
@@ -4257,10 +4312,10 @@ export class PortuguesPuroParser extends Parser {
 			this.state = 759;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === PortuguesPuroParser.CARACTERES_IMPRIMIVEIS) {
+			if (_la===204) {
 				{
 				this.state = 758;
-				this.expressao_decisora();
+				this.expressão_decisora();
 				}
 			}
 
@@ -4268,7 +4323,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4278,95 +4333,95 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public incondicional(): IncondicionalContext {
-		let _localctx: IncondicionalContext = new IncondicionalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 156, PortuguesPuroParser.RULE_incondicional);
+		let localctx: IncondicionalContext = new IncondicionalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 156, PortuguesPuroParser.RULE_incondicional);
 		try {
 			this.state = 769;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__56:
-				this.enterOuterAlt(_localctx, 1);
+			case 57:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 761;
-				this.interrupcao();
+				this.interrupção();
 				}
 				break;
-			case PortuguesPuroParser.T__1:
-			case PortuguesPuroParser.T__2:
-			case PortuguesPuroParser.T__3:
-			case PortuguesPuroParser.T__4:
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
-			case PortuguesPuroParser.T__60:
-			case PortuguesPuroParser.T__61:
-			case PortuguesPuroParser.T__64:
-			case PortuguesPuroParser.T__68:
-			case PortuguesPuroParser.T__69:
-			case PortuguesPuroParser.T__70:
-			case PortuguesPuroParser.DIGITO:
-			case PortuguesPuroParser.ASPAS_DUPLAS:
-			case PortuguesPuroParser.HIFEN:
-			case PortuguesPuroParser.CIFRAO:
-			case PortuguesPuroParser.SINAL_DE_ADICAO:
-			case PortuguesPuroParser.CARACTERES_IMPRIMIVEIS:
-				this.enterOuterAlt(_localctx, 2);
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+			case 61:
+			case 62:
+			case 65:
+			case 69:
+			case 70:
+			case 71:
+			case 183:
+			case 187:
+			case 188:
+			case 189:
+			case 195:
+			case 204:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 762;
-				this.invocacao();
+				this.invocação();
 				}
 				break;
-			case PortuguesPuroParser.T__57:
-				this.enterOuterAlt(_localctx, 3);
+			case 58:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 763;
 				this.retorno();
 				}
 				break;
-			case PortuguesPuroParser.T__63:
-				this.enterOuterAlt(_localctx, 4);
+			case 64:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 764;
-				this.decodificacao();
+				this.decodificação();
 				}
 				break;
-			case PortuguesPuroParser.T__55:
-				this.enterOuterAlt(_localctx, 5);
+			case 56:
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 765;
-				this.reiteracao();
+				this.reiteração();
 				}
 				break;
-			case PortuguesPuroParser.T__165:
-				this.enterOuterAlt(_localctx, 6);
+			case 166:
+				this.enterOuterAlt(localctx, 6);
 				{
 				this.state = 766;
-				this.indirecao();
+				this.indireção();
 				}
 				break;
-			case PortuguesPuroParser.T__66:
-			case PortuguesPuroParser.T__167:
-				this.enterOuterAlt(_localctx, 7);
+			case 67:
+			case 168:
+				this.enterOuterAlt(localctx, 7);
 				{
 				this.state = 767;
 				this.empilhamento();
 				}
 				break;
-			case PortuguesPuroParser.T__59:
-				this.enterOuterAlt(_localctx, 8);
+			case 60:
+				this.enterOuterAlt(localctx, 8);
 				{
 				this.state = 768;
 				this.retorno_booleano();
@@ -4378,7 +4433,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4388,14 +4443,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public interrupcao(): InterrupcaoContext {
-		let _localctx: InterrupcaoContext = new InterrupcaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 158, PortuguesPuroParser.RULE_interrupcao);
+	public interrupção(): InterrupçãoContext {
+		let localctx: InterrupçãoContext = new InterrupçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 158, PortuguesPuroParser.RULE_interrupção);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 771;
 			this.match(PortuguesPuroParser.T__56);
@@ -4403,7 +4458,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4413,44 +4468,42 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public invocacao(): InvocacaoContext {
-		let _localctx: InvocacaoContext = new InvocacaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 160, PortuguesPuroParser.RULE_invocacao);
+	public invocação(): InvocaçãoContext {
+		let localctx: InvocaçãoContext = new InvocaçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 160, PortuguesPuroParser.RULE_invocação);
 		try {
 			this.state = 776;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 50, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 50, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 773;
-				this.invocacao_interna();
+				this.invocação_interna();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 774;
-				this.invocacao_externa();
+				this.invocação_externa();
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 775;
-				this.invocacao_indireta();
+				this.invocação_indireta();
 				}
 				break;
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4460,33 +4513,31 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public invocacao_interna(): Invocacao_internaContext {
-		let _localctx: Invocacao_internaContext = new Invocacao_internaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 162, PortuguesPuroParser.RULE_invocacao_interna);
+	public invocação_interna(): Invocação_internaContext {
+		let localctx: Invocação_internaContext = new Invocação_internaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 162, PortuguesPuroParser.RULE_invocação_interna);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 781;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 51, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 51, this._ctx) ) {
 			case 1:
 				{
 				this.state = 778;
-				this.unidade_semantica();
+				this.unidade_semântica();
 				}
 				break;
-
 			case 2:
 				{
 				this.state = 779;
-				this.expressï¿½o();
+				this.expressão();
 				}
 				break;
-
 			case 3:
 				{
 				this.state = 780;
@@ -4497,7 +4548,7 @@ export class PortuguesPuroParser extends Parser {
 			this.state = 784;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === PortuguesPuroParser.ABRE_PARENTESES) {
+			if (_la===200) {
 				{
 				this.state = 783;
 				this.qualificador();
@@ -4508,7 +4559,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4518,15 +4569,16 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public invocacao_externa(): Invocacao_externaContext {
-		let _localctx: Invocacao_externaContext = new Invocacao_externaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 164, PortuguesPuroParser.RULE_invocacao_externa);
+	public invocação_externa(): Invocação_externaContext {
+		let localctx: Invocação_externaContext = new Invocação_externaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 164, PortuguesPuroParser.RULE_invocação_externa);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			let _alt: number;
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 786;
 			this.processe();
@@ -4539,48 +4591,48 @@ export class PortuguesPuroParser extends Parser {
 			this.state = 790;
 			this.aspas_duplas();
 			this.state = 791;
-			this.nome_da_funcao();
+			this.nome_da_função();
 			this.state = 792;
 			this.aspas_duplas();
-			this.state = 809;
+			this.state = 796;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === PortuguesPuroParser.T__140) {
-				{
+			if (_la===142) {
 				{
 				this.state = 793;
 				this.com();
 				this.state = 794;
-				this.expressï¿½o();
+				this.expressão();
 				}
-				this.state = 801;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				while (_la === PortuguesPuroParser.T__136) {
-					{
-					{
-					this.state = 796;
-					this.e();
-					this.state = 797;
-					this.expressï¿½o();
-					}
-					}
-					this.state = 803;
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
-				}
-				this.state = 807;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__65) {
-					{
-					this.state = 804;
-					this.retornando();
-					this.state = 805;
-					this.termo();
-					}
-				}
+			}
 
+			this.state = 803;
+			this._errHandler.sync(this);
+			_alt = this._interp.adaptivePredict(this._input, 54, this._ctx);
+			while (_alt !== 1 && _alt !== ATN.INVALID_ALT_NUMBER) {
+				if (_alt === 1 + 1) {
+					{
+					{
+					this.state = 798;
+					this.e();
+					this.state = 799;
+					this.expressão();
+					}
+					}
+				}
+				this.state = 805;
+				this._errHandler.sync(this);
+				_alt = this._interp.adaptivePredict(this._input, 54, this._ctx);
+			}
+			this.state = 809;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===66) {
+				{
+				this.state = 806;
+				this.retornando();
+				this.state = 807;
+				this.termo();
 				}
 			}
 
@@ -4588,7 +4640,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4598,14 +4650,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public aspas_duplas(): Aspas_duplasContext {
-		let _localctx: Aspas_duplasContext = new Aspas_duplasContext(this._ctx, this.state);
-		this.enterRule(_localctx, 166, PortuguesPuroParser.RULE_aspas_duplas);
+		let localctx: Aspas_duplasContext = new Aspas_duplasContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 166, PortuguesPuroParser.RULE_aspas_duplas);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 811;
 			this.match(PortuguesPuroParser.ASPAS_DUPLAS);
@@ -4613,7 +4665,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4623,14 +4675,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public nome_da_DLL(): Nome_da_DLLContext {
-		let _localctx: Nome_da_DLLContext = new Nome_da_DLLContext(this._ctx, this.state);
-		this.enterRule(_localctx, 168, PortuguesPuroParser.RULE_nome_da_DLL);
+		let localctx: Nome_da_DLLContext = new Nome_da_DLLContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 168, PortuguesPuroParser.RULE_nome_da_DLL);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 813;
 			this.palavra();
@@ -4638,7 +4690,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4648,14 +4700,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public nome_da_funcao(): Nome_da_funcaoContext {
-		let _localctx: Nome_da_funcaoContext = new Nome_da_funcaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 170, PortuguesPuroParser.RULE_nome_da_funcao);
+	public nome_da_função(): Nome_da_funçãoContext {
+		let localctx: Nome_da_funçãoContext = new Nome_da_funçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 170, PortuguesPuroParser.RULE_nome_da_função);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 815;
 			this.palavra();
@@ -4663,7 +4715,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4673,14 +4725,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public processe(): ProcesseContext {
-		let _localctx: ProcesseContext = new ProcesseContext(this._ctx, this.state);
-		this.enterRule(_localctx, 172, PortuguesPuroParser.RULE_processe);
+		let localctx: ProcesseContext = new ProcesseContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 172, PortuguesPuroParser.RULE_processe);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 817;
 			this.match(PortuguesPuroParser.T__64);
@@ -4688,7 +4740,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4698,22 +4750,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public com(): ComContext {
-		let _localctx: ComContext = new ComContext(this._ctx, this.state);
-		this.enterRule(_localctx, 174, PortuguesPuroParser.RULE_com);
+		let localctx: ComContext = new ComContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 174, PortuguesPuroParser.RULE_com);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 819;
-			this.match(PortuguesPuroParser.T__140);
+			this.match(PortuguesPuroParser.T__141);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4723,22 +4775,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public e(): EContext {
-		let _localctx: EContext = new EContext(this._ctx, this.state);
-		this.enterRule(_localctx, 176, PortuguesPuroParser.RULE_e);
+		let localctx: EContext = new EContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 176, PortuguesPuroParser.RULE_e);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 821;
-			this.match(PortuguesPuroParser.T__136);
+			this.match(PortuguesPuroParser.T__137);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4748,14 +4800,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public retornando(): RetornandoContext {
-		let _localctx: RetornandoContext = new RetornandoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 178, PortuguesPuroParser.RULE_retornando);
+		let localctx: RetornandoContext = new RetornandoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 178, PortuguesPuroParser.RULE_retornando);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 823;
 			this.match(PortuguesPuroParser.T__65);
@@ -4763,7 +4815,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4773,39 +4825,39 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public invocacao_indireta(): Invocacao_indiretaContext {
-		let _localctx: Invocacao_indiretaContext = new Invocacao_indiretaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 180, PortuguesPuroParser.RULE_invocacao_indireta);
+	public invocação_indireta(): Invocação_indiretaContext {
+		let localctx: Invocação_indiretaContext = new Invocação_indiretaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 180, PortuguesPuroParser.RULE_invocação_indireta);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 825;
 			this.processe();
 			this.state = 826;
-			this.expressï¿½o();
+			this.expressão();
 			this.state = 842;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === PortuguesPuroParser.T__140) {
+			if (_la===142) {
 				{
 				this.state = 827;
 				this.com();
 				this.state = 828;
-				this.expressï¿½o();
+				this.expressão();
 				this.state = 834;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				while (_la === PortuguesPuroParser.T__136) {
+				while (_la===138) {
 					{
 					{
 					this.state = 829;
 					this.e();
 					this.state = 830;
-					this.expressï¿½o();
+					this.expressão();
 					}
 					}
 					this.state = 836;
@@ -4815,7 +4867,7 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 840;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__65) {
+				if (_la===66) {
 					{
 					this.state = 837;
 					this.retornando();
@@ -4831,7 +4883,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4841,14 +4893,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public retorno(): RetornoContext {
-		let _localctx: RetornoContext = new RetornoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 182, PortuguesPuroParser.RULE_retorno);
+		let localctx: RetornoContext = new RetornoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 182, PortuguesPuroParser.RULE_retorno);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 844;
 			this.match(PortuguesPuroParser.T__57);
@@ -4856,7 +4908,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4866,14 +4918,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public decodifique(): DecodifiqueContext {
-		let _localctx: DecodifiqueContext = new DecodifiqueContext(this._ctx, this.state);
-		this.enterRule(_localctx, 184, PortuguesPuroParser.RULE_decodifique);
+		let localctx: DecodifiqueContext = new DecodifiqueContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 184, PortuguesPuroParser.RULE_decodifique);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 846;
 			this.match(PortuguesPuroParser.T__63);
@@ -4881,7 +4933,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4891,24 +4943,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public decodificacao(): DecodificacaoContext {
-		let _localctx: DecodificacaoContext = new DecodificacaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 186, PortuguesPuroParser.RULE_decodificacao);
+	public decodificação(): DecodificaçãoContext {
+		let localctx: DecodificaçãoContext = new DecodificaçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 186, PortuguesPuroParser.RULE_decodificação);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 848;
 			this.decodifique();
 			this.state = 849;
-			this.numero_hexadecimal();
+			this.número_hexadecimal();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4918,14 +4970,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public aponte(): AponteContext {
-		let _localctx: AponteContext = new AponteContext(this._ctx, this.state);
-		this.enterRule(_localctx, 188, PortuguesPuroParser.RULE_aponte);
+		let localctx: AponteContext = new AponteContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 188, PortuguesPuroParser.RULE_aponte);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 851;
 			this.match(PortuguesPuroParser.T__165);
@@ -4933,7 +4985,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4943,14 +4995,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public para_rotina(): Para_rotinaContext {
-		let _localctx: Para_rotinaContext = new Para_rotinaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 190, PortuguesPuroParser.RULE_para_rotina);
+		let localctx: Para_rotinaContext = new Para_rotinaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 190, PortuguesPuroParser.RULE_para_rotina);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 853;
 			this.match(PortuguesPuroParser.T__166);
@@ -4958,7 +5010,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4968,15 +5020,15 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public indirecao(): IndirecaoContext {
-		let _localctx: IndirecaoContext = new IndirecaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 192, PortuguesPuroParser.RULE_indirecao);
+	public indireção(): IndireçãoContext {
+		let localctx: IndireçãoContext = new IndireçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 192, PortuguesPuroParser.RULE_indireção);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 855;
 			this.aponte();
@@ -4989,33 +5041,33 @@ export class PortuguesPuroParser extends Parser {
 			this.state = 862;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.CARACTERES_IMPRIMIVEIS:
+			case 204:
 				{
 				this.state = 859;
-				this.unidade_semantica();
+				this.unidade_semântica();
 				}
 				break;
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
 				{
 				this.state = 860;
-				this.parametro();
+				this.parâmetro();
 				}
 				break;
-			case PortuguesPuroParser.T__1:
-			case PortuguesPuroParser.T__2:
-			case PortuguesPuroParser.T__3:
-			case PortuguesPuroParser.T__4:
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
 				{
 				this.state = 861;
 				this.frase();
@@ -5027,7 +5079,7 @@ export class PortuguesPuroParser extends Parser {
 			this.state = 865;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === PortuguesPuroParser.ABRE_PARENTESES) {
+			if (_la===200) {
 				{
 				this.state = 864;
 				this.qualificador();
@@ -5038,7 +5090,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5048,33 +5100,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public push(): PushContext {
-		let _localctx: PushContext = new PushContext(this._ctx, this.state);
-		this.enterRule(_localctx, 194, PortuguesPuroParser.RULE_push);
+		let localctx: PushContext = new PushContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 194, PortuguesPuroParser.RULE_push);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 867;
 			_la = this._input.LA(1);
-			if (!(_la === PortuguesPuroParser.T__66 || _la === PortuguesPuroParser.T__167)) {
+			if(!(_la===67 || _la===168)) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5084,24 +5133,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public empilhamento(): EmpilhamentoContext {
-		let _localctx: EmpilhamentoContext = new EmpilhamentoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 196, PortuguesPuroParser.RULE_empilhamento);
+		let localctx: EmpilhamentoContext = new EmpilhamentoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 196, PortuguesPuroParser.RULE_empilhamento);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 869;
 			this.push();
 			this.state = 870;
-			this.expressï¿½o();
+			this.expressão();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5111,14 +5160,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public reiteracao(): ReiteracaoContext {
-		let _localctx: ReiteracaoContext = new ReiteracaoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 198, PortuguesPuroParser.RULE_reiteracao);
+	public reiteração(): ReiteraçãoContext {
+		let localctx: ReiteraçãoContext = new ReiteraçãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 198, PortuguesPuroParser.RULE_reiteração);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 872;
 			this.match(PortuguesPuroParser.T__55);
@@ -5126,7 +5175,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5136,14 +5185,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public diga(): DigaContext {
-		let _localctx: DigaContext = new DigaContext(this._ctx, this.state);
-		this.enterRule(_localctx, 200, PortuguesPuroParser.RULE_diga);
+		let localctx: DigaContext = new DigaContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 200, PortuguesPuroParser.RULE_diga);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 874;
 			this.match(PortuguesPuroParser.T__59);
@@ -5151,7 +5200,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5161,14 +5210,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public retorno_booleano(): Retorno_booleanoContext {
-		let _localctx: Retorno_booleanoContext = new Retorno_booleanoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 202, PortuguesPuroParser.RULE_retorno_booleano);
+		let localctx: Retorno_booleanoContext = new Retorno_booleanoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 202, PortuguesPuroParser.RULE_retorno_booleano);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 876;
 			this.diga();
@@ -5178,7 +5227,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5188,22 +5237,22 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public expressï¿½o(): Expressï¿½oContext {
-		let _localctx: Expressï¿½oContext = new Expressï¿½oContext(this._ctx, this.state);
-		this.enterRule(_localctx, 204, PortuguesPuroParser.RULE_expressï¿½o);
+	public expressão(): ExpressãoContext {
+		let localctx: ExpressãoContext = new ExpressãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 204, PortuguesPuroParser.RULE_expressão);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 879;
 			this.termo();
 			this.state = 885;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 169)) & ~0x1F) === 0 && ((1 << (_la - 169)) & ((1 << (PortuguesPuroParser.T__168 - 169)) | (1 << (PortuguesPuroParser.T__169 - 169)) | (1 << (PortuguesPuroParser.T__170 - 169)) | (1 << (PortuguesPuroParser.T__171 - 169)) | (1 << (PortuguesPuroParser.T__172 - 169)) | (1 << (PortuguesPuroParser.T__173 - 169)) | (1 << (PortuguesPuroParser.T__174 - 169)) | (1 << (PortuguesPuroParser.T__175 - 169)))) !== 0)) {
+			while (((((_la - 169)) & ~0x1F) === 0 && ((1 << (_la - 169)) & 255) !== 0)) {
 				{
 				{
 				this.state = 880;
@@ -5220,7 +5269,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5230,33 +5279,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public operadores_comuns(): Operadores_comunsContext {
-		let _localctx: Operadores_comunsContext = new Operadores_comunsContext(this._ctx, this.state);
-		this.enterRule(_localctx, 206, PortuguesPuroParser.RULE_operadores_comuns);
+		let localctx: Operadores_comunsContext = new Operadores_comunsContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 206, PortuguesPuroParser.RULE_operadores_comuns);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 888;
 			_la = this._input.LA(1);
-			if (!(((((_la - 169)) & ~0x1F) === 0 && ((1 << (_la - 169)) & ((1 << (PortuguesPuroParser.T__168 - 169)) | (1 << (PortuguesPuroParser.T__169 - 169)) | (1 << (PortuguesPuroParser.T__170 - 169)) | (1 << (PortuguesPuroParser.T__171 - 169)) | (1 << (PortuguesPuroParser.T__172 - 169)) | (1 << (PortuguesPuroParser.T__173 - 169)) | (1 << (PortuguesPuroParser.T__174 - 169)) | (1 << (PortuguesPuroParser.T__175 - 169)))) !== 0))) {
+			if(!(((((_la - 169)) & ~0x1F) === 0 && ((1 << (_la - 169)) & 255) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5266,33 +5312,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public booleano(): BooleanoContext {
-		let _localctx: BooleanoContext = new BooleanoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 208, PortuguesPuroParser.RULE_booleano);
+		let localctx: BooleanoContext = new BooleanoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 208, PortuguesPuroParser.RULE_booleano);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 890;
 			_la = this._input.LA(1);
-			if (!(_la === PortuguesPuroParser.T__60 || _la === PortuguesPuroParser.T__61)) {
+			if(!(_la===61 || _la===62)) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5302,33 +5345,30 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public nulo(): NuloContext {
-		let _localctx: NuloContext = new NuloContext(this._ctx, this.state);
-		this.enterRule(_localctx, 210, PortuguesPuroParser.RULE_nulo);
+		let localctx: NuloContext = new NuloContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 210, PortuguesPuroParser.RULE_nulo);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 892;
 			_la = this._input.LA(1);
-			if (!(((((_la - 69)) & ~0x1F) === 0 && ((1 << (_la - 69)) & ((1 << (PortuguesPuroParser.T__68 - 69)) | (1 << (PortuguesPuroParser.T__69 - 69)) | (1 << (PortuguesPuroParser.T__70 - 69)))) !== 0))) {
+			if(!(((((_la - 69)) & ~0x1F) === 0 && ((1 << (_la - 69)) & 7) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5338,34 +5378,32 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public termo_constante(): Termo_constanteContext {
-		let _localctx: Termo_constanteContext = new Termo_constanteContext(this._ctx, this.state);
-		this.enterRule(_localctx, 212, PortuguesPuroParser.RULE_termo_constante);
+		let localctx: Termo_constanteContext = new Termo_constanteContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 212, PortuguesPuroParser.RULE_termo_constante);
 		try {
 			this.state = 897;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 62, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 62, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 894;
 				this.termo_constante_negativo();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 895;
 				this.termo_constante_positivo();
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 896;
 				this.literal();
@@ -5375,7 +5413,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5385,24 +5423,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public termo_constante_negativo(): Termo_constante_negativoContext {
-		let _localctx: Termo_constante_negativoContext = new Termo_constante_negativoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 214, PortuguesPuroParser.RULE_termo_constante_negativo);
+		let localctx: Termo_constante_negativoContext = new Termo_constante_negativoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 214, PortuguesPuroParser.RULE_termo_constante_negativo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 899;
-			this.match(PortuguesPuroParser.HIFEN);
+			this.match(PortuguesPuroParser.HÍFEN);
 			this.state = 900;
 			this.termo_constante();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5412,24 +5450,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public termo_constante_positivo(): Termo_constante_positivoContext {
-		let _localctx: Termo_constante_positivoContext = new Termo_constante_positivoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 216, PortuguesPuroParser.RULE_termo_constante_positivo);
+		let localctx: Termo_constante_positivoContext = new Termo_constante_positivoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 216, PortuguesPuroParser.RULE_termo_constante_positivo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 902;
-			this.match(PortuguesPuroParser.SINAL_DE_ADICAO);
+			this.match(PortuguesPuroParser.SINAL_DE_ADIÇÃO);
 			this.state = 903;
 			this.termo_constante();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5439,44 +5477,42 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public numero(): NumeroContext {
-		let _localctx: NumeroContext = new NumeroContext(this._ctx, this.state);
-		this.enterRule(_localctx, 218, PortuguesPuroParser.RULE_numero);
+	public número(): NúmeroContext {
+		let localctx: NúmeroContext = new NúmeroContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 218, PortuguesPuroParser.RULE_número);
 		try {
 			this.state = 908;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 63, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 63, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 905;
-				this.numero_decimal();
+				this.número_decimal();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 906;
-				this.numero_fracionario();
+				this.número_fracionário();
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 907;
-				this.numero_misto();
+				this.número_misto();
 				}
 				break;
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5486,27 +5522,27 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public literal(): LiteralContext {
-		let _localctx: LiteralContext = new LiteralContext(this._ctx, this.state);
-		this.enterRule(_localctx, 220, PortuguesPuroParser.RULE_literal);
+		let localctx: LiteralContext = new LiteralContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 220, PortuguesPuroParser.RULE_literal);
 		let _la: number;
 		try {
 			this.state = 918;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.DIGITO:
-			case PortuguesPuroParser.HIFEN:
-				this.enterOuterAlt(_localctx, 1);
+			case 183:
+			case 188:
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 910;
-				this.numero();
+				this.número();
 				this.state = 912;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.CARACTERES_IMPRIMIVEIS) {
+				if (_la===204) {
 					{
 					this.state = 911;
 					this.nome_do_tipo();
@@ -5515,32 +5551,32 @@ export class PortuguesPuroParser extends Parser {
 
 				}
 				break;
-			case PortuguesPuroParser.ASPAS_DUPLAS:
-				this.enterOuterAlt(_localctx, 2);
+			case 187:
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 914;
 				this.string_literal();
 				}
 				break;
-			case PortuguesPuroParser.CIFRAO:
-				this.enterOuterAlt(_localctx, 3);
+			case 189:
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 915;
-				this.numero_hexadecimal();
+				this.número_hexadecimal();
 				}
 				break;
-			case PortuguesPuroParser.T__60:
-			case PortuguesPuroParser.T__61:
-				this.enterOuterAlt(_localctx, 4);
+			case 61:
+			case 62:
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 916;
 				this.booleano();
 				}
 				break;
-			case PortuguesPuroParser.T__68:
-			case PortuguesPuroParser.T__69:
-			case PortuguesPuroParser.T__70:
-				this.enterOuterAlt(_localctx, 5);
+			case 69:
+			case 70:
+			case 71:
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 917;
 				this.nulo();
@@ -5552,7 +5588,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5562,58 +5598,54 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public termo(): TermoContext {
-		let _localctx: TermoContext = new TermoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 222, PortuguesPuroParser.RULE_termo);
+		let localctx: TermoContext = new TermoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 222, PortuguesPuroParser.RULE_termo);
 		let _la: number;
 		try {
 			this.state = 936;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 68, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 68, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 920;
 				this.termo_negativo();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 921;
 				this.termo_positivo();
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 922;
-				this.variavel_local();
+				this.variável_local();
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 923;
-				this.variavel();
+				this.variável();
 				}
 				break;
-
 			case 5:
-				this.enterOuterAlt(_localctx, 5);
+				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 924;
 				this.termo_literal();
 				this.state = 929;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.T__176) {
+				if (_la===177) {
 					{
 					this.state = 925;
 					this.como();
@@ -5627,10 +5659,10 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 934;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === PortuguesPuroParser.BARRA_INCLINADA) {
+				if (_la===193) {
 					{
 					this.state = 931;
-					this.sinal_de_divisï¿½o();
+					this.sinal_de_divisão();
 					this.state = 932;
 					this.termo();
 					}
@@ -5642,7 +5674,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5652,14 +5684,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public sinal_de_divisï¿½o(): Sinal_de_divisï¿½oContext {
-		let _localctx: Sinal_de_divisï¿½oContext = new Sinal_de_divisï¿½oContext(this._ctx, this.state);
-		this.enterRule(_localctx, 224, PortuguesPuroParser.RULE_sinal_de_divisï¿½o);
+	public sinal_de_divisão(): Sinal_de_divisãoContext {
+		let localctx: Sinal_de_divisãoContext = new Sinal_de_divisãoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 224, PortuguesPuroParser.RULE_sinal_de_divisão);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 938;
 			this.match(PortuguesPuroParser.BARRA_INCLINADA);
@@ -5667,7 +5699,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5677,14 +5709,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public como(): ComoContext {
-		let _localctx: ComoContext = new ComoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 226, PortuguesPuroParser.RULE_como);
+		let localctx: ComoContext = new ComoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 226, PortuguesPuroParser.RULE_como);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 940;
 			this.match(PortuguesPuroParser.T__176);
@@ -5692,7 +5724,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5702,24 +5734,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public termo_negativo(): Termo_negativoContext {
-		let _localctx: Termo_negativoContext = new Termo_negativoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 228, PortuguesPuroParser.RULE_termo_negativo);
+		let localctx: Termo_negativoContext = new Termo_negativoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 228, PortuguesPuroParser.RULE_termo_negativo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 942;
-			this.match(PortuguesPuroParser.HIFEN);
+			this.match(PortuguesPuroParser.HÍFEN);
 			this.state = 943;
 			this.termo();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5729,24 +5761,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public termo_positivo(): Termo_positivoContext {
-		let _localctx: Termo_positivoContext = new Termo_positivoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 230, PortuguesPuroParser.RULE_termo_positivo);
+		let localctx: Termo_positivoContext = new Termo_positivoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 230, PortuguesPuroParser.RULE_termo_positivo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 945;
-			this.match(PortuguesPuroParser.SINAL_DE_ADICAO);
+			this.match(PortuguesPuroParser.SINAL_DE_ADIÇÃO);
 			this.state = 946;
 			this.termo();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5756,26 +5788,26 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public variavel_local(): Variavel_localContext {
-		let _localctx: Variavel_localContext = new Variavel_localContext(this._ctx, this.state);
-		this.enterRule(_localctx, 232, PortuguesPuroParser.RULE_variavel_local);
+	public variável_local(): Variável_localContext {
+		let localctx: Variável_localContext = new Variável_localContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 232, PortuguesPuroParser.RULE_variável_local);
 		let _la: number;
 		try {
 			this.state = 960;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.T__5:
-			case PortuguesPuroParser.T__6:
-			case PortuguesPuroParser.T__7:
-			case PortuguesPuroParser.T__8:
-			case PortuguesPuroParser.T__13:
-			case PortuguesPuroParser.T__14:
-			case PortuguesPuroParser.T__15:
-			case PortuguesPuroParser.T__16:
-				this.enterOuterAlt(_localctx, 1);
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+				this.enterOuterAlt(localctx, 1);
 				{
 				{
 				this.state = 948;
@@ -5785,10 +5817,10 @@ export class PortuguesPuroParser extends Parser {
 				this.state = 953;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 72)) & ~0x1F) === 0 && ((1 << (_la - 72)) & ((1 << (PortuguesPuroParser.T__71 - 72)) | (1 << (PortuguesPuroParser.T__72 - 72)) | (1 << (PortuguesPuroParser.T__73 - 72)) | (1 << (PortuguesPuroParser.T__74 - 72)) | (1 << (PortuguesPuroParser.T__75 - 72)) | (1 << (PortuguesPuroParser.T__76 - 72)) | (1 << (PortuguesPuroParser.T__77 - 72)) | (1 << (PortuguesPuroParser.T__78 - 72)))) !== 0)) {
+				if (((((_la - 72)) & ~0x1F) === 0 && ((1 << (_la - 72)) & 255) !== 0)) {
 					{
 					this.state = 950;
-					this.denominacoes();
+					this.denominações();
 					this.state = 951;
 					this.nome();
 					}
@@ -5797,15 +5829,15 @@ export class PortuguesPuroParser extends Parser {
 				}
 				}
 				break;
-			case PortuguesPuroParser.T__1:
-			case PortuguesPuroParser.T__2:
-			case PortuguesPuroParser.T__3:
-			case PortuguesPuroParser.T__4:
-			case PortuguesPuroParser.T__9:
-			case PortuguesPuroParser.T__10:
-			case PortuguesPuroParser.T__11:
-			case PortuguesPuroParser.T__12:
-				this.enterOuterAlt(_localctx, 2);
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+				this.enterOuterAlt(localctx, 2);
 				{
 				{
 				this.state = 955;
@@ -5825,7 +5857,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5835,19 +5867,19 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public variavel(): VariavelContext {
-		let _localctx: VariavelContext = new VariavelContext(this._ctx, this.state);
-		this.enterRule(_localctx, 234, PortuguesPuroParser.RULE_variavel);
+	public variável(): VariávelContext {
+		let localctx: VariávelContext = new VariávelContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 234, PortuguesPuroParser.RULE_variável);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 962;
 			this.artigo_definido();
 			this.state = 963;
-			this.possessivo_portuguï¿½s();
+			this.possessivo_português();
 			this.state = 964;
 			this.p2();
 			this.state = 965;
@@ -5856,7 +5888,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5866,24 +5898,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public termo_literal(): Termo_literalContext {
-		let _localctx: Termo_literalContext = new Termo_literalContext(this._ctx, this.state);
-		this.enterRule(_localctx, 236, PortuguesPuroParser.RULE_termo_literal);
+		let localctx: Termo_literalContext = new Termo_literalContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 236, PortuguesPuroParser.RULE_termo_literal);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 967;
 			this.literal();
 			this.state = 968;
-			this.possessivos_inglï¿½s();
+			this.possessivos_inglês();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5893,14 +5925,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public conteï¿½do(): Conteï¿½doContext {
-		let _localctx: Conteï¿½doContext = new Conteï¿½doContext(this._ctx, this.state);
-		this.enterRule(_localctx, 238, PortuguesPuroParser.RULE_conteï¿½do);
+	public conteúdo(): ConteúdoContext {
+		let localctx: ConteúdoContext = new ConteúdoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 238, PortuguesPuroParser.RULE_conteúdo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 970;
 			this.match(PortuguesPuroParser.T__177);
@@ -5908,7 +5940,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5918,14 +5950,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public magnitude(): MagnitudeContext {
-		let _localctx: MagnitudeContext = new MagnitudeContext(this._ctx, this.state);
-		this.enterRule(_localctx, 240, PortuguesPuroParser.RULE_magnitude);
+		let localctx: MagnitudeContext = new MagnitudeContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 240, PortuguesPuroParser.RULE_magnitude);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 972;
 			this.match(PortuguesPuroParser.T__178);
@@ -5933,7 +5965,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5943,14 +5975,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public endereï¿½amento(): Endereï¿½amentoContext {
-		let _localctx: Endereï¿½amentoContext = new Endereï¿½amentoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 242, PortuguesPuroParser.RULE_endereï¿½amento);
+	public endereçamento(): EndereçamentoContext {
+		let localctx: EndereçamentoContext = new EndereçamentoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 242, PortuguesPuroParser.RULE_endereçamento);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 974;
 			this.match(PortuguesPuroParser.T__179);
@@ -5958,7 +5990,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5968,24 +6000,24 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public possessivos_inglï¿½s(): Possessivos_inglï¿½sContext {
-		let _localctx: Possessivos_inglï¿½sContext = new Possessivos_inglï¿½sContext(this._ctx, this.state);
-		this.enterRule(_localctx, 244, PortuguesPuroParser.RULE_possessivos_inglï¿½s);
+	public possessivos_inglês(): Possessivos_inglêsContext {
+		let localctx: Possessivos_inglêsContext = new Possessivos_inglêsContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 244, PortuguesPuroParser.RULE_possessivos_inglês);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 979;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === PortuguesPuroParser.T__180) {
+			while (_la===181) {
 				{
 				{
 				this.state = 976;
-				this.possessivo_inglï¿½s_antigo();
+				this.possessivo_inglês_antigo();
 				}
 				}
 				this.state = 981;
@@ -5996,7 +6028,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -6006,49 +6038,49 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public possessivo_inglï¿½s_antigo(): Possessivo_inglï¿½s_antigoContext {
-		let _localctx: Possessivo_inglï¿½s_antigoContext = new Possessivo_inglï¿½s_antigoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 246, PortuguesPuroParser.RULE_possessivo_inglï¿½s_antigo);
+	public possessivo_inglês_antigo(): Possessivo_inglês_antigoContext {
+		let localctx: Possessivo_inglês_antigoContext = new Possessivo_inglês_antigoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 246, PortuguesPuroParser.RULE_possessivo_inglês_antigo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 982;
-			this.apostrofo();
+			this.apóstrofo();
 			this.state = 988;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.CARACTERES_IMPRIMIVEIS:
+			case 204:
 				{
 				this.state = 983;
 				this.nome();
 				}
 				break;
-			case PortuguesPuroParser.T__158:
-			case PortuguesPuroParser.T__160:
+			case 160:
+			case 162:
 				{
 				this.state = 984;
-				this.funcao();
+				this.função();
 				}
 				break;
-			case PortuguesPuroParser.T__177:
+			case 178:
 				{
 				this.state = 985;
-				this.conteï¿½do();
+				this.conteúdo();
 				}
 				break;
-			case PortuguesPuroParser.T__178:
+			case 179:
 				{
 				this.state = 986;
 				this.magnitude();
 				}
 				break;
-			case PortuguesPuroParser.T__179:
+			case 180:
 				{
 				this.state = 987;
-				this.endereï¿½amento();
+				this.endereçamento();
 				}
 				break;
 			default:
@@ -6058,7 +6090,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -6068,47 +6100,47 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public possessivo_portuguï¿½s(): Possessivo_portuguï¿½sContext {
-		let _localctx: Possessivo_portuguï¿½sContext = new Possessivo_portuguï¿½sContext(this._ctx, this.state);
-		this.enterRule(_localctx, 248, PortuguesPuroParser.RULE_possessivo_portuguï¿½s);
+	public possessivo_português(): Possessivo_portuguêsContext {
+		let localctx: Possessivo_portuguêsContext = new Possessivo_portuguêsContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 248, PortuguesPuroParser.RULE_possessivo_português);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 995;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case PortuguesPuroParser.CARACTERES_IMPRIMIVEIS:
+			case 204:
 				{
 				this.state = 990;
 				this.nome();
 				}
 				break;
-			case PortuguesPuroParser.T__158:
-			case PortuguesPuroParser.T__160:
+			case 160:
+			case 162:
 				{
 				this.state = 991;
-				this.funcao();
+				this.função();
 				}
 				break;
-			case PortuguesPuroParser.T__177:
+			case 178:
 				{
 				this.state = 992;
-				this.conteï¿½do();
+				this.conteúdo();
 				}
 				break;
-			case PortuguesPuroParser.T__178:
+			case 179:
 				{
 				this.state = 993;
 				this.magnitude();
 				}
 				break;
-			case PortuguesPuroParser.T__179:
+			case 180:
 				{
 				this.state = 994;
-				this.endereï¿½amento();
+				this.endereçamento();
 				}
 				break;
 			default:
@@ -6120,7 +6152,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -6130,14 +6162,14 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public apostrofo(): ApostrofoContext {
-		let _localctx: ApostrofoContext = new ApostrofoContext(this._ctx, this.state);
-		this.enterRule(_localctx, 250, PortuguesPuroParser.RULE_apostrofo);
+	public apóstrofo(): ApóstrofoContext {
+		let localctx: ApóstrofoContext = new ApóstrofoContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 250, PortuguesPuroParser.RULE_apóstrofo);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 999;
 			this.match(PortuguesPuroParser.T__180);
@@ -6145,7 +6177,7 @@ export class PortuguesPuroParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -6155,544 +6187,384 @@ export class PortuguesPuroParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 
-	private static readonly _serializedATNSegments: number = 2;
-	private static readonly _serializedATNSegment0: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\xCF\u03EC\x04" +
-		"\x02\t\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x04" +
-		"\x07\t\x07\x04\b\t\b\x04\t\t\t\x04\n\t\n\x04\v\t\v\x04\f\t\f\x04\r\t\r" +
-		"\x04\x0E\t\x0E\x04\x0F\t\x0F\x04\x10\t\x10\x04\x11\t\x11\x04\x12\t\x12" +
-		"\x04\x13\t\x13\x04\x14\t\x14\x04\x15\t\x15\x04\x16\t\x16\x04\x17\t\x17" +
-		"\x04\x18\t\x18\x04\x19\t\x19\x04\x1A\t\x1A\x04\x1B\t\x1B\x04\x1C\t\x1C" +
-		"\x04\x1D\t\x1D\x04\x1E\t\x1E\x04\x1F\t\x1F\x04 \t \x04!\t!\x04\"\t\"\x04" +
-		"#\t#\x04$\t$\x04%\t%\x04&\t&\x04\'\t\'\x04(\t(\x04)\t)\x04*\t*\x04+\t" +
-		"+\x04,\t,\x04-\t-\x04.\t.\x04/\t/\x040\t0\x041\t1\x042\t2\x043\t3\x04" +
-		"4\t4\x045\t5\x046\t6\x047\t7\x048\t8\x049\t9\x04:\t:\x04;\t;\x04<\t<\x04" +
-		"=\t=\x04>\t>\x04?\t?\x04@\t@\x04A\tA\x04B\tB\x04C\tC\x04D\tD\x04E\tE\x04" +
-		"F\tF\x04G\tG\x04H\tH\x04I\tI\x04J\tJ\x04K\tK\x04L\tL\x04M\tM\x04N\tN\x04" +
-		"O\tO\x04P\tP\x04Q\tQ\x04R\tR\x04S\tS\x04T\tT\x04U\tU\x04V\tV\x04W\tW\x04" +
-		"X\tX\x04Y\tY\x04Z\tZ\x04[\t[\x04\\\t\\\x04]\t]\x04^\t^\x04_\t_\x04`\t" +
-		"`\x04a\ta\x04b\tb\x04c\tc\x04d\td\x04e\te\x04f\tf\x04g\tg\x04h\th\x04" +
-		"i\ti\x04j\tj\x04k\tk\x04l\tl\x04m\tm\x04n\tn\x04o\to\x04p\tp\x04q\tq\x04" +
-		"r\tr\x04s\ts\x04t\tt\x04u\tu\x04v\tv\x04w\tw\x04x\tx\x04y\ty\x04z\tz\x04" +
-		"{\t{\x04|\t|\x04}\t}\x04~\t~\x04\x7F\t\x7F\x03\x02\x03\x02\x03\x03\x06" +
-		"\x03\u0102\n\x03\r\x03\x0E\x03\u0103\x03\x04\x03\x04\x03\x04\x03\x05\x03" +
-		"\x05\x05\x05\u010B\n\x05\x03\x06\x03\x06\x03\x06\x03\x06\x03\x06\x05\x06" +
-		"\u0112\n\x06\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x05\x07\u0119\n\x07" +
-		"\x03\b\x03\b\x03\t\x03\t\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03" +
-		"\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x05" +
-		"\n\u0132\n\n\x03\v\x03\v\x03\f\x03\f\x03\r\x03\r\x03\x0E\x03\x0E\x03\x0E" +
-		"\x03\x0E\x03\x0E\x03\x0E\x03\x0E\x03\x0E\x03\x0E\x05\x0E\u0143\n\x0E\x03" +
-		"\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03" +
-		"\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03\x0F\x03" +
-		"\x0F\x05\x0F\u0158\n\x0F\x03\x10\x03\x10\x03\x11\x03\x11\x03\x12\x03\x12" +
-		"\x03\x13\x03\x13\x05\x13\u0162\n\x13\x03\x14\x03\x14\x07\x14\u0166\n\x14" +
-		"\f\x14\x0E\x14\u0169\v\x14\x03\x14\x03\x14\x03\x15\x03\x15\x07\x15\u016F" +
-		"\n\x15\f\x15\x0E\x15\u0172\v\x15\x03\x15\x03\x15\x03\x16\x03\x16\x03\x16" +
-		"\x03\x16\x05\x16\u017A\n\x16\x03\x17\x03\x17\x03\x17\x03\x18\x03\x18\x03" +
-		"\x19\x03\x19\x03\x1A\x03\x1A\x03\x1A\x03\x1B\x03\x1B\x07\x1B\u0188\n\x1B" +
-		"\f\x1B\x0E\x1B\u018B\v\x1B\x03\x1B\x03\x1B\x03\x1C\x03\x1C\x03\x1C\x03" +
-		"\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x05" +
-		"\x1C\u019B\n\x1C\x03\x1D\x03\x1D\x03\x1E\x03\x1E\x03\x1F\x03\x1F\x03\x1F" +
-		"\x05\x1F\u01A4\n\x1F\x03 \x06 \u01A7\n \r \x0E \u01A8\x03!\x05!\u01AC" +
-		"\n!\x03!\x03!\x03\"\x03\"\x03\"\x03\"\x03#\x03#\x03#\x03#\x03$\x03$\x03" +
-		"$\x03%\x03%\x07%\u01BD\n%\f%\x0E%\u01C0\v%\x03%\x03%\x03&\x03&\x03&\x05" +
-		"&\u01C7\n&\x03\'\x03\'\x03(\x03(\x03(\x03(\x03(\x03(\x05(\u01D1\n(\x03" +
-		"(\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03" +
-		"(\x03(\x03(\x03(\x05(\u01E5\n(\x03)\x03)\x03*\x03*\x03+\x03+\x03+\x03" +
-		"+\x03+\x03+\x03+\x05+\u01F2\n+\x03,\x03,\x03,\x03,\x07,\u01F8\n,\f,\x0E" +
-		",\u01FB\v,\x03-\x03-\x03.\x03.\x03/\x03/\x03/\x03/\x05/\u0205\n/\x03/" +
-		"\x03/\x03/\x03/\x03/\x03/\x03/\x03/\x05/\u020F\n/\x030\x030\x031\x061" +
-		"\u0214\n1\r1\x0E1\u0215\x032\x032\x033\x033\x034\x034\x035\x035\x036\x03" +
-		"6\x037\x037\x037\x037\x037\x037\x057\u0228\n7\x037\x037\x037\x037\x03" +
-		"7\x037\x037\x037\x037\x037\x037\x037\x037\x037\x037\x037\x037\x037\x03" +
-		"7\x037\x037\x037\x037\x037\x037\x037\x057\u0244\n7\x038\x038\x038\x03" +
-		"8\x058\u024A\n8\x039\x059\u024D\n9\x039\x039\x039\x039\x039\x039\x059" +
-		"\u0255\n9\x039\x039\x039\x039\x039\x059\u025C\n9\x039\x039\x03:\x03:\x03" +
-		";\x05;\u0263\n;\x03;\x03;\x03;\x03;\x03;\x03;\x03;\x05;\u026C\n;\x03;" +
-		"\x03;\x03;\x03;\x03;\x03;\x05;\u0274\n;\x03<\x03<\x03=\x03=\x03>\x05>" +
-		"\u027B\n>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>" +
-		"\x03>\x05>\u028A\n>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>\x03>" +
-		"\x03>\x03>\x05>\u0298\n>\x03>\x03>\x03?\x03?\x03@\x03@\x03A\x03A\x03B" +
-		"\x03B\x03C\x05C\u02A5\nC\x03C\x03C\x03C\x03C\x03C\x03C\x03C\x05C\u02AE" +
-		"\nC\x03C\x03C\x03C\x03C\x03C\x03C\x05C\u02B6\nC\x03C\x03C\x03D\x03D\x03" +
-		"D\x03D\x05D\u02BE\nD\x05D\u02C0\nD\x03E\x03E\x03F\x03F\x03F\x03F\x03F" +
-		"\x05F\u02C9\nF\x03G\x03G\x03G\x03H\x06H\u02CF\nH\rH\x0EH\u02D0\x03I\x03" +
-		"I\x03I\x03I\x03I\x03I\x05I\u02D9\nI\x03J\x03J\x03K\x03K\x03K\x03L\x03" +
-		"L\x03M\x03M\x03N\x03N\x03N\x03N\x03N\x03N\x07N\u02EA\nN\fN\x0EN\u02ED" +
-		"\vN\x03N\x03N\x03O\x06O\u02F2\nO\rO\x0EO\u02F3\x03O\x05O\u02F7\nO\x03" +
-		"O\x05O\u02FA\nO\x03P\x03P\x03P\x03P\x03P\x03P\x03P\x03P\x05P\u0304\nP" +
-		"\x03Q\x03Q\x03R\x03R\x03R\x05R\u030B\nR\x03S\x03S\x03S\x05S\u0310\nS\x03" +
-		"S\x05S\u0313\nS\x03T\x03T\x03T\x03T\x03T\x03T\x03T\x03T\x03T\x03T\x03" +
-		"T\x03T\x03T\x07T\u0322\nT\fT\x0ET\u0325\vT\x03T\x03T\x03T\x05T\u032A\n" +
-		"T\x05T\u032C\nT\x03U\x03U\x03V\x03V\x03W\x03W\x03X\x03X\x03Y\x03Y\x03" +
-		"Z\x03Z\x03[\x03[\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x07\\\u0343" +
-		"\n\\\f\\\x0E\\\u0346\v\\\x03\\\x03\\\x03\\\x05\\\u034B\n\\\x05\\\u034D" +
-		"\n\\\x03]\x03]\x03^\x03^\x03_\x03_\x03_\x03`\x03`\x03a\x03a\x03b\x03b" +
-		"\x03b\x03b\x03b\x03b\x03b\x05b\u0361\nb\x03b\x05b\u0364\nb\x03c\x03c\x03" +
-		"d\x03d\x03d\x03e\x03e\x03f\x03f\x03g\x03g\x03g\x03h\x03h\x03h\x03h\x07" +
-		"h\u0376\nh\fh\x0Eh\u0379\vh\x03i\x03i\x03j\x03j\x03k\x03k\x03l\x03l\x03" +
-		"l\x05l\u0384\nl\x03m\x03m\x03m\x03n\x03n\x03n\x03o\x03o\x03o\x05o\u038F" +
-		"\no\x03p\x03p\x05p\u0393\np\x03p\x03p\x03p\x03p\x05p\u0399\np\x03q\x03" +
-		"q\x03q\x03q\x03q\x03q\x03q\x03q\x03q\x05q\u03A4\nq\x03q\x03q\x03q\x05" +
-		"q\u03A9\nq\x05q\u03AB\nq\x03r\x03r\x03s\x03s\x03t\x03t\x03t\x03u\x03u" +
-		"\x03u\x03v\x03v\x03v\x03v\x03v\x05v\u03BC\nv\x03v\x03v\x03v\x03v\x03v" +
-		"\x05v\u03C3\nv\x03w\x03w\x03w\x03w\x03w\x03x\x03x\x03x\x03y\x03y\x03z" +
-		"\x03z\x03{\x03{\x03|\x07|\u03D4\n|\f|\x0E|\u03D7\v|\x03}\x03}\x03}\x03" +
-		"}\x03}\x03}\x05}\u03DF\n}\x03~\x03~\x03~\x03~\x03~\x05~\u03E6\n~\x03~" +
-		"\x03~\x03\x7F\x03\x7F\x03\x7F\x02\x02\x02\x80\x02\x02\x04\x02\x06\x02" +
-		"\b\x02\n\x02\f\x02\x0E\x02\x10\x02\x12\x02\x14\x02\x16\x02\x18\x02\x1A" +
-		"\x02\x1C\x02\x1E\x02 \x02\"\x02$\x02&\x02(\x02*\x02,\x02.\x020\x022\x02" +
-		"4\x026\x028\x02:\x02<\x02>\x02@\x02B\x02D\x02F\x02H\x02J\x02L\x02N\x02" +
-		"P\x02R\x02T\x02V\x02X\x02Z\x02\\\x02^\x02`\x02b\x02d\x02f\x02h\x02j\x02" +
-		"l\x02n\x02p\x02r\x02t\x02v\x02x\x02z\x02|\x02~\x02\x80\x02\x82\x02\x84" +
-		"\x02\x86\x02\x88\x02\x8A\x02\x8C\x02\x8E\x02\x90\x02\x92\x02\x94\x02\x96" +
-		"\x02\x98\x02\x9A\x02\x9C\x02\x9E\x02\xA0\x02\xA2\x02\xA4\x02\xA6\x02\xA8" +
-		"\x02\xAA\x02\xAC\x02\xAE\x02\xB0\x02\xB2\x02\xB4\x02\xB6\x02\xB8\x02\xBA" +
-		"\x02\xBC\x02\xBE\x02\xC0\x02\xC2\x02\xC4\x02\xC6\x02\xC8\x02\xCA\x02\xCC" +
-		"\x02\xCE\x02\xD0\x02\xD2\x02\xD4\x02\xD6\x02\xD8\x02\xDA\x02\xDC\x02\xDE" +
-		"\x02\xE0\x02\xE2\x02\xE4\x02\xE6\x02\xE8\x02\xEA\x02\xEC\x02\xEE\x02\xF0" +
-		"\x02\xF2\x02\xF4\x02\xF6\x02\xF8\x02\xFA\x02\xFC\x02\x02#\x03\x02\f\x0F" +
-		"\x03\x02\x10\x13\x03\x02$\'\x03\x02(+\x03\x02,/\x03\x02JQ\x04\x02\x15" +
-		"\x15Rg\x04\x02\xC0\xC1\xCF\xCF\x07\x02hm\xB8\xB9\xBE\xBF\xC3\xC3\xC5\xC5" +
-		"\x06\x02hm\xB8\xB9\xBC\xBC\xBF\xBF\x03\x02\xB8\xB8\x03\x02\xB9\xB9\x03" +
-		"\x02hh\x03\x02ii\x03\x02jj\x03\x02kk\x03\x02ll\x03\x02\xBF\xBF\x03\x02" +
-		"mm\x03\x02\xBE\xBE\x03\x02\xC5\xC5\x03\x02\xC3\xC3\x04\x02no\xC6\xC9\x06" +
-		"\x02pv\xBE\xBE\xC3\xC3\xC5\xC5\x03\x02w\x87\x04\x02\x8B\x8C\xC7\xC8\x03" +
-		"\x02\x8B\x8D\x05\x02\x1C\x1D\x8A\x8A\x8E\x9F\x04\x02\x15\x15VV\x04\x02" +
-		"EE\xAA\xAA\x03\x02\xAB\xB2\x03\x02?@\x03\x02GI\x02\u0415\x02\xFE\x03\x02" +
-		"\x02\x02\x04\u0101\x03\x02\x02\x02\x06\u0105\x03\x02\x02\x02\b\u010A\x03" +
-		"\x02\x02\x02\n\u0111\x03\x02\x02\x02\f\u0118\x03\x02\x02\x02\x0E\u011A" +
-		"\x03\x02\x02\x02\x10\u011C\x03\x02\x02\x02\x12\u0131\x03\x02\x02\x02\x14" +
-		"\u0133\x03\x02\x02\x02\x16\u0135\x03\x02\x02\x02\x18\u0137\x03\x02\x02" +
-		"\x02\x1A\u0142\x03\x02\x02\x02\x1C\u0157\x03\x02\x02\x02\x1E\u0159\x03" +
-		"\x02\x02\x02 \u015B\x03\x02\x02\x02\"\u015D\x03\x02\x02\x02$\u0161\x03" +
-		"\x02\x02\x02&\u0163\x03\x02\x02\x02(\u016C\x03\x02\x02\x02*\u0179\x03" +
-		"\x02\x02\x02,\u017B\x03\x02\x02\x02.\u017E\x03\x02\x02\x020\u0180\x03" +
-		"\x02\x02\x022\u0182\x03\x02\x02\x024\u0185\x03\x02\x02\x026\u019A\x03" +
-		"\x02\x02\x028\u019C\x03\x02\x02\x02:\u019E\x03\x02\x02\x02<\u01A3\x03" +
-		"\x02\x02\x02>\u01A6\x03\x02\x02\x02@\u01AB\x03\x02\x02\x02B\u01AF\x03" +
-		"\x02\x02\x02D\u01B3\x03\x02\x02\x02F\u01B7\x03\x02\x02\x02H\u01BA\x03" +
-		"\x02\x02\x02J\u01C6\x03\x02\x02\x02L\u01C8\x03\x02\x02\x02N\u01E4\x03" +
-		"\x02\x02\x02P\u01E6\x03\x02\x02\x02R\u01E8\x03\x02\x02\x02T\u01F1\x03" +
-		"\x02\x02\x02V\u01F3\x03\x02\x02\x02X\u01FC\x03\x02\x02\x02Z\u01FE\x03" +
-		"\x02\x02\x02\\\u0204\x03\x02\x02\x02^\u0210\x03\x02\x02\x02`\u0213\x03" +
-		"\x02\x02\x02b\u0217\x03\x02\x02\x02d\u0219\x03\x02\x02\x02f\u021B\x03" +
-		"\x02\x02\x02h\u021D\x03\x02\x02\x02j\u021F\x03\x02\x02\x02l\u0243\x03" +
-		"\x02\x02\x02n\u0249\x03\x02\x02\x02p\u025B\x03\x02\x02\x02r\u025F\x03" +
-		"\x02\x02\x02t\u0273\x03\x02\x02\x02v\u0275\x03\x02\x02\x02x\u0277\x03" +
-		"\x02\x02\x02z\u0297\x03\x02\x02\x02|\u029B\x03\x02\x02\x02~\u029D\x03" +
-		"\x02\x02\x02\x80\u029F\x03\x02\x02\x02\x82\u02A1\x03\x02\x02\x02\x84\u02B5" +
-		"\x03\x02\x02\x02\x86\u02BF\x03\x02\x02\x02\x88\u02C1\x03\x02\x02\x02\x8A" +
-		"\u02C3\x03\x02\x02\x02\x8C\u02CA\x03\x02\x02\x02\x8E\u02CE\x03\x02\x02" +
-		"\x02\x90\u02D8\x03\x02\x02\x02\x92\u02DA\x03\x02\x02\x02\x94\u02DC\x03" +
-		"\x02\x02\x02\x96\u02DF\x03\x02\x02\x02\x98\u02E1\x03\x02\x02\x02\x9A\u02E3" +
-		"\x03\x02\x02\x02\x9C\u02F1\x03\x02\x02\x02\x9E\u0303\x03\x02\x02\x02\xA0" +
-		"\u0305\x03\x02\x02\x02\xA2\u030A\x03\x02\x02\x02\xA4\u030F\x03\x02\x02" +
-		"\x02\xA6\u0314\x03\x02\x02\x02\xA8\u032D\x03\x02\x02\x02\xAA\u032F\x03" +
-		"\x02\x02\x02\xAC\u0331\x03\x02\x02\x02\xAE\u0333\x03\x02\x02\x02\xB0\u0335" +
-		"\x03\x02\x02\x02\xB2\u0337\x03\x02\x02\x02\xB4\u0339\x03\x02\x02\x02\xB6" +
-		"\u033B\x03\x02\x02\x02\xB8\u034E\x03\x02\x02\x02\xBA\u0350\x03\x02\x02" +
-		"\x02\xBC\u0352\x03\x02\x02\x02\xBE\u0355\x03\x02\x02\x02\xC0\u0357\x03" +
-		"\x02\x02\x02\xC2\u0359\x03\x02\x02\x02\xC4\u0365\x03\x02\x02\x02\xC6\u0367" +
-		"\x03\x02\x02\x02\xC8\u036A\x03\x02\x02\x02\xCA\u036C\x03\x02\x02\x02\xCC" +
-		"\u036E\x03\x02\x02\x02\xCE\u0371\x03\x02\x02\x02\xD0\u037A\x03\x02\x02" +
-		"\x02\xD2\u037C\x03\x02\x02\x02\xD4\u037E\x03\x02\x02\x02\xD6\u0383\x03" +
-		"\x02\x02\x02\xD8\u0385\x03\x02\x02\x02\xDA\u0388\x03\x02\x02\x02\xDC\u038E" +
-		"\x03\x02\x02\x02\xDE\u0398\x03\x02\x02\x02\xE0\u03AA\x03\x02\x02\x02\xE2" +
-		"\u03AC\x03\x02\x02\x02\xE4\u03AE\x03\x02\x02\x02\xE6\u03B0\x03\x02\x02" +
-		"\x02\xE8\u03B3\x03\x02\x02\x02\xEA\u03C2\x03\x02\x02\x02\xEC\u03C4\x03" +
-		"\x02\x02\x02\xEE\u03C9\x03\x02\x02\x02\xF0\u03CC\x03\x02\x02\x02\xF2\u03CE" +
-		"\x03\x02\x02\x02\xF4\u03D0\x03\x02\x02\x02\xF6\u03D5\x03\x02\x02\x02\xF8" +
-		"\u03D8\x03\x02\x02\x02\xFA\u03E5\x03\x02\x02\x02\xFC\u03E9\x03\x02\x02" +
-		"\x02\xFE\xFF\x07\x03\x02\x02\xFF\x03\x03\x02\x02\x02\u0100\u0102\x07\xCE" +
-		"\x02\x02\u0101\u0100\x03\x02\x02\x02\u0102\u0103\x03\x02\x02\x02\u0103" +
-		"\u0101\x03\x02\x02\x02\u0103\u0104\x03\x02\x02\x02\u0104\x05\x03\x02\x02" +
-		"\x02\u0105\u0106\x05\x04\x03\x02\u0106\u0107\x07\xBC\x02\x02\u0107\x07" +
-		"\x03\x02\x02\x02\u0108\u010B\x05\n\x06\x02\u0109\u010B\x05\f\x07\x02\u010A" +
-		"\u0108\x03\x02\x02\x02\u010A\u0109\x03\x02\x02\x02\u010B\t\x03\x02\x02" +
-		"\x02\u010C\u0112\x07\x04\x02\x02\u010D\u0112\x07\x05\x02\x02\u010E\u0112" +
-		"\x07\x06\x02\x02\u010F\u0112\x07\x07\x02\x02\u0110\u0112\x05\x0E\b\x02" +
-		"\u0111\u010C\x03\x02\x02\x02\u0111\u010D\x03\x02\x02\x02\u0111\u010E\x03" +
-		"\x02\x02\x02\u0111\u010F\x03\x02\x02\x02\u0111\u0110\x03\x02\x02\x02\u0112" +
-		"\v\x03\x02\x02\x02\u0113\u0119\x07\b\x02\x02\u0114\u0119\x07\t\x02\x02" +
-		"\u0115\u0119\x07\n\x02\x02\u0116\u0119\x07\v\x02\x02\u0117\u0119\x05\x10" +
-		"\t\x02\u0118\u0113\x03\x02\x02\x02\u0118\u0114\x03\x02\x02\x02\u0118\u0115" +
-		"\x03\x02\x02\x02\u0118\u0116\x03\x02\x02\x02\u0118\u0117\x03\x02\x02\x02" +
-		"\u0119\r\x03\x02\x02\x02\u011A\u011B\t\x02\x02\x02\u011B\x0F\x03\x02\x02" +
-		"\x02\u011C\u011D\t\x03\x02\x02\u011D\x11\x03\x02\x02\x02\u011E\u0132\x07" +
-		"\x14\x02\x02\u011F\u0132\x07\x15\x02\x02\u0120\u0132\x07\x16\x02\x02\u0121" +
-		"\u0132\x07\x17\x02\x02\u0122\u0132\x07\x18\x02\x02\u0123\u0132\x07\x19" +
-		"\x02\x02\u0124\u0132\x07\x1A\x02\x02\u0125\u0132\x07\x1B\x02\x02\u0126" +
-		"\u0132\x07\x1C\x02\x02\u0127\u0132\x07\x1D\x02\x02\u0128\u0132\x07\x1E" +
-		"\x02\x02\u0129\u0132\x07\x1F\x02\x02\u012A\u0132\x07 \x02\x02\u012B\u0132" +
-		"\x07!\x02\x02\u012C\u0132\x07\"\x02\x02\u012D\u0132\x07#\x02\x02\u012E" +
-		"\u0132\x05\x14\v\x02\u012F\u0132\x05\x16\f\x02\u0130\u0132\x05\x18\r\x02" +
-		"\u0131\u011E\x03\x02\x02\x02\u0131\u011F\x03\x02\x02\x02\u0131\u0120\x03" +
-		"\x02\x02\x02\u0131\u0121\x03\x02\x02\x02\u0131\u0122\x03\x02\x02\x02\u0131" +
-		"\u0123\x03\x02\x02\x02\u0131\u0124\x03\x02\x02\x02\u0131\u0125\x03\x02" +
-		"\x02\x02\u0131\u0126\x03\x02\x02\x02\u0131\u0127\x03\x02\x02\x02\u0131" +
-		"\u0128\x03\x02\x02\x02\u0131\u0129\x03\x02\x02\x02\u0131\u012A\x03\x02" +
-		"\x02\x02\u0131\u012B\x03\x02\x02\x02\u0131\u012C\x03\x02\x02\x02\u0131" +
-		"\u012D\x03\x02\x02\x02\u0131\u012E\x03\x02\x02\x02\u0131\u012F\x03\x02" +
-		"\x02\x02\u0131\u0130\x03\x02\x02\x02\u0132\x13\x03\x02\x02\x02\u0133\u0134" +
-		"\t\x04\x02\x02\u0134\x15\x03\x02\x02\x02\u0135\u0136\t\x05\x02\x02\u0136" +
-		"\x17\x03\x02\x02\x02\u0137\u0138\t\x06\x02\x02\u0138\x19\x03\x02\x02\x02" +
-		"\u0139\u0143\x03\x02\x02\x02\u013A\u0143\x070\x02\x02\u013B\u0143\x07" +
-		"1\x02\x02\u013C\u0143\x072\x02\x02\u013D\u0143\x073\x02\x02\u013E\u0143" +
-		"\x074\x02\x02\u013F\u0143\x075\x02\x02\u0140\u0143\x076\x02\x02\u0141" +
-		"\u0143\x077\x02\x02\u0142\u0139\x03\x02\x02\x02\u0142\u013A\x03\x02\x02" +
-		"\x02\u0142\u013B\x03\x02\x02\x02\u0142\u013C\x03\x02\x02\x02\u0142\u013D" +
-		"\x03\x02\x02\x02\u0142\u013E\x03\x02\x02\x02\u0142\u013F\x03\x02\x02\x02" +
-		"\u0142\u0140\x03\x02\x02\x02\u0142\u0141\x03\x02\x02\x02\u0143\x1B\x03" +
-		"\x02\x02\x02\u0144\u0158\x078\x02\x02\u0145\u0158\x079\x02\x02\u0146\u0158" +
-		"\x07:\x02\x02\u0147\u0158\x07;\x02\x02\u0148\u0158\x07<\x02\x02\u0149" +
-		"\u0158\x07=\x02\x02\u014A\u0158\x07>\x02\x02\u014B\u0158\x07?\x02\x02" +
-		"\u014C\u0158\x07@\x02\x02\u014D\u0158\x07A\x02\x02\u014E\u0158\x07B\x02" +
-		"\x02\u014F\u0158\x07C\x02\x02\u0150\u0158\x07D\x02\x02\u0151\u0158\x07" +
-		"E\x02\x02\u0152\u0158\x07F\x02\x02\u0153\u0158\x07G\x02\x02\u0154\u0158" +
-		"\x07H\x02\x02\u0155\u0158\x07I\x02\x02\u0156\u0158\x05\x1E\x10\x02\u0157" +
-		"\u0144\x03\x02\x02\x02\u0157\u0145\x03\x02\x02\x02\u0157\u0146\x03\x02" +
-		"\x02\x02\u0157\u0147\x03\x02\x02\x02\u0157\u0148\x03\x02\x02\x02\u0157" +
-		"\u0149\x03\x02\x02\x02\u0157\u014A\x03\x02\x02\x02\u0157\u014B\x03\x02" +
-		"\x02\x02\u0157\u014C\x03\x02\x02\x02\u0157\u014D\x03\x02\x02\x02\u0157" +
-		"\u014E\x03\x02\x02\x02\u0157\u014F\x03\x02\x02\x02\u0157\u0150\x03\x02" +
-		"\x02\x02\u0157\u0151\x03\x02\x02\x02\u0157\u0152\x03\x02\x02\x02\u0157" +
-		"\u0153\x03\x02\x02\x02\u0157\u0154\x03\x02\x02\x02\u0157\u0155\x03\x02" +
-		"\x02\x02\u0157\u0156\x03\x02\x02\x02\u0158\x1D\x03\x02\x02\x02\u0159\u015A" +
-		"\t\x07\x02\x02\u015A\x1F\x03\x02\x02\x02\u015B\u015C\t\b\x02\x02\u015C" +
-		"!\x03\x02\x02\x02\u015D\u015E\t\t\x02\x02\u015E#\x03\x02\x02\x02\u015F" +
-		"\u0162\x05&\x14\x02\u0160\u0162\x05(\x15\x02\u0161\u015F\x03\x02\x02\x02" +
-		"\u0161\u0160\x03\x02\x02\x02\u0162%\x03\x02\x02\x02\u0163\u0167\x07\xC4" +
-		"\x02\x02\u0164\u0166\x07\xCE\x02\x02\u0165\u0164\x03\x02\x02\x02\u0166" +
-		"\u0169\x03\x02\x02\x02\u0167\u0165\x03\x02\x02\x02\u0167\u0168\x03\x02" +
-		"\x02\x02\u0168\u016A\x03\x02\x02\x02\u0169\u0167\x03\x02\x02\x02\u016A" +
-		"\u016B\x07\xC2\x02\x02\u016B\'\x03\x02\x02\x02\u016C\u0170\x07\xCC\x02" +
-		"\x02\u016D\u016F\x07\xCE\x02\x02\u016E\u016D\x03\x02\x02\x02\u016F\u0172" +
-		"\x03\x02\x02\x02\u0170\u016E\x03\x02\x02\x02\u0170\u0171\x03\x02\x02\x02" +
-		"\u0171\u0173\x03\x02\x02\x02\u0172\u0170\x03\x02\x02\x02\u0173\u0174\x07" +
-		"\xCD\x02\x02\u0174)\x03\x02\x02\x02\u0175\u017A\x05,\x17\x02\u0176\u017A" +
-		"\x05\x06\x04\x02\u0177\u017A\x054\x1B\x02\u0178\u017A\x05H%\x02\u0179" +
-		"\u0175\x03\x02\x02\x02\u0179\u0176\x03\x02\x02\x02\u0179\u0177\x03\x02" +
-		"\x02\x02\u0179\u0178\x03\x02\x02\x02\u017A+\x03\x02\x02\x02\u017B\u017C" +
-		"\x050\x19\x02\u017C\u017D\x05.\x18\x02\u017D-\x03\x02\x02\x02\u017E\u017F" +
-		"\t\n\x02\x02\u017F/\x03\x02\x02\x02\u0180\u0181\t\v\x02\x02\u01811\x03" +
-		"\x02\x02\x02\u0182\u0183\x05\xFC\x7F\x02\u0183\u0184\x056\x1C\x02\u0184" +
-		"3\x03\x02\x02\x02\u0185\u0189\x07\xCA\x02\x02\u0186\u0188\x07\xCE\x02" +
-		"\x02\u0187\u0186\x03\x02\x02\x02\u0188\u018B\x03\x02\x02\x02\u0189\u0187" +
-		"\x03\x02\x02\x02\u0189\u018A\x03\x02\x02\x02\u018A\u018C\x03\x02\x02\x02" +
-		"\u018B\u0189\x03\x02\x02\x02\u018C\u018D\x07\xCB\x02\x02\u018D5\x03\x02" +
-		"\x02\x02\u018E\u019B\n\f\x02\x02\u018F\u019B\n\r\x02\x02\u0190\u019B\n" +
-		"\x0E\x02\x02\u0191\u019B\n\x0F\x02\x02\u0192\u019B\n\x10\x02\x02\u0193" +
-		"\u019B\n\x11\x02\x02\u0194\u019B\n\x12\x02\x02\u0195\u019B\n\x13\x02\x02" +
-		"\u0196\u019B\n\x14\x02\x02\u0197\u019B\n\x15\x02\x02\u0198\u019B\n\x16" +
-		"\x02\x02\u0199\u019B\n\x17\x02\x02\u019A\u018E\x03\x02\x02\x02\u019A\u018F" +
-		"\x03\x02\x02\x02\u019A\u0190\x03\x02\x02\x02\u019A\u0191\x03\x02\x02\x02" +
-		"\u019A\u0192\x03\x02\x02\x02\u019A\u0193\x03\x02\x02\x02\u019A\u0194\x03" +
-		"\x02\x02\x02\u019A\u0195\x03\x02\x02\x02\u019A\u0196\x03\x02\x02\x02\u019A" +
-		"\u0197\x03\x02\x02\x02\u019A\u0198\x03\x02\x02\x02\u019A\u0199\x03\x02" +
-		"\x02\x02\u019B7\x03\x02\x02\x02\u019C\u019D\t\x18\x02\x02\u019D9\x03\x02" +
-		"\x02\x02\u019E\u019F\t\x19\x02\x02\u019F;\x03\x02\x02\x02\u01A0\u01A4" +
-		"\x05\"\x12\x02\u01A1\u01A4\x05$\x13\x02\u01A2\u01A4\x054\x1B\x02\u01A3" +
-		"\u01A0\x03\x02\x02\x02\u01A3\u01A1\x03\x02\x02\x02\u01A3\u01A2\x03\x02" +
-		"\x02\x02\u01A4=\x03\x02\x02\x02\u01A5\u01A7\x07\xB9\x02\x02\u01A6\u01A5" +
-		"\x03\x02\x02\x02\u01A7\u01A8\x03\x02\x02\x02\u01A8\u01A6\x03\x02\x02\x02" +
-		"\u01A8\u01A9\x03\x02\x02\x02\u01A9?\x03\x02\x02\x02\u01AA\u01AC\x07\xBE" +
-		"\x02\x02\u01AB\u01AA\x03\x02\x02\x02\u01AB\u01AC\x03\x02\x02\x02\u01AC" +
-		"\u01AD\x03\x02\x02\x02\u01AD\u01AE\x05> \x02\u01AEA\x03\x02\x02\x02\u01AF" +
-		"\u01B0\x05@!\x02\u01B0\u01B1\x07\xC3\x02\x02\u01B1\u01B2\x05> \x02\u01B2" +
-		"C\x03\x02\x02\x02\u01B3\u01B4\x05@!\x02\u01B4\u01B5\x07\xC5\x02\x02\u01B5" +
-		"\u01B6\x05B\"\x02\u01B6E\x03\x02\x02\x02\u01B7\u01B8\x07\xBF\x02\x02\u01B8" +
-		"\u01B9\x05> \x02\u01B9G\x03\x02\x02\x02\u01BA\u01BE\x07\xBD\x02\x02\u01BB" +
-		"\u01BD\x07\xCE\x02\x02\u01BC\u01BB\x03\x02\x02\x02\u01BD\u01C0\x03\x02" +
-		"\x02\x02\u01BE\u01BC\x03\x02\x02\x02\u01BE\u01BF\x03\x02\x02\x02\u01BF" +
-		"\u01C1\x03\x02\x02\x02\u01C0\u01BE\x03\x02\x02\x02\u01C1\u01C2\x07\xBD" +
-		"\x02\x02\u01C2I\x03\x02\x02\x02\u01C3\u01C7\x05N(\x02\u01C4\u01C7\x05" +
-		"l7\x02\u01C5\u01C7\x05n8\x02\u01C6\u01C3\x03\x02\x02\x02\u01C6\u01C4\x03" +
-		"\x02\x02\x02\u01C6\u01C5\x03\x02\x02\x02\u01C7K\x03\x02\x02\x02\u01C8" +
-		"\u01C9\t\x1A\x02\x02\u01C9M\x03\x02\x02\x02\u01CA\u01CB\x05\f\x07\x02" +
-		"\u01CB\u01CC\x05P)\x02\u01CC";
-	private static readonly _serializedATNSegment1: string =
-		"\u01CD\x05f4\x02\u01CD\u01CE\x05\f\x07\x02\u01CE\u01D0\x05R*\x02\u01CF" +
-		"\u01D1\x05T+\x02\u01D0\u01CF\x03\x02\x02\x02\u01D0\u01D1\x03\x02\x02\x02" +
-		"\u01D1\u01D2\x03\x02\x02\x02\u01D2\u01D3\x07\xC6\x02\x02\u01D3\u01E5\x03" +
-		"\x02\x02\x02\u01D4\u01D5\x05\f\x07\x02\u01D5\u01D6\x05P)\x02\u01D6\u01D7" +
-		"\x05f4\x02\u01D7\u01D8\x05\f\x07\x02\u01D8\u01D9\x05h5\x02\u01D9\u01DA" +
-		"\x05\xB0Y\x02\u01DA\u01DB\x05V,\x02\u01DB\u01DC\x07\xC6\x02\x02\u01DC" +
-		"\u01E5\x03\x02\x02\x02\u01DD\u01DE\x05\f\x07\x02\u01DE\u01DF\x05P)\x02" +
-		"\u01DF\u01E0\x05f4\x02\u01E0\u01E1\x05> \x02\u01E1\u01E2\x05R*\x02\u01E2" +
-		"\u01E3\x07\xC6\x02\x02\u01E3\u01E5\x03\x02\x02\x02\u01E4\u01CA\x03\x02" +
-		"\x02\x02\u01E4\u01D4\x03\x02\x02\x02\u01E4\u01DD\x03\x02\x02\x02\u01E5" +
-		"O\x03\x02\x02\x02\u01E6\u01E7\x05\x04\x03\x02\u01E7Q\x03\x02\x02\x02\u01E8" +
-		"\u01E9\x05P)\x02\u01E9S\x03\x02\x02\x02\u01EA\u01EB\x05|?\x02\u01EB\u01EC" +
-		"\x05\f\x07\x02\u01EC\u01ED\x05R*\x02\u01ED\u01F2\x03\x02\x02\x02\u01EE" +
-		"\u01EF\x05\xB0Y\x02\u01EF\u01F0\x05V,\x02\u01F0\u01F2\x03\x02\x02\x02" +
-		"\u01F1\u01EA\x03\x02\x02\x02\u01F1\u01EE\x03\x02\x02\x02\u01F2U\x03\x02" +
-		"\x02\x02\u01F3\u01F9\x05\\/\x02\u01F4\u01F5\x05`1\x02\u01F5\u01F6\x05" +
-		"\\/\x02\u01F6\u01F8\x03\x02\x02\x02\u01F7\u01F4\x03\x02\x02\x02\u01F8" +
-		"\u01FB\x03\x02\x02\x02\u01F9\u01F7\x03\x02\x02\x02\u01F9\u01FA\x03\x02" +
-		"\x02\x02\u01FAW\x03\x02\x02\x02\u01FB\u01F9\x03\x02\x02\x02\u01FC\u01FD" +
-		"\x07\x88\x02\x02\u01FDY\x03\x02\x02\x02\u01FE\u01FF\x07\x89\x02\x02\u01FF" +
-		"[\x03\x02\x02\x02\u0200\u0205\x05\f\x07\x02\u0201\u0202\x05> \x02\u0202" +
-		"\u0203\x05X-\x02\u0203\u0205\x03\x02\x02\x02\u0204\u0200\x03\x02\x02\x02" +
-		"\u0204\u0201\x03\x02\x02\x02\u0205\u020E\x03\x02\x02\x02\u0206\u0207\x05" +
-		"\x1E\x10\x02\u0207\u0208\x05P)\x02\u0208\u020F\x03\x02\x02\x02\u0209\u020A" +
-		"\x07\x8A\x02\x02\u020A\u020B\x05\n\x06\x02\u020B\u020C\x05P)\x02\u020C" +
-		"\u020F\x03\x02\x02\x02\u020D\u020F\x05Z.\x02\u020E\u0206\x03\x02\x02\x02" +
-		"\u020E\u0209\x03\x02\x02\x02\u020E\u020D\x03\x02\x02\x02\u020E\u020F\x03" +
-		"\x02\x02\x02\u020F]\x03\x02\x02\x02\u0210\u0211\t\x1B\x02\x02\u0211_\x03" +
-		"\x02\x02\x02\u0212\u0214\x05^0\x02\u0213\u0212\x03\x02\x02\x02\u0214\u0215" +
-		"\x03\x02\x02\x02\u0215\u0213\x03\x02\x02\x02\u0215\u0216\x03\x02\x02\x02" +
-		"\u0216a\x03\x02\x02\x02\u0217\u0218\t\x1C\x02\x02\u0218c\x03\x02\x02\x02" +
-		"\u0219\u021A\t\x1D\x02\x02\u021Ae\x03\x02\x02\x02\u021B\u021C\t\x1E\x02" +
-		"\x02\u021Cg\x03\x02\x02\x02\u021D\u021E\x07}\x02\x02\u021Ei\x03\x02\x02" +
-		"\x02\u021F\u0220\x070\x02\x02\u0220k\x03\x02\x02\x02\u0221\u0222\x05\n" +
-		"\x06\x02\u0222\u0223\x05P)\x02\u0223\u0224\x05f4\x02\u0224\u0225\x05\f" +
-		"\x07\x02\u0225\u0227\x05R*\x02\u0226\u0228\x05T+\x02\u0227\u0226\x03\x02" +
-		"\x02\x02\u0227\u0228\x03\x02\x02\x02\u0228\u0229\x03\x02\x02\x02\u0229" +
-		"\u022A\x07\xC6\x02\x02\u022A\u0244\x03\x02\x02\x02\u022B\u022C\x05\n\x06" +
-		"\x02\u022C\u022D\x05P)\x02\u022D\u022E\x05f4\x02\u022E\u022F\x05\f\x07" +
-		"\x02\u022F\u0230\x05h5\x02\u0230\u0231\x05\xB0Y\x02\u0231\u0232\x05V," +
-		"\x02\u0232\u0233\x07\xC6\x02\x02\u0233\u0244\x03\x02\x02\x02\u0234\u0235" +
-		"\x05\n\x06\x02\u0235\u0236\x05P)\x02\u0236\u0237\x05f4\x02\u0237\u0238" +
-		"\x05\f\x07\x02\u0238\u0239\x05R*\x02\u0239\u023A\x05j6\x02\u023A\u023B" +
-		"\x05\xD6l\x02\u023B\u023C\x07\xC6\x02\x02\u023C\u023D\x05\n\x06\x02\u023D" +
-		"\u023E\x05P)\x02\u023E\u023F\x05f4\x02\u023F\u0240\x05\xD6l\x02\u0240" +
-		"\u0241\x07\xC6\x02\x02\u0241\u0244\x03\x02\x02\x02\u0242\u0244\x03\x02" +
-		"\x02\x02\u0243\u0221\x03\x02\x02\x02\u0243\u022B\x03\x02\x02\x02\u0243" +
-		"\u0234\x03\x02\x02\x02\u0243\u0242\x03\x02\x02\x02\u0244m\x03\x02\x02" +
-		"\x02\u0245\u024A\x05p9\x02\u0246\u024A\x05t;\x02\u0247\u024A\x05z>\x02" +
-		"\u0248\u024A\x05\x84C\x02\u0249\u0245\x03\x02\x02\x02\u0249\u0246\x03" +
-		"\x02\x02\x02\u0249\u0247\x03\x02\x02\x02\u0249\u0248\x03\x02\x02\x02\u024A" +
-		"o\x03\x02\x02\x02\u024B\u024D\x05\x80A\x02\u024C\u024B\x03\x02\x02\x02" +
-		"\u024C\u024D\x03\x02\x02\x02\u024D\u024E\x03\x02\x02\x02\u024E\u024F\x05" +
-		"|?\x02\u024F\u0250\x05~@\x02\u0250\u0251\x05\x86D\x02\u0251\u0252\x07" +
-		"\xC8\x02\x02\u0252\u025C\x03\x02\x02\x02\u0253\u0255\x05\x80A\x02\u0254" +
-		"\u0253\x03\x02\x02\x02\u0254\u0255\x03\x02\x02\x02\u0255\u0256\x03\x02" +
-		"\x02\x02\u0256\u0257\x05|?\x02\u0257\u0258\x05~@\x02\u0258\u0259\x05\x86" +
-		"D\x02\u0259\u025A\x07\xC9\x02\x02\u025A\u025C\x03\x02\x02\x02\u025B\u024C" +
-		"\x03\x02\x02\x02\u025B\u0254\x03\x02\x02\x02\u025C\u025D\x03\x02\x02\x02" +
-		"\u025D\u025E\x05\x8EH\x02\u025Eq\x03\x02\x02\x02\u025F\u0260\x07\xA0\x02" +
-		"\x02\u0260s\x03\x02\x02\x02\u0261\u0263\x05\x80A\x02\u0262\u0261\x03\x02" +
-		"\x02\x02\u0262\u0263\x03\x02\x02\x02\u0263\u0264\x03\x02\x02\x02\u0264" +
-		"\u0265\x05|?\x02\u0265\u0266\x05~@\x02\u0266\u0267\x05r:\x02\u0267\u0268" +
-		"\x05\x86D\x02\u0268\u0269\x07\xC8\x02\x02\u0269\u0274\x03\x02\x02\x02" +
-		"\u026A\u026C\x05\x80A\x02\u026B\u026A\x03\x02\x02\x02\u026B\u026C\x03" +
-		"\x02\x02\x02\u026C\u026D\x03\x02\x02\x02\u026D\u026E\x05|?\x02\u026E\u026F" +
-		"\x05~@\x02\u026F\u0270\x05r:\x02\u0270\u0271\x05\x86D\x02\u0271\u0272" +
-		"\x07\xC9\x02\x02\u0272\u0274\x03\x02\x02\x02\u0273\u0262\x03\x02\x02\x02" +
-		"\u0273\u026B\x03\x02\x02\x02\u0274u\x03\x02\x02\x02\u0275\u0276\x07\xA1" +
-		"\x02\x02\u0276w\x03\x02\x02\x02\u0277\u0278\x07\xA2\x02\x02\u0278y\x03" +
-		"\x02\x02\x02\u0279\u027B\x05v<\x02\u027A\u0279\x03\x02\x02\x02\u027A\u027B" +
-		"\x03\x02\x02\x02\u027B\u027C\x03\x02\x02\x02\u027C\u027D\x05|?\x02\u027D" +
-		"\u027E\x05~@\x02\u027E\u027F\x05x=\x02\u027F\u0280\x05\n\x06\x02\u0280" +
-		"\u0281\x05R*\x02\u0281\u0282\x05\x14\v\x02\u0282\u0283\x05P)\x02\u0283" +
-		"\u0284\x05|?\x02\u0284\u0285\x05\f\x07\x02\u0285\u0286\x05R*\x02\u0286" +
-		"\u0287\x07\xC8\x02\x02\u0287\u0298\x03\x02\x02\x02\u0288\u028A\x05v<\x02" +
-		"\u0289\u0288\x03\x02\x02\x02\u0289\u028A\x03\x02\x02\x02\u028A\u028B\x03" +
-		"\x02\x02\x02\u028B\u028C\x05|?\x02\u028C\u028D\x05~@\x02\u028D\u028E\x05" +
-		"x=\x02\u028E\u028F\x05\n\x06\x02\u028F\u0290\x05R*\x02\u0290\u0291\x05" +
-		"\x14\v\x02\u0291\u0292\x05P)\x02\u0292\u0293\x05|?\x02\u0293\u0294\x05" +
-		"\f\x07\x02\u0294\u0295\x05R*\x02\u0295\u0296\x07\xC9\x02\x02\u0296\u0298" +
-		"\x03\x02\x02\x02\u0297\u027A\x03\x02\x02\x02\u0297\u0289\x03\x02\x02\x02" +
-		"\u0298\u0299\x03\x02\x02\x02\u0299\u029A\x05\x8EH\x02\u029A{\x03\x02\x02" +
-		"\x02\u029B\u029C\x07\xA3\x02\x02\u029C}\x03\x02\x02\x02\u029D\u029E\x07" +
-		"\xA4\x02\x02\u029E\x7F\x03\x02\x02\x02\u029F\u02A0\x07\xA5\x02\x02\u02A0" +
-		"\x81\x03\x02\x02\x02\u02A1\u02A2\x07\xA6\x02\x02\u02A2\x83\x03\x02\x02" +
-		"\x02\u02A3\u02A5\x05\x80A\x02\u02A4\u02A3\x03\x02\x02\x02\u02A4\u02A5" +
-		"\x03\x02\x02\x02\u02A5\u02A6\x03\x02\x02\x02\u02A6\u02A7\x05|?\x02\u02A7" +
-		"\u02A8\x05~@\x02\u02A8\u02A9\x05\x82B\x02\u02A9\u02AA\x05\x86D\x02\u02AA" +
-		"\u02AB\x07\xC8\x02\x02\u02AB\u02B6\x03\x02\x02\x02\u02AC\u02AE\x05\x80" +
-		"A\x02\u02AD\u02AC\x03\x02\x02\x02\u02AD\u02AE\x03\x02\x02\x02\u02AE\u02AF" +
-		"\x03\x02\x02\x02\u02AF\u02B0\x05|?\x02\u02B0\u02B1\x05~@\x02\u02B1\u02B2" +
-		"\x05\x82B\x02\u02B2\u02B3\x05\x86D\x02\u02B3\u02B4\x07\xC9\x02\x02\u02B4" +
-		"\u02B6\x03\x02\x02\x02\u02B5\u02A4\x03\x02\x02\x02\u02B5\u02AD\x03\x02" +
-		"\x02\x02\u02B6\u02B7\x03\x02\x02\x02\u02B7\u02B8\x05\x8EH\x02\u02B8\x85" +
-		"\x03\x02\x02\x02\u02B9\u02C0\x05\x88E\x02\u02BA\u02C0\x05\x8AF\x02\u02BB" +
-		"\u02BD\x05\x8CG\x02\u02BC\u02BE\x054\x1B\x02\u02BD\u02BC\x03\x02\x02\x02" +
-		"\u02BD\u02BE\x03\x02\x02\x02\u02BE\u02C0\x03\x02\x02\x02\u02BF\u02B9\x03" +
-		"\x02\x02\x02\u02BF\u02BA\x03\x02\x02\x02\u02BF\u02BB\x03\x02\x02\x02\u02C0" +
-		"\x87\x03\x02\x02\x02\u02C1\u02C2\x05\x04\x03\x02\u02C2\x89\x03\x02\x02" +
-		"\x02\u02C3\u02C4\x05\f\x07\x02\u02C4\u02C8\x05P)\x02\u02C5\u02C6\x05\x1E" +
-		"\x10\x02\u02C6\u02C7\x05P)\x02\u02C7\u02C9\x03\x02\x02\x02\u02C8\u02C5" +
-		"\x03\x02\x02\x02\u02C8\u02C9\x03\x02\x02\x02\u02C9\x8B\x03\x02\x02\x02" +
-		"\u02CA\u02CB\x05\n\x06\x02\u02CB\u02CC\x05P)\x02\u02CC\x8D\x03\x02\x02" +
-		"\x02\u02CD\u02CF\x05\x90I\x02\u02CE\u02CD\x03\x02\x02\x02\u02CF\u02D0" +
-		"\x03\x02\x02\x02\u02D0\u02CE\x03\x02\x02\x02\u02D0\u02D1\x03\x02\x02\x02" +
-		"\u02D1\x8F\x03\x02\x02\x02\u02D2\u02D9\x05\x94K\x02\u02D3\u02D9\x05\x96" +
-		"L\x02\u02D4\u02D9\x05\x9AN\x02\u02D5\u02D6\x05\x9EP\x02\u02D6\u02D7\x07" +
-		"\xC7\x02\x02\u02D7\u02D9\x03\x02\x02\x02\u02D8\u02D2\x03\x02\x02\x02\u02D8" +
-		"\u02D3\x03\x02\x02\x02\u02D8\u02D4\x03\x02\x02\x02\u02D8\u02D5\x03\x02" +
-		"\x02\x02\u02D9\x91\x03\x02\x02\x02\u02DA\u02DB\x07=\x02\x02\u02DB\x93" +
-		"\x03\x02\x02\x02\u02DC\u02DD\x05\x92J\x02\u02DD\u02DE\x05\x8AF\x02\u02DE" +
-		"\x95\x03\x02\x02\x02\u02DF\u02E0\x07\xA7\x02\x02\u02E0\x97\x03\x02\x02" +
-		"\x02\u02E1\u02E2\x078\x02\x02\u02E2\x99\x03\x02\x02\x02\u02E3\u02E4\x05" +
-		"\x98M\x02\u02E4\u02E5\x05\x9CO\x02\u02E5\u02E6\x07\xC7\x02\x02\u02E6\u02EB" +
-		"\x05\x9EP\x02\u02E7\u02E8\x07\xC8\x02\x02\u02E8\u02EA\x05\x9EP\x02\u02E9" +
-		"\u02E7\x03\x02\x02\x02\u02EA\u02ED\x03\x02\x02\x02\u02EB\u02E9\x03\x02" +
-		"\x02\x02\u02EB\u02EC\x03\x02\x02\x02\u02EC\u02EE\x03\x02\x02\x02\u02ED" +
-		"\u02EB\x03\x02\x02\x02\u02EE\u02EF\x07\xC6\x02\x02\u02EF\x9B\x03\x02\x02" +
-		"\x02\u02F0\u02F2\x05\x04\x03\x02\u02F1\u02F0\x03\x02\x02\x02\u02F2\u02F3" +
-		"\x03\x02\x02\x02\u02F3\u02F1\x03\x02\x02\x02\u02F3\u02F4\x03\x02\x02\x02" +
-		"\u02F4\u02F6\x03\x02\x02\x02\u02F5\u02F7\x05 \x11\x02\u02F6\u02F5\x03" +
-		"\x02\x02\x02\u02F6\u02F7\x03\x02\x02\x02\u02F7\u02F9\x03\x02\x02\x02\u02F8" +
-		"\u02FA\x05\x9CO\x02\u02F9\u02F8\x03\x02\x02\x02\u02F9\u02FA\x03\x02\x02" +
-		"\x02\u02FA\x9D\x03\x02\x02\x02\u02FB\u0304\x05\xA0Q\x02\u02FC\u0304\x05" +
-		"\xA2R\x02\u02FD\u0304\x05\xB8]\x02\u02FE\u0304\x05\xBC_\x02\u02FF\u0304" +
-		"\x05\xC8e\x02\u0300\u0304\x05\xC2b\x02\u0301\u0304\x05\xC6d\x02\u0302" +
-		"\u0304\x05\xCCg\x02\u0303\u02FB\x03\x02\x02\x02\u0303\u02FC\x03\x02\x02" +
-		"\x02\u0303\u02FD\x03\x02\x02\x02\u0303\u02FE\x03\x02\x02\x02\u0303\u02FF" +
-		"\x03\x02\x02\x02\u0303\u0300\x03\x02\x02\x02\u0303\u0301\x03\x02\x02\x02" +
-		"\u0303\u0302\x03\x02\x02\x02\u0304\x9F\x03\x02\x02\x02\u0305\u0306\x07" +
-		";\x02\x02\u0306\xA1\x03\x02\x02\x02\u0307\u030B\x05\xA4S\x02\u0308\u030B" +
-		"\x05\xA6T\x02\u0309\u030B\x05\xB6\\\x02\u030A\u0307\x03\x02\x02\x02\u030A" +
-		"\u0308\x03\x02\x02\x02\u030A\u0309\x03\x02\x02\x02\u030B\xA3\x03\x02\x02" +
-		"\x02\u030C\u0310\x05\x88E\x02\u030D\u0310\x05\xCEh\x02\u030E\u0310\x05" +
-		"\x8CG\x02\u030F\u030C\x03\x02\x02\x02\u030F\u030D\x03\x02\x02\x02\u030F" +
-		"\u030E\x03\x02\x02\x02\u0310\u0312\x03\x02\x02\x02\u0311\u0313\x054\x1B" +
-		"\x02\u0312\u0311\x03\x02\x02\x02\u0312\u0313\x03\x02\x02\x02\u0313\xA5" +
-		"\x03\x02\x02\x02\u0314\u0315\x05\xAEX\x02\u0315\u0316\x05\xA8U\x02\u0316" +
-		"\u0317\x05\xAAV\x02\u0317\u0318\x05\xA8U\x02\u0318\u0319\x05\xA8U\x02" +
-		"\u0319\u031A\x05\xACW\x02\u031A\u032B\x05\xA8U\x02\u031B\u031C\x05\xB0" +
-		"Y\x02\u031C\u031D\x05\xCEh\x02\u031D\u0323\x03\x02\x02\x02\u031E\u031F" +
-		"\x05\xB2Z\x02\u031F\u0320\x05\xCEh\x02\u0320\u0322\x03\x02\x02\x02\u0321" +
-		"\u031E\x03\x02\x02\x02\u0322\u0325\x03\x02\x02\x02\u0323\u0321\x03\x02" +
-		"\x02\x02\u0323\u0324\x03\x02\x02\x02\u0324\u0329\x03\x02\x02\x02\u0325" +
-		"\u0323\x03\x02\x02\x02\u0326\u0327\x05\xB4[\x02\u0327\u0328\x05\xE0q\x02" +
-		"\u0328\u032A\x03\x02\x02\x02\u0329\u0326\x03\x02\x02\x02\u0329\u032A\x03" +
-		"\x02\x02\x02\u032A\u032C\x03\x02\x02\x02\u032B\u031B\x03\x02\x02\x02\u032B" +
-		"\u032C\x03\x02\x02\x02\u032C\xA7\x03\x02\x02\x02\u032D\u032E\x07\xBD\x02" +
-		"\x02\u032E\xA9\x03\x02\x02\x02\u032F\u0330\x05\x04\x03\x02\u0330\xAB\x03" +
-		"\x02\x02\x02\u0331\u0332\x05\x04\x03\x02\u0332\xAD\x03\x02\x02\x02\u0333" +
-		"\u0334\x07C\x02\x02\u0334\xAF\x03\x02\x02\x02\u0335\u0336\x07\x8F\x02" +
-		"\x02\u0336\xB1\x03\x02\x02\x02\u0337\u0338\x07\x8B\x02\x02\u0338\xB3\x03" +
-		"\x02\x02\x02\u0339\u033A\x07D\x02\x02\u033A\xB5\x03\x02\x02\x02\u033B" +
-		"\u033C\x05\xAEX\x02\u033C\u034C\x05\xCEh\x02\u033D\u033E\x05\xB0Y\x02" +
-		"\u033E\u0344\x05\xCEh\x02\u033F\u0340\x05\xB2Z\x02\u0340\u0341\x05\xCE" +
-		"h\x02\u0341\u0343\x03\x02\x02\x02\u0342\u033F\x03\x02\x02\x02\u0343\u0346" +
-		"\x03\x02\x02\x02\u0344\u0342\x03\x02\x02\x02\u0344\u0345\x03\x02\x02\x02" +
-		"\u0345\u034A\x03\x02\x02\x02\u0346\u0344\x03\x02\x02\x02\u0347\u0348\x05" +
-		"\xB4[\x02\u0348\u0349\x05\xE0q\x02\u0349\u034B\x03\x02\x02\x02\u034A\u0347" +
-		"\x03\x02\x02\x02\u034A\u034B\x03\x02\x02\x02\u034B\u034D\x03\x02\x02\x02" +
-		"\u034C\u033D\x03\x02\x02\x02\u034C\u034D\x03\x02\x02\x02\u034D\xB7\x03" +
-		"\x02\x02\x02\u034E\u034F\x07<\x02\x02\u034F\xB9\x03\x02\x02\x02\u0350" +
-		"\u0351\x07B\x02\x02\u0351\xBB\x03\x02\x02\x02\u0352\u0353\x05\xBA^\x02" +
-		"\u0353\u0354\x05F$\x02\u0354\xBD\x03\x02\x02\x02\u0355\u0356\x07\xA8\x02" +
-		"\x02\u0356\xBF\x03\x02\x02\x02\u0357\u0358\x07\xA9\x02\x02\u0358\xC1\x03" +
-		"\x02\x02\x02\u0359\u035A\x05\xBE`\x02\u035A\u035B\x05\b\x05\x02\u035B" +
-		"\u035C\x05\xE0q\x02\u035C\u0360\x05\xC0a\x02\u035D\u0361\x05\x88E\x02" +
-		"\u035E\u0361\x05\x8AF\x02\u035F\u0361\x05\x8CG\x02\u0360\u035D\x03\x02" +
-		"\x02\x02\u0360\u035E\x03\x02\x02\x02\u0360\u035F\x03\x02\x02\x02\u0361" +
-		"\u0363\x03\x02\x02\x02\u0362\u0364\x054\x1B\x02\u0363\u0362\x03\x02\x02" +
-		"\x02\u0363\u0364\x03\x02\x02\x02\u0364\xC3\x03\x02\x02\x02\u0365\u0366" +
-		"\t\x1F\x02\x02\u0366\xC5\x03\x02\x02\x02\u0367\u0368\x05\xC4c\x02\u0368" +
-		"\u0369\x05\xCEh\x02\u0369\xC7\x03\x02\x02\x02\u036A\u036B\x07:\x02\x02" +
-		"\u036B\xC9\x03\x02\x02\x02\u036C\u036D\x07>\x02\x02\u036D\xCB\x03\x02" +
-		"\x02\x02\u036E\u036F\x05\xCAf\x02\u036F\u0370\x05\xD2j\x02\u0370\xCD\x03" +
-		"\x02\x02\x02\u0371\u0377\x05\xE0q\x02\u0372\u0373\x05\xD0i\x02\u0373\u0374" +
-		"\x05\xE0q\x02\u0374\u0376\x03\x02\x02\x02\u0375\u0372\x03\x02\x02\x02" +
-		"\u0376\u0379\x03\x02\x02\x02\u0377\u0375\x03\x02\x02\x02\u0377\u0378\x03" +
-		"\x02\x02\x02\u0378\xCF\x03\x02\x02\x02\u0379\u0377\x03\x02\x02\x02\u037A" +
-		"\u037B\t \x02\x02\u037B\xD1\x03\x02\x02\x02\u037C\u037D\t!\x02\x02\u037D" +
-		"\xD3\x03\x02\x02\x02\u037E\u037F\t\"\x02\x02\u037F\xD5\x03\x02\x02\x02" +
-		"\u0380\u0384\x05\xD8m\x02\u0381\u0384\x05\xDAn\x02\u0382\u0384\x05\xDE" +
-		"p\x02\u0383\u0380\x03\x02\x02\x02\u0383\u0381\x03\x02\x02\x02\u0383\u0382" +
-		"\x03\x02\x02\x02\u0384\xD7\x03\x02\x02\x02\u0385\u0386\x07\xBE\x02\x02" +
-		"\u0386\u0387\x05\xD6l\x02\u0387\xD9\x03\x02\x02\x02\u0388\u0389\x07\xC5" +
-		"\x02\x02\u0389\u038A\x05\xD6l\x02\u038A\xDB\x03\x02\x02\x02\u038B\u038F" +
-		"\x05@!\x02\u038C\u038F\x05B\"\x02\u038D\u038F\x05D#\x02\u038E\u038B\x03" +
-		"\x02\x02\x02\u038E\u038C\x03\x02\x02\x02\u038E\u038D\x03\x02\x02\x02\u038F" +
-		"\xDD\x03\x02\x02\x02\u0390\u0392\x05\xDCo\x02\u0391\u0393\x05R*\x02\u0392" +
-		"\u0391\x03\x02\x02\x02\u0392\u0393\x03\x02\x02\x02\u0393\u0399\x03\x02" +
-		"\x02\x02\u0394\u0399\x05H%\x02\u0395\u0399\x05F$\x02\u0396\u0399\x05\xD2" +
-		"j\x02\u0397\u0399\x05\xD4k\x02\u0398\u0390\x03\x02\x02\x02\u0398\u0394" +
-		"\x03\x02\x02\x02\u0398\u0395\x03\x02\x02\x02\u0398\u0396\x03\x02\x02\x02" +
-		"\u0398\u0397\x03\x02\x02\x02\u0399\xDF\x03\x02\x02\x02\u039A\u03AB\x05" +
-		"\xE6t\x02\u039B\u03AB\x05\xE8u\x02\u039C\u03AB\x05\xEAv\x02\u039D\u03AB" +
-		"\x05\xECw\x02\u039E\u03A3\x05\xEEx\x02\u039F\u03A0\x05\xE4s\x02\u03A0" +
-		"\u03A1\x05\f\x07\x02\u03A1\u03A2\x05R*\x02\u03A2\u03A4\x03\x02\x02\x02" +
-		"\u03A3\u039F\x03\x02\x02\x02\u03A3\u03A4\x03\x02\x02\x02\u03A4\u03A8\x03" +
-		"\x02\x02\x02\u03A5\u03A6\x05\xE2r\x02\u03A6\u03A7\x05\xE0q\x02\u03A7\u03A9" +
-		"\x03\x02\x02\x02\u03A8\u03A5\x03\x02\x02\x02\u03A8\u03A9\x03\x02\x02\x02" +
-		"\u03A9\u03AB\x03\x02\x02\x02\u03AA\u039A\x03\x02\x02\x02\u03AA\u039B\x03" +
-		"\x02\x02\x02\u03AA\u039C\x03\x02\x02\x02\u03AA\u039D\x03\x02\x02\x02\u03AA" +
-		"\u039E\x03\x02\x02\x02\u03AB\xE1\x03\x02\x02\x02\u03AC\u03AD\x07\xC3\x02" +
-		"\x02\u03AD\xE3\x03\x02\x02\x02\u03AE\u03AF\x07\xB3\x02\x02\u03AF\xE5\x03" +
-		"\x02\x02\x02\u03B0\u03B1\x07\xBE\x02\x02\u03B1\u03B2\x05\xE0q\x02\u03B2" +
-		"\xE7\x03\x02\x02\x02\u03B3\u03B4\x07\xC5\x02\x02\u03B4\u03B5\x05\xE0q" +
-		"\x02\u03B5\xE9\x03\x02\x02\x02\u03B6\u03B7\x05\f\x07\x02\u03B7\u03BB\x05" +
-		"P)\x02\u03B8\u03B9\x05\x1E\x10\x02\u03B9\u03BA\x05P)\x02\u03BA\u03BC\x03" +
-		"\x02\x02\x02\u03BB\u03B8\x03\x02\x02\x02\u03BB\u03BC\x03\x02\x02\x02\u03BC" +
-		"\u03C3\x03\x02\x02\x02\u03BD\u03BE\x05\n\x06\x02\u03BE\u03BF\x05P)\x02" +
-		"\u03BF\u03C0\x05\x14\v\x02\u03C0\u03C1\x05P)\x02\u03C1\u03C3\x03\x02\x02" +
-		"\x02\u03C2\u03B6\x03\x02\x02\x02\u03C2\u03BD\x03\x02\x02\x02\u03C3\xEB" +
-		"\x03\x02\x02\x02\u03C4\u03C5\x05\n\x06\x02\u03C5\u03C6\x05\xFA~\x02\u03C6" +
-		"\u03C7\x05\x18\r\x02\u03C7\u03C8\x05P)\x02\u03C8\xED\x03\x02\x02\x02\u03C9" +
-		"\u03CA\x05\xDEp\x02\u03CA\u03CB\x05\xF6|\x02\u03CB\xEF\x03\x02\x02\x02" +
-		"\u03CC\u03CD\x07\xB4\x02\x02\u03CD\xF1\x03\x02\x02\x02\u03CE\u03CF\x07" +
-		"\xB5\x02\x02\u03CF\xF3\x03\x02\x02\x02\u03D0\u03D1\x07\xB6\x02\x02\u03D1" +
-		"\xF5\x03\x02\x02\x02\u03D2\u03D4\x05\xF8}\x02\u03D3\u03D2\x03\x02\x02" +
-		"\x02\u03D4\u03D7\x03\x02\x02\x02\u03D5\u03D3\x03\x02\x02\x02\u03D5\u03D6" +
-		"\x03\x02\x02\x02\u03D6\xF7\x03\x02\x02\x02\u03D7\u03D5\x03\x02\x02\x02" +
-		"\u03D8\u03DE\x05\xFC\x7F\x02\u03D9\u03DF\x05P)\x02\u03DA\u03DF\x05z>\x02" +
-		"\u03DB\u03DF\x05\xF0y\x02\u03DC\u03DF\x05\xF2z\x02\u03DD\u03DF\x05\xF4" +
-		"{\x02\u03DE\u03D9\x03\x02\x02\x02\u03DE\u03DA\x03\x02\x02\x02\u03DE\u03DB" +
-		"\x03\x02\x02\x02\u03DE\u03DC\x03\x02\x02\x02\u03DE\u03DD\x03\x02\x02\x02" +
-		"\u03DF\xF9\x03\x02\x02\x02\u03E0\u03E6\x05P)\x02\u03E1\u03E6\x05z>\x02" +
-		"\u03E2\u03E6\x05\xF0y\x02\u03E3\u03E6\x05\xF2z\x02\u03E4\u03E6\x05\xF4" +
-		"{\x02\u03E5\u03E0\x03\x02\x02\x02\u03E5\u03E1\x03\x02\x02\x02\u03E5\u03E2" +
-		"\x03\x02\x02\x02\u03E5\u03E3\x03\x02\x02\x02\u03E5\u03E4\x03\x02\x02\x02" +
-		"\u03E6\u03E7\x03\x02\x02\x02\u03E7\u03E8\x05\x18\r\x02\u03E8\xFB\x03\x02" +
-		"\x02\x02\u03E9\u03EA\x07\xB7\x02\x02\u03EA\xFD\x03\x02\x02\x02L\u0103" +
-		"\u010A\u0111\u0118\u0131\u0142\u0157\u0161\u0167\u0170\u0179\u0189\u019A" +
-		"\u01A3\u01A8\u01AB\u01BE\u01C6\u01D0\u01E4\u01F1\u01F9\u0204\u020E\u0215" +
-		"\u0227\u0243\u0249\u024C\u0254\u025B\u0262\u026B\u0273\u027A\u0289\u0297" +
-		"\u02A4\u02AD\u02B5\u02BD\u02BF\u02C8\u02D0\u02D8\u02EB\u02F3\u02F6\u02F9" +
-		"\u0303\u030A\u030F\u0312\u0323\u0329\u032B\u0344\u034A\u034C\u0360\u0363" +
-		"\u0377\u0383\u038E\u0392\u0398\u03A3\u03A8\u03AA\u03BB\u03C2\u03D5\u03DE" +
-		"\u03E5";
-	public static readonly _serializedATN: string = Utils.join(
-		[
-			PortuguesPuroParser._serializedATNSegment0,
-			PortuguesPuroParser._serializedATNSegment1,
-		],
-		"",
-	);
-	public static __ATN: ATN;
+	public static readonly _serializedATN: number[] = [4,1,205,1002,2,0,7,0,
+	2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,7,7,2,8,7,8,2,9,7,9,
+	2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,2,16,7,16,2,
+	17,7,17,2,18,7,18,2,19,7,19,2,20,7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,
+	7,24,2,25,7,25,2,26,7,26,2,27,7,27,2,28,7,28,2,29,7,29,2,30,7,30,2,31,7,
+	31,2,32,7,32,2,33,7,33,2,34,7,34,2,35,7,35,2,36,7,36,2,37,7,37,2,38,7,38,
+	2,39,7,39,2,40,7,40,2,41,7,41,2,42,7,42,2,43,7,43,2,44,7,44,2,45,7,45,2,
+	46,7,46,2,47,7,47,2,48,7,48,2,49,7,49,2,50,7,50,2,51,7,51,2,52,7,52,2,53,
+	7,53,2,54,7,54,2,55,7,55,2,56,7,56,2,57,7,57,2,58,7,58,2,59,7,59,2,60,7,
+	60,2,61,7,61,2,62,7,62,2,63,7,63,2,64,7,64,2,65,7,65,2,66,7,66,2,67,7,67,
+	2,68,7,68,2,69,7,69,2,70,7,70,2,71,7,71,2,72,7,72,2,73,7,73,2,74,7,74,2,
+	75,7,75,2,76,7,76,2,77,7,77,2,78,7,78,2,79,7,79,2,80,7,80,2,81,7,81,2,82,
+	7,82,2,83,7,83,2,84,7,84,2,85,7,85,2,86,7,86,2,87,7,87,2,88,7,88,2,89,7,
+	89,2,90,7,90,2,91,7,91,2,92,7,92,2,93,7,93,2,94,7,94,2,95,7,95,2,96,7,96,
+	2,97,7,97,2,98,7,98,2,99,7,99,2,100,7,100,2,101,7,101,2,102,7,102,2,103,
+	7,103,2,104,7,104,2,105,7,105,2,106,7,106,2,107,7,107,2,108,7,108,2,109,
+	7,109,2,110,7,110,2,111,7,111,2,112,7,112,2,113,7,113,2,114,7,114,2,115,
+	7,115,2,116,7,116,2,117,7,117,2,118,7,118,2,119,7,119,2,120,7,120,2,121,
+	7,121,2,122,7,122,2,123,7,123,2,124,7,124,2,125,7,125,1,0,1,0,1,1,4,1,256,
+	8,1,11,1,12,1,257,1,2,1,2,1,2,1,3,1,3,3,3,265,8,3,1,4,1,4,1,4,1,4,1,4,3,
+	4,272,8,4,1,5,1,5,1,5,1,5,1,5,3,5,279,8,5,1,6,1,6,1,7,1,7,1,8,1,8,1,8,1,
+	8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,3,8,304,8,
+	8,1,9,1,9,1,10,1,10,1,11,1,11,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,
+	12,3,12,321,8,12,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,
+	1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,3,13,342,8,13,1,14,1,14,1,15,1,
+	15,1,16,1,16,1,17,1,17,3,17,352,8,17,1,18,1,18,5,18,356,8,18,10,18,12,18,
+	359,9,18,1,18,1,18,1,19,1,19,5,19,365,8,19,10,19,12,19,368,9,19,1,19,1,
+	19,1,20,1,20,1,20,1,20,3,20,376,8,20,1,21,1,21,1,21,1,22,1,22,1,23,1,23,
+	1,24,1,24,1,24,1,25,1,25,5,25,390,8,25,10,25,12,25,393,9,25,1,25,1,25,1,
+	26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,3,26,409,8,26,
+	1,27,1,27,1,28,1,28,1,29,1,29,1,29,3,29,418,8,29,1,30,4,30,421,8,30,11,
+	30,12,30,422,1,31,3,31,426,8,31,1,31,1,31,1,32,1,32,1,32,1,32,1,33,1,33,
+	1,33,1,33,1,34,1,34,1,34,1,35,1,35,5,35,443,8,35,10,35,12,35,446,9,35,1,
+	35,1,35,1,36,1,36,1,36,3,36,453,8,36,1,37,1,37,1,38,1,38,1,38,1,38,1,38,
+	1,38,3,38,463,8,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,
+	38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,3,38,483,8,38,1,39,1,39,1,40,1,40,
+	1,41,1,41,1,41,1,41,1,41,1,41,1,41,3,41,496,8,41,1,42,1,42,1,42,1,42,5,
+	42,502,8,42,10,42,12,42,505,9,42,1,43,1,43,1,44,1,44,1,45,1,45,1,45,1,45,
+	3,45,515,8,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,3,45,525,8,45,1,46,
+	1,46,1,47,4,47,530,8,47,11,47,12,47,531,1,48,1,48,1,49,1,49,1,50,1,50,1,
+	51,1,51,1,52,1,52,1,53,1,53,1,53,1,53,1,53,1,53,3,53,550,8,53,1,53,1,53,
+	1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,
+	53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,3,53,578,8,53,1,54,1,54,
+	1,54,1,54,3,54,584,8,54,1,55,3,55,587,8,55,1,55,1,55,1,55,1,55,1,55,1,55,
+	3,55,595,8,55,1,55,1,55,1,55,1,55,1,55,3,55,602,8,55,1,55,1,55,1,56,1,56,
+	1,57,3,57,609,8,57,1,57,1,57,1,57,1,57,1,57,1,57,1,57,3,57,618,8,57,1,57,
+	1,57,1,57,1,57,1,57,1,57,3,57,626,8,57,1,58,1,58,1,59,1,59,1,60,3,60,633,
+	8,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,3,
+	60,648,8,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,1,60,
+	3,60,662,8,60,1,60,1,60,1,61,1,61,1,62,1,62,1,63,1,63,1,64,1,64,1,65,3,
+	65,675,8,65,1,65,1,65,1,65,1,65,1,65,1,65,1,65,3,65,684,8,65,1,65,1,65,
+	1,65,1,65,1,65,1,65,3,65,692,8,65,1,65,1,65,1,66,1,66,1,66,1,66,3,66,700,
+	8,66,3,66,702,8,66,1,67,1,67,1,68,1,68,1,68,1,68,1,68,3,68,711,8,68,1,69,
+	1,69,1,69,1,70,4,70,717,8,70,11,70,12,70,718,1,71,1,71,1,71,1,71,1,71,1,
+	71,3,71,727,8,71,1,72,1,72,1,73,1,73,1,73,1,74,1,74,1,75,1,75,1,76,1,76,
+	1,76,1,76,1,76,1,76,5,76,744,8,76,10,76,12,76,747,9,76,1,76,1,76,1,77,4,
+	77,752,8,77,11,77,12,77,753,1,77,3,77,757,8,77,1,77,3,77,760,8,77,1,78,
+	1,78,1,78,1,78,1,78,1,78,1,78,1,78,3,78,770,8,78,1,79,1,79,1,80,1,80,1,
+	80,3,80,777,8,80,1,81,1,81,1,81,3,81,782,8,81,1,81,3,81,785,8,81,1,82,1,
+	82,1,82,1,82,1,82,1,82,1,82,1,82,1,82,1,82,3,82,797,8,82,1,82,1,82,1,82,
+	5,82,802,8,82,10,82,12,82,805,9,82,1,82,1,82,1,82,3,82,810,8,82,1,83,1,
+	83,1,84,1,84,1,85,1,85,1,86,1,86,1,87,1,87,1,88,1,88,1,89,1,89,1,90,1,90,
+	1,90,1,90,1,90,1,90,1,90,5,90,833,8,90,10,90,12,90,836,9,90,1,90,1,90,1,
+	90,3,90,841,8,90,3,90,843,8,90,1,91,1,91,1,92,1,92,1,93,1,93,1,93,1,94,
+	1,94,1,95,1,95,1,96,1,96,1,96,1,96,1,96,1,96,1,96,3,96,863,8,96,1,96,3,
+	96,866,8,96,1,97,1,97,1,98,1,98,1,98,1,99,1,99,1,100,1,100,1,101,1,101,
+	1,101,1,102,1,102,1,102,1,102,5,102,884,8,102,10,102,12,102,887,9,102,1,
+	103,1,103,1,104,1,104,1,105,1,105,1,106,1,106,1,106,3,106,898,8,106,1,107,
+	1,107,1,107,1,108,1,108,1,108,1,109,1,109,1,109,3,109,909,8,109,1,110,1,
+	110,3,110,913,8,110,1,110,1,110,1,110,1,110,3,110,919,8,110,1,111,1,111,
+	1,111,1,111,1,111,1,111,1,111,1,111,1,111,3,111,930,8,111,1,111,1,111,1,
+	111,3,111,935,8,111,3,111,937,8,111,1,112,1,112,1,113,1,113,1,114,1,114,
+	1,114,1,115,1,115,1,115,1,116,1,116,1,116,1,116,1,116,3,116,954,8,116,1,
+	116,1,116,1,116,1,116,1,116,3,116,961,8,116,1,117,1,117,1,117,1,117,1,117,
+	1,118,1,118,1,118,1,119,1,119,1,120,1,120,1,121,1,121,1,122,5,122,978,8,
+	122,10,122,12,122,981,9,122,1,123,1,123,1,123,1,123,1,123,1,123,3,123,989,
+	8,123,1,124,1,124,1,124,1,124,1,124,3,124,996,8,124,1,124,1,124,1,125,1,
+	125,1,125,1,803,0,126,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,
+	36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,
+	84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,
+	124,126,128,130,132,134,136,138,140,142,144,146,148,150,152,154,156,158,
+	160,162,164,166,168,170,172,174,176,178,180,182,184,186,188,190,192,194,
+	196,198,200,202,204,206,208,210,212,214,216,218,220,222,224,226,228,230,
+	232,234,236,238,240,242,244,246,248,250,0,33,1,0,10,13,1,0,14,17,1,0,34,
+	37,1,0,38,41,1,0,42,45,1,0,72,79,1,0,80,102,2,0,190,191,205,205,5,0,103,
+	108,182,183,188,189,193,193,195,195,4,0,103,108,182,183,186,186,189,189,
+	1,0,182,182,1,0,183,183,1,0,103,103,1,0,104,104,1,0,105,105,1,0,106,106,
+	1,0,107,107,1,0,189,189,1,0,108,108,1,0,188,188,1,0,195,195,1,0,193,193,
+	2,0,109,110,196,199,4,0,111,117,188,188,193,193,195,195,1,0,118,134,2,0,
+	138,139,197,198,1,0,138,140,3,0,26,27,137,137,141,158,2,0,80,80,85,85,2,
+	0,67,67,168,168,1,0,169,176,1,0,61,62,1,0,69,71,1043,0,252,1,0,0,0,2,255,
+	1,0,0,0,4,259,1,0,0,0,6,264,1,0,0,0,8,271,1,0,0,0,10,278,1,0,0,0,12,280,
+	1,0,0,0,14,282,1,0,0,0,16,303,1,0,0,0,18,305,1,0,0,0,20,307,1,0,0,0,22,
+	309,1,0,0,0,24,320,1,0,0,0,26,341,1,0,0,0,28,343,1,0,0,0,30,345,1,0,0,0,
+	32,347,1,0,0,0,34,351,1,0,0,0,36,353,1,0,0,0,38,362,1,0,0,0,40,375,1,0,
+	0,0,42,377,1,0,0,0,44,380,1,0,0,0,46,382,1,0,0,0,48,384,1,0,0,0,50,387,
+	1,0,0,0,52,408,1,0,0,0,54,410,1,0,0,0,56,412,1,0,0,0,58,417,1,0,0,0,60,
+	420,1,0,0,0,62,425,1,0,0,0,64,429,1,0,0,0,66,433,1,0,0,0,68,437,1,0,0,0,
+	70,440,1,0,0,0,72,452,1,0,0,0,74,454,1,0,0,0,76,482,1,0,0,0,78,484,1,0,
+	0,0,80,486,1,0,0,0,82,495,1,0,0,0,84,497,1,0,0,0,86,506,1,0,0,0,88,508,
+	1,0,0,0,90,514,1,0,0,0,92,526,1,0,0,0,94,529,1,0,0,0,96,533,1,0,0,0,98,
+	535,1,0,0,0,100,537,1,0,0,0,102,539,1,0,0,0,104,541,1,0,0,0,106,577,1,0,
+	0,0,108,583,1,0,0,0,110,601,1,0,0,0,112,605,1,0,0,0,114,625,1,0,0,0,116,
+	627,1,0,0,0,118,629,1,0,0,0,120,661,1,0,0,0,122,665,1,0,0,0,124,667,1,0,
+	0,0,126,669,1,0,0,0,128,671,1,0,0,0,130,691,1,0,0,0,132,701,1,0,0,0,134,
+	703,1,0,0,0,136,705,1,0,0,0,138,712,1,0,0,0,140,716,1,0,0,0,142,726,1,0,
+	0,0,144,728,1,0,0,0,146,730,1,0,0,0,148,733,1,0,0,0,150,735,1,0,0,0,152,
+	737,1,0,0,0,154,751,1,0,0,0,156,769,1,0,0,0,158,771,1,0,0,0,160,776,1,0,
+	0,0,162,781,1,0,0,0,164,786,1,0,0,0,166,811,1,0,0,0,168,813,1,0,0,0,170,
+	815,1,0,0,0,172,817,1,0,0,0,174,819,1,0,0,0,176,821,1,0,0,0,178,823,1,0,
+	0,0,180,825,1,0,0,0,182,844,1,0,0,0,184,846,1,0,0,0,186,848,1,0,0,0,188,
+	851,1,0,0,0,190,853,1,0,0,0,192,855,1,0,0,0,194,867,1,0,0,0,196,869,1,0,
+	0,0,198,872,1,0,0,0,200,874,1,0,0,0,202,876,1,0,0,0,204,879,1,0,0,0,206,
+	888,1,0,0,0,208,890,1,0,0,0,210,892,1,0,0,0,212,897,1,0,0,0,214,899,1,0,
+	0,0,216,902,1,0,0,0,218,908,1,0,0,0,220,918,1,0,0,0,222,936,1,0,0,0,224,
+	938,1,0,0,0,226,940,1,0,0,0,228,942,1,0,0,0,230,945,1,0,0,0,232,960,1,0,
+	0,0,234,962,1,0,0,0,236,967,1,0,0,0,238,970,1,0,0,0,240,972,1,0,0,0,242,
+	974,1,0,0,0,244,979,1,0,0,0,246,982,1,0,0,0,248,995,1,0,0,0,250,999,1,0,
+	0,0,252,253,5,1,0,0,253,1,1,0,0,0,254,256,5,204,0,0,255,254,1,0,0,0,256,
+	257,1,0,0,0,257,255,1,0,0,0,257,258,1,0,0,0,258,3,1,0,0,0,259,260,3,2,1,
+	0,260,261,5,186,0,0,261,5,1,0,0,0,262,265,3,8,4,0,263,265,3,10,5,0,264,
+	262,1,0,0,0,264,263,1,0,0,0,265,7,1,0,0,0,266,272,5,2,0,0,267,272,5,3,0,
+	0,268,272,5,4,0,0,269,272,5,5,0,0,270,272,3,12,6,0,271,266,1,0,0,0,271,
+	267,1,0,0,0,271,268,1,0,0,0,271,269,1,0,0,0,271,270,1,0,0,0,272,9,1,0,0,
+	0,273,279,5,6,0,0,274,279,5,7,0,0,275,279,5,8,0,0,276,279,5,9,0,0,277,279,
+	3,14,7,0,278,273,1,0,0,0,278,274,1,0,0,0,278,275,1,0,0,0,278,276,1,0,0,
+	0,278,277,1,0,0,0,279,11,1,0,0,0,280,281,7,0,0,0,281,13,1,0,0,0,282,283,
+	7,1,0,0,283,15,1,0,0,0,284,304,5,18,0,0,285,304,5,19,0,0,286,304,5,20,0,
+	0,287,304,5,21,0,0,288,304,5,22,0,0,289,304,5,23,0,0,290,304,5,24,0,0,291,
+	304,5,25,0,0,292,304,5,26,0,0,293,304,5,27,0,0,294,304,5,28,0,0,295,304,
+	5,29,0,0,296,304,5,30,0,0,297,304,5,31,0,0,298,304,5,32,0,0,299,304,5,33,
+	0,0,300,304,3,18,9,0,301,304,3,20,10,0,302,304,3,22,11,0,303,284,1,0,0,
+	0,303,285,1,0,0,0,303,286,1,0,0,0,303,287,1,0,0,0,303,288,1,0,0,0,303,289,
+	1,0,0,0,303,290,1,0,0,0,303,291,1,0,0,0,303,292,1,0,0,0,303,293,1,0,0,0,
+	303,294,1,0,0,0,303,295,1,0,0,0,303,296,1,0,0,0,303,297,1,0,0,0,303,298,
+	1,0,0,0,303,299,1,0,0,0,303,300,1,0,0,0,303,301,1,0,0,0,303,302,1,0,0,0,
+	304,17,1,0,0,0,305,306,7,2,0,0,306,19,1,0,0,0,307,308,7,3,0,0,308,21,1,
+	0,0,0,309,310,7,4,0,0,310,23,1,0,0,0,311,321,1,0,0,0,312,321,5,46,0,0,313,
+	321,5,47,0,0,314,321,5,48,0,0,315,321,5,49,0,0,316,321,5,50,0,0,317,321,
+	5,51,0,0,318,321,5,52,0,0,319,321,5,53,0,0,320,311,1,0,0,0,320,312,1,0,
+	0,0,320,313,1,0,0,0,320,314,1,0,0,0,320,315,1,0,0,0,320,316,1,0,0,0,320,
+	317,1,0,0,0,320,318,1,0,0,0,320,319,1,0,0,0,321,25,1,0,0,0,322,342,5,54,
+	0,0,323,342,5,55,0,0,324,342,5,56,0,0,325,342,5,57,0,0,326,342,5,58,0,0,
+	327,342,5,59,0,0,328,342,5,60,0,0,329,342,5,61,0,0,330,342,5,62,0,0,331,
+	342,5,63,0,0,332,342,5,64,0,0,333,342,5,65,0,0,334,342,5,66,0,0,335,342,
+	5,67,0,0,336,342,5,68,0,0,337,342,5,69,0,0,338,342,5,70,0,0,339,342,5,71,
+	0,0,340,342,3,28,14,0,341,322,1,0,0,0,341,323,1,0,0,0,341,324,1,0,0,0,341,
+	325,1,0,0,0,341,326,1,0,0,0,341,327,1,0,0,0,341,328,1,0,0,0,341,329,1,0,
+	0,0,341,330,1,0,0,0,341,331,1,0,0,0,341,332,1,0,0,0,341,333,1,0,0,0,341,
+	334,1,0,0,0,341,335,1,0,0,0,341,336,1,0,0,0,341,337,1,0,0,0,341,338,1,0,
+	0,0,341,339,1,0,0,0,341,340,1,0,0,0,342,27,1,0,0,0,343,344,7,5,0,0,344,
+	29,1,0,0,0,345,346,7,6,0,0,346,31,1,0,0,0,347,348,7,7,0,0,348,33,1,0,0,
+	0,349,352,3,36,18,0,350,352,3,38,19,0,351,349,1,0,0,0,351,350,1,0,0,0,352,
+	35,1,0,0,0,353,357,5,194,0,0,354,356,5,204,0,0,355,354,1,0,0,0,356,359,
+	1,0,0,0,357,355,1,0,0,0,357,358,1,0,0,0,358,360,1,0,0,0,359,357,1,0,0,0,
+	360,361,5,192,0,0,361,37,1,0,0,0,362,366,5,202,0,0,363,365,5,204,0,0,364,
+	363,1,0,0,0,365,368,1,0,0,0,366,364,1,0,0,0,366,367,1,0,0,0,367,369,1,0,
+	0,0,368,366,1,0,0,0,369,370,5,203,0,0,370,39,1,0,0,0,371,376,3,42,21,0,
+	372,376,3,4,2,0,373,376,3,50,25,0,374,376,3,70,35,0,375,371,1,0,0,0,375,
+	372,1,0,0,0,375,373,1,0,0,0,375,374,1,0,0,0,376,41,1,0,0,0,377,378,3,46,
+	23,0,378,379,3,44,22,0,379,43,1,0,0,0,380,381,7,8,0,0,381,45,1,0,0,0,382,
+	383,7,9,0,0,383,47,1,0,0,0,384,385,3,250,125,0,385,386,3,52,26,0,386,49,
+	1,0,0,0,387,391,5,200,0,0,388,390,5,204,0,0,389,388,1,0,0,0,390,393,1,0,
+	0,0,391,389,1,0,0,0,391,392,1,0,0,0,392,394,1,0,0,0,393,391,1,0,0,0,394,
+	395,5,201,0,0,395,51,1,0,0,0,396,409,8,10,0,0,397,409,8,11,0,0,398,409,
+	8,12,0,0,399,409,8,13,0,0,400,409,8,14,0,0,401,409,8,15,0,0,402,409,8,16,
+	0,0,403,409,8,17,0,0,404,409,8,18,0,0,405,409,8,19,0,0,406,409,8,20,0,0,
+	407,409,8,21,0,0,408,396,1,0,0,0,408,397,1,0,0,0,408,398,1,0,0,0,408,399,
+	1,0,0,0,408,400,1,0,0,0,408,401,1,0,0,0,408,402,1,0,0,0,408,403,1,0,0,0,
+	408,404,1,0,0,0,408,405,1,0,0,0,408,406,1,0,0,0,408,407,1,0,0,0,409,53,
+	1,0,0,0,410,411,7,22,0,0,411,55,1,0,0,0,412,413,7,23,0,0,413,57,1,0,0,0,
+	414,418,3,32,16,0,415,418,3,34,17,0,416,418,3,50,25,0,417,414,1,0,0,0,417,
+	415,1,0,0,0,417,416,1,0,0,0,418,59,1,0,0,0,419,421,5,183,0,0,420,419,1,
+	0,0,0,421,422,1,0,0,0,422,420,1,0,0,0,422,423,1,0,0,0,423,61,1,0,0,0,424,
+	426,5,188,0,0,425,424,1,0,0,0,425,426,1,0,0,0,426,427,1,0,0,0,427,428,3,
+	60,30,0,428,63,1,0,0,0,429,430,3,62,31,0,430,431,5,193,0,0,431,432,3,60,
+	30,0,432,65,1,0,0,0,433,434,3,62,31,0,434,435,5,195,0,0,435,436,3,64,32,
+	0,436,67,1,0,0,0,437,438,5,189,0,0,438,439,3,60,30,0,439,69,1,0,0,0,440,
+	444,5,187,0,0,441,443,5,204,0,0,442,441,1,0,0,0,443,446,1,0,0,0,444,442,
+	1,0,0,0,444,445,1,0,0,0,445,447,1,0,0,0,446,444,1,0,0,0,447,448,5,187,0,
+	0,448,71,1,0,0,0,449,453,3,76,38,0,450,453,3,106,53,0,451,453,3,108,54,
+	0,452,449,1,0,0,0,452,450,1,0,0,0,452,451,1,0,0,0,453,73,1,0,0,0,454,455,
+	7,24,0,0,455,75,1,0,0,0,456,457,3,10,5,0,457,458,3,78,39,0,458,459,3,100,
+	50,0,459,460,3,10,5,0,460,462,3,80,40,0,461,463,3,82,41,0,462,461,1,0,0,
+	0,462,463,1,0,0,0,463,464,1,0,0,0,464,465,5,196,0,0,465,483,1,0,0,0,466,
+	467,3,10,5,0,467,468,3,78,39,0,468,469,3,100,50,0,469,470,3,10,5,0,470,
+	471,3,102,51,0,471,472,3,174,87,0,472,473,3,84,42,0,473,474,5,196,0,0,474,
+	483,1,0,0,0,475,476,3,10,5,0,476,477,3,78,39,0,477,478,3,100,50,0,478,479,
+	3,60,30,0,479,480,3,80,40,0,480,481,5,196,0,0,481,483,1,0,0,0,482,456,1,
+	0,0,0,482,466,1,0,0,0,482,475,1,0,0,0,483,77,1,0,0,0,484,485,3,2,1,0,485,
+	79,1,0,0,0,486,487,3,78,39,0,487,81,1,0,0,0,488,489,3,122,61,0,489,490,
+	3,10,5,0,490,491,3,80,40,0,491,496,1,0,0,0,492,493,3,174,87,0,493,494,3,
+	84,42,0,494,496,1,0,0,0,495,488,1,0,0,0,495,492,1,0,0,0,496,83,1,0,0,0,
+	497,503,3,90,45,0,498,499,3,94,47,0,499,500,3,90,45,0,500,502,1,0,0,0,501,
+	498,1,0,0,0,502,505,1,0,0,0,503,501,1,0,0,0,503,504,1,0,0,0,504,85,1,0,
+	0,0,505,503,1,0,0,0,506,507,5,135,0,0,507,87,1,0,0,0,508,509,5,136,0,0,
+	509,89,1,0,0,0,510,515,3,10,5,0,511,512,3,60,30,0,512,513,3,86,43,0,513,
+	515,1,0,0,0,514,510,1,0,0,0,514,511,1,0,0,0,515,524,1,0,0,0,516,517,3,28,
+	14,0,517,518,3,78,39,0,518,525,1,0,0,0,519,520,5,137,0,0,520,521,3,8,4,
+	0,521,522,3,78,39,0,522,525,1,0,0,0,523,525,3,88,44,0,524,516,1,0,0,0,524,
+	519,1,0,0,0,524,523,1,0,0,0,524,525,1,0,0,0,525,91,1,0,0,0,526,527,7,25,
+	0,0,527,93,1,0,0,0,528,530,3,92,46,0,529,528,1,0,0,0,530,531,1,0,0,0,531,
+	529,1,0,0,0,531,532,1,0,0,0,532,95,1,0,0,0,533,534,7,26,0,0,534,97,1,0,
+	0,0,535,536,7,27,0,0,536,99,1,0,0,0,537,538,7,28,0,0,538,101,1,0,0,0,539,
+	540,5,124,0,0,540,103,1,0,0,0,541,542,5,46,0,0,542,105,1,0,0,0,543,544,
+	3,8,4,0,544,545,3,78,39,0,545,546,3,100,50,0,546,547,3,10,5,0,547,549,3,
+	80,40,0,548,550,3,82,41,0,549,548,1,0,0,0,549,550,1,0,0,0,550,551,1,0,0,
+	0,551,552,5,196,0,0,552,578,1,0,0,0,553,554,3,8,4,0,554,555,3,78,39,0,555,
+	556,3,100,50,0,556,557,3,10,5,0,557,558,3,102,51,0,558,559,3,174,87,0,559,
+	560,3,84,42,0,560,561,5,196,0,0,561,578,1,0,0,0,562,563,3,8,4,0,563,564,
+	3,78,39,0,564,565,3,100,50,0,565,566,3,10,5,0,566,567,3,80,40,0,567,568,
+	3,104,52,0,568,569,3,212,106,0,569,570,5,196,0,0,570,571,3,8,4,0,571,572,
+	3,78,39,0,572,573,3,100,50,0,573,574,3,212,106,0,574,575,5,196,0,0,575,
+	578,1,0,0,0,576,578,1,0,0,0,577,543,1,0,0,0,577,553,1,0,0,0,577,562,1,0,
+	0,0,577,576,1,0,0,0,578,107,1,0,0,0,579,584,3,110,55,0,580,584,3,114,57,
+	0,581,584,3,120,60,0,582,584,3,130,65,0,583,579,1,0,0,0,583,580,1,0,0,0,
+	583,581,1,0,0,0,583,582,1,0,0,0,584,109,1,0,0,0,585,587,3,126,63,0,586,
+	585,1,0,0,0,586,587,1,0,0,0,587,588,1,0,0,0,588,589,3,122,61,0,589,590,
+	3,124,62,0,590,591,3,132,66,0,591,592,5,198,0,0,592,602,1,0,0,0,593,595,
+	3,126,63,0,594,593,1,0,0,0,594,595,1,0,0,0,595,596,1,0,0,0,596,597,3,122,
+	61,0,597,598,3,124,62,0,598,599,3,132,66,0,599,600,5,199,0,0,600,602,1,
+	0,0,0,601,586,1,0,0,0,601,594,1,0,0,0,602,603,1,0,0,0,603,604,3,140,70,
+	0,604,111,1,0,0,0,605,606,5,159,0,0,606,113,1,0,0,0,607,609,3,116,58,0,
+	608,607,1,0,0,0,608,609,1,0,0,0,609,610,1,0,0,0,610,611,3,122,61,0,611,
+	612,3,124,62,0,612,613,3,112,56,0,613,614,3,132,66,0,614,615,5,198,0,0,
+	615,626,1,0,0,0,616,618,3,116,58,0,617,616,1,0,0,0,617,618,1,0,0,0,618,
+	619,1,0,0,0,619,620,3,122,61,0,620,621,3,124,62,0,621,622,3,112,56,0,622,
+	623,3,132,66,0,623,624,5,199,0,0,624,626,1,0,0,0,625,608,1,0,0,0,625,617,
+	1,0,0,0,626,115,1,0,0,0,627,628,5,160,0,0,628,117,1,0,0,0,629,630,5,161,
+	0,0,630,119,1,0,0,0,631,633,3,116,58,0,632,631,1,0,0,0,632,633,1,0,0,0,
+	633,634,1,0,0,0,634,635,3,122,61,0,635,636,3,124,62,0,636,637,3,118,59,
+	0,637,638,3,8,4,0,638,639,3,80,40,0,639,640,3,18,9,0,640,641,3,78,39,0,
+	641,642,3,122,61,0,642,643,3,10,5,0,643,644,3,80,40,0,644,645,5,198,0,0,
+	645,662,1,0,0,0,646,648,3,116,58,0,647,646,1,0,0,0,647,648,1,0,0,0,648,
+	649,1,0,0,0,649,650,3,122,61,0,650,651,3,124,62,0,651,652,3,118,59,0,652,
+	653,3,8,4,0,653,654,3,80,40,0,654,655,3,18,9,0,655,656,3,78,39,0,656,657,
+	3,122,61,0,657,658,3,10,5,0,658,659,3,80,40,0,659,660,5,199,0,0,660,662,
+	1,0,0,0,661,632,1,0,0,0,661,647,1,0,0,0,662,663,1,0,0,0,663,664,3,140,70,
+	0,664,121,1,0,0,0,665,666,5,162,0,0,666,123,1,0,0,0,667,668,5,163,0,0,668,
+	125,1,0,0,0,669,670,5,164,0,0,670,127,1,0,0,0,671,672,5,165,0,0,672,129,
+	1,0,0,0,673,675,3,126,63,0,674,673,1,0,0,0,674,675,1,0,0,0,675,676,1,0,
+	0,0,676,677,3,122,61,0,677,678,3,124,62,0,678,679,3,128,64,0,679,680,3,
+	132,66,0,680,681,5,198,0,0,681,692,1,0,0,0,682,684,3,126,63,0,683,682,1,
+	0,0,0,683,684,1,0,0,0,684,685,1,0,0,0,685,686,3,122,61,0,686,687,3,124,
+	62,0,687,688,3,128,64,0,688,689,3,132,66,0,689,690,5,199,0,0,690,692,1,
+	0,0,0,691,674,1,0,0,0,691,683,1,0,0,0,692,693,1,0,0,0,693,694,3,140,70,
+	0,694,131,1,0,0,0,695,702,3,134,67,0,696,702,3,136,68,0,697,699,3,138,69,
+	0,698,700,3,50,25,0,699,698,1,0,0,0,699,700,1,0,0,0,700,702,1,0,0,0,701,
+	695,1,0,0,0,701,696,1,0,0,0,701,697,1,0,0,0,702,133,1,0,0,0,703,704,3,2,
+	1,0,704,135,1,0,0,0,705,706,3,10,5,0,706,710,3,78,39,0,707,708,3,28,14,
+	0,708,709,3,78,39,0,709,711,1,0,0,0,710,707,1,0,0,0,710,711,1,0,0,0,711,
+	137,1,0,0,0,712,713,3,8,4,0,713,714,3,78,39,0,714,139,1,0,0,0,715,717,3,
+	142,71,0,716,715,1,0,0,0,717,718,1,0,0,0,718,716,1,0,0,0,718,719,1,0,0,
+	0,719,141,1,0,0,0,720,727,3,146,73,0,721,727,3,148,74,0,722,727,3,152,76,
+	0,723,724,3,156,78,0,724,725,5,197,0,0,725,727,1,0,0,0,726,720,1,0,0,0,
+	726,721,1,0,0,0,726,722,1,0,0,0,726,723,1,0,0,0,727,143,1,0,0,0,728,729,
+	5,59,0,0,729,145,1,0,0,0,730,731,3,144,72,0,731,732,3,136,68,0,732,147,
+	1,0,0,0,733,734,5,55,0,0,734,149,1,0,0,0,735,736,5,54,0,0,736,151,1,0,0,
+	0,737,738,3,150,75,0,738,739,3,154,77,0,739,740,5,197,0,0,740,745,3,156,
+	78,0,741,742,5,198,0,0,742,744,3,156,78,0,743,741,1,0,0,0,744,747,1,0,0,
+	0,745,743,1,0,0,0,745,746,1,0,0,0,746,748,1,0,0,0,747,745,1,0,0,0,748,749,
+	5,196,0,0,749,153,1,0,0,0,750,752,3,2,1,0,751,750,1,0,0,0,752,753,1,0,0,
+	0,753,751,1,0,0,0,753,754,1,0,0,0,754,756,1,0,0,0,755,757,3,30,15,0,756,
+	755,1,0,0,0,756,757,1,0,0,0,757,759,1,0,0,0,758,760,3,154,77,0,759,758,
+	1,0,0,0,759,760,1,0,0,0,760,155,1,0,0,0,761,770,3,158,79,0,762,770,3,160,
+	80,0,763,770,3,182,91,0,764,770,3,186,93,0,765,770,3,198,99,0,766,770,3,
+	192,96,0,767,770,3,196,98,0,768,770,3,202,101,0,769,761,1,0,0,0,769,762,
+	1,0,0,0,769,763,1,0,0,0,769,764,1,0,0,0,769,765,1,0,0,0,769,766,1,0,0,0,
+	769,767,1,0,0,0,769,768,1,0,0,0,770,157,1,0,0,0,771,772,5,57,0,0,772,159,
+	1,0,0,0,773,777,3,162,81,0,774,777,3,164,82,0,775,777,3,180,90,0,776,773,
+	1,0,0,0,776,774,1,0,0,0,776,775,1,0,0,0,777,161,1,0,0,0,778,782,3,134,67,
+	0,779,782,3,204,102,0,780,782,3,138,69,0,781,778,1,0,0,0,781,779,1,0,0,
+	0,781,780,1,0,0,0,782,784,1,0,0,0,783,785,3,50,25,0,784,783,1,0,0,0,784,
+	785,1,0,0,0,785,163,1,0,0,0,786,787,3,172,86,0,787,788,3,166,83,0,788,789,
+	3,168,84,0,789,790,3,166,83,0,790,791,3,166,83,0,791,792,3,170,85,0,792,
+	796,3,166,83,0,793,794,3,174,87,0,794,795,3,204,102,0,795,797,1,0,0,0,796,
+	793,1,0,0,0,796,797,1,0,0,0,797,803,1,0,0,0,798,799,3,176,88,0,799,800,
+	3,204,102,0,800,802,1,0,0,0,801,798,1,0,0,0,802,805,1,0,0,0,803,804,1,0,
+	0,0,803,801,1,0,0,0,804,809,1,0,0,0,805,803,1,0,0,0,806,807,3,178,89,0,
+	807,808,3,222,111,0,808,810,1,0,0,0,809,806,1,0,0,0,809,810,1,0,0,0,810,
+	165,1,0,0,0,811,812,5,187,0,0,812,167,1,0,0,0,813,814,3,2,1,0,814,169,1,
+	0,0,0,815,816,3,2,1,0,816,171,1,0,0,0,817,818,5,65,0,0,818,173,1,0,0,0,
+	819,820,5,142,0,0,820,175,1,0,0,0,821,822,5,138,0,0,822,177,1,0,0,0,823,
+	824,5,66,0,0,824,179,1,0,0,0,825,826,3,172,86,0,826,842,3,204,102,0,827,
+	828,3,174,87,0,828,834,3,204,102,0,829,830,3,176,88,0,830,831,3,204,102,
+	0,831,833,1,0,0,0,832,829,1,0,0,0,833,836,1,0,0,0,834,832,1,0,0,0,834,835,
+	1,0,0,0,835,840,1,0,0,0,836,834,1,0,0,0,837,838,3,178,89,0,838,839,3,222,
+	111,0,839,841,1,0,0,0,840,837,1,0,0,0,840,841,1,0,0,0,841,843,1,0,0,0,842,
+	827,1,0,0,0,842,843,1,0,0,0,843,181,1,0,0,0,844,845,5,58,0,0,845,183,1,
+	0,0,0,846,847,5,64,0,0,847,185,1,0,0,0,848,849,3,184,92,0,849,850,3,68,
+	34,0,850,187,1,0,0,0,851,852,5,166,0,0,852,189,1,0,0,0,853,854,5,167,0,
+	0,854,191,1,0,0,0,855,856,3,188,94,0,856,857,3,6,3,0,857,858,3,222,111,
+	0,858,862,3,190,95,0,859,863,3,134,67,0,860,863,3,136,68,0,861,863,3,138,
+	69,0,862,859,1,0,0,0,862,860,1,0,0,0,862,861,1,0,0,0,863,865,1,0,0,0,864,
+	866,3,50,25,0,865,864,1,0,0,0,865,866,1,0,0,0,866,193,1,0,0,0,867,868,7,
+	29,0,0,868,195,1,0,0,0,869,870,3,194,97,0,870,871,3,204,102,0,871,197,1,
+	0,0,0,872,873,5,56,0,0,873,199,1,0,0,0,874,875,5,60,0,0,875,201,1,0,0,0,
+	876,877,3,200,100,0,877,878,3,208,104,0,878,203,1,0,0,0,879,885,3,222,111,
+	0,880,881,3,206,103,0,881,882,3,222,111,0,882,884,1,0,0,0,883,880,1,0,0,
+	0,884,887,1,0,0,0,885,883,1,0,0,0,885,886,1,0,0,0,886,205,1,0,0,0,887,885,
+	1,0,0,0,888,889,7,30,0,0,889,207,1,0,0,0,890,891,7,31,0,0,891,209,1,0,0,
+	0,892,893,7,32,0,0,893,211,1,0,0,0,894,898,3,214,107,0,895,898,3,216,108,
+	0,896,898,3,220,110,0,897,894,1,0,0,0,897,895,1,0,0,0,897,896,1,0,0,0,898,
+	213,1,0,0,0,899,900,5,188,0,0,900,901,3,212,106,0,901,215,1,0,0,0,902,903,
+	5,195,0,0,903,904,3,212,106,0,904,217,1,0,0,0,905,909,3,62,31,0,906,909,
+	3,64,32,0,907,909,3,66,33,0,908,905,1,0,0,0,908,906,1,0,0,0,908,907,1,0,
+	0,0,909,219,1,0,0,0,910,912,3,218,109,0,911,913,3,80,40,0,912,911,1,0,0,
+	0,912,913,1,0,0,0,913,919,1,0,0,0,914,919,3,70,35,0,915,919,3,68,34,0,916,
+	919,3,208,104,0,917,919,3,210,105,0,918,910,1,0,0,0,918,914,1,0,0,0,918,
+	915,1,0,0,0,918,916,1,0,0,0,918,917,1,0,0,0,919,221,1,0,0,0,920,937,3,228,
+	114,0,921,937,3,230,115,0,922,937,3,232,116,0,923,937,3,234,117,0,924,929,
+	3,236,118,0,925,926,3,226,113,0,926,927,3,10,5,0,927,928,3,80,40,0,928,
+	930,1,0,0,0,929,925,1,0,0,0,929,930,1,0,0,0,930,934,1,0,0,0,931,932,3,224,
+	112,0,932,933,3,222,111,0,933,935,1,0,0,0,934,931,1,0,0,0,934,935,1,0,0,
+	0,935,937,1,0,0,0,936,920,1,0,0,0,936,921,1,0,0,0,936,922,1,0,0,0,936,923,
+	1,0,0,0,936,924,1,0,0,0,937,223,1,0,0,0,938,939,5,193,0,0,939,225,1,0,0,
+	0,940,941,5,177,0,0,941,227,1,0,0,0,942,943,5,188,0,0,943,944,3,222,111,
+	0,944,229,1,0,0,0,945,946,5,195,0,0,946,947,3,222,111,0,947,231,1,0,0,0,
+	948,949,3,10,5,0,949,953,3,78,39,0,950,951,3,28,14,0,951,952,3,78,39,0,
+	952,954,1,0,0,0,953,950,1,0,0,0,953,954,1,0,0,0,954,961,1,0,0,0,955,956,
+	3,8,4,0,956,957,3,78,39,0,957,958,3,18,9,0,958,959,3,78,39,0,959,961,1,
+	0,0,0,960,948,1,0,0,0,960,955,1,0,0,0,961,233,1,0,0,0,962,963,3,8,4,0,963,
+	964,3,248,124,0,964,965,3,22,11,0,965,966,3,78,39,0,966,235,1,0,0,0,967,
+	968,3,220,110,0,968,969,3,244,122,0,969,237,1,0,0,0,970,971,5,178,0,0,971,
+	239,1,0,0,0,972,973,5,179,0,0,973,241,1,0,0,0,974,975,5,180,0,0,975,243,
+	1,0,0,0,976,978,3,246,123,0,977,976,1,0,0,0,978,981,1,0,0,0,979,977,1,0,
+	0,0,979,980,1,0,0,0,980,245,1,0,0,0,981,979,1,0,0,0,982,988,3,250,125,0,
+	983,989,3,78,39,0,984,989,3,120,60,0,985,989,3,238,119,0,986,989,3,240,
+	120,0,987,989,3,242,121,0,988,983,1,0,0,0,988,984,1,0,0,0,988,985,1,0,0,
+	0,988,986,1,0,0,0,988,987,1,0,0,0,989,247,1,0,0,0,990,996,3,78,39,0,991,
+	996,3,120,60,0,992,996,3,238,119,0,993,996,3,240,120,0,994,996,3,242,121,
+	0,995,990,1,0,0,0,995,991,1,0,0,0,995,992,1,0,0,0,995,993,1,0,0,0,995,994,
+	1,0,0,0,996,997,1,0,0,0,997,998,3,22,11,0,998,249,1,0,0,0,999,1000,5,181,
+	0,0,1000,251,1,0,0,0,74,257,264,271,278,303,320,341,351,357,366,375,391,
+	408,417,422,425,444,452,462,482,495,503,514,524,531,549,577,583,586,594,
+	601,608,617,625,632,647,661,674,683,691,699,701,710,718,726,745,753,756,
+	759,769,776,781,784,796,803,809,834,840,842,862,865,885,897,908,912,918,
+	929,934,936,953,960,979,988,995];
+
+	private static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!PortuguesPuroParser.__ATN) {
-			PortuguesPuroParser.__ATN = new ATNDeserializer().deserialize(Utils.toCharArray(PortuguesPuroParser._serializedATN));
+			PortuguesPuroParser.__ATN = new ATNDeserializer().deserialize(PortuguesPuroParser._serializedATN);
 		}
 
 		return PortuguesPuroParser.__ATN;
 	}
 
+
+	static DecisionsToDFA = PortuguesPuroParser._ATN.decisionToState.map( (ds: DecisionState, index: number) => new DFA(ds, index) );
+
 }
 
-export class Regra_espacoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Regra_espaçoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_regra_espaco; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_regra_espaço;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterRegra_espaco) {
-			listener.enterRegra_espaco(this);
+	    if(listener.enterRegra_espaço) {
+	 		listener.enterRegra_espaço(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitRegra_espaco) {
-			listener.exitRegra_espaco(this);
+	    if(listener.exitRegra_espaço) {
+	 		listener.exitRegra_espaço(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitRegra_espaco) {
-			return visitor.visitRegra_espaco(this);
+		if (visitor.visitRegra_espaço) {
+			return visitor.visitRegra_espaço(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -6701,30 +6573,27 @@ export class Regra_espacoContext extends ParserRuleContext {
 
 
 export class PalavraContext extends ParserRuleContext {
-	public CARACTERES_IMPRIMIVEIS(): TerminalNode[];
-	public CARACTERES_IMPRIMIVEIS(i: number): TerminalNode;
-	public CARACTERES_IMPRIMIVEIS(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
-		} else {
-			return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_palavra; }
-	// @Override
+	public CARACTERES_IMPRIMÍVEIS_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
+	}
+	public CARACTERES_IMPRIMÍVEIS(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS, i);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_palavra;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPalavra) {
-			listener.enterPalavra(this);
+	    if(listener.enterPalavra) {
+	 		listener.enterPalavra(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPalavra) {
-			listener.exitPalavra(this);
+	    if(listener.exitPalavra) {
+	 		listener.exitPalavra(this);
 		}
 	}
 	// @Override
@@ -6738,32 +6607,34 @@ export class PalavraContext extends ParserRuleContext {
 }
 
 
-export class Possessivo_inglï¿½sContext extends ParserRuleContext {
-	public palavra(): PalavraContext {
-		return this.getRuleContext(0, PalavraContext);
-	}
-	public APOSTROFO(): TerminalNode { return this.getToken(PortuguesPuroParser.APOSTROFO, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Possessivo_inglêsContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_possessivo_inglï¿½s; }
-	// @Override
+	public palavra(): PalavraContext {
+		return this.getTypedRuleContext(PalavraContext, 0) as PalavraContext;
+	}
+	public APÓSTROFO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.APÓSTROFO, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_possessivo_inglês;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPossessivo_inglï¿½s) {
-			listener.enterPossessivo_inglï¿½s(this);
+	    if(listener.enterPossessivo_inglês) {
+	 		listener.enterPossessivo_inglês(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPossessivo_inglï¿½s) {
-			listener.exitPossessivo_inglï¿½s(this);
+	    if(listener.exitPossessivo_inglês) {
+	 		listener.exitPossessivo_inglês(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitPossessivo_inglï¿½s) {
-			return visitor.visitPossessivo_inglï¿½s(this);
+		if (visitor.visitPossessivo_inglês) {
+			return visitor.visitPossessivo_inglês(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -6772,27 +6643,27 @@ export class Possessivo_inglï¿½sContext extends ParserRuleContext {
 
 
 export class ArtigoContext extends ParserRuleContext {
-	public artigo_definido(): Artigo_definidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_definidoContext);
-	}
-	public artigo_indefinido(): Artigo_indefinidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_indefinidoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_artigo; }
-	// @Override
+	public artigo_definido(): Artigo_definidoContext {
+		return this.getTypedRuleContext(Artigo_definidoContext, 0) as Artigo_definidoContext;
+	}
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_artigo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterArtigo) {
-			listener.enterArtigo(this);
+	    if(listener.enterArtigo) {
+	 		listener.enterArtigo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitArtigo) {
-			listener.exitArtigo(this);
+	    if(listener.exitArtigo) {
+	 		listener.exitArtigo(this);
 		}
 	}
 	// @Override
@@ -6807,24 +6678,24 @@ export class ArtigoContext extends ParserRuleContext {
 
 
 export class Artigo_definidoContext extends ParserRuleContext {
-	public adjacentes(): AdjacentesContext | undefined {
-		return this.tryGetRuleContext(0, AdjacentesContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_artigo_definido; }
-	// @Override
+	public adjacentes(): AdjacentesContext {
+		return this.getTypedRuleContext(AdjacentesContext, 0) as AdjacentesContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_artigo_definido;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterArtigo_definido) {
-			listener.enterArtigo_definido(this);
+	    if(listener.enterArtigo_definido) {
+	 		listener.enterArtigo_definido(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitArtigo_definido) {
-			listener.exitArtigo_definido(this);
+	    if(listener.exitArtigo_definido) {
+	 		listener.exitArtigo_definido(this);
 		}
 	}
 	// @Override
@@ -6839,24 +6710,24 @@ export class Artigo_definidoContext extends ParserRuleContext {
 
 
 export class Artigo_indefinidoContext extends ParserRuleContext {
-	public abrangentes(): AbrangentesContext | undefined {
-		return this.tryGetRuleContext(0, AbrangentesContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_artigo_indefinido; }
-	// @Override
+	public abrangentes(): AbrangentesContext {
+		return this.getTypedRuleContext(AbrangentesContext, 0) as AbrangentesContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_artigo_indefinido;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterArtigo_indefinido) {
-			listener.enterArtigo_indefinido(this);
+	    if(listener.enterArtigo_indefinido) {
+	 		listener.enterArtigo_indefinido(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitArtigo_indefinido) {
-			listener.exitArtigo_indefinido(this);
+	    if(listener.exitArtigo_indefinido) {
+	 		listener.exitArtigo_indefinido(this);
 		}
 	}
 	// @Override
@@ -6871,21 +6742,21 @@ export class Artigo_indefinidoContext extends ParserRuleContext {
 
 
 export class AdjacentesContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_adjacentes; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_adjacentes;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterAdjacentes) {
-			listener.enterAdjacentes(this);
+	    if(listener.enterAdjacentes) {
+	 		listener.enterAdjacentes(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitAdjacentes) {
-			listener.exitAdjacentes(this);
+	    if(listener.exitAdjacentes) {
+	 		listener.exitAdjacentes(this);
 		}
 	}
 	// @Override
@@ -6900,21 +6771,21 @@ export class AdjacentesContext extends ParserRuleContext {
 
 
 export class AbrangentesContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_abrangentes; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_abrangentes;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterAbrangentes) {
-			listener.enterAbrangentes(this);
+	    if(listener.enterAbrangentes) {
+	 		listener.enterAbrangentes(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitAbrangentes) {
-			listener.exitAbrangentes(this);
+	    if(listener.exitAbrangentes) {
+	 		listener.exitAbrangentes(this);
 		}
 	}
 	// @Override
@@ -6928,37 +6799,37 @@ export class AbrangentesContext extends ParserRuleContext {
 }
 
 
-export class ContracoesContext extends ParserRuleContext {
-	public atribuidores_de_posse(): Atribuidores_de_posseContext | undefined {
-		return this.tryGetRuleContext(0, Atribuidores_de_posseContext);
-	}
-	public p1(): P1Context | undefined {
-		return this.tryGetRuleContext(0, P1Context);
-	}
-	public p2(): P2Context | undefined {
-		return this.tryGetRuleContext(0, P2Context);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ContraçõesContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_contracoes; }
-	// @Override
+	public atribuidores_de_posse(): Atribuidores_de_posseContext {
+		return this.getTypedRuleContext(Atribuidores_de_posseContext, 0) as Atribuidores_de_posseContext;
+	}
+	public p1(): P1Context {
+		return this.getTypedRuleContext(P1Context, 0) as P1Context;
+	}
+	public p2(): P2Context {
+		return this.getTypedRuleContext(P2Context, 0) as P2Context;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_contrações;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterContracoes) {
-			listener.enterContracoes(this);
+	    if(listener.enterContrações) {
+	 		listener.enterContrações(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitContracoes) {
-			listener.exitContracoes(this);
+	    if(listener.exitContrações) {
+	 		listener.exitContrações(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitContracoes) {
-			return visitor.visitContracoes(this);
+		if (visitor.visitContrações) {
+			return visitor.visitContrações(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -6967,21 +6838,21 @@ export class ContracoesContext extends ParserRuleContext {
 
 
 export class Atribuidores_de_posseContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_atribuidores_de_posse; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_atribuidores_de_posse;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterAtribuidores_de_posse) {
-			listener.enterAtribuidores_de_posse(this);
+	    if(listener.enterAtribuidores_de_posse) {
+	 		listener.enterAtribuidores_de_posse(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitAtribuidores_de_posse) {
-			listener.exitAtribuidores_de_posse(this);
+	    if(listener.exitAtribuidores_de_posse) {
+	 		listener.exitAtribuidores_de_posse(this);
 		}
 	}
 	// @Override
@@ -6996,21 +6867,21 @@ export class Atribuidores_de_posseContext extends ParserRuleContext {
 
 
 export class P1Context extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_p1; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_p1;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterP1) {
-			listener.enterP1(this);
+	    if(listener.enterP1) {
+	 		listener.enterP1(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitP1) {
-			listener.exitP1(this);
+	    if(listener.exitP1) {
+	 		listener.exitP1(this);
 		}
 	}
 	// @Override
@@ -7025,21 +6896,21 @@ export class P1Context extends ParserRuleContext {
 
 
 export class P2Context extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_p2; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_p2;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterP2) {
-			listener.enterP2(this);
+	    if(listener.enterP2) {
+	 		listener.enterP2(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitP2) {
-			listener.exitP2(this);
+	    if(listener.exitP2) {
+	 		listener.exitP2(this);
 		}
 	}
 	// @Override
@@ -7053,28 +6924,28 @@ export class P2Context extends ParserRuleContext {
 }
 
 
-export class Operadores_de_comparacaoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Operadores_de_comparaçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_operadores_de_comparacao; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_operadores_de_comparação;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterOperadores_de_comparacao) {
-			listener.enterOperadores_de_comparacao(this);
+	    if(listener.enterOperadores_de_comparação) {
+	 		listener.enterOperadores_de_comparação(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitOperadores_de_comparacao) {
-			listener.exitOperadores_de_comparacao(this);
+	    if(listener.exitOperadores_de_comparação) {
+	 		listener.exitOperadores_de_comparação(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitOperadores_de_comparacao) {
-			return visitor.visitOperadores_de_comparacao(this);
+		if (visitor.visitOperadores_de_comparação) {
+			return visitor.visitOperadores_de_comparação(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7083,24 +6954,24 @@ export class Operadores_de_comparacaoContext extends ParserRuleContext {
 
 
 export class Palavras_reservadasContext extends ParserRuleContext {
-	public denominacoes(): DenominacoesContext | undefined {
-		return this.tryGetRuleContext(0, DenominacoesContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_palavras_reservadas; }
-	// @Override
+	public denominações(): DenominaçõesContext {
+		return this.getTypedRuleContext(DenominaçõesContext, 0) as DenominaçõesContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_palavras_reservadas;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPalavras_reservadas) {
-			listener.enterPalavras_reservadas(this);
+	    if(listener.enterPalavras_reservadas) {
+	 		listener.enterPalavras_reservadas(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPalavras_reservadas) {
-			listener.exitPalavras_reservadas(this);
+	    if(listener.exitPalavras_reservadas) {
+	 		listener.exitPalavras_reservadas(this);
 		}
 	}
 	// @Override
@@ -7114,28 +6985,28 @@ export class Palavras_reservadasContext extends ParserRuleContext {
 }
 
 
-export class DenominacoesContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class DenominaçõesContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_denominacoes; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_denominações;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterDenominacoes) {
-			listener.enterDenominacoes(this);
+	    if(listener.enterDenominações) {
+	 		listener.enterDenominações(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitDenominacoes) {
-			listener.exitDenominacoes(this);
+	    if(listener.exitDenominações) {
+	 		listener.exitDenominações(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitDenominacoes) {
-			return visitor.visitDenominacoes(this);
+		if (visitor.visitDenominações) {
+			return visitor.visitDenominações(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7144,21 +7015,21 @@ export class DenominacoesContext extends ParserRuleContext {
 
 
 export class VerbosContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_verbos; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_verbos;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterVerbos) {
-			listener.enterVerbos(this);
+	    if(listener.enterVerbos) {
+	 		listener.enterVerbos(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitVerbos) {
-			listener.exitVerbos(this);
+	    if(listener.exitVerbos) {
+	 		listener.exitVerbos(this);
 		}
 	}
 	// @Override
@@ -7172,31 +7043,37 @@ export class VerbosContext extends ParserRuleContext {
 }
 
 
-export class Caracteres_ignoraveisContext extends ParserRuleContext {
-	public CARACTERES_DE_CONTROLE(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.CARACTERES_DE_CONTROLE, 0); }
-	public ESPACO_EM_BRANCO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.ESPACO_EM_BRANCO, 0); }
-	public ESPACO_RIGIDO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.ESPACO_RIGIDO, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Caracteres_ignoráveisContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_caracteres_ignoraveis; }
-	// @Override
+	public CARACTERES_DE_CONTROLE(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CARACTERES_DE_CONTROLE, 0);
+	}
+	public ESPAÇO_EM_BRANCO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.ESPAÇO_EM_BRANCO, 0);
+	}
+	public ESPAÇO_RÍGIDO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.ESPAÇO_RÍGIDO, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_caracteres_ignoráveis;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCaracteres_ignoraveis) {
-			listener.enterCaracteres_ignoraveis(this);
+	    if(listener.enterCaracteres_ignoráveis) {
+	 		listener.enterCaracteres_ignoráveis(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCaracteres_ignoraveis) {
-			listener.exitCaracteres_ignoraveis(this);
+	    if(listener.exitCaracteres_ignoráveis) {
+	 		listener.exitCaracteres_ignoráveis(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitCaracteres_ignoraveis) {
-			return visitor.visitCaracteres_ignoraveis(this);
+		if (visitor.visitCaracteres_ignoráveis) {
+			return visitor.visitCaracteres_ignoráveis(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7204,34 +7081,34 @@ export class Caracteres_ignoraveisContext extends ParserRuleContext {
 }
 
 
-export class ComentarioContext extends ParserRuleContext {
-	public comentario_de_linha(): Comentario_de_linhaContext | undefined {
-		return this.tryGetRuleContext(0, Comentario_de_linhaContext);
-	}
-	public comentario_de_bloco(): Comentario_de_blocoContext | undefined {
-		return this.tryGetRuleContext(0, Comentario_de_blocoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ComentárioContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_comentario; }
-	// @Override
+	public comentário_de_linha(): Comentário_de_linhaContext {
+		return this.getTypedRuleContext(Comentário_de_linhaContext, 0) as Comentário_de_linhaContext;
+	}
+	public comentário_de_bloco(): Comentário_de_blocoContext {
+		return this.getTypedRuleContext(Comentário_de_blocoContext, 0) as Comentário_de_blocoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_comentário;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterComentario) {
-			listener.enterComentario(this);
+	    if(listener.enterComentário) {
+	 		listener.enterComentário(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitComentario) {
-			listener.exitComentario(this);
+	    if(listener.exitComentário) {
+	 		listener.exitComentário(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitComentario) {
-			return visitor.visitComentario(this);
+		if (visitor.visitComentário) {
+			return visitor.visitComentário(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7239,39 +7116,40 @@ export class ComentarioContext extends ParserRuleContext {
 }
 
 
-export class Comentario_de_linhaContext extends ParserRuleContext {
-	public BARRA_INVERTIDA(): TerminalNode { return this.getToken(PortuguesPuroParser.BARRA_INVERTIDA, 0); }
-	public QUEBRA_DE_LINHA(): TerminalNode { return this.getToken(PortuguesPuroParser.QUEBRA_DE_LINHA, 0); }
-	public CARACTERES_IMPRIMIVEIS(): TerminalNode[];
-	public CARACTERES_IMPRIMIVEIS(i: number): TerminalNode;
-	public CARACTERES_IMPRIMIVEIS(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
-		} else {
-			return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Comentário_de_linhaContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_comentario_de_linha; }
-	// @Override
+	public BARRA_INVERTIDA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.BARRA_INVERTIDA, 0);
+	}
+	public QUEBRA_DE_LINHA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.QUEBRA_DE_LINHA, 0);
+	}
+	public CARACTERES_IMPRIMÍVEIS_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
+	}
+	public CARACTERES_IMPRIMÍVEIS(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS, i);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_comentário_de_linha;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterComentario_de_linha) {
-			listener.enterComentario_de_linha(this);
+	    if(listener.enterComentário_de_linha) {
+	 		listener.enterComentário_de_linha(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitComentario_de_linha) {
-			listener.exitComentario_de_linha(this);
+	    if(listener.exitComentário_de_linha) {
+	 		listener.exitComentário_de_linha(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitComentario_de_linha) {
-			return visitor.visitComentario_de_linha(this);
+		if (visitor.visitComentário_de_linha) {
+			return visitor.visitComentário_de_linha(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7279,39 +7157,40 @@ export class Comentario_de_linhaContext extends ParserRuleContext {
 }
 
 
-export class Comentario_de_blocoContext extends ParserRuleContext {
-	public ABRE_COLCHETES(): TerminalNode { return this.getToken(PortuguesPuroParser.ABRE_COLCHETES, 0); }
-	public FECHA_COLCHETES(): TerminalNode { return this.getToken(PortuguesPuroParser.FECHA_COLCHETES, 0); }
-	public CARACTERES_IMPRIMIVEIS(): TerminalNode[];
-	public CARACTERES_IMPRIMIVEIS(i: number): TerminalNode;
-	public CARACTERES_IMPRIMIVEIS(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
-		} else {
-			return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Comentário_de_blocoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_comentario_de_bloco; }
-	// @Override
+	public ABRE_COLCHETES(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.ABRE_COLCHETES, 0);
+	}
+	public FECHA_COLCHETES(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.FECHA_COLCHETES, 0);
+	}
+	public CARACTERES_IMPRIMÍVEIS_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
+	}
+	public CARACTERES_IMPRIMÍVEIS(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS, i);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_comentário_de_bloco;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterComentario_de_bloco) {
-			listener.enterComentario_de_bloco(this);
+	    if(listener.enterComentário_de_bloco) {
+	 		listener.enterComentário_de_bloco(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitComentario_de_bloco) {
-			listener.exitComentario_de_bloco(this);
+	    if(listener.exitComentário_de_bloco) {
+	 		listener.exitComentário_de_bloco(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitComentario_de_bloco) {
-			return visitor.visitComentario_de_bloco(this);
+		if (visitor.visitComentário_de_bloco) {
+			return visitor.visitComentário_de_bloco(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7320,33 +7199,33 @@ export class Comentario_de_blocoContext extends ParserRuleContext {
 
 
 export class TokenContext extends ParserRuleContext {
-	public aglomerado(): AglomeradoContext | undefined {
-		return this.tryGetRuleContext(0, AglomeradoContext);
-	}
-	public possessivo_inglï¿½s(): Possessivo_inglï¿½sContext | undefined {
-		return this.tryGetRuleContext(0, Possessivo_inglï¿½sContext);
-	}
-	public qualificador(): QualificadorContext | undefined {
-		return this.tryGetRuleContext(0, QualificadorContext);
-	}
-	public string_literal(): String_literalContext | undefined {
-		return this.tryGetRuleContext(0, String_literalContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_token; }
-	// @Override
+	public aglomerado(): AglomeradoContext {
+		return this.getTypedRuleContext(AglomeradoContext, 0) as AglomeradoContext;
+	}
+	public possessivo_inglês(): Possessivo_inglêsContext {
+		return this.getTypedRuleContext(Possessivo_inglêsContext, 0) as Possessivo_inglêsContext;
+	}
+	public qualificador(): QualificadorContext {
+		return this.getTypedRuleContext(QualificadorContext, 0) as QualificadorContext;
+	}
+	public string_literal(): String_literalContext {
+		return this.getTypedRuleContext(String_literalContext, 0) as String_literalContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_token;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterToken) {
-			listener.enterToken(this);
+	    if(listener.enterToken) {
+	 		listener.enterToken(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitToken) {
-			listener.exitToken(this);
+	    if(listener.exitToken) {
+	 		listener.exitToken(this);
 		}
 	}
 	// @Override
@@ -7361,27 +7240,27 @@ export class TokenContext extends ParserRuleContext {
 
 
 export class AglomeradoContext extends ParserRuleContext {
-	public iniciador_de_aglomerado(): Iniciador_de_aglomeradoContext {
-		return this.getRuleContext(0, Iniciador_de_aglomeradoContext);
-	}
-	public caractere_aglomeravel(): Caractere_aglomeravelContext | undefined {
-		return this.tryGetRuleContext(0, Caractere_aglomeravelContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_aglomerado; }
-	// @Override
+	public iniciador_de_aglomerado(): Iniciador_de_aglomeradoContext {
+		return this.getTypedRuleContext(Iniciador_de_aglomeradoContext, 0) as Iniciador_de_aglomeradoContext;
+	}
+	public caractere_aglomerável(): Caractere_aglomerávelContext {
+		return this.getTypedRuleContext(Caractere_aglomerávelContext, 0) as Caractere_aglomerávelContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_aglomerado;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterAglomerado) {
-			listener.enterAglomerado(this);
+	    if(listener.enterAglomerado) {
+	 		listener.enterAglomerado(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitAglomerado) {
-			listener.exitAglomerado(this);
+	    if(listener.exitAglomerado) {
+	 		listener.exitAglomerado(this);
 		}
 	}
 	// @Override
@@ -7395,34 +7274,46 @@ export class AglomeradoContext extends ParserRuleContext {
 }
 
 
-export class Caractere_aglomeravelContext extends ParserRuleContext {
-	public LETRA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.LETRA, 0); }
-	public DIGITO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DIGITO, 0); }
-	public CIFRAO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.CIFRAO, 0); }
-	public HIFEN(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.HIFEN, 0); }
-	public SINAL_DE_ADICAO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.SINAL_DE_ADICAO, 0); }
-	public BARRA_INCLINADA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.BARRA_INCLINADA, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Caractere_aglomerávelContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_caractere_aglomeravel; }
-	// @Override
+	public LETRA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.LETRA, 0);
+	}
+	public DÍGITO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DÍGITO, 0);
+	}
+	public CIFRÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CIFRÃO, 0);
+	}
+	public HÍFEN(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.HÍFEN, 0);
+	}
+	public SINAL_DE_ADIÇÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.SINAL_DE_ADIÇÃO, 0);
+	}
+	public BARRA_INCLINADA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.BARRA_INCLINADA, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_caractere_aglomerável;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCaractere_aglomeravel) {
-			listener.enterCaractere_aglomeravel(this);
+	    if(listener.enterCaractere_aglomerável) {
+	 		listener.enterCaractere_aglomerável(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCaractere_aglomeravel) {
-			listener.exitCaractere_aglomeravel(this);
+	    if(listener.exitCaractere_aglomerável) {
+	 		listener.exitCaractere_aglomerável(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitCaractere_aglomeravel) {
-			return visitor.visitCaractere_aglomeravel(this);
+		if (visitor.visitCaractere_aglomerável) {
+			return visitor.visitCaractere_aglomerável(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7431,25 +7322,33 @@ export class Caractere_aglomeravelContext extends ParserRuleContext {
 
 
 export class Iniciador_de_aglomeradoContext extends ParserRuleContext {
-	public LETRA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.LETRA, 0); }
-	public DIGITO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DIGITO, 0); }
-	public CIFRAO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.CIFRAO, 0); }
-	public APOSTROFO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.APOSTROFO, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_iniciador_de_aglomerado; }
-	// @Override
+	public LETRA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.LETRA, 0);
+	}
+	public DÍGITO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DÍGITO, 0);
+	}
+	public CIFRÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CIFRÃO, 0);
+	}
+	public APÓSTROFO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.APÓSTROFO, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_iniciador_de_aglomerado;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterIniciador_de_aglomerado) {
-			listener.enterIniciador_de_aglomerado(this);
+	    if(listener.enterIniciador_de_aglomerado) {
+	 		listener.enterIniciador_de_aglomerado(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitIniciador_de_aglomerado) {
-			listener.exitIniciador_de_aglomerado(this);
+	    if(listener.exitIniciador_de_aglomerado) {
+	 		listener.exitIniciador_de_aglomerado(this);
 		}
 	}
 	// @Override
@@ -7464,27 +7363,27 @@ export class Iniciador_de_aglomeradoContext extends ParserRuleContext {
 
 
 export class Possessivo_novoContext extends ParserRuleContext {
-	public apostrofo(): ApostrofoContext {
-		return this.getRuleContext(0, ApostrofoContext);
-	}
-	public caractere_nao_aglomeravel(): Caractere_nao_aglomeravelContext {
-		return this.getRuleContext(0, Caractere_nao_aglomeravelContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_possessivo_novo; }
-	// @Override
+	public apóstrofo(): ApóstrofoContext {
+		return this.getTypedRuleContext(ApóstrofoContext, 0) as ApóstrofoContext;
+	}
+	public caractere_não_aglomerável(): Caractere_não_aglomerávelContext {
+		return this.getTypedRuleContext(Caractere_não_aglomerávelContext, 0) as Caractere_não_aglomerávelContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_possessivo_novo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPossessivo_novo) {
-			listener.enterPossessivo_novo(this);
+	    if(listener.enterPossessivo_novo) {
+	 		listener.enterPossessivo_novo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPossessivo_novo) {
-			listener.exitPossessivo_novo(this);
+	    if(listener.exitPossessivo_novo) {
+	 		listener.exitPossessivo_novo(this);
 		}
 	}
 	// @Override
@@ -7499,32 +7398,33 @@ export class Possessivo_novoContext extends ParserRuleContext {
 
 
 export class QualificadorContext extends ParserRuleContext {
-	public ABRE_PARENTESES(): TerminalNode { return this.getToken(PortuguesPuroParser.ABRE_PARENTESES, 0); }
-	public FECHA_PARENTESES(): TerminalNode { return this.getToken(PortuguesPuroParser.FECHA_PARENTESES, 0); }
-	public CARACTERES_IMPRIMIVEIS(): TerminalNode[];
-	public CARACTERES_IMPRIMIVEIS(i: number): TerminalNode;
-	public CARACTERES_IMPRIMIVEIS(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
-		} else {
-			return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_qualificador; }
-	// @Override
+	public ABRE_PARÊNTESES(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.ABRE_PARÊNTESES, 0);
+	}
+	public FECHA_PARÊNTESES(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.FECHA_PARÊNTESES, 0);
+	}
+	public CARACTERES_IMPRIMÍVEIS_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
+	}
+	public CARACTERES_IMPRIMÍVEIS(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS, i);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_qualificador;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterQualificador) {
-			listener.enterQualificador(this);
+	    if(listener.enterQualificador) {
+	 		listener.enterQualificador(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitQualificador) {
-			listener.exitQualificador(this);
+	    if(listener.exitQualificador) {
+	 		listener.exitQualificador(this);
 		}
 	}
 	// @Override
@@ -7538,34 +7438,46 @@ export class QualificadorContext extends ParserRuleContext {
 }
 
 
-export class Caractere_nao_aglomeravelContext extends ParserRuleContext {
-	public LETRA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.LETRA, 0); }
-	public DIGITO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DIGITO, 0); }
-	public CIFRAO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.CIFRAO, 0); }
-	public HIFEN(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.HIFEN, 0); }
-	public SINAL_DE_ADICAO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.SINAL_DE_ADICAO, 0); }
-	public BARRA_INCLINADA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.BARRA_INCLINADA, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Caractere_não_aglomerávelContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_caractere_nao_aglomeravel; }
-	// @Override
+	public LETRA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.LETRA, 0);
+	}
+	public DÍGITO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DÍGITO, 0);
+	}
+	public CIFRÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CIFRÃO, 0);
+	}
+	public HÍFEN(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.HÍFEN, 0);
+	}
+	public SINAL_DE_ADIÇÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.SINAL_DE_ADIÇÃO, 0);
+	}
+	public BARRA_INCLINADA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.BARRA_INCLINADA, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_caractere_não_aglomerável;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCaractere_nao_aglomeravel) {
-			listener.enterCaractere_nao_aglomeravel(this);
+	    if(listener.enterCaractere_não_aglomerável) {
+	 		listener.enterCaractere_não_aglomerável(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCaractere_nao_aglomeravel) {
-			listener.exitCaractere_nao_aglomeravel(this);
+	    if(listener.exitCaractere_não_aglomerável) {
+	 		listener.exitCaractere_não_aglomerável(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitCaractere_nao_aglomeravel) {
-			return visitor.visitCaractere_nao_aglomeravel(this);
+		if (visitor.visitCaractere_não_aglomerável) {
+			return visitor.visitCaractere_não_aglomerável(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7573,32 +7485,40 @@ export class Caractere_nao_aglomeravelContext extends ParserRuleContext {
 }
 
 
-export class Sinal_de_pontuacaoContext extends ParserRuleContext {
-	public PONTO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.PONTO, 0); }
-	public VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.VIRGULA, 0); }
-	public PONTO_E_VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.PONTO_E_VIRGULA, 0); }
-	public DOIS_PONTOS(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DOIS_PONTOS, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Sinal_de_pontuaçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_sinal_de_pontuacao; }
-	// @Override
+	public PONTO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO, 0);
+	}
+	public VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.VÍRGULA, 0);
+	}
+	public PONTO_E_VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO_E_VÍRGULA, 0);
+	}
+	public DOIS_PONTOS(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DOIS_PONTOS, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_sinal_de_pontuação;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterSinal_de_pontuacao) {
-			listener.enterSinal_de_pontuacao(this);
+	    if(listener.enterSinal_de_pontuação) {
+	 		listener.enterSinal_de_pontuação(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitSinal_de_pontuacao) {
-			listener.exitSinal_de_pontuacao(this);
+	    if(listener.exitSinal_de_pontuação) {
+	 		listener.exitSinal_de_pontuação(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitSinal_de_pontuacao) {
-			return visitor.visitSinal_de_pontuacao(this);
+		if (visitor.visitSinal_de_pontuação) {
+			return visitor.visitSinal_de_pontuação(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7606,31 +7526,37 @@ export class Sinal_de_pontuacaoContext extends ParserRuleContext {
 }
 
 
-export class Simbolos_especiaisContext extends ParserRuleContext {
-	public SINAL_DE_ADICAO(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.SINAL_DE_ADICAO, 0); }
-	public HIFEN(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.HIFEN, 0); }
-	public BARRA_INCLINADA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.BARRA_INCLINADA, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Símbolos_especiaisContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_simbolos_especiais; }
-	// @Override
+	public SINAL_DE_ADIÇÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.SINAL_DE_ADIÇÃO, 0);
+	}
+	public HÍFEN(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.HÍFEN, 0);
+	}
+	public BARRA_INCLINADA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.BARRA_INCLINADA, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_símbolos_especiais;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterSimbolos_especiais) {
-			listener.enterSimbolos_especiais(this);
+	    if(listener.enterSímbolos_especiais) {
+	 		listener.enterSímbolos_especiais(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitSimbolos_especiais) {
-			listener.exitSimbolos_especiais(this);
+	    if(listener.exitSímbolos_especiais) {
+	 		listener.exitSímbolos_especiais(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitSimbolos_especiais) {
-			return visitor.visitSimbolos_especiais(this);
+		if (visitor.visitSímbolos_especiais) {
+			return visitor.visitSímbolos_especiais(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7638,37 +7564,37 @@ export class Simbolos_especiaisContext extends ParserRuleContext {
 }
 
 
-export class NoiseContext extends ParserRuleContext {
-	public caracteres_ignoraveis(): Caracteres_ignoraveisContext | undefined {
-		return this.tryGetRuleContext(0, Caracteres_ignoraveisContext);
-	}
-	public comentario(): ComentarioContext | undefined {
-		return this.tryGetRuleContext(0, ComentarioContext);
-	}
-	public qualificador(): QualificadorContext | undefined {
-		return this.tryGetRuleContext(0, QualificadorContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class RuídoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_noise; }
-	// @Override
+	public caracteres_ignoráveis(): Caracteres_ignoráveisContext {
+		return this.getTypedRuleContext(Caracteres_ignoráveisContext, 0) as Caracteres_ignoráveisContext;
+	}
+	public comentário(): ComentárioContext {
+		return this.getTypedRuleContext(ComentárioContext, 0) as ComentárioContext;
+	}
+	public qualificador(): QualificadorContext {
+		return this.getTypedRuleContext(QualificadorContext, 0) as QualificadorContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_ruído;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNoise) {
-			listener.enterNoise(this);
+	    if(listener.enterRuído) {
+	 		listener.enterRuído(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNoise) {
-			listener.exitNoise(this);
+	    if(listener.exitRuído) {
+	 		listener.exitRuído(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNoise) {
-			return visitor.visitNoise(this);
+		if (visitor.visitRuído) {
+			return visitor.visitRuído(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7676,37 +7602,34 @@ export class NoiseContext extends ParserRuleContext {
 }
 
 
-export class Numero_inteiroContext extends ParserRuleContext {
-	public DIGITO(): TerminalNode[];
-	public DIGITO(i: number): TerminalNode;
-	public DIGITO(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.DIGITO);
-		} else {
-			return this.getToken(PortuguesPuroParser.DIGITO, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Número_inteiroContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_numero_inteiro; }
-	// @Override
+	public DÍGITO_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.DÍGITO);
+	}
+	public DÍGITO(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DÍGITO, i);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_número_inteiro;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNumero_inteiro) {
-			listener.enterNumero_inteiro(this);
+	    if(listener.enterNúmero_inteiro) {
+	 		listener.enterNúmero_inteiro(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNumero_inteiro) {
-			listener.exitNumero_inteiro(this);
+	    if(listener.exitNúmero_inteiro) {
+	 		listener.exitNúmero_inteiro(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNumero_inteiro) {
-			return visitor.visitNumero_inteiro(this);
+		if (visitor.visitNúmero_inteiro) {
+			return visitor.visitNúmero_inteiro(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7714,32 +7637,34 @@ export class Numero_inteiroContext extends ParserRuleContext {
 }
 
 
-export class Numero_decimalContext extends ParserRuleContext {
-	public numero_inteiro(): Numero_inteiroContext {
-		return this.getRuleContext(0, Numero_inteiroContext);
-	}
-	public HIFEN(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.HIFEN, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Número_decimalContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_numero_decimal; }
-	// @Override
+	public número_inteiro(): Número_inteiroContext {
+		return this.getTypedRuleContext(Número_inteiroContext, 0) as Número_inteiroContext;
+	}
+	public HÍFEN(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.HÍFEN, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_número_decimal;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNumero_decimal) {
-			listener.enterNumero_decimal(this);
+	    if(listener.enterNúmero_decimal) {
+	 		listener.enterNúmero_decimal(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNumero_decimal) {
-			listener.exitNumero_decimal(this);
+	    if(listener.exitNúmero_decimal) {
+	 		listener.exitNúmero_decimal(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNumero_decimal) {
-			return visitor.visitNumero_decimal(this);
+		if (visitor.visitNúmero_decimal) {
+			return visitor.visitNúmero_decimal(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7747,35 +7672,37 @@ export class Numero_decimalContext extends ParserRuleContext {
 }
 
 
-export class Numero_fracionarioContext extends ParserRuleContext {
-	public numero_decimal(): Numero_decimalContext {
-		return this.getRuleContext(0, Numero_decimalContext);
-	}
-	public BARRA_INCLINADA(): TerminalNode { return this.getToken(PortuguesPuroParser.BARRA_INCLINADA, 0); }
-	public numero_inteiro(): Numero_inteiroContext {
-		return this.getRuleContext(0, Numero_inteiroContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Número_fracionárioContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_numero_fracionario; }
-	// @Override
+	public número_decimal(): Número_decimalContext {
+		return this.getTypedRuleContext(Número_decimalContext, 0) as Número_decimalContext;
+	}
+	public BARRA_INCLINADA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.BARRA_INCLINADA, 0);
+	}
+	public número_inteiro(): Número_inteiroContext {
+		return this.getTypedRuleContext(Número_inteiroContext, 0) as Número_inteiroContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_número_fracionário;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNumero_fracionario) {
-			listener.enterNumero_fracionario(this);
+	    if(listener.enterNúmero_fracionário) {
+	 		listener.enterNúmero_fracionário(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNumero_fracionario) {
-			listener.exitNumero_fracionario(this);
+	    if(listener.exitNúmero_fracionário) {
+	 		listener.exitNúmero_fracionário(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNumero_fracionario) {
-			return visitor.visitNumero_fracionario(this);
+		if (visitor.visitNúmero_fracionário) {
+			return visitor.visitNúmero_fracionário(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7783,35 +7710,37 @@ export class Numero_fracionarioContext extends ParserRuleContext {
 }
 
 
-export class Numero_mistoContext extends ParserRuleContext {
-	public numero_decimal(): Numero_decimalContext {
-		return this.getRuleContext(0, Numero_decimalContext);
-	}
-	public SINAL_DE_ADICAO(): TerminalNode { return this.getToken(PortuguesPuroParser.SINAL_DE_ADICAO, 0); }
-	public numero_fracionario(): Numero_fracionarioContext {
-		return this.getRuleContext(0, Numero_fracionarioContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Número_mistoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_numero_misto; }
-	// @Override
+	public número_decimal(): Número_decimalContext {
+		return this.getTypedRuleContext(Número_decimalContext, 0) as Número_decimalContext;
+	}
+	public SINAL_DE_ADIÇÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.SINAL_DE_ADIÇÃO, 0);
+	}
+	public número_fracionário(): Número_fracionárioContext {
+		return this.getTypedRuleContext(Número_fracionárioContext, 0) as Número_fracionárioContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_número_misto;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNumero_misto) {
-			listener.enterNumero_misto(this);
+	    if(listener.enterNúmero_misto) {
+	 		listener.enterNúmero_misto(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNumero_misto) {
-			listener.exitNumero_misto(this);
+	    if(listener.exitNúmero_misto) {
+	 		listener.exitNúmero_misto(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNumero_misto) {
-			return visitor.visitNumero_misto(this);
+		if (visitor.visitNúmero_misto) {
+			return visitor.visitNúmero_misto(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7819,32 +7748,34 @@ export class Numero_mistoContext extends ParserRuleContext {
 }
 
 
-export class Numero_hexadecimalContext extends ParserRuleContext {
-	public CIFRAO(): TerminalNode { return this.getToken(PortuguesPuroParser.CIFRAO, 0); }
-	public numero_inteiro(): Numero_inteiroContext {
-		return this.getRuleContext(0, Numero_inteiroContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Número_hexadecimalContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_numero_hexadecimal; }
-	// @Override
+	public CIFRÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CIFRÃO, 0);
+	}
+	public número_inteiro(): Número_inteiroContext {
+		return this.getTypedRuleContext(Número_inteiroContext, 0) as Número_inteiroContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_número_hexadecimal;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNumero_hexadecimal) {
-			listener.enterNumero_hexadecimal(this);
+	    if(listener.enterNúmero_hexadecimal) {
+	 		listener.enterNúmero_hexadecimal(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNumero_hexadecimal) {
-			listener.exitNumero_hexadecimal(this);
+	    if(listener.exitNúmero_hexadecimal) {
+	 		listener.exitNúmero_hexadecimal(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNumero_hexadecimal) {
-			return visitor.visitNumero_hexadecimal(this);
+		if (visitor.visitNúmero_hexadecimal) {
+			return visitor.visitNúmero_hexadecimal(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -7853,39 +7784,33 @@ export class Numero_hexadecimalContext extends ParserRuleContext {
 
 
 export class String_literalContext extends ParserRuleContext {
-	public ASPAS_DUPLAS(): TerminalNode[];
-	public ASPAS_DUPLAS(i: number): TerminalNode;
-	public ASPAS_DUPLAS(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.ASPAS_DUPLAS);
-		} else {
-			return this.getToken(PortuguesPuroParser.ASPAS_DUPLAS, i);
-		}
-	}
-	public CARACTERES_IMPRIMIVEIS(): TerminalNode[];
-	public CARACTERES_IMPRIMIVEIS(i: number): TerminalNode;
-	public CARACTERES_IMPRIMIVEIS(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS);
-		} else {
-			return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMIVEIS, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_string_literal; }
-	// @Override
+	public ASPAS_DUPLAS_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.ASPAS_DUPLAS);
+	}
+	public ASPAS_DUPLAS(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.ASPAS_DUPLAS, i);
+	}
+	public CARACTERES_IMPRIMÍVEIS_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS);
+	}
+	public CARACTERES_IMPRIMÍVEIS(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.CARACTERES_IMPRIMÍVEIS, i);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_string_literal;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterString_literal) {
-			listener.enterString_literal(this);
+	    if(listener.enterString_literal) {
+	 		listener.enterString_literal(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitString_literal) {
-			listener.exitString_literal(this);
+	    if(listener.exitString_literal) {
+	 		listener.exitString_literal(this);
 		}
 	}
 	// @Override
@@ -7900,30 +7825,30 @@ export class String_literalContext extends ParserRuleContext {
 
 
 export class ProgramaContext extends ParserRuleContext {
-	public tipo(): TipoContext | undefined {
-		return this.tryGetRuleContext(0, TipoContext);
-	}
-	public variavel_global(): Variavel_globalContext | undefined {
-		return this.tryGetRuleContext(0, Variavel_globalContext);
-	}
-	public rotina(): RotinaContext | undefined {
-		return this.tryGetRuleContext(0, RotinaContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_programa; }
-	// @Override
+	public tipo(): TipoContext {
+		return this.getTypedRuleContext(TipoContext, 0) as TipoContext;
+	}
+	public variável_global(): Variável_globalContext {
+		return this.getTypedRuleContext(Variável_globalContext, 0) as Variável_globalContext;
+	}
+	public rotina(): RotinaContext {
+		return this.getTypedRuleContext(RotinaContext, 0) as RotinaContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_programa;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPrograma) {
-			listener.enterPrograma(this);
+	    if(listener.enterPrograma) {
+	 		listener.enterPrograma(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPrograma) {
-			listener.exitPrograma(this);
+	    if(listener.exitPrograma) {
+	 		listener.exitPrograma(this);
 		}
 	}
 	// @Override
@@ -7938,21 +7863,21 @@ export class ProgramaContext extends ParserRuleContext {
 
 
 export class Tipos_primitivosContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_tipos_primitivos; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_tipos_primitivos;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTipos_primitivos) {
-			listener.enterTipos_primitivos(this);
+	    if(listener.enterTipos_primitivos) {
+	 		listener.enterTipos_primitivos(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTipos_primitivos) {
-			listener.exitTipos_primitivos(this);
+	    if(listener.exitTipos_primitivos) {
+	 		listener.exitTipos_primitivos(this);
 		}
 	}
 	// @Override
@@ -7967,55 +7892,54 @@ export class Tipos_primitivosContext extends ParserRuleContext {
 
 
 export class TipoContext extends ParserRuleContext {
-	public artigo_indefinido(): Artigo_indefinidoContext[];
-	public artigo_indefinido(i: number): Artigo_indefinidoContext;
-	public artigo_indefinido(i?: number): Artigo_indefinidoContext | Artigo_indefinidoContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Artigo_indefinidoContext);
-		} else {
-			return this.getRuleContext(i, Artigo_indefinidoContext);
-		}
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
+	public artigo_indefinido_list(): Artigo_indefinidoContext[] {
+		return this.getTypedRuleContexts(Artigo_indefinidoContext) as Artigo_indefinidoContext[];
+	}
+	public artigo_indefinido(i: number): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, i) as Artigo_indefinidoContext;
 	}
 	public nome(): NomeContext {
-		return this.getRuleContext(0, NomeContext);
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
 	}
-	public ï¿½(): ï¿½Context {
-		return this.getRuleContext(0, ï¿½Context);
+	public é(): ÉContext {
+		return this.getTypedRuleContext(ÉContext, 0) as ÉContext;
 	}
-	public nome_do_tipo(): Nome_do_tipoContext | undefined {
-		return this.tryGetRuleContext(0, Nome_do_tipoContext);
+	public nome_do_tipo(): Nome_do_tipoContext {
+		return this.getTypedRuleContext(Nome_do_tipoContext, 0) as Nome_do_tipoContext;
 	}
-	public PONTO(): TerminalNode { return this.getToken(PortuguesPuroParser.PONTO, 0); }
-	public informacao_opcional(): Informacao_opcionalContext | undefined {
-		return this.tryGetRuleContext(0, Informacao_opcionalContext);
+	public PONTO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO, 0);
 	}
-	public estrutura(): EstruturaContext | undefined {
-		return this.tryGetRuleContext(0, EstruturaContext);
+	public informação_opcional(): Informação_opcionalContext {
+		return this.getTypedRuleContext(Informação_opcionalContext, 0) as Informação_opcionalContext;
 	}
-	public com(): ComContext | undefined {
-		return this.tryGetRuleContext(0, ComContext);
+	public estrutura(): EstruturaContext {
+		return this.getTypedRuleContext(EstruturaContext, 0) as EstruturaContext;
 	}
-	public campos(): CamposContext | undefined {
-		return this.tryGetRuleContext(0, CamposContext);
+	public com(): ComContext {
+		return this.getTypedRuleContext(ComContext, 0) as ComContext;
 	}
-	public numero_inteiro(): Numero_inteiroContext | undefined {
-		return this.tryGetRuleContext(0, Numero_inteiroContext);
+	public campos(): CamposContext {
+		return this.getTypedRuleContext(CamposContext, 0) as CamposContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+	public número_inteiro(): Número_inteiroContext {
+		return this.getTypedRuleContext(Número_inteiroContext, 0) as Número_inteiroContext;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_tipo; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_tipo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTipo) {
-			listener.enterTipo(this);
+	    if(listener.enterTipo) {
+	 		listener.enterTipo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTipo) {
-			listener.exitTipo(this);
+	    if(listener.exitTipo) {
+	 		listener.exitTipo(this);
 		}
 	}
 	// @Override
@@ -8030,24 +7954,24 @@ export class TipoContext extends ParserRuleContext {
 
 
 export class NomeContext extends ParserRuleContext {
-	public palavra(): PalavraContext {
-		return this.getRuleContext(0, PalavraContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_nome; }
-	// @Override
+	public palavra(): PalavraContext {
+		return this.getTypedRuleContext(PalavraContext, 0) as PalavraContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_nome;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNome) {
-			listener.enterNome(this);
+	    if(listener.enterNome) {
+	 		listener.enterNome(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNome) {
-			listener.exitNome(this);
+	    if(listener.exitNome) {
+	 		listener.exitNome(this);
 		}
 	}
 	// @Override
@@ -8062,24 +7986,24 @@ export class NomeContext extends ParserRuleContext {
 
 
 export class Nome_do_tipoContext extends ParserRuleContext {
-	public nome(): NomeContext {
-		return this.getRuleContext(0, NomeContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_nome_do_tipo; }
-	// @Override
+	public nome(): NomeContext {
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_nome_do_tipo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNome_do_tipo) {
-			listener.enterNome_do_tipo(this);
+	    if(listener.enterNome_do_tipo) {
+	 		listener.enterNome_do_tipo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNome_do_tipo) {
-			listener.exitNome_do_tipo(this);
+	    if(listener.exitNome_do_tipo) {
+	 		listener.exitNome_do_tipo(this);
 		}
 	}
 	// @Override
@@ -8093,43 +8017,43 @@ export class Nome_do_tipoContext extends ParserRuleContext {
 }
 
 
-export class Informacao_opcionalContext extends ParserRuleContext {
-	public para(): ParaContext | undefined {
-		return this.tryGetRuleContext(0, ParaContext);
-	}
-	public artigo_indefinido(): Artigo_indefinidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_indefinidoContext);
-	}
-	public nome_do_tipo(): Nome_do_tipoContext | undefined {
-		return this.tryGetRuleContext(0, Nome_do_tipoContext);
-	}
-	public com(): ComContext | undefined {
-		return this.tryGetRuleContext(0, ComContext);
-	}
-	public campos(): CamposContext | undefined {
-		return this.tryGetRuleContext(0, CamposContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Informação_opcionalContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_informacao_opcional; }
-	// @Override
+	public para(): ParaContext {
+		return this.getTypedRuleContext(ParaContext, 0) as ParaContext;
+	}
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+	public nome_do_tipo(): Nome_do_tipoContext {
+		return this.getTypedRuleContext(Nome_do_tipoContext, 0) as Nome_do_tipoContext;
+	}
+	public com(): ComContext {
+		return this.getTypedRuleContext(ComContext, 0) as ComContext;
+	}
+	public campos(): CamposContext {
+		return this.getTypedRuleContext(CamposContext, 0) as CamposContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_informação_opcional;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInformacao_opcional) {
-			listener.enterInformacao_opcional(this);
+	    if(listener.enterInformação_opcional) {
+	 		listener.enterInformação_opcional(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInformacao_opcional) {
-			listener.exitInformacao_opcional(this);
+	    if(listener.exitInformação_opcional) {
+	 		listener.exitInformação_opcional(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInformacao_opcional) {
-			return visitor.visitInformacao_opcional(this);
+		if (visitor.visitInformação_opcional) {
+			return visitor.visitInformação_opcional(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8138,39 +8062,33 @@ export class Informacao_opcionalContext extends ParserRuleContext {
 
 
 export class CamposContext extends ParserRuleContext {
-	public campo(): CampoContext[];
-	public campo(i: number): CampoContext;
-	public campo(i?: number): CampoContext | CampoContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(CampoContext);
-		} else {
-			return this.getRuleContext(i, CampoContext);
-		}
-	}
-	public pausas(): PausasContext[];
-	public pausas(i: number): PausasContext;
-	public pausas(i?: number): PausasContext | PausasContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(PausasContext);
-		} else {
-			return this.getRuleContext(i, PausasContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_campos; }
-	// @Override
+	public campo_list(): CampoContext[] {
+		return this.getTypedRuleContexts(CampoContext) as CampoContext[];
+	}
+	public campo(i: number): CampoContext {
+		return this.getTypedRuleContext(CampoContext, i) as CampoContext;
+	}
+	public pausas_list(): PausasContext[] {
+		return this.getTypedRuleContexts(PausasContext) as PausasContext[];
+	}
+	public pausas(i: number): PausasContext {
+		return this.getTypedRuleContext(PausasContext, i) as PausasContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_campos;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCampos) {
-			listener.enterCampos(this);
+	    if(listener.enterCampos) {
+	 		listener.enterCampos(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCampos) {
-			listener.exitCampos(this);
+	    if(listener.exitCampos) {
+	 		listener.exitCampos(this);
 		}
 	}
 	// @Override
@@ -8185,21 +8103,21 @@ export class CamposContext extends ParserRuleContext {
 
 
 export class BytesContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_bytes; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_bytes;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterBytes) {
-			listener.enterBytes(this);
+	    if(listener.enterBytes) {
+	 		listener.enterBytes(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitBytes) {
-			listener.exitBytes(this);
+	    if(listener.exitBytes) {
+	 		listener.exitBytes(this);
 		}
 	}
 	// @Override
@@ -8213,28 +8131,28 @@ export class BytesContext extends ParserRuleContext {
 }
 
 
-export class Referï¿½nciaContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ReferênciaContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_referï¿½ncia; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_referência;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterReferï¿½ncia) {
-			listener.enterReferï¿½ncia(this);
+	    if(listener.enterReferência) {
+	 		listener.enterReferência(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitReferï¿½ncia) {
-			listener.exitReferï¿½ncia(this);
+	    if(listener.exitReferência) {
+	 		listener.exitReferência(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitReferï¿½ncia) {
-			return visitor.visitReferï¿½ncia(this);
+		if (visitor.visitReferência) {
+			return visitor.visitReferência(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8243,42 +8161,42 @@ export class Referï¿½nciaContext extends ParserRuleContext {
 
 
 export class CampoContext extends ParserRuleContext {
-	public artigo_indefinido(): Artigo_indefinidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_indefinidoContext);
-	}
-	public numero_inteiro(): Numero_inteiroContext | undefined {
-		return this.tryGetRuleContext(0, Numero_inteiroContext);
-	}
-	public bytes(): BytesContext | undefined {
-		return this.tryGetRuleContext(0, BytesContext);
-	}
-	public denominacoes(): DenominacoesContext | undefined {
-		return this.tryGetRuleContext(0, DenominacoesContext);
-	}
-	public nome(): NomeContext | undefined {
-		return this.tryGetRuleContext(0, NomeContext);
-	}
-	public artigo_definido(): Artigo_definidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_definidoContext);
-	}
-	public referï¿½ncia(): Referï¿½nciaContext | undefined {
-		return this.tryGetRuleContext(0, Referï¿½nciaContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_campo; }
-	// @Override
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+	public número_inteiro(): Número_inteiroContext {
+		return this.getTypedRuleContext(Número_inteiroContext, 0) as Número_inteiroContext;
+	}
+	public bytes(): BytesContext {
+		return this.getTypedRuleContext(BytesContext, 0) as BytesContext;
+	}
+	public denominações(): DenominaçõesContext {
+		return this.getTypedRuleContext(DenominaçõesContext, 0) as DenominaçõesContext;
+	}
+	public nome(): NomeContext {
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
+	}
+	public artigo_definido(): Artigo_definidoContext {
+		return this.getTypedRuleContext(Artigo_definidoContext, 0) as Artigo_definidoContext;
+	}
+	public referência(): ReferênciaContext {
+		return this.getTypedRuleContext(ReferênciaContext, 0) as ReferênciaContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_campo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCampo) {
-			listener.enterCampo(this);
+	    if(listener.enterCampo) {
+	 		listener.enterCampo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCampo) {
-			listener.exitCampo(this);
+	    if(listener.exitCampo) {
+	 		listener.exitCampo(this);
 		}
 	}
 	// @Override
@@ -8293,23 +8211,27 @@ export class CampoContext extends ParserRuleContext {
 
 
 export class PausaContext extends ParserRuleContext {
-	public VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.VIRGULA, 0); }
-	public PONTO_E_VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.PONTO_E_VIRGULA, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_pausa; }
-	// @Override
+	public VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.VÍRGULA, 0);
+	}
+	public PONTO_E_VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO_E_VÍRGULA, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_pausa;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPausa) {
-			listener.enterPausa(this);
+	    if(listener.enterPausa) {
+	 		listener.enterPausa(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPausa) {
-			listener.exitPausa(this);
+	    if(listener.exitPausa) {
+	 		listener.exitPausa(this);
 		}
 	}
 	// @Override
@@ -8324,30 +8246,27 @@ export class PausaContext extends ParserRuleContext {
 
 
 export class PausasContext extends ParserRuleContext {
-	public pausa(): PausaContext[];
-	public pausa(i: number): PausaContext;
-	public pausa(i?: number): PausaContext | PausaContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(PausaContext);
-		} else {
-			return this.getRuleContext(i, PausaContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_pausas; }
-	// @Override
+	public pausa_list(): PausaContext[] {
+		return this.getTypedRuleContexts(PausaContext) as PausaContext[];
+	}
+	public pausa(i: number): PausaContext {
+		return this.getTypedRuleContext(PausaContext, i) as PausaContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_pausas;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPausas) {
-			listener.enterPausas(this);
+	    if(listener.enterPausas) {
+	 		listener.enterPausas(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPausas) {
-			listener.exitPausas(this);
+	    if(listener.exitPausas) {
+	 		listener.exitPausas(this);
 		}
 	}
 	// @Override
@@ -8361,28 +8280,28 @@ export class PausasContext extends ParserRuleContext {
 }
 
 
-export class ConjuncoesContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ConjunçõesContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_conjuncoes; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_conjunções;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterConjuncoes) {
-			listener.enterConjuncoes(this);
+	    if(listener.enterConjunções) {
+	 		listener.enterConjunções(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitConjuncoes) {
-			listener.exitConjuncoes(this);
+	    if(listener.exitConjunções) {
+	 		listener.exitConjunções(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitConjuncoes) {
-			return visitor.visitConjuncoes(this);
+		if (visitor.visitConjunções) {
+			return visitor.visitConjunções(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8390,28 +8309,28 @@ export class ConjuncoesContext extends ParserRuleContext {
 }
 
 
-export class PreposicoesContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class PreposiçõesContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_preposicoes; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_preposições;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPreposicoes) {
-			listener.enterPreposicoes(this);
+	    if(listener.enterPreposições) {
+	 		listener.enterPreposições(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPreposicoes) {
-			listener.exitPreposicoes(this);
+	    if(listener.exitPreposições) {
+	 		listener.exitPreposições(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitPreposicoes) {
-			return visitor.visitPreposicoes(this);
+		if (visitor.visitPreposições) {
+			return visitor.visitPreposições(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8419,28 +8338,28 @@ export class PreposicoesContext extends ParserRuleContext {
 }
 
 
-export class ï¿½Context extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ÉContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_ï¿½; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_é;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterï¿½) {
-			listener.enterï¿½(this);
+	    if(listener.enterÉ) {
+	 		listener.enterÉ(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitï¿½) {
-			listener.exitï¿½(this);
+	    if(listener.exitÉ) {
+	 		listener.exitÉ(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitï¿½) {
-			return visitor.visitï¿½(this);
+		if (visitor.visitÉ) {
+			return visitor.visitÉ(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8449,21 +8368,21 @@ export class ï¿½Context extends ParserRuleContext {
 
 
 export class EstruturaContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_estrutura; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_estrutura;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterEstrutura) {
-			listener.enterEstrutura(this);
+	    if(listener.enterEstrutura) {
+	 		listener.enterEstrutura(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitEstrutura) {
-			listener.exitEstrutura(this);
+	    if(listener.exitEstrutura) {
+	 		listener.exitEstrutura(this);
 		}
 	}
 	// @Override
@@ -8478,21 +8397,21 @@ export class EstruturaContext extends ParserRuleContext {
 
 
 export class Igual_aContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_igual_a; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_igual_a;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterIgual_a) {
-			listener.enterIgual_a(this);
+	    if(listener.enterIgual_a) {
+	 		listener.enterIgual_a(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitIgual_a) {
-			listener.exitIgual_a(this);
+	    if(listener.exitIgual_a) {
+	 		listener.exitIgual_a(this);
 		}
 	}
 	// @Override
@@ -8506,94 +8425,79 @@ export class Igual_aContext extends ParserRuleContext {
 }
 
 
-export class Variavel_globalContext extends ParserRuleContext {
-	public artigo_definido(): Artigo_definidoContext[];
-	public artigo_definido(i: number): Artigo_definidoContext;
-	public artigo_definido(i?: number): Artigo_definidoContext | Artigo_definidoContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Artigo_definidoContext);
-		} else {
-			return this.getRuleContext(i, Artigo_definidoContext);
-		}
-	}
-	public nome(): NomeContext[];
-	public nome(i: number): NomeContext;
-	public nome(i?: number): NomeContext | NomeContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(NomeContext);
-		} else {
-			return this.getRuleContext(i, NomeContext);
-		}
-	}
-	public ï¿½(): ï¿½Context[];
-	public ï¿½(i: number): ï¿½Context;
-	public ï¿½(i?: number): ï¿½Context | ï¿½Context[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ï¿½Context);
-		} else {
-			return this.getRuleContext(i, ï¿½Context);
-		}
-	}
-	public artigo_indefinido(): Artigo_indefinidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_indefinidoContext);
-	}
-	public nome_do_tipo(): Nome_do_tipoContext | undefined {
-		return this.tryGetRuleContext(0, Nome_do_tipoContext);
-	}
-	public PONTO(): TerminalNode[];
-	public PONTO(i: number): TerminalNode;
-	public PONTO(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.PONTO);
-		} else {
-			return this.getToken(PortuguesPuroParser.PONTO, i);
-		}
-	}
-	public informacao_opcional(): Informacao_opcionalContext | undefined {
-		return this.tryGetRuleContext(0, Informacao_opcionalContext);
-	}
-	public estrutura(): EstruturaContext | undefined {
-		return this.tryGetRuleContext(0, EstruturaContext);
-	}
-	public com(): ComContext | undefined {
-		return this.tryGetRuleContext(0, ComContext);
-	}
-	public campos(): CamposContext | undefined {
-		return this.tryGetRuleContext(0, CamposContext);
-	}
-	public igual_a(): Igual_aContext | undefined {
-		return this.tryGetRuleContext(0, Igual_aContext);
-	}
-	public termo_constante(): Termo_constanteContext[];
-	public termo_constante(i: number): Termo_constanteContext;
-	public termo_constante(i?: number): Termo_constanteContext | Termo_constanteContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Termo_constanteContext);
-		} else {
-			return this.getRuleContext(i, Termo_constanteContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Variável_globalContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_variavel_global; }
-	// @Override
+	public artigo_definido_list(): Artigo_definidoContext[] {
+		return this.getTypedRuleContexts(Artigo_definidoContext) as Artigo_definidoContext[];
+	}
+	public artigo_definido(i: number): Artigo_definidoContext {
+		return this.getTypedRuleContext(Artigo_definidoContext, i) as Artigo_definidoContext;
+	}
+	public nome_list(): NomeContext[] {
+		return this.getTypedRuleContexts(NomeContext) as NomeContext[];
+	}
+	public nome(i: number): NomeContext {
+		return this.getTypedRuleContext(NomeContext, i) as NomeContext;
+	}
+	public é_list(): ÉContext[] {
+		return this.getTypedRuleContexts(ÉContext) as ÉContext[];
+	}
+	public é(i: number): ÉContext {
+		return this.getTypedRuleContext(ÉContext, i) as ÉContext;
+	}
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+	public nome_do_tipo(): Nome_do_tipoContext {
+		return this.getTypedRuleContext(Nome_do_tipoContext, 0) as Nome_do_tipoContext;
+	}
+	public PONTO_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.PONTO);
+	}
+	public PONTO(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO, i);
+	}
+	public informação_opcional(): Informação_opcionalContext {
+		return this.getTypedRuleContext(Informação_opcionalContext, 0) as Informação_opcionalContext;
+	}
+	public estrutura(): EstruturaContext {
+		return this.getTypedRuleContext(EstruturaContext, 0) as EstruturaContext;
+	}
+	public com(): ComContext {
+		return this.getTypedRuleContext(ComContext, 0) as ComContext;
+	}
+	public campos(): CamposContext {
+		return this.getTypedRuleContext(CamposContext, 0) as CamposContext;
+	}
+	public igual_a(): Igual_aContext {
+		return this.getTypedRuleContext(Igual_aContext, 0) as Igual_aContext;
+	}
+	public termo_constante_list(): Termo_constanteContext[] {
+		return this.getTypedRuleContexts(Termo_constanteContext) as Termo_constanteContext[];
+	}
+	public termo_constante(i: number): Termo_constanteContext {
+		return this.getTypedRuleContext(Termo_constanteContext, i) as Termo_constanteContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_variável_global;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterVariavel_global) {
-			listener.enterVariavel_global(this);
+	    if(listener.enterVariável_global) {
+	 		listener.enterVariável_global(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitVariavel_global) {
-			listener.exitVariavel_global(this);
+	    if(listener.exitVariável_global) {
+	 		listener.exitVariável_global(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitVariavel_global) {
-			return visitor.visitVariavel_global(this);
+		if (visitor.visitVariável_global) {
+			return visitor.visitVariável_global(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8602,33 +8506,33 @@ export class Variavel_globalContext extends ParserRuleContext {
 
 
 export class RotinaContext extends ParserRuleContext {
-	public procedimento(): ProcedimentoContext | undefined {
-		return this.tryGetRuleContext(0, ProcedimentoContext);
-	}
-	public decisor(): DecisorContext | undefined {
-		return this.tryGetRuleContext(0, DecisorContext);
-	}
-	public funcao(): FuncaoContext | undefined {
-		return this.tryGetRuleContext(0, FuncaoContext);
-	}
-	public retroinvocacao(): RetroinvocacaoContext | undefined {
-		return this.tryGetRuleContext(0, RetroinvocacaoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_rotina; }
-	// @Override
+	public procedimento(): ProcedimentoContext {
+		return this.getTypedRuleContext(ProcedimentoContext, 0) as ProcedimentoContext;
+	}
+	public decisor(): DecisorContext {
+		return this.getTypedRuleContext(DecisorContext, 0) as DecisorContext;
+	}
+	public função(): FunçãoContext {
+		return this.getTypedRuleContext(FunçãoContext, 0) as FunçãoContext;
+	}
+	public retroinvocação(): RetroinvocaçãoContext {
+		return this.getTypedRuleContext(RetroinvocaçãoContext, 0) as RetroinvocaçãoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_rotina;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterRotina) {
-			listener.enterRotina(this);
+	    if(listener.enterRotina) {
+	 		listener.enterRotina(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitRotina) {
-			listener.exitRotina(this);
+	    if(listener.exitRotina) {
+	 		listener.exitRotina(this);
 		}
 	}
 	// @Override
@@ -8643,38 +8547,42 @@ export class RotinaContext extends ParserRuleContext {
 
 
 export class ProcedimentoContext extends ParserRuleContext {
-	public instrucoes(): InstrucoesContext {
-		return this.getRuleContext(0, InstrucoesContext);
-	}
-	public para(): ParaContext | undefined {
-		return this.tryGetRuleContext(0, ParaContext);
-	}
-	public que_se(): Que_seContext | undefined {
-		return this.tryGetRuleContext(0, Que_seContext);
-	}
-	public nome_da_rotina(): Nome_da_rotinaContext | undefined {
-		return this.tryGetRuleContext(0, Nome_da_rotinaContext);
-	}
-	public PONTO_E_VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.PONTO_E_VIRGULA, 0); }
-	public DOIS_PONTOS(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DOIS_PONTOS, 0); }
-	public rotina2(): Rotina2Context | undefined {
-		return this.tryGetRuleContext(0, Rotina2Context);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_procedimento; }
-	// @Override
+	public instruções(): InstruçõesContext {
+		return this.getTypedRuleContext(InstruçõesContext, 0) as InstruçõesContext;
+	}
+	public para(): ParaContext {
+		return this.getTypedRuleContext(ParaContext, 0) as ParaContext;
+	}
+	public que_se(): Que_seContext {
+		return this.getTypedRuleContext(Que_seContext, 0) as Que_seContext;
+	}
+	public nome_da_rotina(): Nome_da_rotinaContext {
+		return this.getTypedRuleContext(Nome_da_rotinaContext, 0) as Nome_da_rotinaContext;
+	}
+	public PONTO_E_VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO_E_VÍRGULA, 0);
+	}
+	public DOIS_PONTOS(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DOIS_PONTOS, 0);
+	}
+	public rotina2(): Rotina2Context {
+		return this.getTypedRuleContext(Rotina2Context, 0) as Rotina2Context;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_procedimento;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterProcedimento) {
-			listener.enterProcedimento(this);
+	    if(listener.enterProcedimento) {
+	 		listener.enterProcedimento(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitProcedimento) {
-			listener.exitProcedimento(this);
+	    if(listener.exitProcedimento) {
+	 		listener.exitProcedimento(this);
 		}
 	}
 	// @Override
@@ -8689,21 +8597,21 @@ export class ProcedimentoContext extends ParserRuleContext {
 
 
 export class Determine_seContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_determine_se; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_determine_se;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterDetermine_se) {
-			listener.enterDetermine_se(this);
+	    if(listener.enterDetermine_se) {
+	 		listener.enterDetermine_se(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitDetermine_se) {
-			listener.exitDetermine_se(this);
+	    if(listener.exitDetermine_se) {
+	 		listener.exitDetermine_se(this);
 		}
 	}
 	// @Override
@@ -8718,38 +8626,42 @@ export class Determine_seContext extends ParserRuleContext {
 
 
 export class DecisorContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
 	public para(): ParaContext {
-		return this.getRuleContext(0, ParaContext);
+		return this.getTypedRuleContext(ParaContext, 0) as ParaContext;
 	}
 	public que_se(): Que_seContext {
-		return this.getRuleContext(0, Que_seContext);
+		return this.getTypedRuleContext(Que_seContext, 0) as Que_seContext;
 	}
 	public determine_se(): Determine_seContext {
-		return this.getRuleContext(0, Determine_seContext);
+		return this.getTypedRuleContext(Determine_seContext, 0) as Determine_seContext;
 	}
 	public nome_da_rotina(): Nome_da_rotinaContext {
-		return this.getRuleContext(0, Nome_da_rotinaContext);
+		return this.getTypedRuleContext(Nome_da_rotinaContext, 0) as Nome_da_rotinaContext;
 	}
-	public PONTO_E_VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.PONTO_E_VIRGULA, 0); }
-	public rotina2(): Rotina2Context | undefined {
-		return this.tryGetRuleContext(0, Rotina2Context);
+	public PONTO_E_VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO_E_VÍRGULA, 0);
 	}
-	public DOIS_PONTOS(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DOIS_PONTOS, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+	public função2(): Função2Context {
+		return this.getTypedRuleContext(Função2Context, 0) as Função2Context;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_decisor; }
-	// @Override
+	public DOIS_PONTOS(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DOIS_PONTOS, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_decisor;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterDecisor) {
-			listener.enterDecisor(this);
+	    if(listener.enterDecisor) {
+	 		listener.enterDecisor(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitDecisor) {
-			listener.exitDecisor(this);
+	    if(listener.exitDecisor) {
+	 		listener.exitDecisor(this);
 		}
 	}
 	// @Override
@@ -8763,28 +8675,28 @@ export class DecisorContext extends ParserRuleContext {
 }
 
 
-export class Funï¿½ï¿½o2Context extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Função2Context extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_funï¿½ï¿½o2; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_função2;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterFunï¿½ï¿½o2) {
-			listener.enterFunï¿½ï¿½o2(this);
+	    if(listener.enterFunção2) {
+	 		listener.enterFunção2(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitFunï¿½ï¿½o2) {
-			listener.exitFunï¿½ï¿½o2(this);
+	    if(listener.exitFunção2) {
+	 		listener.exitFunção2(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitFunï¿½ï¿½o2) {
-			return visitor.visitFunï¿½ï¿½o2(this);
+		if (visitor.visitFunção2) {
+			return visitor.visitFunção2(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8793,21 +8705,21 @@ export class Funï¿½ï¿½o2Context extends ParserRuleContext {
 
 
 export class AtribuaContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_atribua; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_atribua;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterAtribua) {
-			listener.enterAtribua(this);
+	    if(listener.enterAtribua) {
+	 		listener.enterAtribua(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitAtribua) {
-			listener.exitAtribua(this);
+	    if(listener.exitAtribua) {
+	 		listener.exitAtribua(this);
 		}
 	}
 	// @Override
@@ -8821,72 +8733,70 @@ export class AtribuaContext extends ParserRuleContext {
 }
 
 
-export class FuncaoContext extends ParserRuleContext {
-	public instrucoes(): InstrucoesContext {
-		return this.getRuleContext(0, InstrucoesContext);
-	}
-	public para(): ParaContext[];
-	public para(i: number): ParaContext;
-	public para(i?: number): ParaContext | ParaContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ParaContext);
-		} else {
-			return this.getRuleContext(i, ParaContext);
-		}
-	}
-	public que_se(): Que_seContext | undefined {
-		return this.tryGetRuleContext(0, Que_seContext);
-	}
-	public atribua(): AtribuaContext | undefined {
-		return this.tryGetRuleContext(0, AtribuaContext);
-	}
-	public artigo_definido(): Artigo_definidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_definidoContext);
-	}
-	public nome_do_tipo(): Nome_do_tipoContext[];
-	public nome_do_tipo(i: number): Nome_do_tipoContext;
-	public nome_do_tipo(i?: number): Nome_do_tipoContext | Nome_do_tipoContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Nome_do_tipoContext);
-		} else {
-			return this.getRuleContext(i, Nome_do_tipoContext);
-		}
-	}
-	public atribuidores_de_posse(): Atribuidores_de_posseContext | undefined {
-		return this.tryGetRuleContext(0, Atribuidores_de_posseContext);
-	}
-	public nome(): NomeContext | undefined {
-		return this.tryGetRuleContext(0, NomeContext);
-	}
-	public artigo_indefinido(): Artigo_indefinidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_indefinidoContext);
-	}
-	public PONTO_E_VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.PONTO_E_VIRGULA, 0); }
-	public DOIS_PONTOS(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DOIS_PONTOS, 0); }
-	public funï¿½ï¿½o2(): Funï¿½ï¿½o2Context | undefined {
-		return this.tryGetRuleContext(0, Funï¿½ï¿½o2Context);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class FunçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_funcao; }
-	// @Override
+	public instruções(): InstruçõesContext {
+		return this.getTypedRuleContext(InstruçõesContext, 0) as InstruçõesContext;
+	}
+	public para_list(): ParaContext[] {
+		return this.getTypedRuleContexts(ParaContext) as ParaContext[];
+	}
+	public para(i: number): ParaContext {
+		return this.getTypedRuleContext(ParaContext, i) as ParaContext;
+	}
+	public que_se(): Que_seContext {
+		return this.getTypedRuleContext(Que_seContext, 0) as Que_seContext;
+	}
+	public atribua(): AtribuaContext {
+		return this.getTypedRuleContext(AtribuaContext, 0) as AtribuaContext;
+	}
+	public artigo_definido(): Artigo_definidoContext {
+		return this.getTypedRuleContext(Artigo_definidoContext, 0) as Artigo_definidoContext;
+	}
+	public nome_do_tipo_list(): Nome_do_tipoContext[] {
+		return this.getTypedRuleContexts(Nome_do_tipoContext) as Nome_do_tipoContext[];
+	}
+	public nome_do_tipo(i: number): Nome_do_tipoContext {
+		return this.getTypedRuleContext(Nome_do_tipoContext, i) as Nome_do_tipoContext;
+	}
+	public atribuidores_de_posse(): Atribuidores_de_posseContext {
+		return this.getTypedRuleContext(Atribuidores_de_posseContext, 0) as Atribuidores_de_posseContext;
+	}
+	public nome(): NomeContext {
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
+	}
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+	public PONTO_E_VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO_E_VÍRGULA, 0);
+	}
+	public DOIS_PONTOS(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DOIS_PONTOS, 0);
+	}
+	public função2(): Função2Context {
+		return this.getTypedRuleContext(Função2Context, 0) as Função2Context;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_função;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterFuncao) {
-			listener.enterFuncao(this);
+	    if(listener.enterFunção) {
+	 		listener.enterFunção(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitFuncao) {
-			listener.exitFuncao(this);
+	    if(listener.exitFunção) {
+	 		listener.exitFunção(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitFuncao) {
-			return visitor.visitFuncao(this);
+		if (visitor.visitFunção) {
+			return visitor.visitFunção(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -8895,21 +8805,21 @@ export class FuncaoContext extends ParserRuleContext {
 
 
 export class ParaContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_para; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_para;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPara) {
-			listener.enterPara(this);
+	    if(listener.enterPara) {
+	 		listener.enterPara(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPara) {
-			listener.exitPara(this);
+	    if(listener.exitPara) {
+	 		listener.exitPara(this);
 		}
 	}
 	// @Override
@@ -8924,21 +8834,21 @@ export class ParaContext extends ParserRuleContext {
 
 
 export class Que_seContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_que_se; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_que_se;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterQue_se) {
-			listener.enterQue_se(this);
+	    if(listener.enterQue_se) {
+	 		listener.enterQue_se(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitQue_se) {
-			listener.exitQue_se(this);
+	    if(listener.exitQue_se) {
+	 		listener.exitQue_se(this);
 		}
 	}
 	// @Override
@@ -8953,21 +8863,21 @@ export class Que_seContext extends ParserRuleContext {
 
 
 export class Rotina2Context extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_rotina2; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_rotina2;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterRotina2) {
-			listener.enterRotina2(this);
+	    if(listener.enterRotina2) {
+	 		listener.enterRotina2(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitRotina2) {
-			listener.exitRotina2(this);
+	    if(listener.exitRotina2) {
+	 		listener.exitRotina2(this);
 		}
 	}
 	// @Override
@@ -8982,21 +8892,21 @@ export class Rotina2Context extends ParserRuleContext {
 
 
 export class CompativelmenteContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_compativelmente; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_compativelmente;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCompativelmente) {
-			listener.enterCompativelmente(this);
+	    if(listener.enterCompativelmente) {
+	 		listener.enterCompativelmente(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCompativelmente) {
-			listener.exitCompativelmente(this);
+	    if(listener.exitCompativelmente) {
+	 		listener.exitCompativelmente(this);
 		}
 	}
 	// @Override
@@ -9010,48 +8920,52 @@ export class CompativelmenteContext extends ParserRuleContext {
 }
 
 
-export class RetroinvocacaoContext extends ParserRuleContext {
-	public instrucoes(): InstrucoesContext {
-		return this.getRuleContext(0, InstrucoesContext);
-	}
-	public para(): ParaContext | undefined {
-		return this.tryGetRuleContext(0, ParaContext);
-	}
-	public que_se(): Que_seContext | undefined {
-		return this.tryGetRuleContext(0, Que_seContext);
-	}
-	public compativelmente(): CompativelmenteContext | undefined {
-		return this.tryGetRuleContext(0, CompativelmenteContext);
-	}
-	public nome_da_rotina(): Nome_da_rotinaContext | undefined {
-		return this.tryGetRuleContext(0, Nome_da_rotinaContext);
-	}
-	public PONTO_E_VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.PONTO_E_VIRGULA, 0); }
-	public DOIS_PONTOS(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.DOIS_PONTOS, 0); }
-	public rotina2(): Rotina2Context | undefined {
-		return this.tryGetRuleContext(0, Rotina2Context);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class RetroinvocaçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_retroinvocacao; }
-	// @Override
+	public instruções(): InstruçõesContext {
+		return this.getTypedRuleContext(InstruçõesContext, 0) as InstruçõesContext;
+	}
+	public para(): ParaContext {
+		return this.getTypedRuleContext(ParaContext, 0) as ParaContext;
+	}
+	public que_se(): Que_seContext {
+		return this.getTypedRuleContext(Que_seContext, 0) as Que_seContext;
+	}
+	public compativelmente(): CompativelmenteContext {
+		return this.getTypedRuleContext(CompativelmenteContext, 0) as CompativelmenteContext;
+	}
+	public nome_da_rotina(): Nome_da_rotinaContext {
+		return this.getTypedRuleContext(Nome_da_rotinaContext, 0) as Nome_da_rotinaContext;
+	}
+	public PONTO_E_VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO_E_VÍRGULA, 0);
+	}
+	public DOIS_PONTOS(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.DOIS_PONTOS, 0);
+	}
+	public rotina2(): Rotina2Context {
+		return this.getTypedRuleContext(Rotina2Context, 0) as Rotina2Context;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_retroinvocação;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterRetroinvocacao) {
-			listener.enterRetroinvocacao(this);
+	    if(listener.enterRetroinvocação) {
+	 		listener.enterRetroinvocação(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitRetroinvocacao) {
-			listener.exitRetroinvocacao(this);
+	    if(listener.exitRetroinvocação) {
+	 		listener.exitRetroinvocação(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitRetroinvocacao) {
-			return visitor.visitRetroinvocacao(this);
+		if (visitor.visitRetroinvocação) {
+			return visitor.visitRetroinvocação(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9060,33 +8974,33 @@ export class RetroinvocacaoContext extends ParserRuleContext {
 
 
 export class Nome_da_rotinaContext extends ParserRuleContext {
-	public unidade_semantica(): Unidade_semanticaContext | undefined {
-		return this.tryGetRuleContext(0, Unidade_semanticaContext);
-	}
-	public parametro(): ParametroContext | undefined {
-		return this.tryGetRuleContext(0, ParametroContext);
-	}
-	public frase(): FraseContext | undefined {
-		return this.tryGetRuleContext(0, FraseContext);
-	}
-	public qualificador(): QualificadorContext | undefined {
-		return this.tryGetRuleContext(0, QualificadorContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_nome_da_rotina; }
-	// @Override
+	public unidade_semântica(): Unidade_semânticaContext {
+		return this.getTypedRuleContext(Unidade_semânticaContext, 0) as Unidade_semânticaContext;
+	}
+	public parâmetro(): ParâmetroContext {
+		return this.getTypedRuleContext(ParâmetroContext, 0) as ParâmetroContext;
+	}
+	public frase(): FraseContext {
+		return this.getTypedRuleContext(FraseContext, 0) as FraseContext;
+	}
+	public qualificador(): QualificadorContext {
+		return this.getTypedRuleContext(QualificadorContext, 0) as QualificadorContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_nome_da_rotina;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNome_da_rotina) {
-			listener.enterNome_da_rotina(this);
+	    if(listener.enterNome_da_rotina) {
+	 		listener.enterNome_da_rotina(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNome_da_rotina) {
-			listener.exitNome_da_rotina(this);
+	    if(listener.exitNome_da_rotina) {
+	 		listener.exitNome_da_rotina(this);
 		}
 	}
 	// @Override
@@ -9100,31 +9014,31 @@ export class Nome_da_rotinaContext extends ParserRuleContext {
 }
 
 
-export class Unidade_semanticaContext extends ParserRuleContext {
-	public palavra(): PalavraContext {
-		return this.getRuleContext(0, PalavraContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Unidade_semânticaContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_unidade_semantica; }
-	// @Override
+	public palavra(): PalavraContext {
+		return this.getTypedRuleContext(PalavraContext, 0) as PalavraContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_unidade_semântica;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterUnidade_semantica) {
-			listener.enterUnidade_semantica(this);
+	    if(listener.enterUnidade_semântica) {
+	 		listener.enterUnidade_semântica(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitUnidade_semantica) {
-			listener.exitUnidade_semantica(this);
+	    if(listener.exitUnidade_semântica) {
+	 		listener.exitUnidade_semântica(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitUnidade_semantica) {
-			return visitor.visitUnidade_semantica(this);
+		if (visitor.visitUnidade_semântica) {
+			return visitor.visitUnidade_semântica(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9132,43 +9046,40 @@ export class Unidade_semanticaContext extends ParserRuleContext {
 }
 
 
-export class ParametroContext extends ParserRuleContext {
-	public artigo_indefinido(): Artigo_indefinidoContext {
-		return this.getRuleContext(0, Artigo_indefinidoContext);
-	}
-	public nome(): NomeContext[];
-	public nome(i: number): NomeContext;
-	public nome(i?: number): NomeContext | NomeContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(NomeContext);
-		} else {
-			return this.getRuleContext(i, NomeContext);
-		}
-	}
-	public denominacoes(): DenominacoesContext | undefined {
-		return this.tryGetRuleContext(0, DenominacoesContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ParâmetroContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_parametro; }
-	// @Override
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+	public nome_list(): NomeContext[] {
+		return this.getTypedRuleContexts(NomeContext) as NomeContext[];
+	}
+	public nome(i: number): NomeContext {
+		return this.getTypedRuleContext(NomeContext, i) as NomeContext;
+	}
+	public denominações(): DenominaçõesContext {
+		return this.getTypedRuleContext(DenominaçõesContext, 0) as DenominaçõesContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_parâmetro;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterParametro) {
-			listener.enterParametro(this);
+	    if(listener.enterParâmetro) {
+	 		listener.enterParâmetro(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitParametro) {
-			listener.exitParametro(this);
+	    if(listener.exitParâmetro) {
+	 		listener.exitParâmetro(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitParametro) {
-			return visitor.visitParametro(this);
+		if (visitor.visitParâmetro) {
+			return visitor.visitParâmetro(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9177,27 +9088,27 @@ export class ParametroContext extends ParserRuleContext {
 
 
 export class FraseContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
 	public artigo_definido(): Artigo_definidoContext {
-		return this.getRuleContext(0, Artigo_definidoContext);
+		return this.getTypedRuleContext(Artigo_definidoContext, 0) as Artigo_definidoContext;
 	}
 	public nome(): NomeContext {
-		return this.getRuleContext(0, NomeContext);
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_frase;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_frase; }
-	// @Override
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterFrase) {
-			listener.enterFrase(this);
+	    if(listener.enterFrase) {
+	 		listener.enterFrase(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitFrase) {
-			listener.exitFrase(this);
+	    if(listener.exitFrase) {
+	 		listener.exitFrase(this);
 		}
 	}
 	// @Override
@@ -9211,37 +9122,34 @@ export class FraseContext extends ParserRuleContext {
 }
 
 
-export class InstrucoesContext extends ParserRuleContext {
-	public instrucao(): InstrucaoContext[];
-	public instrucao(i: number): InstrucaoContext;
-	public instrucao(i?: number): InstrucaoContext | InstrucaoContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(InstrucaoContext);
-		} else {
-			return this.getRuleContext(i, InstrucaoContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class InstruçõesContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_instrucoes; }
-	// @Override
+	public instrução_list(): InstruçãoContext[] {
+		return this.getTypedRuleContexts(InstruçãoContext) as InstruçãoContext[];
+	}
+	public instrução(i: number): InstruçãoContext {
+		return this.getTypedRuleContext(InstruçãoContext, i) as InstruçãoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_instruções;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInstrucoes) {
-			listener.enterInstrucoes(this);
+	    if(listener.enterInstruções) {
+	 		listener.enterInstruções(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInstrucoes) {
-			listener.exitInstrucoes(this);
+	    if(listener.exitInstruções) {
+	 		listener.exitInstruções(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInstrucoes) {
-			return visitor.visitInstrucoes(this);
+		if (visitor.visitInstruções) {
+			return visitor.visitInstruções(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9249,41 +9157,43 @@ export class InstrucoesContext extends ParserRuleContext {
 }
 
 
-export class InstrucaoContext extends ParserRuleContext {
-	public preservacao(): PreservacaoContext | undefined {
-		return this.tryGetRuleContext(0, PreservacaoContext);
-	}
-	public iteracao(): IteracaoContext | undefined {
-		return this.tryGetRuleContext(0, IteracaoContext);
-	}
-	public condicional(): CondicionalContext | undefined {
-		return this.tryGetRuleContext(0, CondicionalContext);
-	}
-	public incondicional(): IncondicionalContext | undefined {
-		return this.tryGetRuleContext(0, IncondicionalContext);
-	}
-	public VIRGULA(): TerminalNode | undefined { return this.tryGetToken(PortuguesPuroParser.VIRGULA, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class InstruçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_instrucao; }
-	// @Override
+	public preservação(): PreservaçãoContext {
+		return this.getTypedRuleContext(PreservaçãoContext, 0) as PreservaçãoContext;
+	}
+	public iteração(): IteraçãoContext {
+		return this.getTypedRuleContext(IteraçãoContext, 0) as IteraçãoContext;
+	}
+	public condicional(): CondicionalContext {
+		return this.getTypedRuleContext(CondicionalContext, 0) as CondicionalContext;
+	}
+	public incondicional(): IncondicionalContext {
+		return this.getTypedRuleContext(IncondicionalContext, 0) as IncondicionalContext;
+	}
+	public VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.VÍRGULA, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_instrução;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInstrucao) {
-			listener.enterInstrucao(this);
+	    if(listener.enterInstrução) {
+	 		listener.enterInstrução(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInstrucao) {
-			listener.exitInstrucao(this);
+	    if(listener.exitInstrução) {
+	 		listener.exitInstrução(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInstrucao) {
-			return visitor.visitInstrucao(this);
+		if (visitor.visitInstrução) {
+			return visitor.visitInstrução(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9292,21 +9202,21 @@ export class InstrucaoContext extends ParserRuleContext {
 
 
 export class PreserveContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_preserve; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_preserve;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPreserve) {
-			listener.enterPreserve(this);
+	    if(listener.enterPreserve) {
+	 		listener.enterPreserve(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPreserve) {
-			listener.exitPreserve(this);
+	    if(listener.exitPreserve) {
+	 		listener.exitPreserve(this);
 		}
 	}
 	// @Override
@@ -9320,34 +9230,34 @@ export class PreserveContext extends ParserRuleContext {
 }
 
 
-export class PreservacaoContext extends ParserRuleContext {
-	public preserve(): PreserveContext {
-		return this.getRuleContext(0, PreserveContext);
-	}
-	public parametro(): ParametroContext {
-		return this.getRuleContext(0, ParametroContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class PreservaçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_preservacao; }
-	// @Override
+	public preserve(): PreserveContext {
+		return this.getTypedRuleContext(PreserveContext, 0) as PreserveContext;
+	}
+	public parâmetro(): ParâmetroContext {
+		return this.getTypedRuleContext(ParâmetroContext, 0) as ParâmetroContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_preservação;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPreservacao) {
-			listener.enterPreservacao(this);
+	    if(listener.enterPreservação) {
+	 		listener.enterPreservação(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPreservacao) {
-			listener.exitPreservacao(this);
+	    if(listener.exitPreservação) {
+	 		listener.exitPreservação(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitPreservacao) {
-			return visitor.visitPreservacao(this);
+		if (visitor.visitPreservação) {
+			return visitor.visitPreservação(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9355,28 +9265,28 @@ export class PreservacaoContext extends ParserRuleContext {
 }
 
 
-export class IteracaoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class IteraçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_iteracao; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_iteração;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterIteracao) {
-			listener.enterIteracao(this);
+	    if(listener.enterIteração) {
+	 		listener.enterIteração(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitIteracao) {
-			listener.exitIteracao(this);
+	    if(listener.exitIteração) {
+	 		listener.exitIteração(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitIteracao) {
-			return visitor.visitIteracao(this);
+		if (visitor.visitIteração) {
+			return visitor.visitIteração(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9385,21 +9295,21 @@ export class IteracaoContext extends ParserRuleContext {
 
 
 export class SeContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_se; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_se;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterSe) {
-			listener.enterSe(this);
+	    if(listener.enterSe) {
+	 		listener.enterSe(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitSe) {
-			listener.exitSe(this);
+	    if(listener.exitSe) {
+	 		listener.exitSe(this);
 		}
 	}
 	// @Override
@@ -9414,47 +9324,45 @@ export class SeContext extends ParserRuleContext {
 
 
 export class CondicionalContext extends ParserRuleContext {
-	public se(): SeContext {
-		return this.getRuleContext(0, SeContext);
-	}
-	public expressao_decisora(): Expressao_decisoraContext {
-		return this.getRuleContext(0, Expressao_decisoraContext);
-	}
-	public VIRGULA(): TerminalNode { return this.getToken(PortuguesPuroParser.VIRGULA, 0); }
-	public incondicional(): IncondicionalContext[];
-	public incondicional(i: number): IncondicionalContext;
-	public incondicional(i?: number): IncondicionalContext | IncondicionalContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(IncondicionalContext);
-		} else {
-			return this.getRuleContext(i, IncondicionalContext);
-		}
-	}
-	public PONTO(): TerminalNode { return this.getToken(PortuguesPuroParser.PONTO, 0); }
-	public PONTO_E_VIRGULA(): TerminalNode[];
-	public PONTO_E_VIRGULA(i: number): TerminalNode;
-	public PONTO_E_VIRGULA(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(PortuguesPuroParser.PONTO_E_VIRGULA);
-		} else {
-			return this.getToken(PortuguesPuroParser.PONTO_E_VIRGULA, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_condicional; }
-	// @Override
+	public se(): SeContext {
+		return this.getTypedRuleContext(SeContext, 0) as SeContext;
+	}
+	public expressão_decisora(): Expressão_decisoraContext {
+		return this.getTypedRuleContext(Expressão_decisoraContext, 0) as Expressão_decisoraContext;
+	}
+	public VÍRGULA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.VÍRGULA, 0);
+	}
+	public incondicional_list(): IncondicionalContext[] {
+		return this.getTypedRuleContexts(IncondicionalContext) as IncondicionalContext[];
+	}
+	public incondicional(i: number): IncondicionalContext {
+		return this.getTypedRuleContext(IncondicionalContext, i) as IncondicionalContext;
+	}
+	public PONTO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO, 0);
+	}
+	public PONTO_E_VÍRGULA_list(): TerminalNode[] {
+	    	return this.getTokens(PortuguesPuroParser.PONTO_E_VÍRGULA);
+	}
+	public PONTO_E_VÍRGULA(i: number): TerminalNode {
+		return this.getToken(PortuguesPuroParser.PONTO_E_VÍRGULA, i);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_condicional;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCondicional) {
-			listener.enterCondicional(this);
+	    if(listener.enterCondicional) {
+	 		listener.enterCondicional(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCondicional) {
-			listener.exitCondicional(this);
+	    if(listener.exitCondicional) {
+	 		listener.exitCondicional(this);
 		}
 	}
 	// @Override
@@ -9468,43 +9376,40 @@ export class CondicionalContext extends ParserRuleContext {
 }
 
 
-export class Expressao_decisoraContext extends ParserRuleContext {
-	public palavra(): PalavraContext[];
-	public palavra(i: number): PalavraContext;
-	public palavra(i?: number): PalavraContext | PalavraContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(PalavraContext);
-		} else {
-			return this.getRuleContext(i, PalavraContext);
-		}
-	}
-	public verbos(): VerbosContext | undefined {
-		return this.tryGetRuleContext(0, VerbosContext);
-	}
-	public expressao_decisora(): Expressao_decisoraContext | undefined {
-		return this.tryGetRuleContext(0, Expressao_decisoraContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Expressão_decisoraContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_expressao_decisora; }
-	// @Override
+	public palavra_list(): PalavraContext[] {
+		return this.getTypedRuleContexts(PalavraContext) as PalavraContext[];
+	}
+	public palavra(i: number): PalavraContext {
+		return this.getTypedRuleContext(PalavraContext, i) as PalavraContext;
+	}
+	public verbos(): VerbosContext {
+		return this.getTypedRuleContext(VerbosContext, 0) as VerbosContext;
+	}
+	public expressão_decisora(): Expressão_decisoraContext {
+		return this.getTypedRuleContext(Expressão_decisoraContext, 0) as Expressão_decisoraContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_expressão_decisora;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterExpressao_decisora) {
-			listener.enterExpressao_decisora(this);
+	    if(listener.enterExpressão_decisora) {
+	 		listener.enterExpressão_decisora(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitExpressao_decisora) {
-			listener.exitExpressao_decisora(this);
+	    if(listener.exitExpressão_decisora) {
+	 		listener.exitExpressão_decisora(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitExpressao_decisora) {
-			return visitor.visitExpressao_decisora(this);
+		if (visitor.visitExpressão_decisora) {
+			return visitor.visitExpressão_decisora(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9513,45 +9418,45 @@ export class Expressao_decisoraContext extends ParserRuleContext {
 
 
 export class IncondicionalContext extends ParserRuleContext {
-	public interrupcao(): InterrupcaoContext | undefined {
-		return this.tryGetRuleContext(0, InterrupcaoContext);
-	}
-	public invocacao(): InvocacaoContext | undefined {
-		return this.tryGetRuleContext(0, InvocacaoContext);
-	}
-	public retorno(): RetornoContext | undefined {
-		return this.tryGetRuleContext(0, RetornoContext);
-	}
-	public decodificacao(): DecodificacaoContext | undefined {
-		return this.tryGetRuleContext(0, DecodificacaoContext);
-	}
-	public reiteracao(): ReiteracaoContext | undefined {
-		return this.tryGetRuleContext(0, ReiteracaoContext);
-	}
-	public indirecao(): IndirecaoContext | undefined {
-		return this.tryGetRuleContext(0, IndirecaoContext);
-	}
-	public empilhamento(): EmpilhamentoContext | undefined {
-		return this.tryGetRuleContext(0, EmpilhamentoContext);
-	}
-	public retorno_booleano(): Retorno_booleanoContext | undefined {
-		return this.tryGetRuleContext(0, Retorno_booleanoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_incondicional; }
-	// @Override
+	public interrupção(): InterrupçãoContext {
+		return this.getTypedRuleContext(InterrupçãoContext, 0) as InterrupçãoContext;
+	}
+	public invocação(): InvocaçãoContext {
+		return this.getTypedRuleContext(InvocaçãoContext, 0) as InvocaçãoContext;
+	}
+	public retorno(): RetornoContext {
+		return this.getTypedRuleContext(RetornoContext, 0) as RetornoContext;
+	}
+	public decodificação(): DecodificaçãoContext {
+		return this.getTypedRuleContext(DecodificaçãoContext, 0) as DecodificaçãoContext;
+	}
+	public reiteração(): ReiteraçãoContext {
+		return this.getTypedRuleContext(ReiteraçãoContext, 0) as ReiteraçãoContext;
+	}
+	public indireção(): IndireçãoContext {
+		return this.getTypedRuleContext(IndireçãoContext, 0) as IndireçãoContext;
+	}
+	public empilhamento(): EmpilhamentoContext {
+		return this.getTypedRuleContext(EmpilhamentoContext, 0) as EmpilhamentoContext;
+	}
+	public retorno_booleano(): Retorno_booleanoContext {
+		return this.getTypedRuleContext(Retorno_booleanoContext, 0) as Retorno_booleanoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_incondicional;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterIncondicional) {
-			listener.enterIncondicional(this);
+	    if(listener.enterIncondicional) {
+	 		listener.enterIncondicional(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitIncondicional) {
-			listener.exitIncondicional(this);
+	    if(listener.exitIncondicional) {
+	 		listener.exitIncondicional(this);
 		}
 	}
 	// @Override
@@ -9565,28 +9470,28 @@ export class IncondicionalContext extends ParserRuleContext {
 }
 
 
-export class InterrupcaoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class InterrupçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_interrupcao; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_interrupção;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInterrupcao) {
-			listener.enterInterrupcao(this);
+	    if(listener.enterInterrupção) {
+	 		listener.enterInterrupção(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInterrupcao) {
-			listener.exitInterrupcao(this);
+	    if(listener.exitInterrupção) {
+	 		listener.exitInterrupção(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInterrupcao) {
-			return visitor.visitInterrupcao(this);
+		if (visitor.visitInterrupção) {
+			return visitor.visitInterrupção(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9594,37 +9499,37 @@ export class InterrupcaoContext extends ParserRuleContext {
 }
 
 
-export class InvocacaoContext extends ParserRuleContext {
-	public invocacao_interna(): Invocacao_internaContext | undefined {
-		return this.tryGetRuleContext(0, Invocacao_internaContext);
-	}
-	public invocacao_externa(): Invocacao_externaContext | undefined {
-		return this.tryGetRuleContext(0, Invocacao_externaContext);
-	}
-	public invocacao_indireta(): Invocacao_indiretaContext | undefined {
-		return this.tryGetRuleContext(0, Invocacao_indiretaContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class InvocaçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_invocacao; }
-	// @Override
+	public invocação_interna(): Invocação_internaContext {
+		return this.getTypedRuleContext(Invocação_internaContext, 0) as Invocação_internaContext;
+	}
+	public invocação_externa(): Invocação_externaContext {
+		return this.getTypedRuleContext(Invocação_externaContext, 0) as Invocação_externaContext;
+	}
+	public invocação_indireta(): Invocação_indiretaContext {
+		return this.getTypedRuleContext(Invocação_indiretaContext, 0) as Invocação_indiretaContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_invocação;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInvocacao) {
-			listener.enterInvocacao(this);
+	    if(listener.enterInvocação) {
+	 		listener.enterInvocação(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInvocacao) {
-			listener.exitInvocacao(this);
+	    if(listener.exitInvocação) {
+	 		listener.exitInvocação(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInvocacao) {
-			return visitor.visitInvocacao(this);
+		if (visitor.visitInvocação) {
+			return visitor.visitInvocação(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9632,40 +9537,40 @@ export class InvocacaoContext extends ParserRuleContext {
 }
 
 
-export class Invocacao_internaContext extends ParserRuleContext {
-	public unidade_semantica(): Unidade_semanticaContext | undefined {
-		return this.tryGetRuleContext(0, Unidade_semanticaContext);
-	}
-	public expressï¿½o(): Expressï¿½oContext | undefined {
-		return this.tryGetRuleContext(0, Expressï¿½oContext);
-	}
-	public frase(): FraseContext | undefined {
-		return this.tryGetRuleContext(0, FraseContext);
-	}
-	public qualificador(): QualificadorContext | undefined {
-		return this.tryGetRuleContext(0, QualificadorContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Invocação_internaContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_invocacao_interna; }
-	// @Override
+	public unidade_semântica(): Unidade_semânticaContext {
+		return this.getTypedRuleContext(Unidade_semânticaContext, 0) as Unidade_semânticaContext;
+	}
+	public expressão(): ExpressãoContext {
+		return this.getTypedRuleContext(ExpressãoContext, 0) as ExpressãoContext;
+	}
+	public frase(): FraseContext {
+		return this.getTypedRuleContext(FraseContext, 0) as FraseContext;
+	}
+	public qualificador(): QualificadorContext {
+		return this.getTypedRuleContext(QualificadorContext, 0) as QualificadorContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_invocação_interna;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInvocacao_interna) {
-			listener.enterInvocacao_interna(this);
+	    if(listener.enterInvocação_interna) {
+	 		listener.enterInvocação_interna(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInvocacao_interna) {
-			listener.exitInvocacao_interna(this);
+	    if(listener.exitInvocação_interna) {
+	 		listener.exitInvocação_interna(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInvocacao_interna) {
-			return visitor.visitInvocacao_interna(this);
+		if (visitor.visitInvocação_interna) {
+			return visitor.visitInvocação_interna(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9673,73 +9578,64 @@ export class Invocacao_internaContext extends ParserRuleContext {
 }
 
 
-export class Invocacao_externaContext extends ParserRuleContext {
+export class Invocação_externaContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
 	public processe(): ProcesseContext {
-		return this.getRuleContext(0, ProcesseContext);
+		return this.getTypedRuleContext(ProcesseContext, 0) as ProcesseContext;
 	}
-	public aspas_duplas(): Aspas_duplasContext[];
-	public aspas_duplas(i: number): Aspas_duplasContext;
-	public aspas_duplas(i?: number): Aspas_duplasContext | Aspas_duplasContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Aspas_duplasContext);
-		} else {
-			return this.getRuleContext(i, Aspas_duplasContext);
-		}
+	public aspas_duplas_list(): Aspas_duplasContext[] {
+		return this.getTypedRuleContexts(Aspas_duplasContext) as Aspas_duplasContext[];
+	}
+	public aspas_duplas(i: number): Aspas_duplasContext {
+		return this.getTypedRuleContext(Aspas_duplasContext, i) as Aspas_duplasContext;
 	}
 	public nome_da_DLL(): Nome_da_DLLContext {
-		return this.getRuleContext(0, Nome_da_DLLContext);
+		return this.getTypedRuleContext(Nome_da_DLLContext, 0) as Nome_da_DLLContext;
 	}
-	public nome_da_funcao(): Nome_da_funcaoContext {
-		return this.getRuleContext(0, Nome_da_funcaoContext);
+	public nome_da_função(): Nome_da_funçãoContext {
+		return this.getTypedRuleContext(Nome_da_funçãoContext, 0) as Nome_da_funçãoContext;
 	}
-	public com(): ComContext | undefined {
-		return this.tryGetRuleContext(0, ComContext);
+	public com(): ComContext {
+		return this.getTypedRuleContext(ComContext, 0) as ComContext;
 	}
-	public expressï¿½o(): Expressï¿½oContext[];
-	public expressï¿½o(i: number): Expressï¿½oContext;
-	public expressï¿½o(i?: number): Expressï¿½oContext | Expressï¿½oContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Expressï¿½oContext);
-		} else {
-			return this.getRuleContext(i, Expressï¿½oContext);
-		}
+	public expressão_list(): ExpressãoContext[] {
+		return this.getTypedRuleContexts(ExpressãoContext) as ExpressãoContext[];
 	}
-	public e(): EContext[];
-	public e(i: number): EContext;
-	public e(i?: number): EContext | EContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(EContext);
-		} else {
-			return this.getRuleContext(i, EContext);
-		}
+	public expressão(i: number): ExpressãoContext {
+		return this.getTypedRuleContext(ExpressãoContext, i) as ExpressãoContext;
 	}
-	public retornando(): RetornandoContext | undefined {
-		return this.tryGetRuleContext(0, RetornandoContext);
+	public e_list(): EContext[] {
+		return this.getTypedRuleContexts(EContext) as EContext[];
 	}
-	public termo(): TermoContext | undefined {
-		return this.tryGetRuleContext(0, TermoContext);
+	public e(i: number): EContext {
+		return this.getTypedRuleContext(EContext, i) as EContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+	public retornando(): RetornandoContext {
+		return this.getTypedRuleContext(RetornandoContext, 0) as RetornandoContext;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_invocacao_externa; }
-	// @Override
+	public termo(): TermoContext {
+		return this.getTypedRuleContext(TermoContext, 0) as TermoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_invocação_externa;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInvocacao_externa) {
-			listener.enterInvocacao_externa(this);
+	    if(listener.enterInvocação_externa) {
+	 		listener.enterInvocação_externa(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInvocacao_externa) {
-			listener.exitInvocacao_externa(this);
+	    if(listener.exitInvocação_externa) {
+	 		listener.exitInvocação_externa(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInvocacao_externa) {
-			return visitor.visitInvocacao_externa(this);
+		if (visitor.visitInvocação_externa) {
+			return visitor.visitInvocação_externa(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9748,22 +9644,24 @@ export class Invocacao_externaContext extends ParserRuleContext {
 
 
 export class Aspas_duplasContext extends ParserRuleContext {
-	public ASPAS_DUPLAS(): TerminalNode { return this.getToken(PortuguesPuroParser.ASPAS_DUPLAS, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_aspas_duplas; }
-	// @Override
+	public ASPAS_DUPLAS(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.ASPAS_DUPLAS, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_aspas_duplas;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterAspas_duplas) {
-			listener.enterAspas_duplas(this);
+	    if(listener.enterAspas_duplas) {
+	 		listener.enterAspas_duplas(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitAspas_duplas) {
-			listener.exitAspas_duplas(this);
+	    if(listener.exitAspas_duplas) {
+	 		listener.exitAspas_duplas(this);
 		}
 	}
 	// @Override
@@ -9778,24 +9676,24 @@ export class Aspas_duplasContext extends ParserRuleContext {
 
 
 export class Nome_da_DLLContext extends ParserRuleContext {
-	public palavra(): PalavraContext {
-		return this.getRuleContext(0, PalavraContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_nome_da_DLL; }
-	// @Override
+	public palavra(): PalavraContext {
+		return this.getTypedRuleContext(PalavraContext, 0) as PalavraContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_nome_da_DLL;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNome_da_DLL) {
-			listener.enterNome_da_DLL(this);
+	    if(listener.enterNome_da_DLL) {
+	 		listener.enterNome_da_DLL(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNome_da_DLL) {
-			listener.exitNome_da_DLL(this);
+	    if(listener.exitNome_da_DLL) {
+	 		listener.exitNome_da_DLL(this);
 		}
 	}
 	// @Override
@@ -9809,31 +9707,31 @@ export class Nome_da_DLLContext extends ParserRuleContext {
 }
 
 
-export class Nome_da_funcaoContext extends ParserRuleContext {
-	public palavra(): PalavraContext {
-		return this.getRuleContext(0, PalavraContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Nome_da_funçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_nome_da_funcao; }
-	// @Override
+	public palavra(): PalavraContext {
+		return this.getTypedRuleContext(PalavraContext, 0) as PalavraContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_nome_da_função;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNome_da_funcao) {
-			listener.enterNome_da_funcao(this);
+	    if(listener.enterNome_da_função) {
+	 		listener.enterNome_da_função(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNome_da_funcao) {
-			listener.exitNome_da_funcao(this);
+	    if(listener.exitNome_da_função) {
+	 		listener.exitNome_da_função(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNome_da_funcao) {
-			return visitor.visitNome_da_funcao(this);
+		if (visitor.visitNome_da_função) {
+			return visitor.visitNome_da_função(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -9842,21 +9740,21 @@ export class Nome_da_funcaoContext extends ParserRuleContext {
 
 
 export class ProcesseContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_processe; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_processe;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterProcesse) {
-			listener.enterProcesse(this);
+	    if(listener.enterProcesse) {
+	 		listener.enterProcesse(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitProcesse) {
-			listener.exitProcesse(this);
+	    if(listener.exitProcesse) {
+	 		listener.exitProcesse(this);
 		}
 	}
 	// @Override
@@ -9871,21 +9769,21 @@ export class ProcesseContext extends ParserRuleContext {
 
 
 export class ComContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_com; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_com;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterCom) {
-			listener.enterCom(this);
+	    if(listener.enterCom) {
+	 		listener.enterCom(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitCom) {
-			listener.exitCom(this);
+	    if(listener.exitCom) {
+	 		listener.exitCom(this);
 		}
 	}
 	// @Override
@@ -9900,21 +9798,21 @@ export class ComContext extends ParserRuleContext {
 
 
 export class EContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_e; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_e;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterE) {
-			listener.enterE(this);
+	    if(listener.enterE) {
+	 		listener.enterE(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitE) {
-			listener.exitE(this);
+	    if(listener.exitE) {
+	 		listener.exitE(this);
 		}
 	}
 	// @Override
@@ -9929,21 +9827,21 @@ export class EContext extends ParserRuleContext {
 
 
 export class RetornandoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_retornando; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_retornando;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterRetornando) {
-			listener.enterRetornando(this);
+	    if(listener.enterRetornando) {
+	 		listener.enterRetornando(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitRetornando) {
-			listener.exitRetornando(this);
+	    if(listener.exitRetornando) {
+	 		listener.exitRetornando(this);
 		}
 	}
 	// @Override
@@ -9957,58 +9855,52 @@ export class RetornandoContext extends ParserRuleContext {
 }
 
 
-export class Invocacao_indiretaContext extends ParserRuleContext {
-	public processe(): ProcesseContext {
-		return this.getRuleContext(0, ProcesseContext);
-	}
-	public expressï¿½o(): Expressï¿½oContext[];
-	public expressï¿½o(i: number): Expressï¿½oContext;
-	public expressï¿½o(i?: number): Expressï¿½oContext | Expressï¿½oContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Expressï¿½oContext);
-		} else {
-			return this.getRuleContext(i, Expressï¿½oContext);
-		}
-	}
-	public com(): ComContext | undefined {
-		return this.tryGetRuleContext(0, ComContext);
-	}
-	public e(): EContext[];
-	public e(i: number): EContext;
-	public e(i?: number): EContext | EContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(EContext);
-		} else {
-			return this.getRuleContext(i, EContext);
-		}
-	}
-	public retornando(): RetornandoContext | undefined {
-		return this.tryGetRuleContext(0, RetornandoContext);
-	}
-	public termo(): TermoContext | undefined {
-		return this.tryGetRuleContext(0, TermoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Invocação_indiretaContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_invocacao_indireta; }
-	// @Override
+	public processe(): ProcesseContext {
+		return this.getTypedRuleContext(ProcesseContext, 0) as ProcesseContext;
+	}
+	public expressão_list(): ExpressãoContext[] {
+		return this.getTypedRuleContexts(ExpressãoContext) as ExpressãoContext[];
+	}
+	public expressão(i: number): ExpressãoContext {
+		return this.getTypedRuleContext(ExpressãoContext, i) as ExpressãoContext;
+	}
+	public com(): ComContext {
+		return this.getTypedRuleContext(ComContext, 0) as ComContext;
+	}
+	public e_list(): EContext[] {
+		return this.getTypedRuleContexts(EContext) as EContext[];
+	}
+	public e(i: number): EContext {
+		return this.getTypedRuleContext(EContext, i) as EContext;
+	}
+	public retornando(): RetornandoContext {
+		return this.getTypedRuleContext(RetornandoContext, 0) as RetornandoContext;
+	}
+	public termo(): TermoContext {
+		return this.getTypedRuleContext(TermoContext, 0) as TermoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_invocação_indireta;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterInvocacao_indireta) {
-			listener.enterInvocacao_indireta(this);
+	    if(listener.enterInvocação_indireta) {
+	 		listener.enterInvocação_indireta(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitInvocacao_indireta) {
-			listener.exitInvocacao_indireta(this);
+	    if(listener.exitInvocação_indireta) {
+	 		listener.exitInvocação_indireta(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitInvocacao_indireta) {
-			return visitor.visitInvocacao_indireta(this);
+		if (visitor.visitInvocação_indireta) {
+			return visitor.visitInvocação_indireta(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10017,21 +9909,21 @@ export class Invocacao_indiretaContext extends ParserRuleContext {
 
 
 export class RetornoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_retorno; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_retorno;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterRetorno) {
-			listener.enterRetorno(this);
+	    if(listener.enterRetorno) {
+	 		listener.enterRetorno(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitRetorno) {
-			listener.exitRetorno(this);
+	    if(listener.exitRetorno) {
+	 		listener.exitRetorno(this);
 		}
 	}
 	// @Override
@@ -10046,21 +9938,21 @@ export class RetornoContext extends ParserRuleContext {
 
 
 export class DecodifiqueContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_decodifique; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_decodifique;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterDecodifique) {
-			listener.enterDecodifique(this);
+	    if(listener.enterDecodifique) {
+	 		listener.enterDecodifique(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitDecodifique) {
-			listener.exitDecodifique(this);
+	    if(listener.exitDecodifique) {
+	 		listener.exitDecodifique(this);
 		}
 	}
 	// @Override
@@ -10074,34 +9966,34 @@ export class DecodifiqueContext extends ParserRuleContext {
 }
 
 
-export class DecodificacaoContext extends ParserRuleContext {
-	public decodifique(): DecodifiqueContext {
-		return this.getRuleContext(0, DecodifiqueContext);
-	}
-	public numero_hexadecimal(): Numero_hexadecimalContext {
-		return this.getRuleContext(0, Numero_hexadecimalContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class DecodificaçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_decodificacao; }
-	// @Override
+	public decodifique(): DecodifiqueContext {
+		return this.getTypedRuleContext(DecodifiqueContext, 0) as DecodifiqueContext;
+	}
+	public número_hexadecimal(): Número_hexadecimalContext {
+		return this.getTypedRuleContext(Número_hexadecimalContext, 0) as Número_hexadecimalContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_decodificação;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterDecodificacao) {
-			listener.enterDecodificacao(this);
+	    if(listener.enterDecodificação) {
+	 		listener.enterDecodificação(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitDecodificacao) {
-			listener.exitDecodificacao(this);
+	    if(listener.exitDecodificação) {
+	 		listener.exitDecodificação(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitDecodificacao) {
-			return visitor.visitDecodificacao(this);
+		if (visitor.visitDecodificação) {
+			return visitor.visitDecodificação(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10110,21 +10002,21 @@ export class DecodificacaoContext extends ParserRuleContext {
 
 
 export class AponteContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_aponte; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_aponte;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterAponte) {
-			listener.enterAponte(this);
+	    if(listener.enterAponte) {
+	 		listener.enterAponte(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitAponte) {
-			listener.exitAponte(this);
+	    if(listener.exitAponte) {
+	 		listener.exitAponte(this);
 		}
 	}
 	// @Override
@@ -10139,21 +10031,21 @@ export class AponteContext extends ParserRuleContext {
 
 
 export class Para_rotinaContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_para_rotina; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_para_rotina;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPara_rotina) {
-			listener.enterPara_rotina(this);
+	    if(listener.enterPara_rotina) {
+	 		listener.enterPara_rotina(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPara_rotina) {
-			listener.exitPara_rotina(this);
+	    if(listener.exitPara_rotina) {
+	 		listener.exitPara_rotina(this);
 		}
 	}
 	// @Override
@@ -10167,52 +10059,52 @@ export class Para_rotinaContext extends ParserRuleContext {
 }
 
 
-export class IndirecaoContext extends ParserRuleContext {
+export class IndireçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
 	public aponte(): AponteContext {
-		return this.getRuleContext(0, AponteContext);
+		return this.getTypedRuleContext(AponteContext, 0) as AponteContext;
 	}
 	public artigo(): ArtigoContext {
-		return this.getRuleContext(0, ArtigoContext);
+		return this.getTypedRuleContext(ArtigoContext, 0) as ArtigoContext;
 	}
 	public termo(): TermoContext {
-		return this.getRuleContext(0, TermoContext);
+		return this.getTypedRuleContext(TermoContext, 0) as TermoContext;
 	}
 	public para_rotina(): Para_rotinaContext {
-		return this.getRuleContext(0, Para_rotinaContext);
+		return this.getTypedRuleContext(Para_rotinaContext, 0) as Para_rotinaContext;
 	}
-	public unidade_semantica(): Unidade_semanticaContext | undefined {
-		return this.tryGetRuleContext(0, Unidade_semanticaContext);
+	public unidade_semântica(): Unidade_semânticaContext {
+		return this.getTypedRuleContext(Unidade_semânticaContext, 0) as Unidade_semânticaContext;
 	}
-	public parametro(): ParametroContext | undefined {
-		return this.tryGetRuleContext(0, ParametroContext);
+	public parâmetro(): ParâmetroContext {
+		return this.getTypedRuleContext(ParâmetroContext, 0) as ParâmetroContext;
 	}
-	public frase(): FraseContext | undefined {
-		return this.tryGetRuleContext(0, FraseContext);
+	public frase(): FraseContext {
+		return this.getTypedRuleContext(FraseContext, 0) as FraseContext;
 	}
-	public qualificador(): QualificadorContext | undefined {
-		return this.tryGetRuleContext(0, QualificadorContext);
+	public qualificador(): QualificadorContext {
+		return this.getTypedRuleContext(QualificadorContext, 0) as QualificadorContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_indireção;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_indirecao; }
-	// @Override
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterIndirecao) {
-			listener.enterIndirecao(this);
+	    if(listener.enterIndireção) {
+	 		listener.enterIndireção(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitIndirecao) {
-			listener.exitIndirecao(this);
+	    if(listener.exitIndireção) {
+	 		listener.exitIndireção(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitIndirecao) {
-			return visitor.visitIndirecao(this);
+		if (visitor.visitIndireção) {
+			return visitor.visitIndireção(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10221,21 +10113,21 @@ export class IndirecaoContext extends ParserRuleContext {
 
 
 export class PushContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_push; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_push;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPush) {
-			listener.enterPush(this);
+	    if(listener.enterPush) {
+	 		listener.enterPush(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPush) {
-			listener.exitPush(this);
+	    if(listener.exitPush) {
+	 		listener.exitPush(this);
 		}
 	}
 	// @Override
@@ -10250,27 +10142,27 @@ export class PushContext extends ParserRuleContext {
 
 
 export class EmpilhamentoContext extends ParserRuleContext {
-	public push(): PushContext {
-		return this.getRuleContext(0, PushContext);
-	}
-	public expressï¿½o(): Expressï¿½oContext {
-		return this.getRuleContext(0, Expressï¿½oContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_empilhamento; }
-	// @Override
+	public push(): PushContext {
+		return this.getTypedRuleContext(PushContext, 0) as PushContext;
+	}
+	public expressão(): ExpressãoContext {
+		return this.getTypedRuleContext(ExpressãoContext, 0) as ExpressãoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_empilhamento;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterEmpilhamento) {
-			listener.enterEmpilhamento(this);
+	    if(listener.enterEmpilhamento) {
+	 		listener.enterEmpilhamento(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitEmpilhamento) {
-			listener.exitEmpilhamento(this);
+	    if(listener.exitEmpilhamento) {
+	 		listener.exitEmpilhamento(this);
 		}
 	}
 	// @Override
@@ -10284,28 +10176,28 @@ export class EmpilhamentoContext extends ParserRuleContext {
 }
 
 
-export class ReiteracaoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ReiteraçãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_reiteracao; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_reiteração;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterReiteracao) {
-			listener.enterReiteracao(this);
+	    if(listener.enterReiteração) {
+	 		listener.enterReiteração(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitReiteracao) {
-			listener.exitReiteracao(this);
+	    if(listener.exitReiteração) {
+	 		listener.exitReiteração(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitReiteracao) {
-			return visitor.visitReiteracao(this);
+		if (visitor.visitReiteração) {
+			return visitor.visitReiteração(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10314,21 +10206,21 @@ export class ReiteracaoContext extends ParserRuleContext {
 
 
 export class DigaContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_diga; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_diga;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterDiga) {
-			listener.enterDiga(this);
+	    if(listener.enterDiga) {
+	 		listener.enterDiga(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitDiga) {
-			listener.exitDiga(this);
+	    if(listener.exitDiga) {
+	 		listener.exitDiga(this);
 		}
 	}
 	// @Override
@@ -10343,27 +10235,27 @@ export class DigaContext extends ParserRuleContext {
 
 
 export class Retorno_booleanoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
 	public diga(): DigaContext {
-		return this.getRuleContext(0, DigaContext);
+		return this.getTypedRuleContext(DigaContext, 0) as DigaContext;
 	}
 	public booleano(): BooleanoContext {
-		return this.getRuleContext(0, BooleanoContext);
+		return this.getTypedRuleContext(BooleanoContext, 0) as BooleanoContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_retorno_booleano;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_retorno_booleano; }
-	// @Override
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterRetorno_booleano) {
-			listener.enterRetorno_booleano(this);
+	    if(listener.enterRetorno_booleano) {
+	 		listener.enterRetorno_booleano(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitRetorno_booleano) {
-			listener.exitRetorno_booleano(this);
+	    if(listener.exitRetorno_booleano) {
+	 		listener.exitRetorno_booleano(this);
 		}
 	}
 	// @Override
@@ -10377,46 +10269,40 @@ export class Retorno_booleanoContext extends ParserRuleContext {
 }
 
 
-export class Expressï¿½oContext extends ParserRuleContext {
-	public termo(): TermoContext[];
-	public termo(i: number): TermoContext;
-	public termo(i?: number): TermoContext | TermoContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(TermoContext);
-		} else {
-			return this.getRuleContext(i, TermoContext);
-		}
-	}
-	public operadores_comuns(): Operadores_comunsContext[];
-	public operadores_comuns(i: number): Operadores_comunsContext;
-	public operadores_comuns(i?: number): Operadores_comunsContext | Operadores_comunsContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Operadores_comunsContext);
-		} else {
-			return this.getRuleContext(i, Operadores_comunsContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ExpressãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_expressï¿½o; }
-	// @Override
+	public termo_list(): TermoContext[] {
+		return this.getTypedRuleContexts(TermoContext) as TermoContext[];
+	}
+	public termo(i: number): TermoContext {
+		return this.getTypedRuleContext(TermoContext, i) as TermoContext;
+	}
+	public operadores_comuns_list(): Operadores_comunsContext[] {
+		return this.getTypedRuleContexts(Operadores_comunsContext) as Operadores_comunsContext[];
+	}
+	public operadores_comuns(i: number): Operadores_comunsContext {
+		return this.getTypedRuleContext(Operadores_comunsContext, i) as Operadores_comunsContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_expressão;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterExpressï¿½o) {
-			listener.enterExpressï¿½o(this);
+	    if(listener.enterExpressão) {
+	 		listener.enterExpressão(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitExpressï¿½o) {
-			listener.exitExpressï¿½o(this);
+	    if(listener.exitExpressão) {
+	 		listener.exitExpressão(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitExpressï¿½o) {
-			return visitor.visitExpressï¿½o(this);
+		if (visitor.visitExpressão) {
+			return visitor.visitExpressão(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10425,21 +10311,21 @@ export class Expressï¿½oContext extends ParserRuleContext {
 
 
 export class Operadores_comunsContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_operadores_comuns; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_operadores_comuns;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterOperadores_comuns) {
-			listener.enterOperadores_comuns(this);
+	    if(listener.enterOperadores_comuns) {
+	 		listener.enterOperadores_comuns(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitOperadores_comuns) {
-			listener.exitOperadores_comuns(this);
+	    if(listener.exitOperadores_comuns) {
+	 		listener.exitOperadores_comuns(this);
 		}
 	}
 	// @Override
@@ -10454,21 +10340,21 @@ export class Operadores_comunsContext extends ParserRuleContext {
 
 
 export class BooleanoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_booleano; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_booleano;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterBooleano) {
-			listener.enterBooleano(this);
+	    if(listener.enterBooleano) {
+	 		listener.enterBooleano(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitBooleano) {
-			listener.exitBooleano(this);
+	    if(listener.exitBooleano) {
+	 		listener.exitBooleano(this);
 		}
 	}
 	// @Override
@@ -10483,21 +10369,21 @@ export class BooleanoContext extends ParserRuleContext {
 
 
 export class NuloContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_nulo; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_nulo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNulo) {
-			listener.enterNulo(this);
+	    if(listener.enterNulo) {
+	 		listener.enterNulo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNulo) {
-			listener.exitNulo(this);
+	    if(listener.exitNulo) {
+	 		listener.exitNulo(this);
 		}
 	}
 	// @Override
@@ -10512,30 +10398,30 @@ export class NuloContext extends ParserRuleContext {
 
 
 export class Termo_constanteContext extends ParserRuleContext {
-	public termo_constante_negativo(): Termo_constante_negativoContext | undefined {
-		return this.tryGetRuleContext(0, Termo_constante_negativoContext);
-	}
-	public termo_constante_positivo(): Termo_constante_positivoContext | undefined {
-		return this.tryGetRuleContext(0, Termo_constante_positivoContext);
-	}
-	public literal(): LiteralContext | undefined {
-		return this.tryGetRuleContext(0, LiteralContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_termo_constante; }
-	// @Override
+	public termo_constante_negativo(): Termo_constante_negativoContext {
+		return this.getTypedRuleContext(Termo_constante_negativoContext, 0) as Termo_constante_negativoContext;
+	}
+	public termo_constante_positivo(): Termo_constante_positivoContext {
+		return this.getTypedRuleContext(Termo_constante_positivoContext, 0) as Termo_constante_positivoContext;
+	}
+	public literal(): LiteralContext {
+		return this.getTypedRuleContext(LiteralContext, 0) as LiteralContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_termo_constante;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTermo_constante) {
-			listener.enterTermo_constante(this);
+	    if(listener.enterTermo_constante) {
+	 		listener.enterTermo_constante(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTermo_constante) {
-			listener.exitTermo_constante(this);
+	    if(listener.exitTermo_constante) {
+	 		listener.exitTermo_constante(this);
 		}
 	}
 	// @Override
@@ -10550,25 +10436,27 @@ export class Termo_constanteContext extends ParserRuleContext {
 
 
 export class Termo_constante_negativoContext extends ParserRuleContext {
-	public HIFEN(): TerminalNode { return this.getToken(PortuguesPuroParser.HIFEN, 0); }
-	public termo_constante(): Termo_constanteContext {
-		return this.getRuleContext(0, Termo_constanteContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_termo_constante_negativo; }
-	// @Override
+	public HÍFEN(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.HÍFEN, 0);
+	}
+	public termo_constante(): Termo_constanteContext {
+		return this.getTypedRuleContext(Termo_constanteContext, 0) as Termo_constanteContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_termo_constante_negativo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTermo_constante_negativo) {
-			listener.enterTermo_constante_negativo(this);
+	    if(listener.enterTermo_constante_negativo) {
+	 		listener.enterTermo_constante_negativo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTermo_constante_negativo) {
-			listener.exitTermo_constante_negativo(this);
+	    if(listener.exitTermo_constante_negativo) {
+	 		listener.exitTermo_constante_negativo(this);
 		}
 	}
 	// @Override
@@ -10583,25 +10471,27 @@ export class Termo_constante_negativoContext extends ParserRuleContext {
 
 
 export class Termo_constante_positivoContext extends ParserRuleContext {
-	public SINAL_DE_ADICAO(): TerminalNode { return this.getToken(PortuguesPuroParser.SINAL_DE_ADICAO, 0); }
-	public termo_constante(): Termo_constanteContext {
-		return this.getRuleContext(0, Termo_constanteContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_termo_constante_positivo; }
-	// @Override
+	public SINAL_DE_ADIÇÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.SINAL_DE_ADIÇÃO, 0);
+	}
+	public termo_constante(): Termo_constanteContext {
+		return this.getTypedRuleContext(Termo_constanteContext, 0) as Termo_constanteContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_termo_constante_positivo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTermo_constante_positivo) {
-			listener.enterTermo_constante_positivo(this);
+	    if(listener.enterTermo_constante_positivo) {
+	 		listener.enterTermo_constante_positivo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTermo_constante_positivo) {
-			listener.exitTermo_constante_positivo(this);
+	    if(listener.exitTermo_constante_positivo) {
+	 		listener.exitTermo_constante_positivo(this);
 		}
 	}
 	// @Override
@@ -10615,37 +10505,37 @@ export class Termo_constante_positivoContext extends ParserRuleContext {
 }
 
 
-export class NumeroContext extends ParserRuleContext {
-	public numero_decimal(): Numero_decimalContext | undefined {
-		return this.tryGetRuleContext(0, Numero_decimalContext);
-	}
-	public numero_fracionario(): Numero_fracionarioContext | undefined {
-		return this.tryGetRuleContext(0, Numero_fracionarioContext);
-	}
-	public numero_misto(): Numero_mistoContext | undefined {
-		return this.tryGetRuleContext(0, Numero_mistoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class NúmeroContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_numero; }
-	// @Override
+	public número_decimal(): Número_decimalContext {
+		return this.getTypedRuleContext(Número_decimalContext, 0) as Número_decimalContext;
+	}
+	public número_fracionário(): Número_fracionárioContext {
+		return this.getTypedRuleContext(Número_fracionárioContext, 0) as Número_fracionárioContext;
+	}
+	public número_misto(): Número_mistoContext {
+		return this.getTypedRuleContext(Número_mistoContext, 0) as Número_mistoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_número;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterNumero) {
-			listener.enterNumero(this);
+	    if(listener.enterNúmero) {
+	 		listener.enterNúmero(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitNumero) {
-			listener.exitNumero(this);
+	    if(listener.exitNúmero) {
+	 		listener.exitNúmero(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitNumero) {
-			return visitor.visitNumero(this);
+		if (visitor.visitNúmero) {
+			return visitor.visitNúmero(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10654,39 +10544,39 @@ export class NumeroContext extends ParserRuleContext {
 
 
 export class LiteralContext extends ParserRuleContext {
-	public numero(): NumeroContext | undefined {
-		return this.tryGetRuleContext(0, NumeroContext);
-	}
-	public nome_do_tipo(): Nome_do_tipoContext | undefined {
-		return this.tryGetRuleContext(0, Nome_do_tipoContext);
-	}
-	public string_literal(): String_literalContext | undefined {
-		return this.tryGetRuleContext(0, String_literalContext);
-	}
-	public numero_hexadecimal(): Numero_hexadecimalContext | undefined {
-		return this.tryGetRuleContext(0, Numero_hexadecimalContext);
-	}
-	public booleano(): BooleanoContext | undefined {
-		return this.tryGetRuleContext(0, BooleanoContext);
-	}
-	public nulo(): NuloContext | undefined {
-		return this.tryGetRuleContext(0, NuloContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_literal; }
-	// @Override
+	public número(): NúmeroContext {
+		return this.getTypedRuleContext(NúmeroContext, 0) as NúmeroContext;
+	}
+	public nome_do_tipo(): Nome_do_tipoContext {
+		return this.getTypedRuleContext(Nome_do_tipoContext, 0) as Nome_do_tipoContext;
+	}
+	public string_literal(): String_literalContext {
+		return this.getTypedRuleContext(String_literalContext, 0) as String_literalContext;
+	}
+	public número_hexadecimal(): Número_hexadecimalContext {
+		return this.getTypedRuleContext(Número_hexadecimalContext, 0) as Número_hexadecimalContext;
+	}
+	public booleano(): BooleanoContext {
+		return this.getTypedRuleContext(BooleanoContext, 0) as BooleanoContext;
+	}
+	public nulo(): NuloContext {
+		return this.getTypedRuleContext(NuloContext, 0) as NuloContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_literal;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterLiteral) {
-			listener.enterLiteral(this);
+	    if(listener.enterLiteral) {
+	 		listener.enterLiteral(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitLiteral) {
-			listener.exitLiteral(this);
+	    if(listener.exitLiteral) {
+	 		listener.exitLiteral(this);
 		}
 	}
 	// @Override
@@ -10701,51 +10591,51 @@ export class LiteralContext extends ParserRuleContext {
 
 
 export class TermoContext extends ParserRuleContext {
-	public termo_negativo(): Termo_negativoContext | undefined {
-		return this.tryGetRuleContext(0, Termo_negativoContext);
-	}
-	public termo_positivo(): Termo_positivoContext | undefined {
-		return this.tryGetRuleContext(0, Termo_positivoContext);
-	}
-	public variavel_local(): Variavel_localContext | undefined {
-		return this.tryGetRuleContext(0, Variavel_localContext);
-	}
-	public variavel(): VariavelContext | undefined {
-		return this.tryGetRuleContext(0, VariavelContext);
-	}
-	public termo_literal(): Termo_literalContext | undefined {
-		return this.tryGetRuleContext(0, Termo_literalContext);
-	}
-	public como(): ComoContext | undefined {
-		return this.tryGetRuleContext(0, ComoContext);
-	}
-	public artigo_indefinido(): Artigo_indefinidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_indefinidoContext);
-	}
-	public nome_do_tipo(): Nome_do_tipoContext | undefined {
-		return this.tryGetRuleContext(0, Nome_do_tipoContext);
-	}
-	public sinal_de_divisï¿½o(): Sinal_de_divisï¿½oContext | undefined {
-		return this.tryGetRuleContext(0, Sinal_de_divisï¿½oContext);
-	}
-	public termo(): TermoContext | undefined {
-		return this.tryGetRuleContext(0, TermoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_termo; }
-	// @Override
+	public termo_negativo(): Termo_negativoContext {
+		return this.getTypedRuleContext(Termo_negativoContext, 0) as Termo_negativoContext;
+	}
+	public termo_positivo(): Termo_positivoContext {
+		return this.getTypedRuleContext(Termo_positivoContext, 0) as Termo_positivoContext;
+	}
+	public variável_local(): Variável_localContext {
+		return this.getTypedRuleContext(Variável_localContext, 0) as Variável_localContext;
+	}
+	public variável(): VariávelContext {
+		return this.getTypedRuleContext(VariávelContext, 0) as VariávelContext;
+	}
+	public termo_literal(): Termo_literalContext {
+		return this.getTypedRuleContext(Termo_literalContext, 0) as Termo_literalContext;
+	}
+	public como(): ComoContext {
+		return this.getTypedRuleContext(ComoContext, 0) as ComoContext;
+	}
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+	public nome_do_tipo(): Nome_do_tipoContext {
+		return this.getTypedRuleContext(Nome_do_tipoContext, 0) as Nome_do_tipoContext;
+	}
+	public sinal_de_divisão(): Sinal_de_divisãoContext {
+		return this.getTypedRuleContext(Sinal_de_divisãoContext, 0) as Sinal_de_divisãoContext;
+	}
+	public termo(): TermoContext {
+		return this.getTypedRuleContext(TermoContext, 0) as TermoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_termo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTermo) {
-			listener.enterTermo(this);
+	    if(listener.enterTermo) {
+	 		listener.enterTermo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTermo) {
-			listener.exitTermo(this);
+	    if(listener.exitTermo) {
+	 		listener.exitTermo(this);
 		}
 	}
 	// @Override
@@ -10759,29 +10649,31 @@ export class TermoContext extends ParserRuleContext {
 }
 
 
-export class Sinal_de_divisï¿½oContext extends ParserRuleContext {
-	public BARRA_INCLINADA(): TerminalNode { return this.getToken(PortuguesPuroParser.BARRA_INCLINADA, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Sinal_de_divisãoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_sinal_de_divisï¿½o; }
-	// @Override
+	public BARRA_INCLINADA(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.BARRA_INCLINADA, 0);
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_sinal_de_divisão;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterSinal_de_divisï¿½o) {
-			listener.enterSinal_de_divisï¿½o(this);
+	    if(listener.enterSinal_de_divisão) {
+	 		listener.enterSinal_de_divisão(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitSinal_de_divisï¿½o) {
-			listener.exitSinal_de_divisï¿½o(this);
+	    if(listener.exitSinal_de_divisão) {
+	 		listener.exitSinal_de_divisão(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitSinal_de_divisï¿½o) {
-			return visitor.visitSinal_de_divisï¿½o(this);
+		if (visitor.visitSinal_de_divisão) {
+			return visitor.visitSinal_de_divisão(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10790,21 +10682,21 @@ export class Sinal_de_divisï¿½oContext extends ParserRuleContext {
 
 
 export class ComoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_como; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_como;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterComo) {
-			listener.enterComo(this);
+	    if(listener.enterComo) {
+	 		listener.enterComo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitComo) {
-			listener.exitComo(this);
+	    if(listener.exitComo) {
+	 		listener.exitComo(this);
 		}
 	}
 	// @Override
@@ -10819,25 +10711,27 @@ export class ComoContext extends ParserRuleContext {
 
 
 export class Termo_negativoContext extends ParserRuleContext {
-	public HIFEN(): TerminalNode { return this.getToken(PortuguesPuroParser.HIFEN, 0); }
-	public termo(): TermoContext {
-		return this.getRuleContext(0, TermoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_termo_negativo; }
-	// @Override
+	public HÍFEN(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.HÍFEN, 0);
+	}
+	public termo(): TermoContext {
+		return this.getTypedRuleContext(TermoContext, 0) as TermoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_termo_negativo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTermo_negativo) {
-			listener.enterTermo_negativo(this);
+	    if(listener.enterTermo_negativo) {
+	 		listener.enterTermo_negativo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTermo_negativo) {
-			listener.exitTermo_negativo(this);
+	    if(listener.exitTermo_negativo) {
+	 		listener.exitTermo_negativo(this);
 		}
 	}
 	// @Override
@@ -10852,25 +10746,27 @@ export class Termo_negativoContext extends ParserRuleContext {
 
 
 export class Termo_positivoContext extends ParserRuleContext {
-	public SINAL_DE_ADICAO(): TerminalNode { return this.getToken(PortuguesPuroParser.SINAL_DE_ADICAO, 0); }
-	public termo(): TermoContext {
-		return this.getRuleContext(0, TermoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_termo_positivo; }
-	// @Override
+	public SINAL_DE_ADIÇÃO(): TerminalNode {
+		return this.getToken(PortuguesPuroParser.SINAL_DE_ADIÇÃO, 0);
+	}
+	public termo(): TermoContext {
+		return this.getTypedRuleContext(TermoContext, 0) as TermoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_termo_positivo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTermo_positivo) {
-			listener.enterTermo_positivo(this);
+	    if(listener.enterTermo_positivo) {
+	 		listener.enterTermo_positivo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTermo_positivo) {
-			listener.exitTermo_positivo(this);
+	    if(listener.exitTermo_positivo) {
+	 		listener.exitTermo_positivo(this);
 		}
 	}
 	// @Override
@@ -10884,49 +10780,46 @@ export class Termo_positivoContext extends ParserRuleContext {
 }
 
 
-export class Variavel_localContext extends ParserRuleContext {
-	public artigo_indefinido(): Artigo_indefinidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_indefinidoContext);
-	}
-	public nome(): NomeContext[];
-	public nome(i: number): NomeContext;
-	public nome(i?: number): NomeContext | NomeContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(NomeContext);
-		} else {
-			return this.getRuleContext(i, NomeContext);
-		}
-	}
-	public denominacoes(): DenominacoesContext | undefined {
-		return this.tryGetRuleContext(0, DenominacoesContext);
-	}
-	public artigo_definido(): Artigo_definidoContext | undefined {
-		return this.tryGetRuleContext(0, Artigo_definidoContext);
-	}
-	public atribuidores_de_posse(): Atribuidores_de_posseContext | undefined {
-		return this.tryGetRuleContext(0, Atribuidores_de_posseContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Variável_localContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_variavel_local; }
-	// @Override
+	public artigo_indefinido(): Artigo_indefinidoContext {
+		return this.getTypedRuleContext(Artigo_indefinidoContext, 0) as Artigo_indefinidoContext;
+	}
+	public nome_list(): NomeContext[] {
+		return this.getTypedRuleContexts(NomeContext) as NomeContext[];
+	}
+	public nome(i: number): NomeContext {
+		return this.getTypedRuleContext(NomeContext, i) as NomeContext;
+	}
+	public denominações(): DenominaçõesContext {
+		return this.getTypedRuleContext(DenominaçõesContext, 0) as DenominaçõesContext;
+	}
+	public artigo_definido(): Artigo_definidoContext {
+		return this.getTypedRuleContext(Artigo_definidoContext, 0) as Artigo_definidoContext;
+	}
+	public atribuidores_de_posse(): Atribuidores_de_posseContext {
+		return this.getTypedRuleContext(Atribuidores_de_posseContext, 0) as Atribuidores_de_posseContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_variável_local;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterVariavel_local) {
-			listener.enterVariavel_local(this);
+	    if(listener.enterVariável_local) {
+	 		listener.enterVariável_local(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitVariavel_local) {
-			listener.exitVariavel_local(this);
+	    if(listener.exitVariável_local) {
+	 		listener.exitVariável_local(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitVariavel_local) {
-			return visitor.visitVariavel_local(this);
+		if (visitor.visitVariável_local) {
+			return visitor.visitVariável_local(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10934,40 +10827,40 @@ export class Variavel_localContext extends ParserRuleContext {
 }
 
 
-export class VariavelContext extends ParserRuleContext {
-	public artigo_definido(): Artigo_definidoContext {
-		return this.getRuleContext(0, Artigo_definidoContext);
+export class VariávelContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	public possessivo_portuguï¿½s(): Possessivo_portuguï¿½sContext {
-		return this.getRuleContext(0, Possessivo_portuguï¿½sContext);
+	public artigo_definido(): Artigo_definidoContext {
+		return this.getTypedRuleContext(Artigo_definidoContext, 0) as Artigo_definidoContext;
+	}
+	public possessivo_português(): Possessivo_portuguêsContext {
+		return this.getTypedRuleContext(Possessivo_portuguêsContext, 0) as Possessivo_portuguêsContext;
 	}
 	public p2(): P2Context {
-		return this.getRuleContext(0, P2Context);
+		return this.getTypedRuleContext(P2Context, 0) as P2Context;
 	}
 	public nome(): NomeContext {
-		return this.getRuleContext(0, NomeContext);
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_variável;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_variavel; }
-	// @Override
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterVariavel) {
-			listener.enterVariavel(this);
+	    if(listener.enterVariável) {
+	 		listener.enterVariável(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitVariavel) {
-			listener.exitVariavel(this);
+	    if(listener.exitVariável) {
+	 		listener.exitVariável(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitVariavel) {
-			return visitor.visitVariavel(this);
+		if (visitor.visitVariável) {
+			return visitor.visitVariável(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -10976,27 +10869,27 @@ export class VariavelContext extends ParserRuleContext {
 
 
 export class Termo_literalContext extends ParserRuleContext {
-	public literal(): LiteralContext {
-		return this.getRuleContext(0, LiteralContext);
-	}
-	public possessivos_inglï¿½s(): Possessivos_inglï¿½sContext {
-		return this.getRuleContext(0, Possessivos_inglï¿½sContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_termo_literal; }
-	// @Override
+	public literal(): LiteralContext {
+		return this.getTypedRuleContext(LiteralContext, 0) as LiteralContext;
+	}
+	public possessivos_inglês(): Possessivos_inglêsContext {
+		return this.getTypedRuleContext(Possessivos_inglêsContext, 0) as Possessivos_inglêsContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_termo_literal;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterTermo_literal) {
-			listener.enterTermo_literal(this);
+	    if(listener.enterTermo_literal) {
+	 		listener.enterTermo_literal(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitTermo_literal) {
-			listener.exitTermo_literal(this);
+	    if(listener.exitTermo_literal) {
+	 		listener.exitTermo_literal(this);
 		}
 	}
 	// @Override
@@ -11010,28 +10903,28 @@ export class Termo_literalContext extends ParserRuleContext {
 }
 
 
-export class Conteï¿½doContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ConteúdoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_conteï¿½do; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_conteúdo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterConteï¿½do) {
-			listener.enterConteï¿½do(this);
+	    if(listener.enterConteúdo) {
+	 		listener.enterConteúdo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitConteï¿½do) {
-			listener.exitConteï¿½do(this);
+	    if(listener.exitConteúdo) {
+	 		listener.exitConteúdo(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitConteï¿½do) {
-			return visitor.visitConteï¿½do(this);
+		if (visitor.visitConteúdo) {
+			return visitor.visitConteúdo(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -11040,21 +10933,21 @@ export class Conteï¿½doContext extends ParserRuleContext {
 
 
 export class MagnitudeContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_magnitude; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_magnitude;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterMagnitude) {
-			listener.enterMagnitude(this);
+	    if(listener.enterMagnitude) {
+	 		listener.enterMagnitude(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitMagnitude) {
-			listener.exitMagnitude(this);
+	    if(listener.exitMagnitude) {
+	 		listener.exitMagnitude(this);
 		}
 	}
 	// @Override
@@ -11068,28 +10961,28 @@ export class MagnitudeContext extends ParserRuleContext {
 }
 
 
-export class Endereï¿½amentoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class EndereçamentoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_endereï¿½amento; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_endereçamento;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterEndereï¿½amento) {
-			listener.enterEndereï¿½amento(this);
+	    if(listener.enterEndereçamento) {
+	 		listener.enterEndereçamento(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitEndereï¿½amento) {
-			listener.exitEndereï¿½amento(this);
+	    if(listener.exitEndereçamento) {
+	 		listener.exitEndereçamento(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitEndereï¿½amento) {
-			return visitor.visitEndereï¿½amento(this);
+		if (visitor.visitEndereçamento) {
+			return visitor.visitEndereçamento(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -11097,37 +10990,34 @@ export class Endereï¿½amentoContext extends ParserRuleContext {
 }
 
 
-export class Possessivos_inglï¿½sContext extends ParserRuleContext {
-	public possessivo_inglï¿½s_antigo(): Possessivo_inglï¿½s_antigoContext[];
-	public possessivo_inglï¿½s_antigo(i: number): Possessivo_inglï¿½s_antigoContext;
-	public possessivo_inglï¿½s_antigo(i?: number): Possessivo_inglï¿½s_antigoContext | Possessivo_inglï¿½s_antigoContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(Possessivo_inglï¿½s_antigoContext);
-		} else {
-			return this.getRuleContext(i, Possessivo_inglï¿½s_antigoContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Possessivos_inglêsContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_possessivos_inglï¿½s; }
-	// @Override
+	public possessivo_inglês_antigo_list(): Possessivo_inglês_antigoContext[] {
+		return this.getTypedRuleContexts(Possessivo_inglês_antigoContext) as Possessivo_inglês_antigoContext[];
+	}
+	public possessivo_inglês_antigo(i: number): Possessivo_inglês_antigoContext {
+		return this.getTypedRuleContext(Possessivo_inglês_antigoContext, i) as Possessivo_inglês_antigoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_possessivos_inglês;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPossessivos_inglï¿½s) {
-			listener.enterPossessivos_inglï¿½s(this);
+	    if(listener.enterPossessivos_inglês) {
+	 		listener.enterPossessivos_inglês(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPossessivos_inglï¿½s) {
-			listener.exitPossessivos_inglï¿½s(this);
+	    if(listener.exitPossessivos_inglês) {
+	 		listener.exitPossessivos_inglês(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitPossessivos_inglï¿½s) {
-			return visitor.visitPossessivos_inglï¿½s(this);
+		if (visitor.visitPossessivos_inglês) {
+			return visitor.visitPossessivos_inglês(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -11135,46 +11025,46 @@ export class Possessivos_inglï¿½sContext extends ParserRuleContext {
 }
 
 
-export class Possessivo_inglï¿½s_antigoContext extends ParserRuleContext {
-	public apostrofo(): ApostrofoContext {
-		return this.getRuleContext(0, ApostrofoContext);
-	}
-	public nome(): NomeContext | undefined {
-		return this.tryGetRuleContext(0, NomeContext);
-	}
-	public funcao(): FuncaoContext | undefined {
-		return this.tryGetRuleContext(0, FuncaoContext);
-	}
-	public conteï¿½do(): Conteï¿½doContext | undefined {
-		return this.tryGetRuleContext(0, Conteï¿½doContext);
-	}
-	public magnitude(): MagnitudeContext | undefined {
-		return this.tryGetRuleContext(0, MagnitudeContext);
-	}
-	public endereï¿½amento(): Endereï¿½amentoContext | undefined {
-		return this.tryGetRuleContext(0, Endereï¿½amentoContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class Possessivo_inglês_antigoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_possessivo_inglï¿½s_antigo; }
-	// @Override
+	public apóstrofo(): ApóstrofoContext {
+		return this.getTypedRuleContext(ApóstrofoContext, 0) as ApóstrofoContext;
+	}
+	public nome(): NomeContext {
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
+	}
+	public função(): FunçãoContext {
+		return this.getTypedRuleContext(FunçãoContext, 0) as FunçãoContext;
+	}
+	public conteúdo(): ConteúdoContext {
+		return this.getTypedRuleContext(ConteúdoContext, 0) as ConteúdoContext;
+	}
+	public magnitude(): MagnitudeContext {
+		return this.getTypedRuleContext(MagnitudeContext, 0) as MagnitudeContext;
+	}
+	public endereçamento(): EndereçamentoContext {
+		return this.getTypedRuleContext(EndereçamentoContext, 0) as EndereçamentoContext;
+	}
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_possessivo_inglês_antigo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPossessivo_inglï¿½s_antigo) {
-			listener.enterPossessivo_inglï¿½s_antigo(this);
+	    if(listener.enterPossessivo_inglês_antigo) {
+	 		listener.enterPossessivo_inglês_antigo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPossessivo_inglï¿½s_antigo) {
-			listener.exitPossessivo_inglï¿½s_antigo(this);
+	    if(listener.exitPossessivo_inglês_antigo) {
+	 		listener.exitPossessivo_inglês_antigo(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitPossessivo_inglï¿½s_antigo) {
-			return visitor.visitPossessivo_inglï¿½s_antigo(this);
+		if (visitor.visitPossessivo_inglês_antigo) {
+			return visitor.visitPossessivo_inglês_antigo(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -11182,46 +11072,46 @@ export class Possessivo_inglï¿½s_antigoContext extends ParserRuleContext {
 }
 
 
-export class Possessivo_portuguï¿½sContext extends ParserRuleContext {
+export class Possessivo_portuguêsContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
 	public p2(): P2Context {
-		return this.getRuleContext(0, P2Context);
+		return this.getTypedRuleContext(P2Context, 0) as P2Context;
 	}
-	public nome(): NomeContext | undefined {
-		return this.tryGetRuleContext(0, NomeContext);
+	public nome(): NomeContext {
+		return this.getTypedRuleContext(NomeContext, 0) as NomeContext;
 	}
-	public funcao(): FuncaoContext | undefined {
-		return this.tryGetRuleContext(0, FuncaoContext);
+	public função(): FunçãoContext {
+		return this.getTypedRuleContext(FunçãoContext, 0) as FunçãoContext;
 	}
-	public conteï¿½do(): Conteï¿½doContext | undefined {
-		return this.tryGetRuleContext(0, Conteï¿½doContext);
+	public conteúdo(): ConteúdoContext {
+		return this.getTypedRuleContext(ConteúdoContext, 0) as ConteúdoContext;
 	}
-	public magnitude(): MagnitudeContext | undefined {
-		return this.tryGetRuleContext(0, MagnitudeContext);
+	public magnitude(): MagnitudeContext {
+		return this.getTypedRuleContext(MagnitudeContext, 0) as MagnitudeContext;
 	}
-	public endereï¿½amento(): Endereï¿½amentoContext | undefined {
-		return this.tryGetRuleContext(0, Endereï¿½amentoContext);
+	public endereçamento(): EndereçamentoContext {
+		return this.getTypedRuleContext(EndereçamentoContext, 0) as EndereçamentoContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_possessivo_português;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_possessivo_portuguï¿½s; }
-	// @Override
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterPossessivo_portuguï¿½s) {
-			listener.enterPossessivo_portuguï¿½s(this);
+	    if(listener.enterPossessivo_português) {
+	 		listener.enterPossessivo_português(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitPossessivo_portuguï¿½s) {
-			listener.exitPossessivo_portuguï¿½s(this);
+	    if(listener.exitPossessivo_português) {
+	 		listener.exitPossessivo_português(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitPossessivo_portuguï¿½s) {
-			return visitor.visitPossessivo_portuguï¿½s(this);
+		if (visitor.visitPossessivo_português) {
+			return visitor.visitPossessivo_português(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -11229,32 +11119,30 @@ export class Possessivo_portuguï¿½sContext extends ParserRuleContext {
 }
 
 
-export class ApostrofoContext extends ParserRuleContext {
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+export class ApóstrofoContext extends ParserRuleContext {
+	constructor(parser?: PortuguesPuroParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return PortuguesPuroParser.RULE_apostrofo; }
-	// @Override
+    public get ruleIndex(): number {
+    	return PortuguesPuroParser.RULE_apóstrofo;
+	}
 	public enterRule(listener: PortuguesPuroListener): void {
-		if (listener.enterApostrofo) {
-			listener.enterApostrofo(this);
+	    if(listener.enterApóstrofo) {
+	 		listener.enterApóstrofo(this);
 		}
 	}
-	// @Override
 	public exitRule(listener: PortuguesPuroListener): void {
-		if (listener.exitApostrofo) {
-			listener.exitApostrofo(this);
+	    if(listener.exitApóstrofo) {
+	 		listener.exitApóstrofo(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: PortuguesPuroVisitor<Result>): Result {
-		if (visitor.visitApostrofo) {
-			return visitor.visitApostrofo(this);
+		if (visitor.visitApóstrofo) {
+			return visitor.visitApóstrofo(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
 	}
 }
-
-
