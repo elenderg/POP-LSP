@@ -2,14 +2,15 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree';
 import { ParseTreeVisitor } from 'antlr4ts/tree/ParseTreeVisitor';
 import { Token } from 'antlr4ts/Token';
 import { ParserRuleContext } from 'antlr4ts/ParserRuleContext';
-import PortuguesPuroVisitor from './antlr4/PortuguesPuroVisitor';
+import PortuguesPuroVisitor from './antlr/PortuguesPuroVisitor';
 import {
     ProgramaContext,
     TipoContext,
     Variável_globalContext,
     RotinaContext,
-    NomeContext
-} from './antlr4/PortuguesPuroParser';
+    NomeContext,
+    Regra_espaçoContext
+} from './antlr/PortuguesPuroParser';
 
 interface ASTNode {
     type: string;
@@ -24,8 +25,36 @@ interface ASTNode {
 
 
 export class ASTBuilder implements PortuguesPuroVisitor<ASTNode> {
+  
+  // propriedades visit 
+  visit(node) {
+    return node.accept(this);
+  }
+  visitChildren(node) {    
+    return node.accept(this);
+  }
+  visitTerminal(node) {    
+    return node.accept(this);
+  }
+  visitErrorNode(node) {    
+    return node.accept(this);
+  }
+  visitRegra_espaço(contexto: Regra_espaçoContext): ASTNode {
+        //const nomeCtx =  NomeContext;
+        const regraToken = contexto.start;
 
+        return {
+            type: 'RegraEspaço',
+            name: 'Regra de Espaço',
+            // file: regraToken,
+            //name: nomeCtx ? nomeCtx: undefined,
+            //line: regraToken.line,
+            //column: regraToken.charPositionInLine
+        };
+    }
 
+    // Implement other visit methods for different contexts as needed
+}
 
 /*
     visitPrograma(ctx: ProgramaContext): ASTNode {
