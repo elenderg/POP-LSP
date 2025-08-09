@@ -139,7 +139,7 @@ export default class PortuguesPuroListener extends ParseTreeListener {
 	 * Enter a parse tree produced by `PortuguesPuroParser.regra_espaço`.
 	 * @param ctx the parse tree
 	 */
-	enterRegra_espaço?: (ctx: Regra_espaçoContext) => void;
+	enterRegra_espaço?: (ctx: Regra_espaçoContext) => void; 
 	/**
 	 * Exit a parse tree produced by `PortuguesPuroParser.regra_espaço`.
 	 * @param ctx the parse tree

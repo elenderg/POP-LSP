@@ -11,8 +11,8 @@ import {
   Token, TokenStream,
   Interval, IntervalSet
 } from 'antlr4';
-import PortuguesPuroListener from "./PortuguesPuroListener";
-import PortuguesPuroVisitor from "./PortuguesPuroVisitor";
+import PortuguesPuroListener from "./PortuguesPuroListener"; 
+import * as PortuguesPuroVisitor from "./PortuguesPuroVisitor"; 
 
 // for running tests with parameters, TODO: discuss strategy for typed parameters in CI
 // eslint-disable-next-line no-unused-vars
@@ -6553,13 +6553,13 @@ export class Regra_espaçoContext extends ParserRuleContext {
   }
   public enterRule(listener: PortuguesPuroListener): void {
       if(listener.enterRegra_espaço) {
-       listener.enterRegra_espaço();
+       listener.enterRegra_espaço(this);
 
     }
   }
   public exitRule(listener: PortuguesPuroListener): void {
       if(listener.exitRegra_espaço) {
-       listener.exitRegra_espaço(this);
+       listener.exitRegra_espaço(context);
     }
   }
   // @Override

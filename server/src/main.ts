@@ -1,3 +1,5 @@
+/*
+
 import { CharStreams, CommonTokenStream } from 'antlr4ts';
 import  PortuguesPuroLexer from "./antlr/PortuguesPuroLexer";
 
@@ -33,3 +35,5 @@ for (const symbol of symbols) {
   console.log(symbol);
   console.log(nodeToLocation(symbol, "teste.pop"));
 }
+
+*/
