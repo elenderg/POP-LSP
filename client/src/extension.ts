@@ -8,31 +8,27 @@ import {
   workspace as espaçoDeTrabalho, 
   ExtensionContext as ContextoDeExtensão
 } from 'vscode';
-import * as vscode from 'vscode';
+
 import {
   LanguageClient as ClienteDeLinguagem,
   LanguageClientOptions as OpçõesDoClienteDeLinguagem,
   ServerOptions as OpçõesDoServidor,
   TransportKind as TipoDeTransporte
 } from 'vscode-languageclient/node';
-
+import * as vscode from 'vscode';
 let cliente: ClienteDeLinguagem;
+
 
 export function activate(contexto: ContextoDeExtensão) {
   console.log('Extensão do cliente foi ativada!');
-  // The server is implemented in node
   const executávelDoServidor = contexto.asAbsolutePath(endereço.join('server', 'out', 'server.js'));
 
-  // If the extension is launched in debug mode then the debug server options are used
-  // Otherwise the run options are used
   const opçõesDoServidor: OpçõesDoServidor = {
-    run:   {module: executávelDoServidor,transport: TipoDeTransporte.ipc},
+    run:     {module: executávelDoServidor,transport: TipoDeTransporte.ipc},
     debug:   {module: executávelDoServidor,transport: TipoDeTransporte.ipc,}
   };
 
-  // Options to control the language client
   const opçõesDoCliente: OpçõesDoClienteDeLinguagem = {
-    // Register the server for plain text documents
     documentSelector: [      
       { scheme: 'file',language: 'pop'}
     ],
@@ -42,7 +38,6 @@ export function activate(contexto: ContextoDeExtensão) {
     }
   };
 
-  // Create the language client and start the client.
   cliente = new ClienteDeLinguagem(
     'languageServerExample',
     'Language Server Example',
@@ -76,18 +71,8 @@ export function activate(contexto: ContextoDeExtensão) {
       }
     )
   );
-  
-
-  // Start the client. This will also launch the server
   cliente.start();
 }
-
-
-
-
-
-
-
 
 export function deactivate(): Thenable<void> | undefined {
   if (!cliente) {
@@ -95,5 +80,3 @@ export function deactivate(): Thenable<void> | undefined {
   }
   return cliente.stop();
 }
-
-

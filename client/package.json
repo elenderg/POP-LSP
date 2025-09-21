@@ -4,30 +4,23 @@
   "author": "Elender Góis Gallas",
   "license": "MIT",
   "version": "0.0.1",
-  "main": "./out/extension.js",
-  "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "compile": "tsc"
-  },
   "publisher": "elender",
   "repository": {
     "type": "git",
     "url": "https://github.com/elenderg/POP-LSP"
   },
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.100.0"
   },
   "dependencies": {
     "glob": "^11.0.0",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
-		"@types/node": "^20",
-    "@types/vscode": "^1.75.1",
+    "@types/vscode": "^1.100.0",
     "@vscode/test-electron": "^2.3.9"
   },
-  "contributes": {
+	"contributes": {
     "commands": [
     {
       "command": "meuLsp.enviarSelecao",
@@ -46,6 +39,6 @@
   },
   "activationEvents": [
 		"onLanguage:PoP",
-  	"workspaceContains:**/*.pop"    
+  	"workspaceContains:**/*.pop"
   ]
 }
