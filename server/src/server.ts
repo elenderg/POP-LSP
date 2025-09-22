@@ -984,7 +984,162 @@ function extrairEntreDelimitadoresTokenizado(
 }
 
 
+function recuaParaAPalavraAnterior(linha: string, índiceAtual: number): string {
+  if (índiceAtual <= 0) {
+    // vai para a linha anterior
+    let linhaAnterior = obterLinhaAnterior(linha);
+    // recua para a última palavra da linha anterior
+    let palavraAnterior = recuaParaAPalavraAnterior(linhaAnterior, linhaAnterior.length);
+    return palavraAnterior;
+  ;} 
+  let conteúdoAnterior = linha.slice(0, índiceAtual).trimEnd();
+  let partes = conteúdoAnterior.split(/\s+/);
+  if (partes.length > 0) {
+    return partes[partes.length - 1].toLowerCase();
+  } else {
+    return '';
+  }
+}
 
+function avançaParaAPalavraSeguinte(linha: string, índiceAtual: number): string {
+  if (índiceAtual >= linha.length) {
+    // vai para a linha seguinte
+    let linhaSeguinte = obterLinhaSeguinte(linha);
+    // avança para a primeira palavra da linha seguinte
+    let palavraSeguinte = avançaParaAPalavraSeguinte(linhaSeguinte, 0);
+    return palavraSeguinte;
+  }
+  let conteúdoPosterior = linha.slice(índiceAtual).trimStart();
+  let partes = conteúdoPosterior.split(/\s+/);
+  if (partes.length > 0) {
+    return partes[0].toLowerCase();
+  } else {
+    return '';
+  }
+}
+
+function obterLinhaSeguinte(linhaAtual: string): string {
+  // Esta função deve retornar a linha seguinte ao conteúdo da linha atual
+  
+  // procura o índice da linha atual no array de linhas
+  const linhas = linhaAtual.split(/\r?\n/g);
+  const índiceLinhaAtual = linhas.indexOf(linhaAtual);
+  let índiceLinhaSeguinte = índiceLinhaAtual + 1;
+  let conteúdoLinhaSeguinte = '';
+  // atribui o conteúdo da linha seguinte se existir
+  if (índiceLinhaSeguinte >= 0 && índiceLinhaSeguinte < linhas.length) {
+    conteúdoLinhaSeguinte = linhas[índiceLinhaSeguinte];
+  }
+  return conteúdoLinhaSeguinte;
+}
+
+function obterLinhaAnterior(linhaAtual: string): string {
+  // Esta função deve retornar a linha anterior ao conteúdo da linha atual
+  
+  // procura o índice da linha atual no array de linhas
+  const linhas = linhaAtual.split(/\r?\n/g);
+  const índiceLinhaAtual = linhas.indexOf(linhaAtual);
+  let índiceLinhaAnterior = índiceLinhaAtual - 1;
+  let conteúdoLinhaAnterior = '';
+  // atribui o conteúdo da linha anterior se existir
+  if (índiceLinhaAnterior >= 0 && índiceLinhaAnterior < linhas.length) {
+    conteúdoLinhaAnterior = linhas[índiceLinhaAnterior];
+  }
+  return conteúdoLinhaAnterior;
+}
+
+function encontraFimDoTermo(linhaAtual: string, posiçãoAtual: number): string {
+  let próximoTermo = '';
+  while (posiçãoAtual < linhaAtual.length) { // Enquanto estivermos na linha atual
+    let termoEmAnalise = avançaParaAPalavraSeguinte(linhaAtual, posiçãoAtual);
+    if (conjuntoDePalavrasContexto.has(termoEmAnalise)) {
+      // Se o próximo termo for um dos termos de contexto, então paramos aqui
+      console.log(`Termo encontrado na lista de contexto: "${termoEmAnalise}"`);
+      break;
+    }
+    else {
+      console.log(`Termo não encontrado na lista de contexto: "${termoEmAnalise}"`);
+      próximoTermo = próximoTermo + " " + termoEmAnalise;
+      posiçãoAtual = posiçãoAtual + termoEmAnalise.length + 1; // avança o índice atual
+    }
+  }
+  return próximoTermo.trim();// O trim remove espaços em branco extras no início e no fim
+}
+
+function encontraInícioDoTermo(linhaAtual: string, posiçãoAtual: number): string {
+  let termoAnterior = '';
+  while (posiçãoAtual > 0) { // Enquanto estivermos na linha atual
+    let termoEmAnalise = recuaParaAPalavraAnterior(linhaAtual, posiçãoAtual);
+    console.log(`Analisando termo: "${termoEmAnalise}"`);
+    if (conjuntoDePalavrasContexto.has(termoEmAnalise)) {
+      // Se o termo anterior for um dos termos de contexto, então paramos aqui
+      console.log(`Termo encontrado na lista de contexto: "${termoEmAnalise}"`);
+      break;
+    }
+    else {
+      console.log(`Termo não encontrado na lista de contexto: "${termoEmAnalise}"`);
+      termoAnterior = termoEmAnalise + " " + termoAnterior;
+      posiçãoAtual = posiçãoAtual - termoEmAnalise.length - 1; // recua o índice atual
+    }
+  }
+  return termoAnterior.trim();// O trim remove espaços em branco extras no início e no fim
+}
+
+
+// Handler para Goto Type Definition
+conexão.onTypeDefinition(
+  (_params: ParametrosDeDefiniçãoDeTipo): Localização[] => {
+    let conteúdoLinha = '';
+    let documento = documentos.get(_params.textDocument.uri);
+    if (!documento) {
+      console.log('Documento não encontrado.');
+      return [];
+    }
+    // Pega a posição enviada pelo cliente
+    let posição = _params.position;
+    // Descobre os limites (início e fim) da linha
+    let inícioDaLinha = { line: posição.line, character: 0 };
+    let fimDaLinha = { line: posição.line, character: Number.MAX_SAFE_INTEGER };
+
+    // Extrai o texto da linha
+    let linha = documento.getText({
+      start: inícioDaLinha,
+      end: fimDaLinha
+    });
+
+    if (linha) {
+      conteúdoLinha = linha;
+    }
+
+    console.log(`Conteúdo da linha: "${conteúdoLinha}"`);
+
+    let palavra = obtémPalavraSobCursor(conteúdoLinha, posição.character);
+    if (!palavra) {
+      return [];
+    }
+    console.log(`Palavra atual: "${palavra}"`);
+
+    let posiçãoDaPalavra = conteúdoLinha.indexOf(palavra);
+
+    let inícioDoTermo = encontraInícioDoTermo(conteúdoLinha, posiçãoDaPalavra);
+    let fimDoTermo = encontraFimDoTermo(conteúdoLinha, posiçãoDaPalavra + palavra.length);
+
+    let palavraCompleta = (inícioDoTermo + " " + palavra + " " + fimDoTermo).trim();
+
+    console.log(`Palavra completa: "${palavraCompleta}"`);
+
+    // Retorna uma localização simulada (sempre aponta para a linha 1)
+    return [{
+      uri: _params.textDocument.uri,
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 1, character: 10 }
+      }
+    }];
+  }
+);
+
+/*
 // Handler para Goto Type Definition
 conexão.onTypeDefinition(
   (_params: ParametrosDeDefiniçãoDeTipo): Localização[] => {
@@ -1056,10 +1211,10 @@ conexão.onTypeDefinition(
         start: { line: 1, character: 0 },
         end: { line: 1, character: 10 }
       }
-    }];*/
+    }];
   }
 );
-
+*/
 
 
 
