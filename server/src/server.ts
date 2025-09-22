@@ -32,14 +32,11 @@ import {
 import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocument';
 //import { Range } from "vscode-languageclient";
 
-
-
-
-// Create a connection for the server, using Node's IPC as a transport.
-// Also include all preview / proposed LSP features.
+// Cria uma conexão para o servidor. A conexão usa Node's IPC como transporte.
+// Também inclui todos os recursos LSP propostos.
 const conexão = CriarConexão(RecursosPropostos.all);
 
-// Create a simple text document manager.
+// Cria um gerenciador de documentos de texto. Ele lida com o sincronismo de documentos
 const documentos = new DocumentosDeTexto(DocumentoDeTexto);
 
 let possuiCapacidadeDeConfiguração = false;
@@ -51,19 +48,21 @@ conexão.onInitialize((parâmetros: InicializarParâmetros) => {
   const capacidades = parâmetros.capabilities;
 
   // Verifica se o cliente suporta as capacidades de configuração e espaço de trabalho.
-  // Isso é importante para saber se o servidor pode registrar notificações de mudança de configuração e eventos de espaço de trabalho.
+  // Isso é importante para saber se o servidor pode registrar notificações de mudança de configuração
+  //  e eventos de espaço de trabalho.
   possuiCapacidadeDeConfiguração = !!(capacidades.workspace && !!capacidades.workspace.configuration);
   possuiCapacidadeDeEspaçoDeTrabalho = !!(capacidades.workspace && !!capacidades.workspace.workspaceFolders);
   possuiCapacidadedeInformaçõesDeDiagnósticoRelacionadas = !!(
     capacidades.textDocument && capacidades.textDocument.publishDiagnostics &&
     capacidades.textDocument.publishDiagnostics.relatedInformation
   );
-  // Se o cliente não suporta as capacidades de configuração e espaço de trabalho, o servidor usará configurações globais padrão.
+  // Se o cliente não suporta as capacidades de configuração e espaço de trabalho, 
+  // o servidor usará configurações globais padrão.
 
   const resultado: ResultadoDeInicialização = {
     capabilities: {
       textDocumentSync: TipoDeSincronizaçãoDoDocumento.Incremental,
-      // Tell the client that this server supports code completion.
+      // Informa ao cliente que o servidor suporta conclusão de código.
       completionProvider: {resolveProvider: true},
       diagnosticProvider: {
         interFileDependencies: false,
@@ -100,32 +99,31 @@ conexão.onInitialized(() => {
   }
 });
 
-// The example settings
+// As configurações de exemplo
 interface ConfiguraçõesDeExemplo {
   maxNumberOfProblems: number;
 }
 
-// The global settings, used when the `workspace/configuration` request is not supported by the client.
-// Please note that this is not the case when using this server with the client provided in this example
-// but could happen with other clients.
+// As configurações globais, usadas quando a solicitação `workspace/configuration` não é suportada pelo cliente.
+// Por favor, note que este não é o caso do VSCode, que suporta essa solicitação por padrão.
+// mas pode acontecer com outros clientes.
 const configuraçõesPadrão: ConfiguraçõesDeExemplo = { maxNumberOfProblems: 1000 };
 let configuraçõesGlobais: ConfiguraçõesDeExemplo = configuraçõesPadrão;
 
-// Cache the settings of all open documents
+// Armazena em cache as configurações específicas do documento.
 const configuraçõesDoDocumento = new Map<string, Thenable<ConfiguraçõesDeExemplo>>();
 
 conexão.onDidChangeConfiguration(alteração => {
   if (possuiCapacidadeDeConfiguração) {
-    // Reset all cached document settings
+    // Redefine todas as configurações de documento armazenadas em cache
     configuraçõesDoDocumento.clear();
   } else {
     configuraçõesGlobais = (
       (alteração.settings.languageServerExample || configuraçõesPadrão)
     );
   }
-  // Refresh the diagnostics since the `maxNumberOfProblems` could have changed.
-  // We could optimize things here and re-fetch the setting first can compare it
-  // to the existing setting, but this is out of scope for this example.
+  // Atualiza os diagnósticos, uma vez que o `maxNumberOfProblems` pode ter mudado.
+  // Pode ser otimizado posteriormente
   conexão.languages.diagnostics.refresh();
 });
 
@@ -137,14 +135,15 @@ function obtémConfiguraçõesDoDocumento(recurso: string): Thenable<Configuraç
   if (!resultado) {
     resultado = conexão.workspace.getConfiguration({
       scopeUri: recurso,
-      section: 'languageServerExample'
+      section: 'languageServerExample' 
+      // Nome da seção de configuração no cliente (ex.: ..\client\package.json)
     });
     configuraçõesDoDocumento.set(recurso, resultado);
   }
   return resultado;
 }
 
-// Only keep settings for open documents
+// As configurações só são mantidas em cache para documentos abertos.
 documentos.onDidClose(e => {
   configuraçõesDoDocumento.delete(e.document.uri);
 });
@@ -158,8 +157,8 @@ conexão.languages.diagnostics.on(async (parâmetros) => {
       items: await validateTextDocument(documento)
     } satisfies RelatórioDeDiagnósticoDoDocumento;
   } else {
-    // We don't know the document. We can either try to read it from disk
-    // or we don't report problems for it.
+    // Quando não conhecemos o documento. Podemos tentar lê-lo do disco
+    // ou não relatar problemas para ele.
     return {
       kind: TipoDeRelatórioDeDiagnósticoDoDocumento.Full,
       items: []
@@ -167,8 +166,8 @@ conexão.languages.diagnostics.on(async (parâmetros) => {
   }
 });
 
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
+// O conteúdo de um documento de texto foi alterado. Este evento é emitido
+// quando o documento de texto é aberto pela primeira vez ou quando seu conteúdo é alterado.
 documentos.onDidChangeContent(alteração => {
   validateTextDocument(alteração.document);
 });
@@ -245,96 +244,47 @@ conexão.onDocumentSymbol(
 
 
 async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
-  const diagnósticos: Diagnóstico[] = [];
-  /*
-  // No momento apenas um template, falta definir o que é um documento válido.
-  // 1. Etapa léxica
-  const texto = documentoDeTexto.getText();
-  const errosLexicos = analisarLexico(texto);
+  let diagnósticos: Diagnóstico[] = [];
 
-	let diagnóstico: Diagnóstico = {
-      severity: SeveridadeDoDiagnóstico.Warning,
-      range: {
-        start: documentoDeTexto.positionAt(0),
-        end: documentoDeTexto.positionAt(-1)
-      },
-      message: "Este é um exemplo de diagnóstico.",
-      source: 'ex'
-    };
+  let texto = documentoDeTexto.getText();
+  let linhas = texto.split(/\r?\n/);
 
-  // Send the computed diagnostics to VS Code.
-  //conexão.sendDiagnostics({ uri: documentoDeTexto.uri, diagnostics });
-
-	
-
-  diagnósticos.push(...errosLexicos);
-
-  // 2. Etapa sintática
-  const arvore = tentarParsear(texto);
-  if (!arvore.válida) {
-    diagnósticos.push(...arvore.erros);
-    return diagnósticos; // não continua se a sintaxe estiver errada
-  }
-
-  // 3. Etapa semântica
-  const errosSemanticos = analisarSemantica(arvore);
-  diagnósticos.push(...errosSemanticos);
-
-  // 4. Avisos e boas práticas
-  const avisos = verificarBoasPraticas(arvore);
-  diagnósticos.push(...avisos);
-
-  
-
-	*/
-  const texto = documentoDeTexto.getText();
-  const linhas = texto.split(/\r?\n/);
-
-  let ultimaLinhaDeCodigo: string | undefined;
+  let últimaLinhaDeCódigo: string | undefined;
+  //let índiceDaLinha: number | undefined;
 
   // Percorre de trás para frente
-  for (let i = linhas.length - 1; i >= 0; i--) {
-    let linha = linhas[i].trim();
-
+  for (let índice = linhas.length - 1; índice >= 0; índice--) {
+    let linha = linhas[índice].trim();
     // Ignora linhas vazias
-    if (linha === "") {
-      continue;
-    }
-
+    if (linha === "") {continue;}
     // Ignora comentários iniciados por "\"
-    if (linha.startsWith("\\")) {
-      continue;
-    }
-
+    if (linha.startsWith("\\")) {continue;}
     // Encontramos a última linha de código
-    ultimaLinhaDeCodigo = linha;
+    últimaLinhaDeCódigo = linha;
+    //índiceDaLinha = índice;
     break;
   }
 
-  if (ultimaLinhaDeCodigo) {
+  if (últimaLinhaDeCódigo /*&& índiceDaLinha !== undefined*/) {
     // Verifica se termina com "." ou "]"
-    if (!(ultimaLinhaDeCodigo.endsWith(".") || ultimaLinhaDeCodigo.endsWith("]"))) {
+    if (!(últimaLinhaDeCódigo.endsWith(".") || últimaLinhaDeCódigo.endsWith("]"))) {
       // Pega último caractere não-espaço
-      const ultimoChar = ultimaLinhaDeCodigo[ultimaLinhaDeCodigo.length - 1];
-
+      let últimoCaractere = últimaLinhaDeCódigo[últimaLinhaDeCódigo.length - 1];
       diagnósticos.push({
         severity: 1, // 1 = Error no LSP
         range: {
           start: {
-            line: linhas.length - 1,
-            character: ultimaLinhaDeCodigo.length - 1
+            line: linhas.length - 1, character: últimaLinhaDeCódigo.length - 1
           },
           end: {
-            line: linhas.length - 1,
-            character: ultimaLinhaDeCodigo.length
+            line: linhas.length - 1, character: últimaLinhaDeCódigo.length
           }
         },
-        message: `Documento inválido: O último caractere do documento deve ser um ponto final ou um comentário, não um "${ultimoChar}".`,
+        message: `Documento inválido: O último caractere do documento deve ser um ponto final ou um comentário, não um "${últimoCaractere}".`,
         source: "servidor-de-linguagem"
       });
     }
   }
-
   return diagnósticos;
 }
 

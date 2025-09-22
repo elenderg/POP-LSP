@@ -1,3 +1,46 @@
+  /*
+  async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
+  // No momento apenas um template, falta definir o que é um documento válido.
+  // 1. Etapa léxica
+  const texto = documentoDeTexto.getText();
+  const errosLexicos = analisarLexico(texto);
+
+	let diagnóstico: Diagnóstico = {
+      severity: SeveridadeDoDiagnóstico.Warning,
+      range: {
+        start: documentoDeTexto.positionAt(0),
+        end: documentoDeTexto.positionAt(-1)
+      },
+      message: "Este é um exemplo de diagnóstico.",
+      source: 'ex'
+    };
+
+  // Send the computed diagnostics to VS Code.
+  //conexão.sendDiagnostics({ uri: documentoDeTexto.uri, diagnostics });
+
+	
+
+  diagnósticos.push(...errosLexicos);
+
+  // 2. Etapa sintática
+  const arvore = tentarParsear(texto);
+  if (!arvore.válida) {
+    diagnósticos.push(...arvore.erros);
+    return diagnósticos; // não continua se a sintaxe estiver errada
+  }
+
+  // 3. Etapa semântica
+  const errosSemanticos = analisarSemantica(arvore);
+  diagnósticos.push(...errosSemanticos);
+
+  // 4. Avisos e boas práticas
+  const avisos = verificarBoasPraticas(arvore);
+  diagnósticos.push(...avisos);
+
+  
+
+	*/
+
 
 
 
