@@ -372,7 +372,7 @@ conexão.onRequest('selecaoTexto', (
 
 
 const palavrasContexto = [
-  //'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
+  'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
   //'se', 'itere', 'pare', 'retorne', 
 	'no', 'na', 'nos', 'nas',
   'ao', 'aos', 'à', 'às', 'num', 'nuns', 'numa', 'numas', 'não',
@@ -857,7 +857,213 @@ conexão.onDefinition(
 
 */
 
+function encontrarUltimoDelimitadorAntes(texto: string, deslocamento: number, delimitadores: string[]): number {
+  let posição = -1;
+  for (const delimitador of delimitadores) {
+    console.log(`Procurando delimitador: "${delimitador}"`);
+    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g");
+    let correspondência: RegExpExecArray | null;
+    while ((correspondência = expressão_regular.exec(texto)) !== null) {
+      if (correspondência.index < deslocamento && correspondência.index > posição) {
+        posição = correspondência.index + delimitador.length;
+        console.log(`Delimitador "${delimitador}" encontrado na posição ${correspondência.index}, atualizando posição para ${posição}`);
+      }
+      else {
+        console.log(`Delimitador "${delimitador}" encontrado, mas fora do intervalo (posição: ${correspondência.index}, deslocamento: ${deslocamento}, posição atual: ${posição})`);
+      }
+      //console.log(`Delimitador encontrado: "${delimitador}" na posição ${correspondência.index}`);
+    }
+    console.log('Delimitador não encontrado nesta iteração.');
+  }
+  return posição;
+}
 
+function encontrarPrimeiroDelimitadorDepois(texto: string, deslocamento: number, delimitadores: string[]): number {
+  let posição = texto.length;
+  for (const delimitador of delimitadores) {
+    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g");
+    let correspondência: RegExpExecArray | null;
+    while ((correspondência = expressão_regular.exec(texto)) !== null) {
+      if (correspondência.index > deslocamento && correspondência.index < posição) {
+        posição = correspondência.index;
+      }
+    }
+  }
+  return posição;
+}
+
+function extrairEntreDelimitadoresRegex(
+  texto: string,
+  deslocamento: number,
+  delimitadores: string[]
+): string {
+  // Último delimitador antes do cursor
+  let início = -1; // Posição do último delimitador antes do cursor. 
+  // O valor -1 indica que não foi encontrado nenhum delimitador antes do cursor
+
+  for (const delimitador of delimitadores) { // Para cada delimitador presente na lista de delimitadores
+    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g"); // Cria uma expressão regular para encontrar o delimitador
+    let correspondência: RegExpExecArray | null; // Variável para armazenar a correspondência da regex
+    while ((correspondência = expressão_regular.exec(texto)) !== null) { // Enquanto houver correspondências
+      if (correspondência.index < deslocamento && correspondência.index > início) {
+      // se a correspondência estiver antes do deslocamento e for a correspondência mais próxima do deslocamento
+        início = correspondência.index + delimitador.length;
+        // Atualiza a posição do início para o final do delimitador encontrado
+        console.log(`Delimitador encontrado antes: "${delimitador}" na posição ${início}`); // Log para depuração
+      }
+    }
+  }
+
+  // Primeiro delimitador depois
+  let fim = texto.length;
+  for (const delimitador of delimitadores) {
+    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g");
+    let correspondência: RegExpExecArray | null;
+    while ((correspondência = expressão_regular.exec(texto)) !== null) {
+      if (correspondência.index > deslocamento && correspondência.index < fim) {
+        fim = correspondência.index;
+        console.log(`Delimitador encontrado depois: "${delimitador}" na posição ${fim}`); // Log para depuração
+      }
+    }
+  }
+  let resultado = '';
+  if(início === -1 && fim === texto.length) {
+    console.log(`Nenhum delimitador encontrado. Retornando texto completo.`);
+    resultado = texto.trim();
+  }
+  else{
+    console.log(`Início: ${início}, Fim: ${fim}`);
+    resultado = texto.substring(início, fim).trim();
+  }
+  return  resultado;
+}
+
+function extrairEntreDelimitadoresTokenizado(
+  texto: string,
+  deslocamento: number,
+  delimitadores: string[]
+): string {
+  // Regex básica para tokens (identificadores ou palavras-chave)
+  const regexTokens = /[a-zA-Z_][a-zA-Z0-9_]*/g;
+  let tokens: {valor: string; início: number; fim: number }[] = [];
+
+  // Tokeniza o texto
+  let correspondência: RegExpExecArray | null;
+  while ((correspondência = regexTokens.exec(texto)) !== null) {
+    tokens.push({
+      valor: correspondência[0],
+      início: correspondência.index,
+      fim: correspondência.index + correspondência[0].length
+    });
+  }
+
+  // Encontra o token em que o cursor está
+  const tokenAtual = tokens.find(
+    t => t.início <= deslocamento && deslocamento <= t.fim
+  );
+
+  // Agora procura delimitadores
+  let inicio = 0;
+  let fim = texto.length;
+
+  // Último delimitador antes
+  for (const token of tokens) {
+    if (delimitadores.includes(token.valor) && token.fim <= deslocamento) {
+      inicio = Math.max(inicio, token.fim);
+    }
+  }
+
+  // Primeiro delimitador depois
+  for (const token of tokens) {
+    if (delimitadores.includes(token.valor) && token.início >= deslocamento) {
+      fim = Math.min(fim, token.início);
+    }
+  }
+
+  return texto.substring(inicio, fim).trim();
+}
+
+
+
+// Handler para Goto Type Definition
+conexão.onTypeDefinition(
+  (_params: ParametrosDeDefiniçãoDeTipo): Localização[] => {
+    let conteúdoLinha = '';
+    const documento = documentos.get(_params.textDocument.uri);
+    if (!documento) {
+      console.log('Documento não encontrado.');
+      return [];
+    }
+    // Pega a posição enviada pelo cliente
+    const posição = _params.position;
+    // Descobre os limites (início e fim) da linha
+    const inícioDaLinha = { line: posição.line, character: 0 };
+    const fimDaLinha = { line: posição.line, character: Number.MAX_SAFE_INTEGER };
+
+    // Extrai o texto da linha
+    const linha = documento.getText({
+      start: inícioDaLinha,
+      end: fimDaLinha
+    });
+
+    if (linha) {
+      conteúdoLinha = linha;
+    }
+
+    console.log(`Conteúdo da linha: "${conteúdoLinha}"`);
+
+    let palavra = obtémPalavraSobCursor(conteúdoLinha, posição.character);
+    if (!palavra) {
+      return [];
+    }
+    console.log(`Palavra atual: "${palavra}"`);
+
+    const posiçãoDaPalavra = conteúdoLinha.indexOf(palavra);
+    //let início = posiçãoDaPalavra;
+    //let fim = posiçãoDaPalavra + palavra.length;
+    //console.log(`Início: ${início}, Fim: ${fim}`);
+
+    const início = encontrarUltimoDelimitadorAntes(conteúdoLinha.toLowerCase(), posiçãoDaPalavra, palavrasContexto);
+    const fim = encontrarPrimeiroDelimitadorDepois(conteúdoLinha.toLowerCase(), posiçãoDaPalavra + palavra.length, palavrasContexto);
+
+    //início = recuaAtéEncontrarArtigoInicial(conteúdoLinha, início);
+    //fim = avançaProFimDoTermoAtual(conteúdoLinha, fim);
+    //let palavraCompleta = extrairEntreDelimitadoresRegex(conteúdoLinha, início, palavrasContexto);
+    const palavraCompleta = conteúdoLinha.substring(
+      início === -1 ? 0 : início,
+      fim === conteúdoLinha.length ? conteúdoLinha.length : fim
+    ).trim();
+
+    //const palavraCompleta = conteúdoLinha.substring(início, fim).trim();
+    console.log(`Palavra completa: "${palavraCompleta}"`);
+
+    // Aqui você pode implementar a lógica para encontrar a definição do tipo
+    // Por enquanto, vamos apenas retornar a localização da palavraCompleta
+
+    return palavraCompleta ? [{
+      uri: _params.textDocument.uri,
+      range: {
+        start: { line: posição.line, character: início },
+        end: { line: posição.line, character: fim }
+      }
+    }] : [];
+
+
+    // Retorna uma localização simulada (sempre aponta para a linha 1)
+    /*return [{
+      uri: _params.textDocument.uri,
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 1, character: 10 }
+      }
+    }];*/
+  }
+);
+
+
+
+
+/*
 // Handler para Goto Type Definition
 conexão.onTypeDefinition(
   (_params: ParametrosDeDefiniçãoDeTipo): Localização[] => {
@@ -894,7 +1100,7 @@ conexão.onTypeDefinition(
     }];
   }
 );
-
+*/
 // Handler para Goto Implementation
 conexão.onImplementation(
   (_params: ParametrosDeImplementação): Localização[] => {
