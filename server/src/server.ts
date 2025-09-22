@@ -245,9 +245,8 @@ conexão.onDocumentSymbol(
 
 
 async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
-  const diagnósticos: Diagnóstico[] = [];   
+  const diagnósticos: Diagnóstico[] = [];
   /*
-
   // No momento apenas um template, falta definir o que é um documento válido.
   // 1. Etapa léxica
   const texto = documentoDeTexto.getText();
@@ -288,8 +287,57 @@ async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise
   
 
 	*/
-	return diagnósticos;
+  const texto = documentoDeTexto.getText();
+  const linhas = texto.split(/\r?\n/);
+
+  let ultimaLinhaDeCodigo: string | undefined;
+
+  // Percorre de trás para frente
+  for (let i = linhas.length - 1; i >= 0; i--) {
+    let linha = linhas[i].trim();
+
+    // Ignora linhas vazias
+    if (linha === "") {
+      continue;
+    }
+
+    // Ignora comentários iniciados por "\"
+    if (linha.startsWith("\\")) {
+      continue;
+    }
+
+    // Encontramos a última linha de código
+    ultimaLinhaDeCodigo = linha;
+    break;
+  }
+
+  if (ultimaLinhaDeCodigo) {
+    // Verifica se termina com "." ou "]"
+    if (!(ultimaLinhaDeCodigo.endsWith(".") || ultimaLinhaDeCodigo.endsWith("]"))) {
+      // Pega último caractere não-espaço
+      const ultimoChar = ultimaLinhaDeCodigo[ultimaLinhaDeCodigo.length - 1];
+
+      diagnósticos.push({
+        severity: 1, // 1 = Error no LSP
+        range: {
+          start: {
+            line: linhas.length - 1,
+            character: ultimaLinhaDeCodigo.length - 1
+          },
+          end: {
+            line: linhas.length - 1,
+            character: ultimaLinhaDeCodigo.length
+          }
+        },
+        message: `Documento inválido: O último caractere do documento deve ser um ponto final ou um comentário, não um "${ultimoChar}".`,
+        source: "servidor-de-linguagem"
+      });
+    }
+  }
+
+  return diagnósticos;
 }
+
 
 conexão.onDidChangeWatchedFiles(_change => {
   // Monitored files have change in VSCode
@@ -603,260 +651,6 @@ function avançaAtéVerboSer(linhaAtual: string, posiçãoAtual: number): number
 }
 
 
-
-/*
-conexão.onDefinition(  
-   (parâmetros: ParametrosDeDefinicao): Localizacao[] => {
-  const documento = documentos.get(parâmetros.textDocument.uri);
-  if (!documento) {
-    return []; // Retorna um array vazio se o documento não for encontrado
-  }
-  const posição = parâmetros.position;
-  const texto = documento.getText();
-  const linhas = texto.split(/\r?\n/g);
-  if (linhas.length === 0) {
-    return []; // Retorna um array vazio se não houver linhas
-  }
-  // Obtém todo o conteúdo da linha atual
-  const linhaAtual = linhas[posição.line];
-  if (!linhaAtual) {
-    return []; // Retorna um array vazio se a linha atual não existir
-  }
-
-  
-  
-
-
-  
-  // Divide a linha em palavras, removendo espaços em branco e sinais de pontuação
-  let conjuntoDePalavras = linhaAtual.toLowerCase().split(/[\s.,!?;:"'()]+/).filter(Boolean);
-
-  //conjuntoDePalavras = conjuntoDePalavras.filter(palavra => palavra.length > 0); // Remove palavras vazias
-  //conjuntoDePalavras = conjuntoDePalavras.map(palavra => palavra.trim()); // Remove espaços em branco
-  // Remove o artigo inicial da linha, se houver
-  const palavrasIndesejadas = new Set([
-    'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
-    'se', 'itere', 'pare', 'retorne',
-    'no', 'na', 'nos', 'nas', 'ao', 'aos', 'à', 'às',
-    'num', 'nuns', 'numa', 'numas']);
-  
-  indicePalavraIndesejada =conjuntoDePalavras.findIndex(palavra =>
-      palavrasIndesejadas.has(palavra)
-  );
-
-  // remove os itens indesejados do início do conjunto de palavras
-  if (indicePalavraIndesejada !== -1) {
-    conjuntoDePalavras = conjuntoDePalavras.slice(indicePalavraIndesejada + 1);
-  }*/
-
-  /*
-  while(conjuntoDePalavras.length > 0 && palavrasIndesejadas.has(conjuntoDePalavras[0])) {
-      conjuntoDePalavras.shift(); // Remove o primeiro elemento se for um artigo
-  }*/
-
-/*
-  const palavrasChave = new Set([
-  'não', 'desse', 'desses', 'deste', 'destes', 'dessa', 'dessas',
-  'desta', 'destas', 'cabe', 'couber', 'começa', 'começar', 'conter',
-  'contiver', 'contém', 'deve', 'devem', 'deveria', 'deveriam',
-  'estamos', 'estar', 'estará', 'estarão', 'estava', 'estavam',
-  'estiver', 'estiverem', 'está', 'estão', 'excede', 'excedem',
-  'existe', 'existem', 'existir', 'finaliza', 'finalizar', 'é', 'foi',
-  'for', 'foram', 'forem', 'há', 'houver', 'inicia', 'iniciar',
-  'necessita', 'necessitar', 'parece', 'pode', 'podem', 'podemos',
-  'poderia', 'possuem', 'possui', 'possuir', 'puder', 'puderem',
-  'requer', 'ser', 'será', 'serão', 'supera', 'superam', 'superar',
-  'são', 'tem', 'ter', 'termina', 'terminar', 'tiver', 'têm',
-  'mais' , 'menos' , 'vezes' , 'multiplicado' , 'dividido',
-  'junto', 'seguido', 'partir', 'partindo', 'abaixo',  'ante', 
-  'perante', 'antes', 'debaixo', 'sob', 'acerca', 'cerca', 
-  'cuja', 'cujo', 'cujas', 'cujos', 'próximo', 'perto', 'com', 
-  'tal', 'como', 'contra', 'dada', 'dado', 'dando', 'gerando', 
-  'resultando', 'retornando', 'desde', 'depois', 'após', 'durante',
-  'em', 'entre', 'dentre', 'até', 'mediante', 'para', 'via', 'segundo', 
-  'acordo', 'sem', 'então', 'sobre', 'usando', 'versus', 'enquanto',
-  'aproximadamente', 'através', 'algum', 'sob', 'debaixo', 
-  'entre', 'por', 'usando', 'referente', 'pertencente', 
-  'pertinente', 'relativo', 'relativa', 'concernente', 
-  'atinente', 'pertinente', 'retornando', 'começando', 
-  'começando', 'iniciando', 'usando', 'via', 'com', 'aproada', 
-  'aproado', 'aproando', 'orientada', 'orientado', 'orientando', 
-  'orientando-se', 'voltada', 'voltado', 'virada', 'virado', 'virando', 
-  'virando-se', 'tão', 'tanto', 'quanto', 'quão', 'qual', 
-  'regressivamente', 'dentro', 'parecida', 'parecido', 'semelhante', 
-  'similar', 'só', 'somente', 'unicamente', 'exclusivamente', 'apenas', 
-  'fora', 'menores', 'alta', 'alto', 'comprido', 'comprida', 'largo', 'larga', 
-  'chamado', 'chamados', 'chamada', 'chamadas',
-  'denominado', 'denominados', 'denominada', 'denominadas',
-  'e', 'ou', 'nem'
-
-  ]);
-
-  const indicePalavraChave = conjuntoDePalavras.findIndex(palavra =>
-      palavrasChave.has(palavra)
-  );
-
-  if (indicePalavraChave !== -1) {
-    conjuntoDePalavras = conjuntoDePalavras.slice(0, indicePalavraChave);
-    // Remove as palavras-chave indesejadas do final do conjunto de palavras
-  }
-
-  //console.log(`Conjunto de palavras: ${conjuntoDePalavras}`); // Log para depuração
-  const termoSelecionado = conjuntoDePalavras.join(' ');
-  console.log(`Termo atual: "${termoSelecionado}"`); // Log para depuração
-
-
-  //console.log(`Linha atual: "${linhaAtual}"`); // Log para depuração
-
-  
-
-  //return []; // Retorna a localização da linha atual
-  
-  
-  const regexPalavra = /\w+/g; 
-  // Regex para capturar palavras. 
-  // \w+ captura uma sequência de caracteres alfanuméricos (incluindo _).
-  // O /g permite capturar todas as ocorrências na linha.
-  let correspondência: RegExpExecArray | null; 
-  let palavra = '';
-  while ((correspondência = regexPalavra.exec(termoSelecionado))) {
-    if (correspondência.index <= posição.character && regexPalavra.lastIndex >= posição.character) {
-        palavra = correspondência[0];
-        break;
-      }
-    }
-    if (!palavra) return [];
-
-    // Regex para definição exata conforme solicitado
-    // Exemplo: "A idade do usuário é um inteiro."
-    //      "O nome do usuário é uma string."
-    //      "As aspas duplas são um caractere."
-    const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\w\s]+)\s+(é|são)\s+(um|uma|uns|umas)\s+([\w\s]+)\.$/;
-    //const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)[\s\S]+?(é|são)[\s\S]+?(um|uma|uns|umas)[\s\S]+?\.$/m;
-    // Regex para capturar definições de variáveis
-    // ^(A|O|As|Os|Um|Uma|Uns|Umas) captura o artigo inicial
-    // \s+([\w\s]+) captura o nome da variável (permitindo espaços)
-    // \s+(é|são) captura o verbo de ligação
-    // \s+(um|uma|uns|umas) captura o artigo do tipo
-    // \s+([\w\s]+) captura o tipo base (permitindo espaços)
-    // \.$ captura o ponto final da frase. O cifrão $ garante que a frase termina com um ponto.
-
-    for (let i = 0; i < linhas.length; i++) {
-      const linha = linhas[i];
-      // Garante que não há vírgula, ponto e vírgula ou dois pontos
-      if (linha.includes(',') || linha.includes(';') || linha.includes(':')) continue;
-
-      const resultado = regexDefinicao.exec(linha);
-      if (resultado) {
-        // resultado[2] é o nome da variável
-        // resultado[5] é o tipo base
-        // Verifica se a palavra sob o cursor corresponde ao nome da variável
-        // ou ao tipo base
-        const nomeVariavel = resultado[2].trim();
-        const tipoBase = resultado[5].trim();
-        // Divide nomeVariavel em palavras para permitir match em qualquer uma delas
-        const palavrasVariavel = nomeVariavel.split(/\s+/);
-        if (palavrasVariavel.includes(palavra) || tipoBase === palavra) {
-          // Retorna a posição da palavra na linha
-          const idx = linha.indexOf(palavra);
-          if (idx !== -1) {
-            return [{
-              uri: parâmetros.textDocument.uri,
-              range: {
-                start: { line: i, character: idx },
-                end: { line: i, character: idx + palavra.length }
-              }
-            }];
-          }
-        }
-      }
-    }
-    //console.log(Localizacao);
-    return [];
-  }
-);
-
-
-
-conexão.onDefinition(
-  (params: ParametrosDeDefinicao): Localizacao[] => {
-    const documento = documentos.get(params.textDocument.uri);
-    if (!documento) return [];
-
-    const posição = params.position;
-    const texto = documento.getText();
-    const linhas = texto.split(/\r?\n/g);
-
-    // Determina o intervalo de seleção
-    // Se não houver seleção, início e fim são iguais à posição do cursor
-    const selectionStart = (params as any).selection && (params as any).selection.start
-      ? (params as any).selection.start
-      : posição;
-    const selectionEnd = (params as any).selection && (params as any).selection.end
-      ? (params as any).selection.end
-      : posição;
-
-    const linhaAtual = linhas[selectionStart.line];
-    if (!linhaAtual) return [];
-
-    const regexPalavra = /\w+/g;
-    let correspondência: RegExpExecArray | null;
-    let palavrasSelecionadas: string[] = [];
-
-    // Percorre todas as palavras da linha e seleciona as que estão dentro do intervalo da seleção
-    while ((correspondência = regexPalavra.exec(linhaAtual))) {
-      const inicioPalavra = correspondência.index;
-      const fimPalavra = regexPalavra.lastIndex;
-      // Verifica se a palavra se sobrepõe ao intervalo da seleção
-      if (
-        fimPalavra > selectionStart.character &&
-        inicioPalavra < selectionEnd.character
-      ) {
-        palavrasSelecionadas.push(correspondência[0]);
-      }
-    }
-
-    if (palavrasSelecionadas.length === 0) return [];
-
-    // Regex para definição exata conforme solicitado
-    const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\w\s]+)\s+(é|são)\s+(um|uma|uns|umas)\s+([\w\s]+)\.$/;
-
-    const localizacoes: Localizacao[] = [];
-
-    for (let i = 0; i < linhas.length; i++) {
-      const linha = linhas[i];
-      // Garante que não há vírgula, ponto e vírgula ou dois pontos
-      if (linha.includes(',') || linha.includes(';') || linha.includes(':')) continue;
-
-      const resultado = regexDefinicao.exec(linha);
-      if (resultado) {
-        const nomeVariavel = resultado[2].trim();
-        const tipoBase = resultado[5].trim();
-        const palavrasVariavel = nomeVariavel.split(/\s+/);
-
-        for (const palavra of palavrasSelecionadas) {
-          if (palavrasVariavel.includes(palavra) || tipoBase === palavra) {
-            const idx = linha.indexOf(palavra);
-            if (idx !== -1) {
-              localizacoes.push({
-                uri: params.textDocument.uri,
-                range: {
-                  start: { line: i, character: idx },
-                  end: { line: i, character: idx + palavra.length }
-                }
-              });
-            }
-          }
-        }
-      }
-    }
-
-    return localizacoes;
-  }
-);
-
-*/
-
 function encontrarUltimoDelimitadorAntes(texto: string, deslocamento: number, delimitadores: string[]): number {
   let posição = -1;
   for (const delimitador of delimitadores) {
@@ -1139,123 +933,7 @@ conexão.onTypeDefinition(
   }
 );
 
-/*
-// Handler para Goto Type Definition
-conexão.onTypeDefinition(
-  (_params: ParametrosDeDefiniçãoDeTipo): Localização[] => {
-    let conteúdoLinha = '';
-    const documento = documentos.get(_params.textDocument.uri);
-    if (!documento) {
-      console.log('Documento não encontrado.');
-      return [];
-    }
-    // Pega a posição enviada pelo cliente
-    const posição = _params.position;
-    // Descobre os limites (início e fim) da linha
-    const inícioDaLinha = { line: posição.line, character: 0 };
-    const fimDaLinha = { line: posição.line, character: Number.MAX_SAFE_INTEGER };
 
-    // Extrai o texto da linha
-    const linha = documento.getText({
-      start: inícioDaLinha,
-      end: fimDaLinha
-    });
-
-    if (linha) {
-      conteúdoLinha = linha;
-    }
-
-    console.log(`Conteúdo da linha: "${conteúdoLinha}"`);
-
-    let palavra = obtémPalavraSobCursor(conteúdoLinha, posição.character);
-    if (!palavra) {
-      return [];
-    }
-    console.log(`Palavra atual: "${palavra}"`);
-
-    const posiçãoDaPalavra = conteúdoLinha.indexOf(palavra);
-    //let início = posiçãoDaPalavra;
-    //let fim = posiçãoDaPalavra + palavra.length;
-    //console.log(`Início: ${início}, Fim: ${fim}`);
-
-    const início = encontrarUltimoDelimitadorAntes(conteúdoLinha.toLowerCase(), posiçãoDaPalavra, palavrasContexto);
-    const fim = encontrarPrimeiroDelimitadorDepois(conteúdoLinha.toLowerCase(), posiçãoDaPalavra + palavra.length, palavrasContexto);
-
-    //início = recuaAtéEncontrarArtigoInicial(conteúdoLinha, início);
-    //fim = avançaProFimDoTermoAtual(conteúdoLinha, fim);
-    //let palavraCompleta = extrairEntreDelimitadoresRegex(conteúdoLinha, início, palavrasContexto);
-    const palavraCompleta = conteúdoLinha.substring(
-      início === -1 ? 0 : início,
-      fim === conteúdoLinha.length ? conteúdoLinha.length : fim
-    ).trim();
-
-    //const palavraCompleta = conteúdoLinha.substring(início, fim).trim();
-    console.log(`Palavra completa: "${palavraCompleta}"`);
-
-    // Aqui você pode implementar a lógica para encontrar a definição do tipo
-    // Por enquanto, vamos apenas retornar a localização da palavraCompleta
-
-    return palavraCompleta ? [{
-      uri: _params.textDocument.uri,
-      range: {
-        start: { line: posição.line, character: início },
-        end: { line: posição.line, character: fim }
-      }
-    }] : [];
-
-
-    // Retorna uma localização simulada (sempre aponta para a linha 1)
-    /*return [{
-      uri: _params.textDocument.uri,
-      range: {
-        start: { line: 1, character: 0 },
-        end: { line: 1, character: 10 }
-      }
-    }];
-  }
-);
-*/
-
-
-
-/*
-// Handler para Goto Type Definition
-conexão.onTypeDefinition(
-  (_params: ParametrosDeDefiniçãoDeTipo): Localização[] => {
-    let conteúdoLinha = '';
-    const documento = documentos.get(_params.textDocument.uri);
-    if(!documento) {
-      console.log('Documento não encontrado.');
-      return [];
-    }
-    // Pega a posição enviada pelo cliente
-    const pos = _params.position;
-
-    // Descobre os limites (início e fim) da linha
-    const inícioDaLinha = { line: pos.line, character: 0 };
-    const fimDaLinha = { line: pos.line, character: Number.MAX_SAFE_INTEGER };
-
-    // Extrai o texto da linha
-    const linha = documento.getText({
-      start: inícioDaLinha,
-      end: fimDaLinha
-    });
-    if(linha) { 
-      conteúdoLinha = linha;
-    }    
-    console.log(`Conteúdo da linha: "${conteúdoLinha}"`);
-
-    // Retorna uma localização simulada (sempre aponta para a linha 1)
-    return [{
-      uri: _params.textDocument.uri,
-      range: {
-        start: { line: 1, character: 0 },
-        end: { line: 1, character: 10 }
-      }
-    }];
-  }
-);
-*/
 // Handler para Goto Implementation
 conexão.onImplementation(
   (_params: ParametrosDeImplementação): Localização[] => {
@@ -1301,259 +979,3 @@ documentos.listen(conexão);
 // Listen on the connection
 conexão.listen();
 
-
-
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ 
-import {
-	createConnection,
-	TextDocuments,
-	Diagnostic,
-	DiagnosticSeverity,
-	ProposedFeatures,
-	InitializeParams,
-	DidChangeConfigurationNotification,
-	CompletionItem,
-	CompletionItemKind,
-	TextDocumentPositionParams,
-	TextDocumentSyncKind,
-	InitializeResult,
-	DocumentDiagnosticReportKind,
-	type DocumentDiagnosticReport
-} from 'vscode-languageserver/node';
-
-import {
-	TextDocument
-} from 'vscode-languageserver-textdocument';
-
-// Create a connection for the server, using Node's IPC as a transport.
-// Also include all preview / proposed LSP features.
-const connection = createConnection(ProposedFeatures.all);
-
-// Create a simple text document manager.
-const documents = new TextDocuments(TextDocument);
-
-let hasConfigurationCapability = false;
-let hasWorkspaceFolderCapability = false;
-let hasDiagnosticRelatedInformationCapability = false;
-
-connection.onInitialize((params: InitializeParams) => {
-	const capabilities = params.capabilities;
-
-	// Does the client support the `workspace/configuration` request?
-	// If not, we fall back using global settings.
-	hasConfigurationCapability = !!(
-		capabilities.workspace && !!capabilities.workspace.configuration
-	);
-	hasWorkspaceFolderCapability = !!(
-		capabilities.workspace && !!capabilities.workspace.workspaceFolders
-	);
-	hasDiagnosticRelatedInformationCapability = !!(
-		capabilities.textDocument &&
-		capabilities.textDocument.publishDiagnostics &&
-		capabilities.textDocument.publishDiagnostics.relatedInformation
-	);
-
-	const result: InitializeResult = {
-		capabilities: {
-			textDocumentSync: TextDocumentSyncKind.Incremental,
-			// Tell the client that this server supports code completion.
-			completionProvider: {
-				resolveProvider: true
-			},
-			diagnosticProvider: {
-				interFileDependencies: false,
-				workspaceDiagnostics: false
-			}
-		}
-	};
-	if (hasWorkspaceFolderCapability) {
-		result.capabilities.workspace = {
-			workspaceFolders: {
-				supported: true
-			}
-		};
-	}
-	return result;
-});
-
-connection.onInitialized(() => {
-	if (hasConfigurationCapability) {
-		// Register for all configuration changes.
-		connection.client.register(DidChangeConfigurationNotification.type, undefined);
-	}
-	if (hasWorkspaceFolderCapability) {
-		connection.workspace.onDidChangeWorkspaceFolders(_event => {
-			connection.console.log('Workspace folder change event received.');
-		});
-	}
-});
-
-// The example settings
-interface ExampleSettings {
-	maxNumberOfProblems: number;
-}
-
-// The global settings, used when the `workspace/configuration` request is not supported by the client.
-// Please note that this is not the case when using this server with the client provided in this example
-// but could happen with other clients.
-const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000 };
-let globalSettings: ExampleSettings = defaultSettings;
-
-// Cache the settings of all open documents
-const documentSettings = new Map<string, Thenable<ExampleSettings>>();
-
-connection.onDidChangeConfiguration(change => {
-	if (hasConfigurationCapability) {
-		// Reset all cached document settings
-		documentSettings.clear();
-	} else {
-		globalSettings = (
-			(change.settings.languageServerExample || defaultSettings)
-		);
-	}
-	// Refresh the diagnostics since the `maxNumberOfProblems` could have changed.
-	// We could optimize things here and re-fetch the setting first can compare it
-	// to the existing setting, but this is out of scope for this example.
-	connection.languages.diagnostics.refresh();
-});
-
-function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
-	if (!hasConfigurationCapability) {
-		return Promise.resolve(globalSettings);
-	}
-	let result = documentSettings.get(resource);
-	if (!result) {
-		result = connection.workspace.getConfiguration({
-			scopeUri: resource,
-			section: 'languageServerExample'
-		});
-		documentSettings.set(resource, result);
-	}
-	return result;
-}
-
-// Only keep settings for open documents
-documents.onDidClose(e => {
-	documentSettings.delete(e.document.uri);
-});
-
-
-connection.languages.diagnostics.on(async (params) => {
-	const document = documents.get(params.textDocument.uri);
-	if (document !== undefined) {
-		return {
-			kind: DocumentDiagnosticReportKind.Full,
-			items: await validateTextDocument(document)
-		} satisfies DocumentDiagnosticReport;
-	} else {
-		// We don't know the document. We can either try to read it from disk
-		// or we don't report problems for it.
-		return {
-			kind: DocumentDiagnosticReportKind.Full,
-			items: []
-		} satisfies DocumentDiagnosticReport;
-	}
-});
-
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-documents.onDidChangeContent(change => {
-	validateTextDocument(change.document);
-});
-
-async function validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
-	// In this simple example we get the settings for every validate run.
-	const settings = await getDocumentSettings(textDocument.uri);
-
-	// The validator creates diagnostics for all uppercase words length 2 and more
-	const text = textDocument.getText();
-	const pattern = /\b[A-Z]{2,}\b/g;
-	let m: RegExpExecArray | null;
-
-	let problems = 0;
-	const diagnostics: Diagnostic[] = [];
-	while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
-		problems++;
-		const diagnostic: Diagnostic = {
-			severity: DiagnosticSeverity.Warning,
-			range: {
-				start: textDocument.positionAt(m.index),
-				end: textDocument.positionAt(m.index + m[0].length)
-			},
-			message: `${m[0]} is all uppercase.`,
-			source: 'ex'
-		};
-		if (hasDiagnosticRelatedInformationCapability) {
-			diagnostic.relatedInformation = [
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Spelling matters'
-				},
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Particularly for names'
-				}
-			];
-		}
-		diagnostics.push(diagnostic);
-	}
-	return diagnostics;
-}
-
-connection.onDidChangeWatchedFiles(_change => {
-	// Monitored files have change in VSCode
-	connection.console.log('We received a file change event');
-});
-
-// This handler provides the initial list of the completion items.
-connection.onCompletion(
-	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-		// The pass parameter contains the position of the text document in
-		// which code complete got requested. For the example we ignore this
-		// info and always provide the same completion items.
-		return [
-			{
-				label: 'TypeScript',
-				kind: CompletionItemKind.Text,
-				data: 1
-			},
-			{
-				label: 'JavaScript',
-				kind: CompletionItemKind.Text,
-				data: 2
-			}
-		];
-	}
-);
-
-// This handler resolves additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve(
-	(item: CompletionItem): CompletionItem => {
-		if (item.data === 1) {
-			item.detail = 'TypeScript details';
-			item.documentation = 'TypeScript documentation';
-		} else if (item.data === 2) {
-			item.detail = 'JavaScript details';
-			item.documentation = 'JavaScript documentation';
-		}
-		return item;
-	}
-);
-
-// Make the text document manager listen on the connection
-// for open, change and close text document events
-documents.listen(connection);
-
-// Listen on the connection
-connection.listen();
-*/
