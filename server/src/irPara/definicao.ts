@@ -38,8 +38,9 @@ import { getReferences } from '../references';
 */
 
 import * as servidor from '../server';
+import { create } from 'domain';
 
-export default function irParaDefinição(termo: string, documentoAtual: DocumentoDeTexto) : Localização | LinkDeLocalização | null {
+export function irParaDefinição(termo: string, documentoAtual: DocumentoDeTexto) : Localização | LinkDeLocalização | null {
   // Verifica o path do documento
   const documentos = servidor.documentos;
   let documento = documentoAtual;
@@ -71,3 +72,22 @@ export default function irParaDefinição(termo: string, documentoAtual: Documen
   }
   return null;
 }
+
+export default servidor.conexão.onDefinition((_params: ParametrosDeDefiniçãoDeTipo): Localização[] |LinkDeLocalização[] | null | undefined => {
+  const documento = servidor.documentos.get(_params.textDocument.uri);
+  if (!documento) {
+    return null;
+  }
+  let uri = documento.uri;
+  let intervalo: Intervalo;
+  intervalo = Intervalo.create(_params.position, _params.position);
+  // Cria uma localização inicial fictícia
+  let localização = Localização.create(uri, intervalo);
+  const linhaTexto = documento.getText(Intervalo.create(_params.position.line, 0, _params.position.line + 1, 0));
+  const palavra = servidor.obtémPalavraSobCursor(linhaTexto, _params.position.character);
+  let definição = irParaDefinição(palavra, documento);
+  if (definição) {
+    return [definição] as LinkDeLocalização[] | Localização[];
+  }
+  return null;
+}); 

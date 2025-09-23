@@ -34,7 +34,7 @@ import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocum
 
 // Cria uma conexão para o servidor. A conexão usa Node's IPC como transporte.
 // Também inclui todos os recursos LSP propostos.
-const conexão = CriarConexão(RecursosPropostos.all);
+export const conexão = CriarConexão(RecursosPropostos.all);
 
 // Cria um gerenciador de documentos de texto. Ele lida com o sincronismo de documentos
 export const documentos = new DocumentosDeTexto(DocumentoDeTexto);
@@ -352,7 +352,7 @@ const listaDeArtigos = new Set([
 //const padraoContexto = palavrasContexto.join('|');
 //const expressao = new RegExp(`\\b(?:${padraoContexto})\\s+(\\w+)\\s+(?:${padraoContexto})\\b`, 'gi');
 
-function obtémPalavraSobCursor(linha: string, posicao: number): string {
+export function obtémPalavraSobCursor(linha: string, posicao: number): string {
   const regexPalavra = /\w+/g;
   let correspondência: RegExpExecArray | null; // RegExpExecArray é o tipo usado em correspondências de regex
   while ((correspondência = regexPalavra.exec(linha))) { 
@@ -567,3 +567,12 @@ function encontraInícioDoTermo(linhaAtual: string, posiçãoAtual: number): str
   }
   return termoAnterior.trim();// O trim remove espaços em branco extras no início e no fim
 }
+
+conexão.onDefinition((_params: ParametrosDeDefiniçãoDeTipo): Localização[] |LinkDeLocalização[] | null => {
+  const documento = documentos.get(_params.textDocument.uri);
+  if (!documento) {
+    return null;
+  }
+  return null;
+
+}); 
