@@ -172,21 +172,7 @@ documentos.onDidChangeContent(alteração => {
   validateTextDocument(alteração.document);
 });
 
-function analisarLexico(texto: string): Diagnóstico[] {
 
-  if( !texto || texto.length === 0) {
-    return []; // Retorna um array vazio se o texto estiver vazio
-  };
-
-  // Simula a análise léxica e retorna erros lexicos
-  const errosLexicos: Diagnóstico[] = [];
-
-  return errosLexicos;
-  // Aqui você implementaria a lógica de análise léxica real.
-  // Por exemplo, você poderia usar uma biblioteca de análise léxica
-  // para identificar tokens inválidos, palavras-chave desconhecidas, etc.
-  // Os erros lexicos devem ser retornados como um array de Diagnóstico.
-}
 
 function tentarParsear(texto: string): { válida: boolean; erros: Diagnóstico[] } {
   if( !texto || texto.length === 0) {
@@ -222,7 +208,6 @@ function verificarBoasPraticas(arvore: { válida: boolean; erros: Diagnóstico[]
   if (!arvore || !arvore.válida) {
     return []; // Retorna um array vazio se a árvore não for válida
   };
-
   // Simula a verificação de boas práticas e retorna avisos
   const avisos: Diagnóstico[] = [];
   // Aqui você implementaria a lógica de verificação de boas práticas real.
@@ -290,16 +275,20 @@ async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise
 
 
 conexão.onDidChangeWatchedFiles(_change => {
-  // Monitored files have change in VSCode
+  // Monitora arquivos no espaço de trabalho. Neste exemplo, não fazemos nada
+  // quando um arquivo é alterado.
   conexão.console.log('Recebido evento de alteração de arquivos.');
 });
 
-// This handler provides the initial list of the completion items.
+// Este método é chamado para completar o código no editor.
+// O provedor de conclusão é acionado quando o usuário solicita a conclusão
+//  (por exemplo, ao pressionar Ctrl+Space) ou automaticamente dependendo do
+//  configurações do editor.
 conexão.onCompletion(
   (_textDocumentPosition: ParâmetrosDePosiçãoDoDocumento): ItemDeConclusão[] => {
-    // The pass parameter contains the position of the text document in
-    // which code complete got requested. For the example we ignore this
-    // info and always provide the same completion items.
+    // Retorna uma lista de itens de conclusão de exemplo.
+    // Em um cenário real, você provavelmente buscaria esses itens de um banco de dados
+    //  ou os geraria dinamicamente com base no contexto atual do documento.
     return [
       {
         label: 'TypeScript',
@@ -315,8 +304,13 @@ conexão.onCompletion(
   }
 );
 
-// This handler resolves additional information for the item selected in
-// the completion list.
+// Este método fornece informações adicionais para um item de conclusão selecionado na lista de conclusão.
+// Por exemplo, o item de conclusão pode ter sido selecionado na lista de conclusão
+//  e agora o cliente quer saber mais detalhes sobre esse item, como documentação ou detalhes.
+// O servidor deve retornar o item de conclusão com os campos adicionais preenchidos.
+// Note que a propriedade 'data' do item de conclusão é usada para identificar qual item
+// o cliente está solicitando mais informações. Neste exemplo, usamos valores numéricos simples,
+// mas em um cenário real, você poderia usar identificadores mais complexos.
 conexão.onCompletionResolve(
   (item: ItemDeConclusão): ItemDeConclusão => {
     if (item.data === 1) {
@@ -343,18 +337,6 @@ conexão.onHover(
     };
   }
 );
-
-// Handler para Goto Definition
-/*(_params: ParametrosDeDefinicao): Localizacao[] => {
-    // Retorna uma localização simulada (sempre aponta para o início do documento)
-    return [{
-      uri: _params.textDocument.uri,
-      range: {
-        start: { line: 0, character: 0 },
-        end: { line: 0, character: 10 }
-      }
-    }];
-  }*/
 
 
 conexão.onRequest('selecaoTexto', (
@@ -418,55 +400,6 @@ const listaDeArtigos = new Set([
 //const padraoContexto = palavrasContexto.join('|');
 //const expressao = new RegExp(`\\b(?:${padraoContexto})\\s+(\\w+)\\s+(?:${padraoContexto})\\b`, 'gi');
 
-// Função auxiliar para extrair a palavra anterior ao índice
-function extraiPalavraAnterior(linha: string, indice: number): string {
-  // o índice corresponde ao caractere atual, então precisamos olhar para trás
-  if (indice <= 0) { // Se o índice for menor ou igual a zero, então não há palavra anterior
-    return '';  
-  }
-  const antes = linha.slice(0, indice).trimEnd(); 
-  // Corta a linha desde o início até o caractere atual, removendo espaços e quebras de linha do final
-
-  const partes = antes.split(/\s+/); 
-  // Divide a string em partes usando espaços em branco como delimitadores
-  
-  if (partes.length > 0) {
-    // Retorna a última parte, que é a palavra anterior
-    return partes[partes.length - 1].toLowerCase(); 
-  }
-  // Se não houver partes, retorna uma string vazia
-  else {
-    return '';
-  }
-  
-  //return partes.length > 0 ? partes[partes.length - 1].toLowerCase() : '';
-}
-
-// Função auxiliar para extrair a próxima palavra a partir do índice
-function extraiPalavraPosterior(linha: string, indice: number): string {
-  // o índice corresponde ao caractere atual, então precisamos olhar para trás
-  if (indice <= 0) { // Se o índice for menor ou igual a zero, então não há palavra anterior
-    return '';  
-  }
-  const depois = linha.slice(indice).trimStart();
-  // Corta a linha desde o caractere atual até o final, removendo espaços e quebras de linha
-  
-  
-  const partes = depois.split(/\s+/);
-  // Divide a string em partes usando espaços em branco como delimitadores
-
-  if (partes.length > 0) {
-    // Retorna a primeira parte, que é a próxima palavra
-    return partes[0].toLowerCase();
-  }
-  // Se não houver partes, retorna uma string vazia
-  else {
-    return '';
-  }
-  //return partes.length > 0 ? partes[0].toLowerCase() : '';
-}
-
-
 function obtémPalavraSobCursor(linha: string, posicao: number): string {
   const regexPalavra = /\w+/g;
   let correspondência: RegExpExecArray | null; // RegExpExecArray é o tipo usado em correspondências de regex
@@ -481,20 +414,6 @@ function obtémPalavraSobCursor(linha: string, posicao: number): string {
   return '';
 }
 
-function recuaAtéEncontrarArtigoInicial(linhaAtual: string, posiçãoAtual: number): number {
-  while (posiçãoAtual > 0) { // Enquanto estivermos na linha atual
-    const artigoMaisPróximo = extraiPalavraAnterior(linhaAtual, posiçãoAtual); // Extrai a palavra anterior à palavra atual
-    if (listaDeArtigos.has(artigoMaisPróximo)) { // Verifica se a palavra anterior é um artigo
-      const índiceDoArtigo = linhaAtual.lastIndexOf(artigoMaisPróximo, posiçãoAtual - 1); // Encontra o índice do artigo na linha atual
-      if (índiceDoArtigo !== -1 && (índiceDoArtigo === 0 || /\s/.test(linhaAtual[índiceDoArtigo - 1]))) { 
-				// Verifica se o artigo está no início da linha ou precedido por um espaço
-        return índiceDoArtigo + artigoMaisPróximo.length; // Ajusta o início para o final do artigo
-      }
-    }
-    posiçãoAtual--;
-  }
-  return posiçãoAtual;
-}
 
 // Handler para Goto Type Definition
 conexão.onTypeDefinition(
