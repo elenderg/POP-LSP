@@ -37,7 +37,7 @@ import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocum
 const conexão = CriarConexão(RecursosPropostos.all);
 
 // Cria um gerenciador de documentos de texto. Ele lida com o sincronismo de documentos
-const documentos = new DocumentosDeTexto(DocumentoDeTexto);
+export const documentos = new DocumentosDeTexto(DocumentoDeTexto);
 
 let possuiCapacidadeDeConfiguração = false;
 let possuiCapacidadeDeEspaçoDeTrabalho = false;
@@ -172,51 +172,6 @@ documentos.onDidChangeContent(alteração => {
   validateTextDocument(alteração.document);
 });
 
-
-
-function tentarParsear(texto: string): { válida: boolean; erros: Diagnóstico[] } {
-  if( !texto || texto.length === 0) {
-    return { válida: false, erros: [] }; // Retorna inválido se o texto estiver vazio
-  };
-  // Simula a análise sintática e retorna erros sintáticos
-  const errosSintaticos: Diagnóstico[] = [];
-  // Aqui você implementaria a lógica de análise sintática real.
-  // Por exemplo, você poderia usar uma biblioteca de análise sintática
-  // para construir uma árvore de sintaxe abstrata (AST) e identificar erros.
-  // Os erros sintáticos devem ser retornados como um array de Diagnóstico.
-  return {
-    válida: errosSintaticos.length === 0,
-    erros: errosSintaticos
-  };
-}
-
-function analisarSemantica(arvore: { válida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
-  if (!arvore) {
-    return []; // Retorna um array vazio se a árvore não for válida
-  };
-
-  // Simula a análise semântica e retorna erros semânticos
-  const errosSemanticos: Diagnóstico[] = [];
-  // Aqui você implementaria a lógica de análise semântica real.
-  // Por exemplo, você poderia verificar tipos, escopos, variáveis não declaradas
-  // e outros aspectos semânticos do código.
-  // Os erros semânticos devem ser retornados como um array de Diagnóstico.
-  return errosSemanticos;
-}
-
-function verificarBoasPraticas(arvore: { válida: boolean; erros: Diagnóstico[] }): Diagnóstico[] {
-  if (!arvore || !arvore.válida) {
-    return []; // Retorna um array vazio se a árvore não for válida
-  };
-  // Simula a verificação de boas práticas e retorna avisos
-  const avisos: Diagnóstico[] = [];
-  // Aqui você implementaria a lógica de verificação de boas práticas real.
-  // Por exemplo, você poderia verificar se o código segue convenções de estilo,
-  // se há código morto, se as variáveis são usadas corretamente, etc.
-  // Os avisos devem ser retornados como um array de Diagnóstico.
-  return avisos;
-}
-
 conexão.onDocumentSymbol(
   (parâmetros) => {
     if (!parâmetros.textDocument.uri)  {
@@ -226,7 +181,6 @@ conexão.onDocumentSymbol(
     return [];
   }
 );
-
 
 async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
   let diagnósticos: Diagnóstico[] = [];

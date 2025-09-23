@@ -26,3 +26,48 @@ import {
 } from 'vscode-languageserver/node';
 
 import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocument';
+/*
+import { getDocumentSettings, hasConfigurationCapability, hasWorkspaceFolderCapability } from '../configuracao';
+import { getDiagnostics } from '../diagnosticos';
+import { getCompletions } from '../completions';
+import { getHover } from '../hover';
+import { getDefinition } from '../definition';
+import { getTypeDefinition } from '../typeDefinition';
+import { getImplementation } from '../implementation';
+import { getReferences } from '../references';
+*/
+
+import * as servidor from '../server';
+
+export default function irParaDefinição(termo: string, documentoAtual: DocumentoDeTexto) : Localização | LinkDeLocalização | null {
+  // Verifica o path do documento
+  const documentos = servidor.documentos;
+  let documento = documentoAtual;
+  let posição: Posição | null = null;
+  let intervalo: Intervalo | null = null;
+  let textoDoDocumento = documento.getText();
+  let linhas = textoDoDocumento.split(/\r?\n/g);
+  let linhaAtual = 0;
+  let caractereAtual = 0;
+  let encontrou = false;
+  let totalDeLinhas = linhas.length;
+  if(!documento) {return null;}
+  const expressão_regular = /(?<!\bSe\s)(Um|Uma|Uns|Umas|O|A|O|A)\s+(.+?)\s+(é|são)/is;
+  const correspondência = expressão_regular.exec(textoDoDocumento);
+  if (correspondência) {
+    // A variável "correspondência" é um array onde o primeiro elemento é a correspondência completa
+    // e os próximos elementos são os grupos capturados pela expressão regular
+    const termoCapturado = correspondência[2]; // O segundo grupo capturado é o termo que queremos
+    const índiceDoTermo = textoDoDocumento.indexOf(termoCapturado);
+    if (índiceDoTermo !== -1) {
+      // Calcula a linha e o caractere do termo capturado
+      const linhasAntesDoTermo = textoDoDocumento.substring(0, índiceDoTermo).split(/\r?\n/g);
+      linhaAtual = linhasAntesDoTermo.length - 1;
+      caractereAtual = linhasAntesDoTermo[linhaAtual].length;
+      posição = Posição.create(linhaAtual, caractereAtual);
+      intervalo = Intervalo.create(posição, Posição.create(linhaAtual, caractereAtual + termoCapturado.length));
+      return Localização.create(documento.uri, intervalo);
+    }
+  }
+  return null;
+}
