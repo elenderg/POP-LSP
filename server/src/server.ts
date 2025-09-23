@@ -496,340 +496,6 @@ function recuaAtéEncontrarArtigoInicial(linhaAtual: string, posiçãoAtual: num
   return posiçãoAtual;
 }
 
-function avançaProFimDoTermoAtual(linhaAtual: string, posiçãoAtual: number): number {
-  while (posiçãoAtual < linhaAtual.length) { // Enquanto estivermos na linha atual
-    const próximoTermo = extraiPalavraPosterior(linhaAtual, posiçãoAtual);
-    if (conjuntoDePalavrasContexto.has(próximoTermo)) {
-      const índiceDoÚltimoTermo = linhaAtual.indexOf(próximoTermo, posiçãoAtual);
-      if (
-        índiceDoÚltimoTermo !== -1 &&
-        (índiceDoÚltimoTermo + próximoTermo.length === linhaAtual.length || /\s/.test(linhaAtual[índiceDoÚltimoTermo + próximoTermo.length]))
-      ) {
-        return índiceDoÚltimoTermo - (próximoTermo.length + 1);
-      }
-    }
-    posiçãoAtual++;
-  }
-  return posiçãoAtual;
-}
-
-function encontrarDefinicaoNasLinhas(
-  linhas: string[], regexDefinicao: RegExp,
-  palavra: string, palavraCompleta: string,
-  parâmetros: ParametrosDeDefinição): Localização[] 
-{
-  for (let i = 0; i < linhas.length; i++) {
-    const linha = linhas[i];
-    if (linha.includes(',') || linha.includes(';') || linha.includes(':')) continue;
-    const resultado = regexDefinicao.exec(linha);
-    if (resultado) {
-      const nomeVariavel = resultado[2].trim();
-      const tipoBase = resultado[5].trim();
-      const palavrasVariavel = nomeVariavel.split(/\s+/);
-      if (
-        palavraCompleta === nomeVariavel ||
-        palavrasVariavel.includes(palavra) ||
-        tipoBase === palavra ||
-        palavraCompleta === tipoBase
-      ) {
-        const idx = linha.indexOf(palavraCompleta !== '' ? palavraCompleta : palavra);
-        if (idx !== -1) {
-          return [{
-            uri: parâmetros.textDocument.uri,
-            range: {
-              start: { line: i, character: idx },
-              end: { line: i, character: idx + (palavraCompleta !== '' ? palavraCompleta.length : palavra.length) }
-            }
-          }];
-        }
-      }
-    }
-  }
-  return [];
-}
-
-conexão.onDefinition((parâmetros: ParametrosDeDefinição): Localização[] => {
-  console.log(`Parâmetros de definição recebidos: ${JSON.stringify(parâmetros)}`);
-  const documento = documentos.get(parâmetros.textDocument.uri);
-  if (!documento) {return [];}
-  const texto = documento.getText();
-  const posição = parâmetros.position;
-  const linhas = texto.split(/\r?\n/g);
-  // Extrai a palavra sob o cursor
-  const linhaAtual = linhas[posição.line];
-  if (!linhaAtual) {return [];} 
-  
-  let palavra = obtémPalavraSobCursor(linhaAtual, posição.character); // OK
-  if (!palavra) {return [];}
-  console.log(`Palavra atual: "${palavra}"`);
-
-  const posiçãoDaPalavra = linhaAtual.indexOf(palavra);
-  let inicio = posiçãoDaPalavra;
-  let fim = posiçãoDaPalavra + palavra.length;
-  console.log(`Início: ${inicio}, Fim: ${fim}`);
-
-  inicio = recuaAtéEncontrarArtigoInicial(linhaAtual, inicio);
-  fim = avançaProFimDoTermoAtual(linhaAtual, fim);
-
-  const palavraCompleta = linhaAtual.substring(inicio, fim).trim();
-  console.log(`Palavra completa: "${palavraCompleta}"`);
-
-  // Regex para definição exata conforme solicitado
-  //const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\w\s]+)\s+(é|são)\s+(um|uma|uns|umas)\s+([\w\s]+)(\.|com)$/;
-	const regexDefinicao = /^(A|O|As|Os|Um|Uma|Uns|Umas)\s+([\wÀ-ÿ\s\-]+?)\s+(é|são)\s+(um|uma|uns|umas)\s+([\wÀ-ÿ\s\-]+)(\.| com)?$/i;
-	const regexDefinicaoTipo = /^(Um|Uma|Uns|Umas)\s+([\wÀ-ÿ\s\-]+)\s+é\s+(um|uma|uns|umas)\s+([\wÀ-ÿ\s\-]+)\.$/i;
-
-	// Uma string denominada abc,
-
-  const localizacao = encontrarDefinicaoNasLinhas(linhas, regexDefinicao, palavra, palavraCompleta, parâmetros);
-  if (localizacao.length > 0) {return localizacao;}  
-  else{return [];}
-  }
-);
-
-
-function avançaAtéVerboSer(linhaAtual: string, posiçãoAtual: number): number {
-  const regexVerbo = /\b(é|são)\b/gi;
-  let correspondencia;
-  while ((correspondencia = regexVerbo.exec(linhaAtual)) !== null) {
-    if (correspondencia.index >= posiçãoAtual) {
-      return correspondencia.index;
-    }
-  }
-  // Se não encontrar, vai até o fim da linha
-  return linhaAtual.length;
-}
-
-
-function encontrarUltimoDelimitadorAntes(texto: string, deslocamento: number, delimitadores: string[]): number {
-  let posição = -1;
-  for (const delimitador of delimitadores) {
-    console.log(`Procurando delimitador: "${delimitador}"`);
-    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g");
-    let correspondência: RegExpExecArray | null;
-    while ((correspondência = expressão_regular.exec(texto)) !== null) {
-      if (correspondência.index < deslocamento && correspondência.index > posição) {
-        posição = correspondência.index + delimitador.length;
-        console.log(`Delimitador "${delimitador}" encontrado na posição ${correspondência.index}, atualizando posição para ${posição}`);
-      }
-      else {
-        console.log(`Delimitador "${delimitador}" encontrado, mas fora do intervalo (posição: ${correspondência.index}, deslocamento: ${deslocamento}, posição atual: ${posição})`);
-      }
-      //console.log(`Delimitador encontrado: "${delimitador}" na posição ${correspondência.index}`);
-    }
-    console.log('Delimitador não encontrado nesta iteração.');
-  }
-  return posição;
-}
-
-function encontrarPrimeiroDelimitadorDepois(texto: string, deslocamento: number, delimitadores: string[]): number {
-  let posição = texto.length;
-  for (const delimitador of delimitadores) {
-    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g");
-    let correspondência: RegExpExecArray | null;
-    while ((correspondência = expressão_regular.exec(texto)) !== null) {
-      if (correspondência.index > deslocamento && correspondência.index < posição) {
-        posição = correspondência.index;
-      }
-    }
-  }
-  return posição;
-}
-
-function extrairEntreDelimitadoresRegex(
-  texto: string,
-  deslocamento: number,
-  delimitadores: string[]
-): string {
-  // Último delimitador antes do cursor
-  let início = -1; // Posição do último delimitador antes do cursor. 
-  // O valor -1 indica que não foi encontrado nenhum delimitador antes do cursor
-
-  for (const delimitador of delimitadores) { // Para cada delimitador presente na lista de delimitadores
-    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g"); // Cria uma expressão regular para encontrar o delimitador
-    let correspondência: RegExpExecArray | null; // Variável para armazenar a correspondência da regex
-    while ((correspondência = expressão_regular.exec(texto)) !== null) { // Enquanto houver correspondências
-      if (correspondência.index < deslocamento && correspondência.index > início) {
-      // se a correspondência estiver antes do deslocamento e for a correspondência mais próxima do deslocamento
-        início = correspondência.index + delimitador.length;
-        // Atualiza a posição do início para o final do delimitador encontrado
-        console.log(`Delimitador encontrado antes: "${delimitador}" na posição ${início}`); // Log para depuração
-      }
-    }
-  }
-
-  // Primeiro delimitador depois
-  let fim = texto.length;
-  for (const delimitador of delimitadores) {
-    const expressão_regular = new RegExp(`\\b${delimitador}\\b`, "g");
-    let correspondência: RegExpExecArray | null;
-    while ((correspondência = expressão_regular.exec(texto)) !== null) {
-      if (correspondência.index > deslocamento && correspondência.index < fim) {
-        fim = correspondência.index;
-        console.log(`Delimitador encontrado depois: "${delimitador}" na posição ${fim}`); // Log para depuração
-      }
-    }
-  }
-  let resultado = '';
-  if(início === -1 && fim === texto.length) {
-    console.log(`Nenhum delimitador encontrado. Retornando texto completo.`);
-    resultado = texto.trim();
-  }
-  else{
-    console.log(`Início: ${início}, Fim: ${fim}`);
-    resultado = texto.substring(início, fim).trim();
-  }
-  return  resultado;
-}
-
-function extrairEntreDelimitadoresTokenizado(
-  texto: string,
-  deslocamento: number,
-  delimitadores: string[]
-): string {
-  // Regex básica para tokens (identificadores ou palavras-chave)
-  const regexTokens = /[a-zA-Z_][a-zA-Z0-9_]*/g;
-  let tokens: {valor: string; início: number; fim: number }[] = [];
-
-  // Tokeniza o texto
-  let correspondência: RegExpExecArray | null;
-  while ((correspondência = regexTokens.exec(texto)) !== null) {
-    tokens.push({
-      valor: correspondência[0],
-      início: correspondência.index,
-      fim: correspondência.index + correspondência[0].length
-    });
-  }
-
-  // Encontra o token em que o cursor está
-  const tokenAtual = tokens.find(
-    t => t.início <= deslocamento && deslocamento <= t.fim
-  );
-
-  // Agora procura delimitadores
-  let inicio = 0;
-  let fim = texto.length;
-
-  // Último delimitador antes
-  for (const token of tokens) {
-    if (delimitadores.includes(token.valor) && token.fim <= deslocamento) {
-      inicio = Math.max(inicio, token.fim);
-    }
-  }
-
-  // Primeiro delimitador depois
-  for (const token of tokens) {
-    if (delimitadores.includes(token.valor) && token.início >= deslocamento) {
-      fim = Math.min(fim, token.início);
-    }
-  }
-
-  return texto.substring(inicio, fim).trim();
-}
-
-
-function recuaParaAPalavraAnterior(linha: string, índiceAtual: number): string {
-  if (índiceAtual <= 0) {
-    // vai para a linha anterior
-    let linhaAnterior = obterLinhaAnterior(linha);
-    // recua para a última palavra da linha anterior
-    let palavraAnterior = recuaParaAPalavraAnterior(linhaAnterior, linhaAnterior.length);
-    return palavraAnterior;
-  ;} 
-  let conteúdoAnterior = linha.slice(0, índiceAtual).trimEnd();
-  let partes = conteúdoAnterior.split(/\s+/);
-  if (partes.length > 0) {
-    return partes[partes.length - 1].toLowerCase();
-  } else {
-    return '';
-  }
-}
-
-function avançaParaAPalavraSeguinte(linha: string, índiceAtual: number): string {
-  if (índiceAtual >= linha.length) {
-    // vai para a linha seguinte
-    let linhaSeguinte = obterLinhaSeguinte(linha);
-    // avança para a primeira palavra da linha seguinte
-    let palavraSeguinte = avançaParaAPalavraSeguinte(linhaSeguinte, 0);
-    return palavraSeguinte;
-  }
-  let conteúdoPosterior = linha.slice(índiceAtual).trimStart();
-  let partes = conteúdoPosterior.split(/\s+/);
-  if (partes.length > 0) {
-    return partes[0].toLowerCase();
-  } else {
-    return '';
-  }
-}
-
-function obterLinhaSeguinte(linhaAtual: string): string {
-  // Esta função deve retornar a linha seguinte ao conteúdo da linha atual
-  
-  // procura o índice da linha atual no array de linhas
-  const linhas = linhaAtual.split(/\r?\n/g);
-  const índiceLinhaAtual = linhas.indexOf(linhaAtual);
-  let índiceLinhaSeguinte = índiceLinhaAtual + 1;
-  let conteúdoLinhaSeguinte = '';
-  // atribui o conteúdo da linha seguinte se existir
-  if (índiceLinhaSeguinte >= 0 && índiceLinhaSeguinte < linhas.length) {
-    conteúdoLinhaSeguinte = linhas[índiceLinhaSeguinte];
-  }
-  return conteúdoLinhaSeguinte;
-}
-
-function obterLinhaAnterior(linhaAtual: string): string {
-  // Esta função deve retornar a linha anterior ao conteúdo da linha atual
-  
-  // procura o índice da linha atual no array de linhas
-  const linhas = linhaAtual.split(/\r?\n/g);
-  const índiceLinhaAtual = linhas.indexOf(linhaAtual);
-  let índiceLinhaAnterior = índiceLinhaAtual - 1;
-  let conteúdoLinhaAnterior = '';
-  // atribui o conteúdo da linha anterior se existir
-  if (índiceLinhaAnterior >= 0 && índiceLinhaAnterior < linhas.length) {
-    conteúdoLinhaAnterior = linhas[índiceLinhaAnterior];
-  }
-  return conteúdoLinhaAnterior;
-}
-
-function encontraFimDoTermo(linhaAtual: string, posiçãoAtual: number): string {
-  let próximoTermo = '';
-  while (posiçãoAtual < linhaAtual.length) { // Enquanto estivermos na linha atual
-    let termoEmAnalise = avançaParaAPalavraSeguinte(linhaAtual, posiçãoAtual);
-    if (conjuntoDePalavrasContexto.has(termoEmAnalise)) {
-      // Se o próximo termo for um dos termos de contexto, então paramos aqui
-      console.log(`Termo encontrado na lista de contexto: "${termoEmAnalise}"`);
-      break;
-    }
-    else {
-      console.log(`Termo não encontrado na lista de contexto: "${termoEmAnalise}"`);
-      próximoTermo = próximoTermo + " " + termoEmAnalise;
-      posiçãoAtual = posiçãoAtual + termoEmAnalise.length + 1; // avança o índice atual
-    }
-  }
-  return próximoTermo.trim();// O trim remove espaços em branco extras no início e no fim
-}
-
-function encontraInícioDoTermo(linhaAtual: string, posiçãoAtual: number): string {
-  let termoAnterior = '';
-  while (posiçãoAtual > 0) { // Enquanto estivermos na linha atual
-    let termoEmAnalise = recuaParaAPalavraAnterior(linhaAtual, posiçãoAtual);
-    console.log(`Analisando termo: "${termoEmAnalise}"`);
-    if (conjuntoDePalavrasContexto.has(termoEmAnalise)) {
-      // Se o termo anterior for um dos termos de contexto, então paramos aqui
-      console.log(`Termo encontrado na lista de contexto: "${termoEmAnalise}"`);
-      break;
-    }
-    else {
-      console.log(`Termo não encontrado na lista de contexto: "${termoEmAnalise}"`);
-      termoAnterior = termoEmAnalise + " " + termoAnterior;
-      posiçãoAtual = posiçãoAtual - termoEmAnalise.length - 1; // recua o índice atual
-    }
-  }
-  return termoAnterior.trim();// O trim remove espaços em branco extras no início e no fim
-}
-
-
 // Handler para Goto Type Definition
 conexão.onTypeDefinition(
   (_params: ParametrosDeDefiniçãoDeTipo): Localização[] => {
@@ -929,3 +595,104 @@ documentos.listen(conexão);
 // Listen on the connection
 conexão.listen();
 
+
+
+function recuaParaAPalavraAnterior(linha: string, índiceAtual: number): string {
+  if (índiceAtual <= 0) {
+    // vai para a linha anterior
+    let linhaAnterior = obterLinhaAnterior(linha);
+    // recua para a última palavra da linha anterior
+    let palavraAnterior = recuaParaAPalavraAnterior(linhaAnterior, linhaAnterior.length);
+    return palavraAnterior;
+  ;} 
+  let conteúdoAnterior = linha.slice(0, índiceAtual).trimEnd();
+  let partes = conteúdoAnterior.split(/\s+/);
+  if (partes.length > 0) {
+    return partes[partes.length - 1].toLowerCase();
+  } else {
+    return '';
+  }
+}
+
+function avançaParaAPalavraSeguinte(linha: string, índiceAtual: number): string {
+  if (índiceAtual >= linha.length) {
+    // vai para a linha seguinte
+    let linhaSeguinte = obterLinhaSeguinte(linha);
+    // avança para a primeira palavra da linha seguinte
+    let palavraSeguinte = avançaParaAPalavraSeguinte(linhaSeguinte, 0);
+    return palavraSeguinte;
+  }
+  let conteúdoPosterior = linha.slice(índiceAtual).trimStart();
+  let partes = conteúdoPosterior.split(/\s+/);
+  if (partes.length > 0) {
+    return partes[0].toLowerCase();
+  } else {
+    return '';
+  }
+}
+
+function obterLinhaSeguinte(linhaAtual: string): string {
+  // Esta função deve retornar a linha seguinte ao conteúdo da linha atual
+  
+  // procura o índice da linha atual no array de linhas
+  const linhas = linhaAtual.split(/\r?\n/g);
+  const índiceLinhaAtual = linhas.indexOf(linhaAtual);
+  let índiceLinhaSeguinte = índiceLinhaAtual + 1;
+  let conteúdoLinhaSeguinte = '';
+  // atribui o conteúdo da linha seguinte se existir
+  if (índiceLinhaSeguinte >= 0 && índiceLinhaSeguinte < linhas.length) {
+    conteúdoLinhaSeguinte = linhas[índiceLinhaSeguinte];
+  }
+  return conteúdoLinhaSeguinte;
+}
+
+function obterLinhaAnterior(linhaAtual: string): string {
+  // Esta função deve retornar a linha anterior ao conteúdo da linha atual  
+  // procura o índice da linha atual no array de linhas
+  const linhas = linhaAtual.split(/\r?\n/g);
+  const índiceLinhaAtual = linhas.indexOf(linhaAtual);
+  let índiceLinhaAnterior = índiceLinhaAtual - 1;
+  let conteúdoLinhaAnterior = '';
+  // atribui o conteúdo da linha anterior se existir
+  if (índiceLinhaAnterior >= 0 && índiceLinhaAnterior < linhas.length) {
+    conteúdoLinhaAnterior = linhas[índiceLinhaAnterior];
+  }
+  return conteúdoLinhaAnterior;
+}
+
+function encontraFimDoTermo(linhaAtual: string, posiçãoAtual: number): string {
+  let próximoTermo = '';
+  while (posiçãoAtual < linhaAtual.length) { // Enquanto estivermos na linha atual
+    let termoEmAnalise = avançaParaAPalavraSeguinte(linhaAtual, posiçãoAtual);
+    if (conjuntoDePalavrasContexto.has(termoEmAnalise)) {
+      // Se o próximo termo for um dos termos de contexto, então paramos aqui
+      console.log(`Termo encontrado na lista de contexto: "${termoEmAnalise}"`);
+      break;
+    }
+    else {
+      console.log(`Termo não encontrado na lista de contexto: "${termoEmAnalise}"`);
+      próximoTermo = próximoTermo + " " + termoEmAnalise;
+      posiçãoAtual = posiçãoAtual + termoEmAnalise.length + 1; // avança o índice atual
+    }
+  }
+  return próximoTermo.trim();// O trim remove espaços em branco extras no início e no fim
+}
+
+function encontraInícioDoTermo(linhaAtual: string, posiçãoAtual: number): string {
+  let termoAnterior = '';
+  while (posiçãoAtual > 0) { // Enquanto estivermos na linha atual
+    let termoEmAnalise = recuaParaAPalavraAnterior(linhaAtual, posiçãoAtual);
+    console.log(`Analisando termo: "${termoEmAnalise}"`);
+    if (conjuntoDePalavrasContexto.has(termoEmAnalise)) {
+      // Se o termo anterior for um dos termos de contexto, então paramos aqui
+      console.log(`Termo encontrado na lista de contexto: "${termoEmAnalise}"`);
+      break;
+    }
+    else {
+      console.log(`Termo não encontrado na lista de contexto: "${termoEmAnalise}"`);
+      termoAnterior = termoEmAnalise + " " + termoAnterior;
+      posiçãoAtual = posiçãoAtual - termoEmAnalise.length - 1; // recua o índice atual
+    }
+  }
+  return termoAnterior.trim();// O trim remove espaços em branco extras no início e no fim
+}
