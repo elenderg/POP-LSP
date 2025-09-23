@@ -349,8 +349,6 @@ conexão.onRequest('selecaoTexto', (
       return `O servidor recebeu ${parâmetros.texto.length} caracteres`;
 });
 
-
-
 const palavrasContexto = [
   'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
   //'se', 'itere', 'pare', 'retorne', 
