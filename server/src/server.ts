@@ -39,12 +39,88 @@ export const conexão = CriarConexão(RecursosPropostos.all);
 // Cria um gerenciador de documentos de texto. Ele lida com o sincronismo de documentos
 export const documentos = new DocumentosDeTexto(DocumentoDeTexto);
 
-let possuiCapacidadeDeConfiguração = false;
-let possuiCapacidadeDeEspaçoDeTrabalho = false;
-let possuiCapacidadedeInformaçõesDeDiagnósticoRelacionadas = false;
+export let possuiCapacidadeDeConfiguração = false;
+export let possuiCapacidadeDeEspaçoDeTrabalho = false;
+export let possuiCapacidadedeInformaçõesDeDiagnósticoRelacionadas = false;
+
+
+// As configurações de exemplo
+export interface ConfiguraçõesDeExemplo {
+  maxNumberOfProblems: number;
+}
+
+// As configurações globais, usadas quando a solicitação `workspace/configuration` não é suportada pelo cliente.
+// Por favor, note que este não é o caso do VSCode, que suporta essa solicitação por padrão.
+// mas pode acontecer com outros clientes.
+export const configuraçõesPadrão: ConfiguraçõesDeExemplo = { maxNumberOfProblems: 1000 };
+export let configuraçõesGlobais: ConfiguraçõesDeExemplo = configuraçõesPadrão;
+
+// Armazena em cache as configurações específicas do documento.
+export const configuraçõesDoDocumento = new Map<string, Thenable<ConfiguraçõesDeExemplo>>();
+
+export const palavrasContexto = [
+  'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
+  //'se', 'itere', 'pare', 'retorne', 
+	'no', 'na', 'nos', 'nas',
+  'ao', 'aos', 'à', 'às', 'num', 'nuns', 'numa', 'numas', 'não',
+  'desse', 'desses', 'deste', 'destes', 'dessa', 'dessas', 'desta', 'destas',
+  'cabe', 'couber', 'começa', 'começar', 'conter', 'contiver', 'contém',
+  'deve', 'devem', 'deveria', 'deveriam', 'estamos', 'estar', 'estará',
+  'estarão', 'estava', 'estavam', 'estiver', 'estiverem', 'está', 'estão',
+  'excede', 'excedem', 'existe', 'existem', 'existir', 'finaliza', 'finalizar',
+  'é', 'foi', 'for', 'foram', 'forem', 'há', 'houver', 'inicia', 'iniciar',
+  'necessita', 'necessitar', 'parece', 'pode', 'podem', 'podemos', 'poderia',
+  'possuem', 'possui', 'possuir', 'puder', 'puderem', 'requer', 'ser', 'será',
+  'serão', 'supera', 'superam', 'superar', 'são', 'tem', 'ter', 'termina',
+  'terminar', 'tiver', 'têm', 'mais', 'menos', 'vezes', 'multiplicado',
+  'dividido', 'junto', 'seguido', 'partir', 'partindo', 'abaixo', 'ante',
+  'perante', 'antes', 'debaixo', 'sob', 'acerca', 'cerca', 'cuja', 'cujo',
+  'cujas', 'cujos', 'próximo', 'perto', 'com', 'tal', 'como', 'contra', 'dada',
+  'dado', 'dando', 'gerando', 'resultando', 'retornando', 'desde', 'depois',
+  'após', 'durante', 'em', 'entre', 'dentre', 'até', 'mediante', 'para', 'via',
+  //'segundo', 
+	'acordo', 'sem', 'então', 'sobre', 'usando', 'versus', 'enquanto',
+  'aproximadamente', 'através', 'algum', 'referente', 'pertencente', 'pertinente',
+  'relativo', 'relativa', 'concernente', 'atinente', 'começando', 'iniciando',
+  'orientada', 'orientado', 'orientando', 'orientando-se', 'voltada', 'voltado',
+  'virada', 'virado', 'virando', 'virando-se', 'tão', 'tanto', 'quanto', 'quão',
+  'qual', 'regressivamente', 'dentro', 'parecida', 'parecido', 'semelhante',
+  'similar', 'só', 'somente', 'unicamente', 'exclusivamente', 'apenas', 'fora',
+  'menores', 'alta', 'alto', 'comprido', 'comprida', 'largo', 'larga',
+  'chamado', 'chamados', 'chamada', 'chamadas', 'denominado', 'denominados',
+  'denominada', 'denominadas', 'e', 'ou', 'nem', ',', '.', ';', ':'
+];
+
+export const conjuntoDePalavrasContexto = new Set(palavrasContexto.map(palavra => palavra.toLowerCase()));
+
+export const listaDeArtigos = new Set([
+  'a', 'o', 'as', 'os', 
+  'um', 'uma', 'uns', 'umas',
+  'ao', 'aos', 'à', 'às', 
+  'num', 'nuns', 'numa', 'numas',
+  'no', 'na', 'nos', 'nas',
+	//'pro', 'pros', 'pra', 'pras',
+  'desse', 'desses', 'deste', 'destes', 
+  'dessa', 'dessas', 'desta', 'destas'
+]);
+
+//const padraoContexto = palavrasContexto.join('|');
+//const expressao = new RegExp(`\\b(?:${padraoContexto})\\s+(\\w+)\\s+(?:${padraoContexto})\\b`, 'gi');
+
+// As configurações só são mantidas em cache para documentos abertos.
+documentos.onDidClose(e => {
+  configuraçõesDoDocumento.delete(e.document.uri);
+});
+
+// O conteúdo de um documento de texto foi alterado. Este evento é emitido
+// quando o documento de texto é aberto pela primeira vez ou quando seu conteúdo é alterado.
+documentos.onDidChangeContent(alteração => {
+  validateTextDocument(alteração.document);
+});
+
 
 conexão.onInitialize((parâmetros: InicializarParâmetros) => {
-  console.log('Servidor de Linguagem para PoP iniciado.');
+  console.log('Servidor de Linguagem para PoP iniciado.');  
   const capacidades = parâmetros.capabilities;
 
   // Verifica se o cliente suporta as capacidades de configuração e espaço de trabalho.
@@ -99,19 +175,6 @@ conexão.onInitialized(() => {
   }
 });
 
-// As configurações de exemplo
-interface ConfiguraçõesDeExemplo {
-  maxNumberOfProblems: number;
-}
-
-// As configurações globais, usadas quando a solicitação `workspace/configuration` não é suportada pelo cliente.
-// Por favor, note que este não é o caso do VSCode, que suporta essa solicitação por padrão.
-// mas pode acontecer com outros clientes.
-const configuraçõesPadrão: ConfiguraçõesDeExemplo = { maxNumberOfProblems: 1000 };
-let configuraçõesGlobais: ConfiguraçõesDeExemplo = configuraçõesPadrão;
-
-// Armazena em cache as configurações específicas do documento.
-const configuraçõesDoDocumento = new Map<string, Thenable<ConfiguraçõesDeExemplo>>();
 
 conexão.onDidChangeConfiguration(alteração => {
   if (possuiCapacidadeDeConfiguração) {
@@ -125,27 +188,6 @@ conexão.onDidChangeConfiguration(alteração => {
   // Atualiza os diagnósticos, uma vez que o `maxNumberOfProblems` pode ter mudado.
   // Pode ser otimizado posteriormente
   conexão.languages.diagnostics.refresh();
-});
-
-function obtémConfiguraçõesDoDocumento(recurso: string): Thenable<ConfiguraçõesDeExemplo> {
-  if (!possuiCapacidadeDeConfiguração) {
-    return Promise.resolve(configuraçõesGlobais);
-  }
-  let resultado = configuraçõesDoDocumento.get(recurso);
-  if (!resultado) {
-    resultado = conexão.workspace.getConfiguration({
-      scopeUri: recurso,
-      section: 'languageServerExample' 
-      // Nome da seção de configuração no cliente (ex.: ..\client\package.json)
-    });
-    configuraçõesDoDocumento.set(recurso, resultado);
-  }
-  return resultado;
-}
-
-// As configurações só são mantidas em cache para documentos abertos.
-documentos.onDidClose(e => {
-  configuraçõesDoDocumento.delete(e.document.uri);
 });
 
 
@@ -166,12 +208,6 @@ conexão.languages.diagnostics.on(async (parâmetros) => {
   }
 });
 
-// O conteúdo de um documento de texto foi alterado. Este evento é emitido
-// quando o documento de texto é aberto pela primeira vez ou quando seu conteúdo é alterado.
-documentos.onDidChangeContent(alteração => {
-  validateTextDocument(alteração.document);
-});
-
 conexão.onDocumentSymbol(
   (parâmetros) => {
     if (!parâmetros.textDocument.uri)  {
@@ -182,50 +218,6 @@ conexão.onDocumentSymbol(
   }
 );
 
-async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
-  let diagnósticos: Diagnóstico[] = [];
-
-  let texto = documentoDeTexto.getText();
-  let linhas = texto.split(/\r?\n/);
-
-  let últimaLinhaDeCódigo: string | undefined;
-  //let índiceDaLinha: number | undefined;
-
-  // Percorre de trás para frente
-  for (let índice = linhas.length - 1; índice >= 0; índice--) {
-    let linha = linhas[índice].trim();
-    // Ignora linhas vazias
-    if (linha === "") {continue;}
-    // Ignora comentários iniciados por "\"
-    if (linha.startsWith("\\")) {continue;}
-    // Encontramos a última linha de código
-    últimaLinhaDeCódigo = linha;
-    //índiceDaLinha = índice;
-    break;
-  }
-
-  if (últimaLinhaDeCódigo /*&& índiceDaLinha !== undefined*/) {
-    // Verifica se termina com "." ou "]"
-    if (!(últimaLinhaDeCódigo.endsWith(".") || últimaLinhaDeCódigo.endsWith("]"))) {
-      // Pega último caractere não-espaço
-      let últimoCaractere = últimaLinhaDeCódigo[últimaLinhaDeCódigo.length - 1];
-      diagnósticos.push({
-        severity: 1, // 1 = Error no LSP
-        range: {
-          start: {
-            line: linhas.length - 1, character: últimaLinhaDeCódigo.length - 1
-          },
-          end: {
-            line: linhas.length - 1, character: últimaLinhaDeCódigo.length
-          }
-        },
-        message: `Documento inválido: O último caractere do documento deve ser um ponto final ou um comentário, não um "${últimoCaractere}".`,
-        source: "servidor-de-linguagem"
-      });
-    }
-  }
-  return diagnósticos;
-}
 
 
 conexão.onDidChangeWatchedFiles(_change => {
@@ -302,69 +294,6 @@ conexão.onRequest('selecaoTexto', (
       conexão.console.log(`Texto recebido: "${parâmetros.texto}"`);
       return `O servidor recebeu ${parâmetros.texto.length} caracteres`;
 });
-
-const palavrasContexto = [
-  'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
-  //'se', 'itere', 'pare', 'retorne', 
-	'no', 'na', 'nos', 'nas',
-  'ao', 'aos', 'à', 'às', 'num', 'nuns', 'numa', 'numas', 'não',
-  'desse', 'desses', 'deste', 'destes', 'dessa', 'dessas', 'desta', 'destas',
-  'cabe', 'couber', 'começa', 'começar', 'conter', 'contiver', 'contém',
-  'deve', 'devem', 'deveria', 'deveriam', 'estamos', 'estar', 'estará',
-  'estarão', 'estava', 'estavam', 'estiver', 'estiverem', 'está', 'estão',
-  'excede', 'excedem', 'existe', 'existem', 'existir', 'finaliza', 'finalizar',
-  'é', 'foi', 'for', 'foram', 'forem', 'há', 'houver', 'inicia', 'iniciar',
-  'necessita', 'necessitar', 'parece', 'pode', 'podem', 'podemos', 'poderia',
-  'possuem', 'possui', 'possuir', 'puder', 'puderem', 'requer', 'ser', 'será',
-  'serão', 'supera', 'superam', 'superar', 'são', 'tem', 'ter', 'termina',
-  'terminar', 'tiver', 'têm', 'mais', 'menos', 'vezes', 'multiplicado',
-  'dividido', 'junto', 'seguido', 'partir', 'partindo', 'abaixo', 'ante',
-  'perante', 'antes', 'debaixo', 'sob', 'acerca', 'cerca', 'cuja', 'cujo',
-  'cujas', 'cujos', 'próximo', 'perto', 'com', 'tal', 'como', 'contra', 'dada',
-  'dado', 'dando', 'gerando', 'resultando', 'retornando', 'desde', 'depois',
-  'após', 'durante', 'em', 'entre', 'dentre', 'até', 'mediante', 'para', 'via',
-  //'segundo', 
-	'acordo', 'sem', 'então', 'sobre', 'usando', 'versus', 'enquanto',
-  'aproximadamente', 'através', 'algum', 'referente', 'pertencente', 'pertinente',
-  'relativo', 'relativa', 'concernente', 'atinente', 'começando', 'iniciando',
-  'orientada', 'orientado', 'orientando', 'orientando-se', 'voltada', 'voltado',
-  'virada', 'virado', 'virando', 'virando-se', 'tão', 'tanto', 'quanto', 'quão',
-  'qual', 'regressivamente', 'dentro', 'parecida', 'parecido', 'semelhante',
-  'similar', 'só', 'somente', 'unicamente', 'exclusivamente', 'apenas', 'fora',
-  'menores', 'alta', 'alto', 'comprido', 'comprida', 'largo', 'larga',
-  'chamado', 'chamados', 'chamada', 'chamadas', 'denominado', 'denominados',
-  'denominada', 'denominadas', 'e', 'ou', 'nem', ',', '.', ';', ':'
-];
-
-const conjuntoDePalavrasContexto = new Set(palavrasContexto.map(palavra => palavra.toLowerCase()));
-
-const listaDeArtigos = new Set([
-  'a', 'o', 'as', 'os', 
-  'um', 'uma', 'uns', 'umas',
-  'ao', 'aos', 'à', 'às', 
-  'num', 'nuns', 'numa', 'numas',
-  'no', 'na', 'nos', 'nas',
-	//'pro', 'pros', 'pra', 'pras',
-  'desse', 'desses', 'deste', 'destes', 
-  'dessa', 'dessas', 'desta', 'destas'
-]);
-
-//const padraoContexto = palavrasContexto.join('|');
-//const expressao = new RegExp(`\\b(?:${padraoContexto})\\s+(\\w+)\\s+(?:${padraoContexto})\\b`, 'gi');
-
-export function obtémPalavraSobCursor(linha: string, posicao: number): string {
-  const regexPalavra = /\w+/g;
-  let correspondência: RegExpExecArray | null; // RegExpExecArray é o tipo usado em correspondências de regex
-  while ((correspondência = regexPalavra.exec(linha))) { 
-    // sempre que encontrar uma correspondência, isto é, uma palavra sob o cursor
-    if (correspondência.index <= posicao && regexPalavra.lastIndex >= posicao) {
-      // Se correspondência atual estiver na posição do cursor
-      return correspondência[0]; // Retorna a palavra encontrada
-    }
-  }
-  // Se nenhuma palavra for encontrada sob o cursor, retorna uma string vazia
-  return '';
-}
 
 
 // Handler para Goto Type Definition
@@ -458,6 +387,14 @@ conexão.onReferences(
   }
 );
 
+conexão.onDefinition((_params: ParametrosDeDefiniçãoDeTipo): Localização[] |LinkDeLocalização[] | null => {
+  const documento = documentos.get(_params.textDocument.uri);
+  if (!documento) {
+    return null;
+  }
+  return null;
+
+}); 
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events
@@ -468,7 +405,23 @@ conexão.listen();
 
 
 
-function recuaParaAPalavraAnterior(linha: string, índiceAtual: number): string {
+
+export function obtémPalavraSobCursor(linha: string, posicao: number): string {
+  const regexPalavra = /\w+/g;
+  let correspondência: RegExpExecArray | null; // RegExpExecArray é o tipo usado em correspondências de regex
+  while ((correspondência = regexPalavra.exec(linha))) { 
+    // sempre que encontrar uma correspondência, isto é, uma palavra sob o cursor
+    if (correspondência.index <= posicao && regexPalavra.lastIndex >= posicao) {
+      // Se correspondência atual estiver na posição do cursor
+      return correspondência[0]; // Retorna a palavra encontrada
+    }
+  }
+  // Se nenhuma palavra for encontrada sob o cursor, retorna uma string vazia
+  return '';
+}
+
+
+export function recuaParaAPalavraAnterior(linha: string, índiceAtual: number): string {
   if (índiceAtual <= 0) {
     // vai para a linha anterior
     let linhaAnterior = obterLinhaAnterior(linha);
@@ -485,7 +438,7 @@ function recuaParaAPalavraAnterior(linha: string, índiceAtual: number): string 
   }
 }
 
-function avançaParaAPalavraSeguinte(linha: string, índiceAtual: number): string {
+export function avançaParaAPalavraSeguinte(linha: string, índiceAtual: number): string {
   if (índiceAtual >= linha.length) {
     // vai para a linha seguinte
     let linhaSeguinte = obterLinhaSeguinte(linha);
@@ -502,7 +455,7 @@ function avançaParaAPalavraSeguinte(linha: string, índiceAtual: number): strin
   }
 }
 
-function obterLinhaSeguinte(linhaAtual: string): string {
+export function obterLinhaSeguinte(linhaAtual: string): string {
   // Esta função deve retornar a linha seguinte ao conteúdo da linha atual
   
   // procura o índice da linha atual no array de linhas
@@ -517,7 +470,7 @@ function obterLinhaSeguinte(linhaAtual: string): string {
   return conteúdoLinhaSeguinte;
 }
 
-function obterLinhaAnterior(linhaAtual: string): string {
+export function obterLinhaAnterior(linhaAtual: string): string {
   // Esta função deve retornar a linha anterior ao conteúdo da linha atual  
   // procura o índice da linha atual no array de linhas
   const linhas = linhaAtual.split(/\r?\n/g);
@@ -531,7 +484,7 @@ function obterLinhaAnterior(linhaAtual: string): string {
   return conteúdoLinhaAnterior;
 }
 
-function encontraFimDoTermo(linhaAtual: string, posiçãoAtual: number): string {
+export function encontraFimDoTermo(linhaAtual: string, posiçãoAtual: number): string {
   let próximoTermo = '';
   while (posiçãoAtual < linhaAtual.length) { // Enquanto estivermos na linha atual
     let termoEmAnalise = avançaParaAPalavraSeguinte(linhaAtual, posiçãoAtual);
@@ -549,7 +502,7 @@ function encontraFimDoTermo(linhaAtual: string, posiçãoAtual: number): string 
   return próximoTermo.trim();// O trim remove espaços em branco extras no início e no fim
 }
 
-function encontraInícioDoTermo(linhaAtual: string, posiçãoAtual: number): string {
+export function encontraInícioDoTermo(linhaAtual: string, posiçãoAtual: number): string {
   let termoAnterior = '';
   while (posiçãoAtual > 0) { // Enquanto estivermos na linha atual
     let termoEmAnalise = recuaParaAPalavraAnterior(linhaAtual, posiçãoAtual);
@@ -568,11 +521,47 @@ function encontraInícioDoTermo(linhaAtual: string, posiçãoAtual: number): str
   return termoAnterior.trim();// O trim remove espaços em branco extras no início e no fim
 }
 
-conexão.onDefinition((_params: ParametrosDeDefiniçãoDeTipo): Localização[] |LinkDeLocalização[] | null => {
-  const documento = documentos.get(_params.textDocument.uri);
-  if (!documento) {
-    return null;
-  }
-  return null;
+async function validateTextDocument(documentoDeTexto: DocumentoDeTexto): Promise<Diagnóstico[]> {
+  let diagnósticos: Diagnóstico[] = [];
 
-}); 
+  let texto = documentoDeTexto.getText();
+  let linhas = texto.split(/\r?\n/);
+
+  let últimaLinhaDeCódigo: string | undefined;
+  //let índiceDaLinha: number | undefined;
+
+  // Percorre de trás para frente
+  for (let índice = linhas.length - 1; índice >= 0; índice--) {
+    let linha = linhas[índice].trim();
+    // Ignora linhas vazias
+    if (linha === "") {continue;}
+    // Ignora comentários iniciados por "\"
+    if (linha.startsWith("\\")) {continue;}
+    // Encontramos a última linha de código
+    últimaLinhaDeCódigo = linha;
+    //índiceDaLinha = índice;
+    break;
+  }
+
+  if (últimaLinhaDeCódigo /*&& índiceDaLinha !== undefined*/) {
+    // Verifica se termina com "." ou "]"
+    if (!(últimaLinhaDeCódigo.endsWith(".") || últimaLinhaDeCódigo.endsWith("]"))) {
+      // Pega último caractere não-espaço
+      let últimoCaractere = últimaLinhaDeCódigo[últimaLinhaDeCódigo.length - 1];
+      diagnósticos.push({
+        severity: 1, // 1 = Error no LSP
+        range: {
+          start: {
+            line: linhas.length - 1, character: últimaLinhaDeCódigo.length - 1
+          },
+          end: {
+            line: linhas.length - 1, character: últimaLinhaDeCódigo.length
+          }
+        },
+        message: `Documento inválido: O último caractere do documento deve ser um ponto final ou um comentário, não um "${últimoCaractere}".`,
+        source: "servidor-de-linguagem"
+      });
+    }
+  }
+  return diagnósticos;
+}

@@ -27,7 +27,9 @@ import {
 
 import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocument';
 
-const palavrasContexto = [
+import * as servidor from '../server';;
+
+export const palavrasContexto = [
   'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
   //'se', 'itere', 'pare', 'retorne', 
 	'no', 'na', 'nos', 'nas',
@@ -60,9 +62,9 @@ const palavrasContexto = [
   'denominada', 'denominadas', 'e', 'ou', 'nem', ',', '.', ';', ':'
 ];
 
-const conjuntoDePalavrasContexto = new Set(palavrasContexto.map(palavra => palavra.toLowerCase()));
+export const conjuntoDePalavrasContexto = new Set(palavrasContexto.map(palavra => palavra.toLowerCase()));
 
-const listaDeArtigos = new Set([
+export const listaDeArtigos = new Set([
   'a', 'o', 'as', 'os', 
   'um', 'uma', 'uns', 'umas',
   'ao', 'aos', 'à', 'às', 
@@ -72,8 +74,6 @@ const listaDeArtigos = new Set([
   'desse', 'desses', 'deste', 'destes', 
   'dessa', 'dessas', 'desta', 'destas'
 ]);
-
-
 
 function tentarParsear(texto: string): { válida: boolean; erros: Diagnóstico[] } {
   if( !texto || texto.length === 0) {
@@ -118,6 +118,21 @@ function verificarBoasPraticas(arvore: { válida: boolean; erros: Diagnóstico[]
   return avisos;
 }
 
+function obtémConfiguraçõesDoDocumento(recurso: string): Thenable<servidor.ConfiguraçõesDeExemplo> {
+  if (!servidor.possuiCapacidadeDeConfiguração) {
+    return Promise.resolve(servidor.configuraçõesGlobais);
+  }
+  let resultado = servidor.configuraçõesDoDocumento.get(recurso);
+  if (!resultado) {
+    resultado = servidor.conexão.workspace.getConfiguration({
+      scopeUri: recurso,
+      section: 'languageServerExample' 
+      // Nome da seção de configuração no cliente (ex.: ..\client\package.json)
+    });
+    servidor.configuraçõesDoDocumento.set(recurso, resultado);
+  }
+  return resultado;
+}
 
 function analisarLexico(texto: string): Diagnóstico[] {
 
