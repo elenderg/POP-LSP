@@ -29,8 +29,6 @@ import {
   type DocumentDiagnosticReport as RelatórioDeDiagnósticoDoDocumento
 } from 'vscode-languageserver/node';
 
-import {irParaDefinição} from './irPara/definicao';
-
 import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocument';
 //import { Range } from "vscode-languageclient";
 

@@ -101,18 +101,6 @@ function buscarDefiniçãoTipoLocal(termo: string, documento: DocumentoDeTexto):
 }
 
 /**
- * Função para verificar se um símbolo no cache é um tipo
- */
-function éTipoNoCache(nomeSímbolo: string): boolean {
-  const símbolos = cacheSímbolos.símbolos.get(nomeSímbolo);
-  if (!símbolos) {
-    return false;
-  }
-
-  return símbolos.some(símbolo => símbolo.tipo === 'tipo');
-}
-
-/**
  * Função principal para encontrar definições de tipos
  */
 function encontrarDefiniçãoTipo(termo: string, documento: DocumentoDeTexto): Localização | null {
