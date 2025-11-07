@@ -29,6 +29,8 @@ import {
   type DocumentDiagnosticReport as RelatórioDeDiagnósticoDoDocumento
 } from 'vscode-languageserver/node';
 
+import {irParaDefinição} from './irPara/definicao';
+
 import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocument';
 //import { Range } from "vscode-languageclient";
 
@@ -60,7 +62,7 @@ export const configuraçõesDoDocumento = new Map<string, Thenable<Configuraçõ
 
 export const palavrasContexto = [
   'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
-  //'se', 'itere', 'pare', 'retorne', 
+  //'se', 'itere', 'pare', 'retorne',
 	'no', 'na', 'nos', 'nas',
   'ao', 'aos', 'à', 'às', 'num', 'nuns', 'numa', 'numas', 'não',
   'desse', 'desses', 'deste', 'destes', 'dessa', 'dessas', 'desta', 'destas',
@@ -78,7 +80,7 @@ export const palavrasContexto = [
   'cujas', 'cujos', 'próximo', 'perto', 'com', 'tal', 'como', 'contra', 'dada',
   'dado', 'dando', 'gerando', 'resultando', 'retornando', 'desde', 'depois',
   'após', 'durante', 'em', 'entre', 'dentre', 'até', 'mediante', 'para', 'via',
-  //'segundo', 
+  //'segundo',
 	'acordo', 'sem', 'então', 'sobre', 'usando', 'versus', 'enquanto',
   'aproximadamente', 'através', 'algum', 'referente', 'pertencente', 'pertinente',
   'relativo', 'relativa', 'concernente', 'atinente', 'começando', 'iniciando',
@@ -94,13 +96,13 @@ export const palavrasContexto = [
 export const conjuntoDePalavrasContexto = new Set(palavrasContexto.map(palavra => palavra.toLowerCase()));
 
 export const listaDeArtigos = new Set([
-  'a', 'o', 'as', 'os', 
+  'a', 'o', 'as', 'os',
   'um', 'uma', 'uns', 'umas',
-  'ao', 'aos', 'à', 'às', 
+  'ao', 'aos', 'à', 'às',
   'num', 'nuns', 'numa', 'numas',
   'no', 'na', 'nos', 'nas',
 	//'pro', 'pros', 'pra', 'pras',
-  'desse', 'desses', 'deste', 'destes', 
+  'desse', 'desses', 'deste', 'destes',
   'dessa', 'dessas', 'desta', 'destas'
 ]);
 
@@ -120,7 +122,7 @@ documentos.onDidChangeContent(alteração => {
 
 
 conexão.onInitialize((parâmetros: InicializarParâmetros) => {
-  console.log('Servidor de Linguagem para PoP iniciado.');  
+  console.log('Servidor de Linguagem para PoP iniciado.');
   const capacidades = parâmetros.capabilities;
 
   // Verifica se o cliente suporta as capacidades de configuração e espaço de trabalho.
@@ -132,7 +134,7 @@ conexão.onInitialize((parâmetros: InicializarParâmetros) => {
     capacidades.textDocument && capacidades.textDocument.publishDiagnostics &&
     capacidades.textDocument.publishDiagnostics.relatedInformation
   );
-  // Se o cliente não suporta as capacidades de configuração e espaço de trabalho, 
+  // Se o cliente não suporta as capacidades de configuração e espaço de trabalho,
   // o servidor usará configurações globais padrão.
 
   const resultado: ResultadoDeInicialização = {
@@ -145,7 +147,7 @@ conexão.onInitialize((parâmetros: InicializarParâmetros) => {
         workspaceDiagnostics: false
       },
       // ↓ ↓ ↓ ↓ ↓ Linhas adicionais
-      definitionProvider: true, 
+      definitionProvider: true,
       typeDefinitionProvider: true,
       implementationProvider: true,
       referencesProvider: true,
@@ -286,10 +288,10 @@ conexão.onHover(
 
 
 conexão.onRequest('selecaoTexto', (
-  parâmetros: { 
-    uri: string, 
-    range: Intervalo, 
-    texto: string 
+  parâmetros: {
+    uri: string,
+    range: Intervalo,
+    texto: string
   }) => {
       conexão.console.log(`Texto recebido: "${parâmetros.texto}"`);
       return `O servidor recebeu ${parâmetros.texto.length} caracteres`;
@@ -394,7 +396,7 @@ conexão.onDefinition((_params: ParametrosDeDefiniçãoDeTipo): Localização[] 
   }
   return null;
 
-}); 
+});
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events
@@ -409,7 +411,7 @@ conexão.listen();
 export function obtémPalavraSobCursor(linha: string, posicao: number): string {
   const regexPalavra = /\w+/g;
   let correspondência: RegExpExecArray | null; // RegExpExecArray é o tipo usado em correspondências de regex
-  while ((correspondência = regexPalavra.exec(linha))) { 
+  while ((correspondência = regexPalavra.exec(linha))) {
     // sempre que encontrar uma correspondência, isto é, uma palavra sob o cursor
     if (correspondência.index <= posicao && regexPalavra.lastIndex >= posicao) {
       // Se correspondência atual estiver na posição do cursor
@@ -428,7 +430,7 @@ export function recuaParaAPalavraAnterior(linha: string, índiceAtual: number): 
     // recua para a última palavra da linha anterior
     let palavraAnterior = recuaParaAPalavraAnterior(linhaAnterior, linhaAnterior.length);
     return palavraAnterior;
-  ;} 
+  ;}
   let conteúdoAnterior = linha.slice(0, índiceAtual).trimEnd();
   let partes = conteúdoAnterior.split(/\s+/);
   if (partes.length > 0) {
@@ -457,7 +459,7 @@ export function avançaParaAPalavraSeguinte(linha: string, índiceAtual: number)
 
 export function obterLinhaSeguinte(linhaAtual: string): string {
   // Esta função deve retornar a linha seguinte ao conteúdo da linha atual
-  
+
   // procura o índice da linha atual no array de linhas
   const linhas = linhaAtual.split(/\r?\n/g);
   const índiceLinhaAtual = linhas.indexOf(linhaAtual);
@@ -471,7 +473,7 @@ export function obterLinhaSeguinte(linhaAtual: string): string {
 }
 
 export function obterLinhaAnterior(linhaAtual: string): string {
-  // Esta função deve retornar a linha anterior ao conteúdo da linha atual  
+  // Esta função deve retornar a linha anterior ao conteúdo da linha atual
   // procura o índice da linha atual no array de linhas
   const linhas = linhaAtual.split(/\r?\n/g);
   const índiceLinhaAtual = linhas.indexOf(linhaAtual);
