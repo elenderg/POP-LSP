@@ -28,22 +28,127 @@ import {
 import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocument';
 
 import * as servidor from '../server';
+
 import {
-  obterPalavraSobCursor,
-  éNomeSímboloVálido
+  obterPalavraSobCursor
 } from './utils';
 
 import {
   encontrarDefiniçãoCache,
-  SymbolInfo
+  cacheSímbolos
 } from './symbols';
 
+import {
+  éPalavraChave,
+  éNomeSímboloVálido,
+  extrairNomeSímbolo
+} from './keywords';
+
 /**
- * Handler para "Implementações"
- * Encontra implementações de rotinas e funções em Português Puro
- * Em PP, implementação é onde a rotina/função é efetivamente definida
+ * Padrões específicos para detectar implementações (rotinas/funções) em Português Puro
  */
-export default servidor.conexão.onImplementation((_params: ParametrosDeImplementação): Localização[] | LinkDeLocalização[] | null | undefined => {
+const padrõesImplementações = {
+  // Declaração de rotina: "Rotina para que se adicione uma cor e um rótulo para um menu:"
+  rotina: /(?:Rotina|rotina)\s+(?:para\s+que\s+se\s+)?(.+?)(?=\:|\n)/i,
+
+  // Declaração de função: "Função para que se determine se um número é negativo:"
+  função: /(?:Função|função)\s+(?:para\s+que\s+se\s+(?:determine\s+se\s+)?)?(.+?)(?=\:|\n)/i,
+
+  // Padrão genérico para "para que se"
+  genérico: /(?:para\s+que\s+se\s+)(.+?)(?=\:|\n)/i
+};
+
+/**
+ * Função para buscar implementações (rotinas/funções) no documento
+ */
+function buscarImplementaçãoLocal(termo: string, documento: DocumentoDeTexto): Localização | null {
+  const textoCompleto = documento.getText();
+  const linhas = textoCompleto.split(/\r?\n/);
+
+  for (let i = 0; i < linhas.length; i++) {
+    const linha = linhas[i].trim();
+
+    // Verificar cada padrão de implementação
+    for (const [tipo, padrão] of Object.entries(padrõesImplementações)) {
+      const correspondência = padrão.exec(linha);
+      if (correspondência) {
+        const nomeExtraído = extrairNomeSímbolo(correspondência[1]);
+
+        if (nomeExtraído.toLowerCase().includes(termo.toLowerCase()) ||
+            termo.toLowerCase().includes(nomeExtraído.toLowerCase())) {
+
+          // Encontrar a posição do nome na linha
+          const posiçãoNome = linha.toLowerCase().indexOf(nomeExtraído.toLowerCase());
+          if (posiçãoNome !== -1) {
+            const posiçãoInício = Posição.create(i, posiçãoNome);
+            const posiçãoFim = Posição.create(i, posiçãoNome + nomeExtraído.length);
+            const intervalo = Intervalo.create(posiçãoInício, posiçãoFim);
+
+            console.log(`Implementação encontrada (${tipo}): "${nomeExtraído}" na linha ${i + 1}`);
+            return Localização.create(documento.uri, intervalo);
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Função para verificar se um símbolo no cache é uma implementação (rotina/função)
+ */
+function éImplementaçãoNoCache(nomeSímbolo: string): boolean {
+  const símbolos = cacheSímbolos.símbolos.get(nomeSímbolo);
+  if (!símbolos) {
+    return false;
+  }
+
+  return símbolos.some(símbolo => símbolo.tipo === 'rotina' || símbolo.tipo === 'função');
+}
+
+/**
+ * Função principal para encontrar implementações
+ */
+function encontrarImplementação(termo: string, documento: DocumentoDeTexto): Localização | null {
+  if (!termo || !documento) {
+    return null;
+  }
+
+  // Verificar se é uma palavra-chave
+  if (éPalavraChave(termo)) {
+    console.log(`Termo "${termo}" é uma palavra-chave, ignorando...`);
+    return null;
+  }
+
+  // Verificar se é um nome de símbolo válido
+  if (!éNomeSímboloVálido(termo)) {
+    console.log(`Termo "${termo}" não é um nome de símbolo válido...`);
+    return null;
+  }
+
+  // Primeiro, buscar no cache de símbolos global (apenas rotinas/funções)
+  const definiçãoCache = encontrarDefiniçãoCache(termo, documento.uri);
+  if (definiçãoCache && (definiçãoCache.tipo === 'rotina' || definiçãoCache.tipo === 'função')) {
+    console.log(`Implementação encontrada no cache: "${termo}"`);
+    return Localização.create(definiçãoCache.caminhoArquivo, definiçãoCache.intervalo);
+  }
+
+  // Se não encontrou no cache, buscar localmente no documento atual
+  const implementaçãoLocal = buscarImplementaçãoLocal(termo, documento);
+  if (implementaçãoLocal) {
+    console.log(`Implementação encontrada localmente: "${termo}"`);
+    return implementaçãoLocal;
+  }
+
+  console.log(`Nenhuma implementação encontrada para: "${termo}"`);
+  return null;
+}
+
+/**
+ * Handler LSP para funcionalidade "Ir Para Implementação"
+ */
+export default servidor.conexão.onImplementation((_params: ParametrosDeImplementação): Localização[] | null | undefined => {
   const documento = servidor.documentos.get(_params.textDocument.uri);
   if (!documento) {
     return null;
@@ -61,67 +166,16 @@ export default servidor.conexão.onImplementation((_params: ParametrosDeImplemen
 
     console.log(`Procurando implementação para: "${palavra}"`);
 
-    // Buscar especificamente implementações (rotinas/funções) no cache
-    const símbolo = encontrarDefiniçãoCache(palavra, documento.uri);
-    if (símbolo && (símbolo.tipo === 'rotina' || símbolo.tipo === 'função')) {
-      console.log(`Implementação encontrada para: "${palavra}"`);
-      return [Localização.create(símbolo.caminhoArquivo, símbolo.intervalo)] as LinkDeLocalização[] | Localização[];
-    }
+    // Buscar implementação
+    const implementação = encontrarImplementação(palavra, documento);
 
-    // Se não encontrou no cache, fazer busca manual por rotinas/funções
-    const implementação = buscarImplementaçãoLocal(documento, palavra);
     if (implementação) {
-      console.log(`Implementação encontrada localmente para: "${palavra}"`);
-      return [implementação] as LinkDeLocalização[] | Localização[];
+      return [implementação];
     }
 
-    console.log(`Nenhuma implementação encontrada para: "${palavra}"`);
     return null;
   } catch (erro) {
     console.error('Erro no handler de implementação:', erro);
     return null;
   }
 });
-
-/**
- * Busca implementações (rotinas/funções) no documento local
- */
-function buscarImplementaçãoLocal(documento: DocumentoDeTexto, termo: string): Localização | null {
-  const textoDoDocumento = documento.getText();
-
-  // Padrões específicos para rotinas e funções em Português Puro
-  const padrõesImplementações = [
-    // "Rotina para que se adicione uma cor e um rótulo para um menu:"
-    /(?:Rotina|rotina)\s+(?:para\s+que\s+se\s+)?(.+?)(?=\:|\n)/gi,
-
-    // "Função para que se determine se um número é negativo:"
-    /(?:Função|função)\s+(?:para\s+que\s+se\s+(?:determine\s+se\s+)?)?(.+?)(?=\:|\n)/gi,
-
-    // Busca simples por "para que se"
-    /(?:para\s+que\s+se\s+)(.+?)(?=\:|\n)/gi
-  ];
-
-  for (const padrão of padrõesImplementações) {
-    let correspondência: RegExpExecArray | null;
-    padrão.lastIndex = 0; // Reset regex state
-
-    while ((correspondência = padrão.exec(textoDoDocumento)) !== null) {
-      const nomeRotina = correspondência[1]?.trim();
-
-      if (nomeRotina && nomeRotina.toLowerCase().includes(termo.toLowerCase())) {
-        const índiceDoTermo = textoDoDocumento.indexOf(nomeRotina);
-        if (índiceDoTermo !== -1) {
-          const linhasAntesDoTermo = textoDoDocumento.substring(0, índiceDoTermo).split(/\r?\n/g);
-          const linhaAtual = linhasAntesDoTermo.length - 1;
-          const caractereAtual = linhasAntesDoTermo[linhaAtual]?.length || 0;
-
-          const posição = Posição.create(linhaAtual, caractereAtual);
-          const intervalo = Intervalo.create(posição, Posição.create(linhaAtual, caractereAtual + nomeRotina.length));
-          return Localização.create(documento.uri, intervalo);
-        }
-      }
-    }
-  }
-
-  return null;
-}
