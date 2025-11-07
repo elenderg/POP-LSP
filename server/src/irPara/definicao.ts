@@ -26,68 +26,80 @@ import {
 } from 'vscode-languageserver/node';
 
 import {TextDocument as DocumentoDeTexto,} from 'vscode-languageserver-textdocument';
-/*
-import { getDocumentSettings, hasConfigurationCapability, hasWorkspaceFolderCapability } from '../configuracao';
-import { getDiagnostics } from '../diagnosticos';
-import { getCompletions } from '../completions';
-import { getHover } from '../hover';
-import { getDefinition } from '../definition';
-import { getTypeDefinition } from '../typeDefinition';
-import { getImplementation } from '../implementation';
-import { getReferences } from '../references';
-*/
 
 import * as servidor from '../server';
 import { create } from 'domain';
 
-export function irParaDefinição(termo: string, documentoAtual: DocumentoDeTexto) : Localização | LinkDeLocalização | null {
-  // Verifica o path do documento
-  const documentos = servidor.documentos;
-  let documento = documentoAtual;
-  let posição: Posição | null = null;
-  let intervalo: Intervalo | null = null;
-  let textoDoDocumento = documento.getText();
-  let linhas = textoDoDocumento.split(/\r?\n/g);
-  let linhaAtual = 0;
-  let caractereAtual = 0;
-  let encontrou = false;
-  let totalDeLinhas = linhas.length;
-  if(!documento) {return null;}
-  const expressão_regular = /(?<!\bSe\s)(Um|Uma|Uns|Umas|O|A|O|A)\s+(.+?)\s+(é|são)/is;
-  const correspondência = expressão_regular.exec(textoDoDocumento);
-  if (correspondência) {
-    // A variável "correspondência" é um array onde o primeiro elemento é a correspondência completa
-    // e os próximos elementos são os grupos capturados pela expressão regular
-    const termoCapturado = correspondência[2]; // O segundo grupo capturado é o termo que queremos
-    const índiceDoTermo = textoDoDocumento.indexOf(termoCapturado);
-    if (índiceDoTermo !== -1) {
-      // Calcula a linha e o caractere do termo capturado
-      const linhasAntesDoTermo = textoDoDocumento.substring(0, índiceDoTermo).split(/\r?\n/g);
-      linhaAtual = linhasAntesDoTermo.length - 1;
-      caractereAtual = linhasAntesDoTermo[linhaAtual].length;
-      posição = Posição.create(linhaAtual, caractereAtual);
-      intervalo = Intervalo.create(posição, Posição.create(linhaAtual, caractereAtual + termoCapturado.length));
-      return Localização.create(documento.uri, intervalo);
-    }
+import {
+  encontrarDefinição,
+  escanearSímbolosProjeto,
+  obterPalavraSobCursor,
+  éNomeSímboloVálido
+} from './utils';
+
+/**
+ * Função principal para encontrar definições de símbolos em Português Puro
+ * Implementa busca multi-arquivo usando cache de símbolos
+ */
+export function irParaDefinição(termo: string, documentoAtual: DocumentoDeTexto): Localização | LinkDeLocalização | null {
+  if (!termo || !documentoAtual) {
+    return null;
   }
-  return null;
+
+  // Validar se o termo é um nome de símbolo válido
+  if (!éNomeSímboloVálido(termo)) {
+    return null;
+  }
+
+  try {
+    // Usar a nova função de busca que utiliza o cache de símbolos
+    const definição = encontrarDefinição(termo, documentoAtual);
+    return definição;
+  } catch (erro) {
+    console.error(`Erro ao procurar definição para "${termo}":`, erro);
+    return null;
+  }
 }
 
-export default servidor.conexão.onDefinition((_params: ParametrosDeDefiniçãoDeTipo): Localização[] |LinkDeLocalização[] | null | undefined => {
+/**
+ * Handler LSP para funcionalidade "Ir Para Definição"
+ * Processa requisições de definição do cliente e retorna localizações
+ */
+export default servidor.conexão.onDefinition(async (_params: ParametrosDeDefiniçãoDeTipo): Promise<Localização[] | LinkDeLocalização[] | null | undefined> => {
   const documento = servidor.documentos.get(_params.textDocument.uri);
   if (!documento) {
     return null;
   }
-  let uri = documento.uri;
-  let intervalo: Intervalo;
-  intervalo = Intervalo.create(_params.position, _params.position);
-  // Cria uma localização inicial fictícia
-  let localização = Localização.create(uri, intervalo);
-  const linhaTexto = documento.getText(Intervalo.create(_params.position.line, 0, _params.position.line + 1, 0));
-  const palavra = servidor.obtémPalavraSobCursor(linhaTexto, _params.position.character);
-  let definição = irParaDefinição(palavra, documento);
-  if (definição) {
-    return [definição] as LinkDeLocalização[] | Localização[];
+
+  try {
+    // Extrair a palavra sob o cursor
+    const linhaTexto = documento.getText(Intervalo.create(_params.position.line, 0, _params.position.line + 1, 0));
+    const palavra = obterPalavraSobCursor(linhaTexto, _params.position.character);
+
+    // Se não há palavra válida, retornar null
+    if (!palavra || palavra.length === 0) {
+      return null;
+    }
+
+    console.log(`Procurando definição para: "${palavra}"`);
+
+    // Buscar definição usando o novo sistema
+    const definição = irParaDefinição(palavra, documento);
+
+    if (definição) {
+      // Log da definição encontrada (com type guard para LocationLink)
+      if ('uri' in definição) {
+        console.log(`Definição encontrada: ${definição.uri}`);
+      } else {
+        console.log('Definição encontrada (LocationLink)');
+      }
+      return [definição] as LinkDeLocalização[] | Localização[];
+    }
+
+    console.log(`Nenhuma definição encontrada para: "${palavra}"`);
+    return null;
+  } catch (erro) {
+    console.error('Erro no handler de definição:', erro);
+    return null;
   }
-  return null;
-}); 
+});
