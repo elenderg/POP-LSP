@@ -45,7 +45,7 @@
       "patterns": [
         {"name": "storage.type.function.Rotina.pop","match": "Rotina\\s*para\\s*que\\s*se"},
         {"name": "storage.type.function.Rotina.pop","match": "Função\\s*para\\s*que\\s*se"},
-        {"name": "storage.type.function.Rotina.pop","match": "determine\\s*se"}
+        {"name": "storage.type.function.FuncaoBooliana.pop","match": "determine\\s*se"}
       ]
     },
     "keyword": {
@@ -58,8 +58,12 @@
           "match": "\\b(?i:(deste|desta|destes|destas|dessa|dessas|desse|desses|dum|duma|dumas|duns|essa|essas|esse|esses|esta|estas|este|estes))\\b"},
         {"name": "string.other.parameters.begin.pop",
           "match": "\\b(a|as|o|os|um|uns|uma|umas)\\b"},
+        {"name": "keyword.control.conditional.popkeyword.control.flow",
+          "match": "\\b(?i:(se))\\b"},
+        {"name": "keyword.control.flow.pop",
+          "match": "\\b(?i:(retorne|pare|reitere|diga))\\b"},
         {"name": "keyword.control.pop",
-          "match": "\\b(?i:(desde|se))\\b|\\(referência\\)"},
+          "match": "\\b(?i:(desde))\\b|\\(referência\\)"},
         {"name": "keyword.control.adjetivos.pop",
           "match": "\\b(?i:(ativo|ativado|desativado|desligado|inativo|inativado|inexistente|ligado|nulo|original|próximo|vazia|vazias|vazio|vazios))\\b"},
         {"name": "keyword.control.preposicoes.pop",
