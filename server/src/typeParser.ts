@@ -207,6 +207,7 @@ export function parseTypeDeclarations(source: string): ParsedDocument {
 		periodIndex = source.indexOf('.', segmentStart);
 	}
 	const symbols = new TypeSymbolTable(declarations);
+	validateBaseTypes(declarations, symbols, diagnostics);
 	resolveFields(source, declarations, symbols, diagnostics);
 
 	return {
@@ -214,6 +215,22 @@ export function parseTypeDeclarations(source: string): ParsedDocument {
 		symbols,
 		diagnostics
 	};
+}
+
+function validateBaseTypes(
+	declarations: TypeDeclaration[],
+	symbols: TypeSymbolTable,
+	diagnostics: ParserDiagnostic[]
+): void {
+	for (const declaration of declarations) {
+		if (symbols.lookup(declaration.baseType.name)) {
+			continue;
+		}
+		diagnostics.push({
+			message: `Unknown base type "${declaration.baseType.name}".`,
+			range: declaration.baseType.range
+		});
+	}
 }
 
 function resolveFields(

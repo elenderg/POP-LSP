@@ -32,6 +32,8 @@ language-specific default.
   declared type `número`.
 - Type names are case-insensitive for lookup, and runs of whitespace (including
   line breaks and tabs) are normalized.
+- Unknown base types are reported as errors on the type name, including names
+  that differ from a declared type only by missing or incorrect accents.
 - End-to-end coverage for Go to Definition.
 
 ## Development

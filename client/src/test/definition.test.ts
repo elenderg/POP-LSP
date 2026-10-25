@@ -536,4 +536,40 @@ suite('Português Puro definitions', () => {
     assert.equal(referenceOnlyFieldDefinition.length, 1);
     assert.equal(referenceOnlyFieldDefinition[0].range.start.line, 0);
   });
+
+  test('Reports unknown base types without ignoring accent differences', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um dígito binário é um byte.',
+      'Uma caractere é um digito binario.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 1);
+    assert.equal(diagnostics[0].severity, vscode.DiagnosticSeverity.Error);
+    assert.equal(diagnostics[0].message, 'Unknown base type "digito binario".');
+    const misspelledStart = document.getText().lastIndexOf('digito binario');
+    assert.deepEqual(diagnostics[0].range, new vscode.Range(
+      document.positionAt(misspelledStart),
+      document.positionAt(misspelledStart + 'digito binario'.length)
+    ));
+
+    const misspelledOffset = misspelledStart + 3;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(misspelledOffset)
+    );
+    assert.deepEqual(definition, []);
+  });
 });
