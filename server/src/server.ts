@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 import {
 	createConnection,
+	Diagnostic,
+	DiagnosticSeverity,
 	InitializeResult,
 	Location,
 	ProposedFeatures,
@@ -29,7 +31,18 @@ connection.onInitialize((): InitializeResult => ({
 }));
 
 function updateDocumentSymbols(document: TextDocument): void {
-	parsedDocuments.set(document.uri, parseTypeDeclarations(document.getText()));
+	const parsedDocument = parseTypeDeclarations(document.getText());
+	parsedDocuments.set(document.uri, parsedDocument);
+	const diagnostics: Diagnostic[] = parsedDocument.diagnostics.map(diagnostic => ({
+		severity: DiagnosticSeverity.Error,
+		range: {
+			start: document.positionAt(diagnostic.range.start),
+			end: document.positionAt(diagnostic.range.end)
+		},
+		message: diagnostic.message,
+		source: 'portugues-puro'
+	}));
+	connection.sendDiagnostics({ uri: document.uri, diagnostics });
 }
 
 documents.onDidOpen(({ document }) => {
@@ -46,6 +59,7 @@ documents.onDidSave(({ document }) => {
 
 documents.onDidClose(({ document }) => {
 	parsedDocuments.delete(document.uri);
+	connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 });
 
 connection.onDefinition((params: TextDocumentPositionParams) => {

@@ -311,4 +311,177 @@ suite('Português Puro definitions', () => {
     assert.equal(definitions.length, 1);
     assert.equal(definitions[0].range.start.line, 0);
   });
+
+  test('Parses union fields introduced by sob without absorbing the target into the field name', async () => {
+    await activate(docUri);
+    await setTestContent([
+      'Uma word é uma estrutura com',
+      '  Um byte denominado byte inicial e',
+      '  Um byte denominado byte final.',
+      'Um número é uma estrutura com',
+      '  Um byte denominado primeiro byte,',
+      '  Um byte denominado segundo byte,',
+      '  Um byte denominado terceiro byte,',
+      '  Um byte denominado quarto byte,',
+      '  Uma word denominada word de ordem inferior sob o primeiro byte,',
+      '  Uma word denominada word de ordem superior sob o terceiro byte,',
+      '  Uma word denominada palavra baixa sob a primeira word,',
+      '  Uma word denominada palavra alta sob a segunda word,',
+      '  Uma word denominada palavras baixas sob os primeiros bytes,',
+      '  Uma word denominada palavras altas sob os últimos bytes.',
+      'Uma medida é um número.'
+    ].join('\n'));
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const unionTypeOffsets = [...text.matchAll(/word denominada/gu)]
+      .map(match => match.index! + 2);
+    assert.equal(unionTypeOffsets.length, 6);
+    for (const offset of unionTypeOffsets) {
+      const unionTypeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+      assert.ok(unionTypeDefinition);
+      assert.equal(unionTypeDefinition.length, 1);
+      assert.equal(unionTypeDefinition[0].range.start.line, 0);
+    }
+
+    const numberReferenceOffset = text.lastIndexOf('número') + 2;
+    const numberDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(numberReferenceOffset)
+    );
+
+    assert.ok(numberDefinition);
+    assert.equal(numberDefinition.length, 1);
+    assert.equal(numberDefinition[0].range.start.line, 3);
+  });
+
+  test('Accepts byte arrays and reports arrays of other element types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura com',
+      '  4 bytes,',
+      '  4 palavras.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 1);
+    assert.equal(diagnostics[0].severity, vscode.DiagnosticSeverity.Error);
+    assert.equal(diagnostics[0].message, 'Only contiguous arrays of byte are supported.');
+    assert.deepEqual(diagnostics[0].range, new vscode.Range(
+      new vscode.Position(2, 4),
+      new vscode.Position(2, 12)
+    ));
+  });
+
+  test('Infers field names and resolves type aliases from their longest suffix', async () => {
+    await activate(docUri);
+    await setTestContent([
+      'Um octeto é um byte.',
+      'Uma string é uma estrutura.',
+      'Um número é uma estrutura com',
+      '  Um primeiro byte,',
+      '  Um segundo byte,',
+      '  Um terceiro byte e',
+      '  Um quarto byte.',
+      'Uma caixa é uma estrutura com Um primeiro\tocteto e Um octeto denominado explícito.',
+      'Uma pessoa é uma estrutura com',
+      '  Uma string e',
+      '  Um número.'
+    ].join('\n'));
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const byteAliasOffset = text.indexOf('primeiro octeto') + 10;
+    const byteDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(byteAliasOffset)
+    );
+    assert.ok(byteDefinition);
+    assert.equal(byteDefinition.length, 1);
+
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma repetida é uma estrutura com',
+      '  Um byte,',
+      '  Um byte.',
+      'Uma palavra é uma estrutura.',
+      'Uma inválida é uma estrutura com',
+      '  Um campo inexistente e',
+      '  Uma palavra de ordem inferior.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 3);
+    assert.ok(diagnostics.some(diagnostic => diagnostic.message.includes('Duplicate field name')));
+    assert.equal(
+      diagnostics.filter(diagnostic => diagnostic.message.includes('No type matches field alias')).length,
+      2
+    );
+  });
+
+  test('Treats complete multi-word field names as a single definition reference', async () => {
+    await activate(docUri);
+    await setTestContent([
+      'Uma word é uma estrutura.',
+      'Uma word de ordem inferior é uma word.',
+      'Uma word de ordem superior é uma word.',
+      'Um número é uma estrutura com',
+      '  Uma word denominada word de ordem inferior,',
+      '  Uma word denominada word de ordem superior.',
+      'Uma estrutura de exemplo é uma estrutura com',
+      '  Um número,',
+      '  Um segundo número.'
+    ].join('\n'));
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const lowerFieldName = text.indexOf('word de ordem inferior', text.indexOf('Uma word denominada'));
+    for (const word of ['word', 'de', 'ordem', 'inferior']) {
+      const wordOffset = text.indexOf(word, lowerFieldName);
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(wordOffset)
+      );
+      assert.ok(definition);
+      assert.equal(definition.length, 1);
+      assert.equal(definition[0].range.start.line, 1);
+    }
+
+    const inferredNameStart = text.lastIndexOf('segundo número');
+    for (const word of ['segundo', 'número']) {
+      const wordOffset = text.indexOf(word, inferredNameStart);
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(wordOffset)
+      );
+      assert.ok(definition);
+      assert.equal(definition.length, 1);
+      assert.equal(definition[0].range.start.line, 3);
+    }
+  });
 });

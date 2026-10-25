@@ -14,9 +14,15 @@ language-specific default.
   changes, or is saved, and discarded when it closes.
 - Initial parser and type symbol table in `server/src/typeParser.ts`, recognizing
   dot-terminated type declarations, including `ponteiro para um tipo`,
-  structures with named fields, and the primitive type names `byte`/`bytes`
-  and `estrutura`/`estruturas`. `número` is a declared structure type, not a
-  primitive.
+  structures with named fields, and union fields using `sob o/a/os/as`. The
+  primitive type names are `byte`/`bytes` and `estrutura`/`estruturas`.
+  `número` is a declared structure type, not a primitive.
+- Structure fields may include an unnamed contiguous byte array, such as
+  `4 bytes.`. Other array element types are reported as errors.
+- A field may omit `denominado/a/os/as` to infer its name from the field type.
+  Multi-word aliases such as `primeiro byte` are resolved by removing leading
+  words until a known type suffix is found; unresolved aliases and duplicate
+  field names are reported as errors.
 - Scalar declarations can use integer multipliers (for example,
   `Uma dezena são 10 unidades.`). Type lookup accepts generated plural names,
   and scalar types store their reduced scale as a fraction relative to the

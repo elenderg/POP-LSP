@@ -11,9 +11,26 @@ export interface TypeReference {
 	range: SourceRange;
 }
 
-export interface TypeField {
+export interface NamedTypeField {
+	kind: 'named';
 	type: TypeReference;
 	name: TypeReference;
+	unionTarget?: TypeReference;
+	usesTypeAlias: boolean;
+}
+
+export interface ByteArrayField {
+	kind: 'byte-array';
+	count: string;
+	elementType: TypeReference;
+	range: SourceRange;
+}
+
+export type TypeField = NamedTypeField | ByteArrayField;
+
+export interface ParserDiagnostic {
+	message: string;
+	range: SourceRange;
 }
 
 export interface TypeDeclaration {
@@ -156,6 +173,7 @@ function isNumberTypeName(name: string): boolean {
 export interface ParsedDocument {
 	declarations: TypeDeclaration[];
 	symbols: TypeSymbolTable;
+	diagnostics: ParserDiagnostic[];
 }
 
 const indefiniteArticles = new Set(['um', 'uma', 'uns', 'umas']);
@@ -175,22 +193,85 @@ function pluralizeTypeName(name: string): string {
 
 export function parseTypeDeclarations(source: string): ParsedDocument {
 	const declarations: TypeDeclaration[] = [];
+	const diagnostics: ParserDiagnostic[] = [];
 	let segmentStart = 0;
 	let periodIndex = source.indexOf('.', segmentStart);
 
 	while (periodIndex !== -1) {
-		const declaration = parseDeclaration(source, segmentStart, periodIndex);
+		const declaration = parseDeclaration(source, segmentStart, periodIndex, diagnostics);
 		if (declaration) {
 			declarations.push(declaration);
 		}
 		segmentStart = periodIndex + 1;
 		periodIndex = source.indexOf('.', segmentStart);
 	}
+	const symbols = new TypeSymbolTable(declarations);
+	resolveFields(source, declarations, symbols, diagnostics);
 
 	return {
 		declarations,
-		symbols: new TypeSymbolTable(declarations)
+		symbols,
+		diagnostics
 	};
+}
+
+function resolveFields(
+	source: string,
+	declarations: TypeDeclaration[],
+	symbols: TypeSymbolTable,
+	diagnostics: ParserDiagnostic[]
+): void {
+	for (const declaration of declarations) {
+		const fields = declaration.fields?.filter(
+			(field): field is NamedTypeField => field.kind === 'named'
+		) ?? [];
+		const fieldNames = new Map<string, TypeReference>();
+
+		for (const field of fields) {
+			let resolvedType: TypeReference | undefined;
+			if (field.usesTypeAlias) {
+				const aliasText = source.slice(field.name.range.start, field.name.range.end);
+				const words = [...aliasText.matchAll(/\S+/gu)];
+				for (let firstWord = 0; firstWord < words.length; firstWord++) {
+					const candidateName = words.slice(firstWord).map(word => word[0]).join(' ');
+					if (!symbols.lookup(candidateName)) {
+						continue;
+					}
+					const typeStart = field.name.range.start + words[firstWord].index!;
+					resolvedType = createTypeReference(source, {
+						start: typeStart,
+						end: field.name.range.end
+					});
+					break;
+				}
+				if (!resolvedType) {
+					diagnostics.push({
+						message: `No type matches field alias "${field.name.name}".`,
+						range: field.name.range
+					});
+				} else {
+					field.type = resolvedType;
+				}
+			} else if (symbols.lookup(field.type.name)) {
+				resolvedType = field.type;
+			} else {
+				diagnostics.push({
+					message: `Unknown field type "${field.type.name}".`,
+					range: field.type.range
+				});
+			}
+
+			const fieldName = normalizeTypeName(field.name.name);
+			if (fieldNames.has(fieldName)) {
+				diagnostics.push({
+					message: `Duplicate field name "${field.name.name}".`,
+					range: field.name.range
+				});
+			} else {
+				fieldNames.set(fieldName, field.name);
+			}
+		}
+	}
 }
 
 function parseFraction(fraction: string): [bigint, bigint] {
@@ -217,17 +298,35 @@ export function findTypeReferenceAtOffset(
 	offset: number
 ): TypeReference | undefined {
 	for (const declaration of parsedDocument.declarations) {
-		for (const reference of [
+		const declarationReferences = [
 			declaration.name,
 			declaration.baseType,
-			declaration.pointedType,
-			...(declaration.fields ?? []).map(field => field.type)
-		]) {
+			declaration.pointedType
+		];
+		for (const reference of declarationReferences) {
 			if (!reference) {
 				continue;
 			}
 			if (offset >= reference.range.start && offset <= reference.range.end) {
 				return reference;
+			}
+		}
+
+		for (const field of declaration.fields ?? []) {
+			if (field.kind === 'byte-array') {
+				if (offset >= field.elementType.range.start && offset <= field.elementType.range.end) {
+					return field.elementType;
+				}
+				continue;
+			}
+
+			if (offset >= field.name.range.start && offset <= field.name.range.end) {
+				return parsedDocument.symbols.lookup(field.name.name)
+					? field.name
+					: field.type;
+			}
+			if (offset >= field.type.range.start && offset <= field.type.range.end) {
+				return field.type;
 			}
 		}
 	}
@@ -237,7 +336,8 @@ export function findTypeReferenceAtOffset(
 function parseDeclaration(
 	source: string,
 	segmentStart: number,
-	periodIndex: number
+	periodIndex: number,
+	diagnostics: ParserDiagnostic[]
 ): TypeDeclaration | undefined {
 	let contentStart = segmentStart;
 	while (contentStart < periodIndex && /\s/u.test(source[contentStart])) {
@@ -286,10 +386,12 @@ function parseDeclaration(
 			pointedType = createTypeReference(source, pointedNameRange);
 		}
 		if (fieldsKeyword) {
-			fields = parseFields(source, fieldsKeyword.end, periodIndex);
-			if (!fields) {
+			const parsedFields = parseFields(source, fieldsKeyword.end, periodIndex);
+			if (!parsedFields) {
 				return undefined;
 			}
+			fields = parsedFields.fields;
+			diagnostics.push(...parsedFields.diagnostics);
 		}
 	}
 
@@ -320,31 +422,75 @@ function parseDeclaration(
 	};
 }
 
-function parseFields(source: string, start: number, end: number): TypeField[] | undefined {
+function parseFields(
+	source: string,
+	start: number,
+	end: number
+): { fields: TypeField[]; diagnostics: ParserDiagnostic[] } | undefined {
 	const fields: TypeField[] = [];
+	const diagnostics: ParserDiagnostic[] = [];
 	let fieldStart = start;
 
 	while (fieldStart < end) {
+		const count = readInteger(source, fieldStart, end);
+		if (count) {
+			const typeStart = skipWhitespace(source, count.end, end);
+			const separator = findFieldSeparator(source, typeStart, end);
+			const typeRange = trimRange(source, typeStart, separator?.start ?? end);
+			if (typeRange.start === typeRange.end) {
+				return undefined;
+			}
+			const elementType = createTypeReference(source, typeRange);
+			fields.push({
+				kind: 'byte-array',
+				count: count.value,
+				elementType,
+				range: { start: count.start, end: typeRange.end }
+			});
+			if (!['byte', 'bytes'].includes(elementType.normalizedName)) {
+				diagnostics.push({
+					message: 'Only contiguous arrays of byte are supported.',
+					range: typeRange
+				});
+			}
+			if (!separator) {
+				break;
+			}
+			fieldStart = separator.nextStart;
+			continue;
+		}
+
 		const article = readWord(source, fieldStart, end);
 		if (!article || !indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
 			return undefined;
 		}
 
-		const marker = findFieldMarker(source, article.end, end);
-		if (!marker) {
+		const separator = findFieldSeparator(source, article.end, end);
+		const fieldEnd = separator?.start ?? end;
+		const marker = findFieldMarker(source, article.end, fieldEnd);
+		const explicitName = marker !== undefined;
+		const contentStart = explicitName ? marker.end : article.end;
+		const unionMarker = findWord(source, contentStart, fieldEnd, 'sob');
+		const nameRange = trimRange(source, contentStart, unionMarker?.start ?? fieldEnd);
+		const typeRange = explicitName
+			? trimRange(source, article.end, marker.start)
+			: nameRange;
+		if (typeRange.start === typeRange.end || nameRange.start === nameRange.end) {
 			return undefined;
 		}
-		const typeRange = trimRange(source, article.end, marker.start);
-		const nameStart = marker.end;
-		const separator = findFieldSeparator(source, nameStart, end);
-		const nameRange = trimRange(source, nameStart, separator?.start ?? end);
-		if (typeRange.start === typeRange.end || nameRange.start === nameRange.end) {
+		const unionTarget = unionMarker
+			? parseUnionTarget(source, unionMarker.end, fieldEnd)
+			: undefined;
+		if (unionMarker && !unionTarget) {
 			return undefined;
 		}
 
 		fields.push({
+			kind: 'named',
 			type: createTypeReference(source, typeRange),
-			name: createTypeReference(source, nameRange)
+			name: createTypeReference(source, nameRange),
+			unionTarget,
+			usesTypeAlias: !explicitName
 		});
 		if (!separator) {
 			break;
@@ -352,7 +498,27 @@ function parseFields(source: string, start: number, end: number): TypeField[] | 
 		fieldStart = separator.nextStart;
 	}
 
-	return fields.length > 0 ? fields : undefined;
+	return fields.length > 0 ? { fields, diagnostics } : undefined;
+}
+
+function skipWhitespace(source: string, start: number, end: number): number {
+	while (start < end && /\s/u.test(source[start])) {
+		start++;
+	}
+	return start;
+}
+
+function parseUnionTarget(source: string, start: number, end: number): TypeReference | undefined {
+	const article = readWord(source, start, end);
+	if (!article || !new Set(['o', 'a', 'os', 'as']).has(article.value.toLocaleLowerCase('pt-BR'))) {
+		return undefined;
+	}
+
+	const targetRange = trimRange(source, article.end, end);
+	if (targetRange.start === targetRange.end) {
+		return undefined;
+	}
+	return createTypeReference(source, targetRange);
 }
 
 function findFieldMarker(
@@ -386,7 +552,7 @@ function findFieldSeparator(
 ): { start: number; nextStart: number } | undefined {
 	const commaIndex = source.indexOf(',', start);
 	let separator = commaIndex !== -1 && commaIndex < end
-		? { start: commaIndex, nextStart: commaIndex + 1 }
+		? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
 		: undefined;
 	const words = /\p{L}+/gu;
 	words.lastIndex = start;
@@ -403,9 +569,14 @@ function findFieldSeparator(
 		if (separator && separator.start < match.index) {
 			break;
 		}
-		const nextArticle = readWord(source, wordEnd, end);
-		if (nextArticle && indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR'))) {
-			separator = { start: match.index, nextStart: nextArticle.start };
+		const nextStart = skipWhitespace(source, wordEnd, end);
+		const nextArticle = readWord(source, nextStart, end);
+		const nextCount = readInteger(source, nextStart, end);
+		if (
+			(nextArticle && indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR'))) ||
+			nextCount
+		) {
+			separator = { start: match.index, nextStart };
 			break;
 		}
 	}
