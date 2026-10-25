@@ -1,11 +1,11 @@
 {
-  "editor.insertSpaces": true,
-  "typescript.tsc.autoDetect": "off",
-  "typescript.preferences.quoteStyle": "single",
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "eslint.codeAction.disableRuleComment": {
-    "enable": false
-  }
+	"editor.insertSpaces": false,
+	"js/ts.tsc.autoDetect": "off",
+	"typescript.preferences.quoteStyle": "single",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	},
+	"[portugues-puro]": {
+		"files.encoding": "windows1252"
+	}
 }

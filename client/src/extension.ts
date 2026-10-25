@@ -3,80 +3,58 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as endereço from 'path';
-import { 
-  workspace as espaçoDeTrabalho, 
-  ExtensionContext as ContextoDeExtensão
-} from 'vscode';
+import * as path from 'path';
+import { workspace, ExtensionContext } from 'vscode';
 
 import {
-  LanguageClient as ClienteDeLinguagem,
-  LanguageClientOptions as OpçõesDoClienteDeLinguagem,
-  ServerOptions as OpçõesDoServidor,
-  TransportKind as TipoDeTransporte
+	LanguageClient,
+	LanguageClientOptions,
+	ServerOptions,
+	TransportKind
 } from 'vscode-languageclient/node';
-import * as vscode from 'vscode';
-let cliente: ClienteDeLinguagem;
 
+let client: LanguageClient;
 
-export function activate(contexto: ContextoDeExtensão) {
-  console.log('Extensão do cliente foi ativada!');
-  const executávelDoServidor = contexto.asAbsolutePath(endereço.join('server', 'out', 'server.js'));
+export function activate(context: ExtensionContext) {
+	// The server is implemented in node
+	const serverModule = context.asAbsolutePath(
+		path.join('server', 'out', 'server.js')
+	);
 
-  const opçõesDoServidor: OpçõesDoServidor = {
-    run:     {module: executávelDoServidor,transport: TipoDeTransporte.ipc},
-    debug:   {module: executávelDoServidor,transport: TipoDeTransporte.ipc,}
-  };
+	// If the extension is launched in debug mode then the debug server options are used
+	// Otherwise the run options are used
+	const serverOptions: ServerOptions = {
+		run: { module: serverModule, transport: TransportKind.ipc },
+		debug: {
+			module: serverModule,
+			transport: TransportKind.ipc,
+		}
+	};
 
-  const opçõesDoCliente: OpçõesDoClienteDeLinguagem = {
-    documentSelector: [      
-      { scheme: 'file',language: 'pop'}
-    ],
-    synchronize: {
-      // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: espaçoDeTrabalho.createFileSystemWatcher('**/.clientrc')
-    }
-  };
+	// Options to control the language client
+	const clientOptions: LanguageClientOptions = {
+		documentSelector: [{ scheme: 'file', language: 'portugues-puro' }],
+		synchronize: {
+			// Notify the server about file changes to '.clientrc files contained in the workspace
+			fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+		}
+	};
 
-  cliente = new ClienteDeLinguagem(
-    'languageServerExample',
-    'Language Server Example',
-    opçõesDoServidor,
-    opçõesDoCliente
-  );
+	// Create the language client and start the client.
+	client = new LanguageClient(
+		'languageServerExample',
+		'Language Server Example',
+		serverOptions,
+		clientOptions
+	);
 
-
-  // Comando personalizado
-  contexto.subscriptions.push(
-    vscode.commands.registerCommand(
-      'meuLsp.enviarSelecao', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {return;}
-
-        const selecao = editor.selection;
-        const textoSelecionado = editor.document.getText(selecao);
-
-        const resposta = await cliente.sendRequest(
-          'selecaoTexto', {
-            uri: editor.document.uri.toString(),
-            range: {
-              start: selecao.start,
-              end: selecao.end,
-              },
-            texto: textoSelecionado,
-          }
-        );
-
-        vscode.window.showInformationMessage('Resposta do servidor: ' + resposta);
-      }
-    )
-  );
-  cliente.start();
+	// Start the client. This will also launch the server
+	client.start();
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!cliente) {
-    return undefined;
-  }
-  return cliente.stop();
+	if (!client) {
+		return undefined;
+	}
+	return client.stop();
 }

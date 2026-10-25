@@ -1,37 +1,35 @@
-# LSP Example
+# Português Puro Language Server
 
-Heavily documented sample code for https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
+The VS Code extension recognizes Português Puro source files with the `.pop`
+extension. The workspace configures `windows1252` for the `portugues-puro`
+language ID in `.vscode/settings.json`; the extension also contributes this
+language-specific default.
 
 ## Functionality
 
-This Language Server works for plain text file. It has the following language features:
-- Completions
-- Diagnostics regenerated on each file change or configuration change
+- Go to Definition for declared types, including multi-word names and
+  declarations in other open `.pop` documents, as well as both the base type
+  and pointed-to type in pointer declarations.
+- Each open document's symbol table is refreshed when the document opens,
+  changes, or is saved, and discarded when it closes.
+- Initial parser and type symbol table in `server/src/typeParser.ts`, recognizing
+  dot-terminated type declarations, including `ponteiro para um tipo`,
+  structures with named fields, and the primitive type names `byte`/`bytes`
+  and `estrutura`/`estruturas`. `número` is a declared structure type, not a
+  primitive.
+- Scalar declarations can use integer multipliers (for example,
+  `Uma dezena são 10 unidades.`). Type lookup accepts generated plural names,
+  and scalar types store their reduced scale as a fraction relative to the
+  declared type `número`.
+- Type names are case-insensitive for lookup, and runs of whitespace (including
+  line breaks and tabs) are normalized.
+- End-to-end coverage for Go to Definition.
 
-It also includes an End-to-End test.
+## Development
 
-## Structure
-
-```
-.
-├── client // Language Client
-│   ├── src
-│   │   ├── test // End to End tests for Language Client / Server
-│   │   └── extension.ts // Language Client entry point
-├── package.json // The extension manifest.
-└── server // Language Server
-    └── src
-        └── server.ts // Language Server entry point
-```
-
-## Running the Sample
-
-- Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder
-- Open VS Code on this folder.
-- Press Ctrl+Shift+B to start compiling the client and server in [watch mode](https://code.visualstudio.com/docs/editor/tasks#:~:text=The%20first%20entry%20executes,the%20HelloWorld.js%20file.).
-- Switch to the Run and Debug View in the Sidebar (Ctrl+Shift+D).
-- Select `Launch Client` from the drop down (if it is not already).
-- Press ▷ to run the launch config (F5).
-- In the [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, open a document in 'plain text' language mode.
-  - Type `j` or `t` to see `Javascript` and `TypeScript` completion.
-  - Enter text content such as `AAA aaa BBB`. The extension will emit diagnostics for all words in all-uppercase.
+- Run `npm install` in this folder to install the client and server dependencies.
+- Open this folder in VS Code and press Ctrl+Shift+B to compile in watch mode.
+- Press F5 and open a `.pop` file in the Extension Development Host to test the
+  language server.
+- Run `npm test` to compile and execute the VS Code end-to-end tests against
+  this workspace, including the language-specific encoding setting.
