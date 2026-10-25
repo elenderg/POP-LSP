@@ -484,4 +484,56 @@ suite('Português Puro definitions', () => {
       assert.equal(definition[0].range.start.line, 3);
     }
   });
+
+  test('Parses reference field markers as field terminators, not navigable names', async () => {
+    await activate(docUri);
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um marcador do pdf é uma estrutura.',
+      'Um pdf state é uma estrutura com',
+      '  Um marcador do pdf denominado marcador (referência),',
+      '  Um segundo número (referência) e',
+      '  Um número denominado número armazenado.'
+    ].join('\n'));
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const markerOffset = text.indexOf('(referência)') + 3;
+    const markerDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(markerOffset)
+    );
+    assert.deepEqual(markerDefinition, []);
+
+    const fieldNameOffset = text.indexOf('marcador (referência)') + 2;
+    const fieldNameDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(fieldNameOffset)
+    );
+    assert.ok(fieldNameDefinition);
+    assert.equal(fieldNameDefinition.length, 1);
+    assert.equal(fieldNameDefinition[0].range.start.line, 1);
+
+    const inferredTypeOffset = text.indexOf('segundo número') + 2;
+    const inferredTypeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(inferredTypeOffset)
+    );
+    assert.ok(inferredTypeDefinition);
+    assert.equal(inferredTypeDefinition.length, 1);
+    assert.equal(inferredTypeDefinition[0].range.start.line, 0);
+
+    const referenceOnlyNameOffset = text.indexOf('(referência)', text.indexOf('segundo número')) - 2;
+    const referenceOnlyFieldDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(referenceOnlyNameOffset)
+    );
+    assert.ok(referenceOnlyFieldDefinition);
+    assert.equal(referenceOnlyFieldDefinition.length, 1);
+    assert.equal(referenceOnlyFieldDefinition[0].range.start.line, 0);
+  });
 });

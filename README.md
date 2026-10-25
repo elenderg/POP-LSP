@@ -23,6 +23,9 @@ language-specific default.
   Multi-word aliases such as `primeiro byte` are resolved by removing leading
   words until a known type suffix is found; unresolved aliases and duplicate
   field names are reported as errors.
+- Structure fields may end with `(referência)` to mark that the field stores a
+  reference to its type. The marker is excluded from the field name and is not
+  treated as a type reference for navigation.
 - Scalar declarations can use integer multipliers (for example,
   `Uma dezena são 10 unidades.`). Type lookup accepts generated plural names,
   and scalar types store their reduced scale as a fraction relative to the

@@ -17,6 +17,7 @@ export interface NamedTypeField {
 	name: TypeReference;
 	unionTarget?: TypeReference;
 	usesTypeAlias: boolean;
+	isReference: boolean;
 }
 
 export interface ByteArrayField {
@@ -470,8 +471,10 @@ function parseFields(
 		const marker = findFieldMarker(source, article.end, fieldEnd);
 		const explicitName = marker !== undefined;
 		const contentStart = explicitName ? marker.end : article.end;
-		const unionMarker = findWord(source, contentStart, fieldEnd, 'sob');
-		const nameRange = trimRange(source, contentStart, unionMarker?.start ?? fieldEnd);
+		const referenceMarker = findReferenceMarker(source, contentStart, fieldEnd);
+		const contentEnd = referenceMarker?.start ?? fieldEnd;
+		const unionMarker = findWord(source, contentStart, contentEnd, 'sob');
+		const nameRange = trimRange(source, contentStart, unionMarker?.start ?? contentEnd);
 		const typeRange = explicitName
 			? trimRange(source, article.end, marker.start)
 			: nameRange;
@@ -479,7 +482,7 @@ function parseFields(
 			return undefined;
 		}
 		const unionTarget = unionMarker
-			? parseUnionTarget(source, unionMarker.end, fieldEnd)
+			? parseUnionTarget(source, unionMarker.end, contentEnd)
 			: undefined;
 		if (unionMarker && !unionTarget) {
 			return undefined;
@@ -490,7 +493,8 @@ function parseFields(
 			type: createTypeReference(source, typeRange),
 			name: createTypeReference(source, nameRange),
 			unionTarget,
-			usesTypeAlias: !explicitName
+			usesTypeAlias: !explicitName,
+			isReference: referenceMarker !== undefined
 		});
 		if (!separator) {
 			break;
@@ -499,6 +503,19 @@ function parseFields(
 	}
 
 	return fields.length > 0 ? { fields, diagnostics } : undefined;
+}
+
+function findReferenceMarker(
+	source: string,
+	start: number,
+	end: number
+): { start: number; end: number } | undefined {
+	const marker = /\(\s*referência\s*\)/giu;
+	marker.lastIndex = start;
+	const match = marker.exec(source);
+	return match && match.index < end && match.index + match[0].length <= end
+		? { start: match.index, end: match.index + match[0].length }
+		: undefined;
 }
 
 function skipWhitespace(source: string, start: number, end: number): number {
