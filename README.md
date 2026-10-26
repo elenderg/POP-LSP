@@ -34,6 +34,18 @@ language-specific default.
   line breaks and tabs) are normalized.
 - Unknown base types are reported as errors on the type name, including names
   that differ from a declared type only by missing or incorrect accents.
+- Global variables use the definite articles `o`, `os`, `a`, and `as` and are
+  stored in a symbol catalog separate from types. Their declared types are
+  checked against the type catalog.
+- Global variables declared as structures may contain fields, using the same
+  named, inferred, aliased, union, byte-array, and reference-marker rules as
+  structure types.
+- Global variables may be initialized with signed 32-bit integers, fractions,
+  mixed numbers, hexadecimal values, or quoted strings. String literals support
+  doubled quotes as escapes and reject control characters.
+- Global variable types may be inferred from abbreviated literal initializers:
+  integers infer `número`, fractions and mixed numbers infer `fração`,
+  hexadecimal values infer `texto hexadecimal`, and strings infer `string`.
 - End-to-end coverage for Go to Definition.
 
 ## Development

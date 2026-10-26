@@ -572,4 +572,205 @@ suite('Português Puro definitions', () => {
     );
     assert.deepEqual(definition, []);
   });
+
+  test('Parses global variables into a separate catalog from types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma cor é uma estrutura.',
+      'Uma aba é uma estrutura.',
+      'Um número é uma estrutura.',
+      'A cor do ambiente de trabalho é uma cor.',
+      'A aba atual é uma aba.',
+      'O número é um número.',
+      'AS CORES DO AMBIENTE SÃO UMAS CORES.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const sameNamedTypeOffset = document.getText().lastIndexOf('número') + 2;
+    const typeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(sameNamedTypeOffset)
+    );
+    assert.ok(typeDefinition);
+    assert.equal(typeDefinition.length, 1);
+    assert.equal(typeDefinition[0].range.start.line, 2);
+  });
+
+  test('Reports global variables with unknown types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent('A cor atual é uma cor inexistente.');
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 1);
+    assert.equal(diagnostics[0].message, 'Unknown global variable type "cor inexistente".');
+  });
+
+  test('Recognizes initialized global variables with supported literal forms', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma fração é uma estrutura.',
+      'Uma string é uma estrutura.',
+      'Um byte é uma estrutura.',
+      'Um texto hexadecimal é uma estrutura.',
+      'Um sinalizador é uma estrutura.',
+      'A fração simples é uma fração igual a 123.',
+      'A fração negativa é uma fração igual a -67.',
+      'A razão é uma fração igual a +9/-5.',
+      'O número misto é uma fração igual a -2+-7/-1.',
+      'O código é um texto hexadecimal igual a $BeBaC0cA.',
+      'O servidor SMTP é uma string igual a "localhost".',
+      'O texto citado é uma string igual a "Ele disse:""Olá. João""".',
+      'As aspas duplas são um byte igual a 34.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Reports invalid initialized global variable literals', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma fração é uma estrutura.',
+      'Uma string é uma estrutura.',
+      'A fora de faixa é uma fração igual a 2147483648.',
+      'A sintaxe incorreta é uma fração igual a 2-7/1.',
+      'A string com tab é uma string igual a "texto\ttab".'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 3);
+    assert.ok(diagnostics.every(diagnostic =>
+      diagnostic.message === 'Invalid global variable initializer.'
+    ));
+  });
+
+  test('Infers global variable types from abbreviated initializers', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'O maior número é 2147483647.',
+      'O número pi é 355/113.',
+      'O servidor SMTP é "localhost".',
+      'As aspas duplas são 34.',
+      'O texto CRLF é $0D0A.',
+      'O sinalizador de problemas é 0.',
+      'O número negativo é -2147483648.',
+      'O número misto é -2+-7/-1.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const integerLiteralOffset = document.getText().indexOf('34');
+    const literalDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(integerLiteralOffset)
+    );
+    assert.deepEqual(literalDefinition, []);
+  });
+
+  test('Parses fields in global structure variables using the type field rules', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um endereço é uma estrutura.',
+      'Um sinalizador é uma estrutura.',
+      'Um sinalizador de erros é uma estrutura.',
+      'Uma mensagem de erro é uma estrutura.',
+      'Uma listagem é uma estrutura.',
+      'O compilador é uma estrutura com',
+      '  Um endereço denominado endereço da pasta,',
+      '  Um sinalizador de erros,',
+      '  Uma mensagem de erro e',
+      '  Uma listagem (referência).'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const inferredAliasOffset = text.indexOf('sinalizador de erros') + 13;
+    const aliasDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(inferredAliasOffset)
+    );
+    assert.ok(aliasDefinition);
+    assert.equal(aliasDefinition.length, 1);
+    assert.equal(aliasDefinition[0].range.start.line, 2);
+
+    const explicitlyNamedTypeOffset = text.indexOf('endereço denominado') + 2;
+    const explicitlyNamedDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(explicitlyNamedTypeOffset)
+    );
+    assert.ok(explicitlyNamedDefinition);
+    assert.equal(explicitlyNamedDefinition.length, 1);
+    assert.equal(explicitlyNamedDefinition[0].range.start.line, 0);
+
+    const referenceMarkerOffset = text.indexOf('(referência)') + 4;
+    const referenceMarkerDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(referenceMarkerOffset)
+    );
+    assert.deepEqual(referenceMarkerDefinition, []);
+  });
 });

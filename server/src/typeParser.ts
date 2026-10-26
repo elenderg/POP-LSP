@@ -45,6 +45,59 @@ export interface TypeDeclaration {
 	range: SourceRange;
 }
 
+export interface GlobalVariableDeclaration {
+	kind: 'global-variable-declaration';
+	name: TypeReference;
+	type?: TypeReference;
+	inferredTypeName?: string;
+	initializer?: GlobalVariableLiteral;
+	fields?: TypeField[];
+	article: string;
+	operator: 'é' | 'são';
+	range: SourceRange;
+}
+
+export interface GlobalVariableLiteral {
+	kind: 'integer' | 'fraction' | 'mixed' | 'hexadecimal' | 'string';
+	text: string;
+	range: SourceRange;
+}
+
+export interface GlobalVariableSymbol {
+	name: string;
+	normalizedName: string;
+	typeName?: string;
+	type?: TypeReference;
+	declaration: GlobalVariableDeclaration;
+}
+
+export class GlobalVariableSymbolTable {
+	private readonly symbols = new Map<string, GlobalVariableSymbol>();
+
+	constructor(declarations: GlobalVariableDeclaration[] = []) {
+		for (const declaration of declarations) {
+			const key = declaration.name.normalizedName;
+			if (!this.symbols.has(key)) {
+				this.symbols.set(key, {
+					name: declaration.name.name,
+					normalizedName: key,
+					typeName: declaration.type?.name ?? declaration.inferredTypeName,
+					type: declaration.type,
+					declaration
+				});
+			}
+		}
+	}
+
+	lookup(name: string): GlobalVariableSymbol | undefined {
+		return this.symbols.get(normalizeTypeName(name));
+	}
+
+	get entries(): GlobalVariableSymbol[] {
+		return [...this.symbols.values()];
+	}
+}
+
 export interface TypeSymbol {
 	name: string;
 	normalizedName: string;
@@ -173,11 +226,14 @@ function isNumberTypeName(name: string): boolean {
 
 export interface ParsedDocument {
 	declarations: TypeDeclaration[];
+	globalVariables: GlobalVariableDeclaration[];
 	symbols: TypeSymbolTable;
+	globalVariableSymbols: GlobalVariableSymbolTable;
 	diagnostics: ParserDiagnostic[];
 }
 
 const indefiniteArticles = new Set(['um', 'uma', 'uns', 'umas']);
+const definiteArticles = new Set(['o', 'os', 'a', 'as']);
 
 export function normalizeTypeName(name: string): string {
 	return name.trim().replace(/\s+/gu, ' ').toLocaleLowerCase('pt-BR');
@@ -194,27 +250,286 @@ function pluralizeTypeName(name: string): string {
 
 export function parseTypeDeclarations(source: string): ParsedDocument {
 	const declarations: TypeDeclaration[] = [];
+	const globalVariables: GlobalVariableDeclaration[] = [];
 	const diagnostics: ParserDiagnostic[] = [];
 	let segmentStart = 0;
-	let periodIndex = source.indexOf('.', segmentStart);
+	let periodIndex = findDeclarationPeriod(source, segmentStart);
 
 	while (periodIndex !== -1) {
-		const declaration = parseDeclaration(source, segmentStart, periodIndex, diagnostics);
-		if (declaration) {
-			declarations.push(declaration);
+		const article = readWord(source, segmentStart, periodIndex);
+		if (article && definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+			const variable = parseGlobalVariableDeclaration(
+				source,
+				segmentStart,
+				periodIndex,
+				diagnostics
+			);
+			if (variable) {
+				globalVariables.push(variable);
+			}
+		} else {
+			const declaration = parseDeclaration(source, segmentStart, periodIndex, diagnostics);
+			if (declaration) {
+				declarations.push(declaration);
+			}
 		}
 		segmentStart = periodIndex + 1;
-		periodIndex = source.indexOf('.', segmentStart);
+		periodIndex = findDeclarationPeriod(source, segmentStart);
 	}
 	const symbols = new TypeSymbolTable(declarations);
+	const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
 	validateBaseTypes(declarations, symbols, diagnostics);
-	resolveFields(source, declarations, symbols, diagnostics);
+	validateGlobalVariableTypes(globalVariables, symbols, diagnostics);
+	resolveFields(source, [...declarations, ...globalVariables], symbols, diagnostics);
 
 	return {
 		declarations,
+		globalVariables,
 		symbols,
+		globalVariableSymbols,
 		diagnostics
 	};
+}
+
+function parseGlobalVariableDeclaration(
+	source: string,
+	segmentStart: number,
+	periodIndex: number,
+	diagnostics: ParserDiagnostic[]
+): GlobalVariableDeclaration | undefined {
+	let contentStart = segmentStart;
+	while (contentStart < periodIndex && /\s/u.test(source[contentStart])) {
+		contentStart++;
+	}
+
+	const article = readWord(source, contentStart, periodIndex);
+	if (!article || !definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+		return undefined;
+	}
+	const operator = findOperator(source, article.end, periodIndex);
+	if (!operator) {
+		return undefined;
+	}
+	const nameRange = trimRange(source, article.end, operator.start);
+	if (nameRange.start === nameRange.end) {
+		return undefined;
+	}
+
+	const typeArticle = readWord(source, operator.end, periodIndex);
+	const hasExplicitType = Boolean(
+		typeArticle && indefiniteArticles.has(typeArticle.value.toLocaleLowerCase('pt-BR'))
+	);
+	let type: TypeReference | undefined;
+	let initializer: GlobalVariableLiteral | undefined;
+	let inferredTypeName: string | undefined;
+
+	if (hasExplicitType && typeArticle) {
+		const fieldsKeyword = findWord(source, typeArticle.end, periodIndex, 'com');
+		const initializerMarker = findEqualTo(
+			source,
+			fieldsKeyword?.start ?? typeArticle.end,
+			periodIndex
+		);
+		const typeRange = trimRange(
+			source,
+			typeArticle.end,
+			fieldsKeyword?.start ?? initializerMarker?.start ?? periodIndex
+		);
+		if (typeRange.start === typeRange.end) {
+			return undefined;
+		}
+		type = createTypeReference(source, typeRange);
+		let fields: TypeField[] | undefined;
+		if (fieldsKeyword) {
+			const fieldsEnd = initializerMarker?.start ?? periodIndex;
+			const parsedFields = parseFields(source, fieldsKeyword.end, fieldsEnd);
+			if (!parsedFields) {
+				return undefined;
+			}
+			fields = parsedFields.fields;
+			diagnostics.push(...parsedFields.diagnostics);
+		}
+		if (initializerMarker) {
+			const initializerRange = trimRange(source, initializerMarker.end, periodIndex);
+			initializer = parseGlobalVariableLiteral(source, initializerRange);
+			if (!initializer) {
+				diagnostics.push({
+					message: 'Invalid global variable initializer.',
+					range: initializerRange
+				});
+			}
+		}
+		return {
+			kind: 'global-variable-declaration',
+			name: createTypeReference(source, nameRange),
+			type,
+			fields,
+			initializer,
+			article: article.value.toLocaleLowerCase('pt-BR'),
+			operator: operator.value,
+			range: { start: contentStart, end: periodIndex + 1 }
+		};
+	} else {
+		const initializerRange = trimRange(source, operator.end, periodIndex);
+		initializer = parseGlobalVariableLiteral(source, initializerRange);
+		if (!initializer) {
+			diagnostics.push({
+				message: 'Invalid global variable initializer.',
+				range: initializerRange
+			});
+		} else {
+			inferredTypeName = inferGlobalVariableTypeName(initializer);
+		}
+	}
+
+	return {
+		kind: 'global-variable-declaration',
+		name: createTypeReference(source, nameRange),
+		type,
+		inferredTypeName,
+		initializer,
+		article: article.value.toLocaleLowerCase('pt-BR'),
+		operator: operator.value,
+		range: { start: contentStart, end: periodIndex + 1 }
+	};
+}
+
+function inferGlobalVariableTypeName(literal: GlobalVariableLiteral): string {
+	switch (literal.kind) {
+		case 'integer':
+			return 'número';
+		case 'fraction':
+		case 'mixed':
+			return 'fração';
+		case 'hexadecimal':
+			return 'texto hexadecimal';
+		case 'string':
+			return 'string';
+	}
+}
+
+function findDeclarationPeriod(source: string, start: number): number {
+	let inString = false;
+	for (let index = start; index < source.length; index++) {
+		if (source[index] === '"') {
+			if (!inString) {
+				inString = true;
+				continue;
+			}
+			if (source[index + 1] === '"') {
+				if (
+					source[index + 2] === '.' &&
+					(index + 3 === source.length || /\s/u.test(source[index + 3]))
+				) {
+					inString = false;
+					index++;
+					continue;
+				}
+				index++;
+				continue;
+			}
+			inString = false;
+			continue;
+		}
+		if (source[index] === '.' && !inString) {
+			return index;
+		}
+	}
+	return -1;
+}
+
+function findEqualTo(
+	source: string,
+	start: number,
+	end: number
+): { start: number; end: number } | undefined {
+	const marker = /\bigual\s+a\b/giu;
+	marker.lastIndex = start;
+	const match = marker.exec(source);
+	if (!match || match.index >= end || match.index + match[0].length > end) {
+		return undefined;
+	}
+	return { start: match.index, end: match.index + match[0].length };
+}
+
+function parseGlobalVariableLiteral(
+	source: string,
+	range: SourceRange
+): GlobalVariableLiteral | undefined {
+	const text = source.slice(range.start, range.end);
+	if (/^[+-]?\d+$/u.test(text)) {
+		const value = Number(text);
+		return Number.isSafeInteger(value) && value >= -2147483648 && value <= 2147483647
+			? { kind: 'integer', text, range }
+			: undefined;
+	}
+
+	const mixed = /^([+-]?\d+)\+([+-]?\d+)\/([+-]?\d+)$/u.exec(text);
+	if (mixed) {
+		return mixed.slice(1).every(isSigned32BitInteger)
+			? { kind: 'mixed', text, range }
+			: undefined;
+	}
+
+	const fraction = /^([+-]?\d+)\/([+-]?\d+)$/u.exec(text);
+	if (fraction) {
+		return fraction.slice(1).every(isSigned32BitInteger)
+			? { kind: 'fraction', text, range }
+			: undefined;
+	}
+
+	if (/^\$[a-f\d]+$/iu.test(text)) {
+		return { kind: 'hexadecimal', text, range };
+	}
+
+	if (isValidStringLiteral(text)) {
+		return { kind: 'string', text, range };
+	}
+
+	return undefined;
+}
+
+function isSigned32BitInteger(value: string): boolean {
+	const number = Number(value);
+	return Number.isSafeInteger(number) && number >= -2147483648 && number <= 2147483647;
+}
+
+function isValidStringLiteral(text: string): boolean {
+	if (text.length < 2 || text[0] !== '"' || text[text.length - 1] !== '"') {
+		return false;
+	}
+
+	const hasEscapedQuoteAndTerminator = text.endsWith('""') && !text.endsWith('"""');
+	const contentEnd = hasEscapedQuoteAndTerminator ? text.length - 2 : text.length - 1;
+	for (let index = 1; index < contentEnd; index++) {
+		const character = text[index];
+		if (/[\p{Cc}]/u.test(character)) {
+			return false;
+		}
+		if (character === '"') {
+			if (text[index + 1] !== '"' || index + 1 >= contentEnd) {
+				return false;
+			}
+			index++;
+		}
+	}
+	return true;
+}
+
+function validateGlobalVariableTypes(
+	declarations: GlobalVariableDeclaration[],
+	symbols: TypeSymbolTable,
+	diagnostics: ParserDiagnostic[]
+): void {
+	for (const declaration of declarations) {
+		if (!declaration.type || symbols.lookup(declaration.type.name)) {
+			continue;
+		}
+		diagnostics.push({
+			message: `Unknown global variable type "${declaration.type.name}".`,
+			range: declaration.type.range
+		});
+	}
 }
 
 function validateBaseTypes(
@@ -235,7 +550,7 @@ function validateBaseTypes(
 
 function resolveFields(
 	source: string,
-	declarations: TypeDeclaration[],
+	declarations: Pick<TypeDeclaration | GlobalVariableDeclaration, 'fields'>[],
 	symbols: TypeSymbolTable,
 	diagnostics: ParserDiagnostic[]
 ): void {
@@ -330,6 +645,32 @@ export function findTypeReferenceAtOffset(
 			}
 		}
 
+		for (const field of declaration.fields ?? []) {
+			if (field.kind === 'byte-array') {
+				if (offset >= field.elementType.range.start && offset <= field.elementType.range.end) {
+					return field.elementType;
+				}
+				continue;
+			}
+
+			if (offset >= field.name.range.start && offset <= field.name.range.end) {
+				return parsedDocument.symbols.lookup(field.name.name)
+					? field.name
+					: field.type;
+			}
+			if (offset >= field.type.range.start && offset <= field.type.range.end) {
+				return field.type;
+			}
+		}
+	}
+	for (const declaration of parsedDocument.globalVariables) {
+		if (
+			declaration.type &&
+			offset >= declaration.type.range.start &&
+			offset <= declaration.type.range.end
+		) {
+			return declaration.type;
+		}
 		for (const field of declaration.fields ?? []) {
 			if (field.kind === 'byte-array') {
 				if (offset >= field.elementType.range.start && offset <= field.elementType.range.end) {
