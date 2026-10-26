@@ -46,6 +46,25 @@ language-specific default.
 - Global variable types may be inferred from abbreviated literal initializers:
   integers infer `número`, fractions and mixed numbers infer `fração`,
   hexadecimal values infer `texto hexadecimal`, and strings infer `string`.
+- Comments are ignored by the parser: `\` starts a line comment, while `[ ... ]`
+  delimits a block comment. Comment contents do not affect declarations or
+  source locations. Non-printable control characters in comments are diagnosed,
+  except CR/LF that terminate line comments.
+- Routine and function headers use `para que se`, optionally preceded by
+  `Rotina` or `Função`. Semicolon-terminated alternate names are associated
+  with the following colon-terminated header. Headers may declare parameters
+  after `usando` and a return value after `retornando`; parameter and return
+  types are resolved against the type catalog. The routine body begins after
+  the header colon and ends at the next top-level type declaration, global
+  variable declaration, or routine header; no block delimiter is required.
+- A period terminates type and global-variable declarations and statements;
+  it also terminates conditional blocks. A colon is used for the end of a
+  routine header and start of its body. Semicolons separate statements in
+  conditional blocks, with alternate routine headers as the existing syntax
+  exception. These punctuation marks are diagnosed when used in type or
+  global-variable names.
+- Reserved grammar words are diagnosed when used in type or global-variable
+  identifiers.
 - End-to-end coverage for Go to Definition.
 
 ## Development

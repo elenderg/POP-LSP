@@ -63,6 +63,43 @@ export interface GlobalVariableLiteral {
 	range: SourceRange;
 }
 
+export interface RoutineParameter {
+	name: TypeReference;
+	type: TypeReference;
+}
+
+export interface RoutineDeclaration {
+	name: TypeReference;
+	alternateNames: TypeReference[];
+	parameters: RoutineParameter[];
+	returnParameter?: RoutineParameter;
+	annotation?: 'rotina' | 'função';
+	isBooleanFunction: boolean;
+	range: SourceRange;
+	bodyRange: SourceRange;
+}
+
+export class RoutineSymbolTable {
+	private readonly routines = new Map<string, RoutineDeclaration>();
+
+	constructor(declarations: RoutineDeclaration[] = []) {
+		for (const declaration of declarations) {
+			this.routines.set(declaration.name.normalizedName, declaration);
+			for (const alternateName of declaration.alternateNames) {
+				this.routines.set(alternateName.normalizedName, declaration);
+			}
+		}
+	}
+
+	lookup(name: string): RoutineDeclaration | undefined {
+		return this.routines.get(normalizeTypeName(name));
+	}
+
+	get entries(): RoutineDeclaration[] {
+		return [...new Set(this.routines.values())];
+	}
+}
+
 export interface GlobalVariableSymbol {
 	name: string;
 	normalizedName: string;
@@ -227,13 +264,35 @@ function isNumberTypeName(name: string): boolean {
 export interface ParsedDocument {
 	declarations: TypeDeclaration[];
 	globalVariables: GlobalVariableDeclaration[];
+	routines: RoutineDeclaration[];
 	symbols: TypeSymbolTable;
 	globalVariableSymbols: GlobalVariableSymbolTable;
+	routineSymbols: RoutineSymbolTable;
 	diagnostics: ParserDiagnostic[];
 }
 
 const indefiniteArticles = new Set(['um', 'uma', 'uns', 'umas']);
 const definiteArticles = new Set(['o', 'os', 'a', 'as']);
+const conjunctions = new Set(['e', 'ou', 'nem']);
+const routineNameDelimiters = new Set([
+	'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
+	'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
+	'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante',
+	'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
+	'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão',
+	'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob',
+	'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada',
+	'voltado', 'cima', 'contendo', 'embaixo', 'pela', 'pelo', 'retornando', 'é', 'está',
+	'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
+	'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
+	'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas'
+]);
+const reservedIdentifierWords = new Set([
+	...routineNameDelimiters,
+	...conjunctions,
+	'denominado', 'denominada', 'denominados', 'denominadas', 'chamado', 'chamada',
+	'chamados', 'chamadas', 'para', 'que', 'se', 'determine', 'rotina', 'função'
+]);
 
 export function normalizeTypeName(name: string): string {
 	return name.trim().replace(/\s+/gu, ' ').toLocaleLowerCase('pt-BR');
@@ -249,46 +308,471 @@ function pluralizeTypeName(name: string): string {
 }
 
 export function parseTypeDeclarations(source: string): ParsedDocument {
+	const diagnostics: ParserDiagnostic[] = [];
+	const parserSource = maskComments(source, diagnostics);
 	const declarations: TypeDeclaration[] = [];
 	const globalVariables: GlobalVariableDeclaration[] = [];
-	const diagnostics: ParserDiagnostic[] = [];
+	const routines = parseRoutineDeclarations(parserSource, diagnostics);
 	let segmentStart = 0;
-	let periodIndex = findDeclarationPeriod(source, segmentStart);
+	let periodIndex = findDeclarationPeriod(parserSource, segmentStart);
 
 	while (periodIndex !== -1) {
-		const article = readWord(source, segmentStart, periodIndex);
+		const declarationStart = findDeclarationStart(parserSource, segmentStart, periodIndex);
+		const article = declarationStart === undefined
+			? undefined
+			: readWord(parserSource, declarationStart, periodIndex);
 		if (article && definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
 			const variable = parseGlobalVariableDeclaration(
-				source,
-				segmentStart,
+				parserSource,
+				declarationStart!,
 				periodIndex,
 				diagnostics
 			);
 			if (variable) {
 				globalVariables.push(variable);
 			}
-		} else {
-			const declaration = parseDeclaration(source, segmentStart, periodIndex, diagnostics);
+		} else if (article) {
+			const declaration = parseDeclaration(parserSource, declarationStart!, periodIndex, diagnostics);
 			if (declaration) {
 				declarations.push(declaration);
 			}
 		}
 		segmentStart = periodIndex + 1;
-		periodIndex = findDeclarationPeriod(source, segmentStart);
+		periodIndex = findDeclarationPeriod(parserSource, segmentStart);
 	}
 	const symbols = new TypeSymbolTable(declarations);
 	const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
+	const routineSymbols = new RoutineSymbolTable(routines);
+	setRoutineBodyRanges(
+		parserSource,
+		routines,
+		[...declarations, ...globalVariables].map(declaration => declaration.range)
+	);
 	validateBaseTypes(declarations, symbols, diagnostics);
 	validateGlobalVariableTypes(globalVariables, symbols, diagnostics);
-	resolveFields(source, [...declarations, ...globalVariables], symbols, diagnostics);
+	validateReservedNames(parserSource, declarations, globalVariables, diagnostics);
+	validateIdentifierPunctuation(
+		parserSource,
+		[...declarations, ...globalVariables].map(declaration => declaration.name),
+		diagnostics
+	);
+	resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
+	resolveRoutineParameters(parserSource, routines, symbols, diagnostics);
 
 	return {
 		declarations,
 		globalVariables,
+		routines,
 		symbols,
 		globalVariableSymbols,
+		routineSymbols,
 		diagnostics
 	};
+}
+
+function validateIdentifierPunctuation(
+	source: string,
+	identifiers: TypeReference[],
+	diagnostics: ParserDiagnostic[]
+): void {
+	for (const identifier of identifiers) {
+		for (let index = identifier.range.start; index < identifier.range.end; index++) {
+			const character = source[index];
+			if (character !== ':' && character !== ';' && character !== '.') {
+				continue;
+			}
+			diagnostics.push({
+				message: `The character "${character}" cannot appear in an identifier.`,
+				range: { start: index, end: index + 1 }
+			});
+		}
+	}
+}
+
+function findDeclarationStart(source: string, start: number, end: number): number | undefined {
+	let lineStart = start;
+	while (lineStart <= end) {
+		if (lineStart < end && !/\s/u.test(source[lineStart])) {
+			const article = readWord(source, lineStart, end);
+			if (
+				article &&
+				(indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR')) ||
+					definiteArticles.has(article.value.toLocaleLowerCase('pt-BR')))
+			) {
+				return lineStart;
+			}
+		}
+		const nextLineFeed = source.indexOf('\n', lineStart);
+		const nextCarriageReturn = source.indexOf('\r', lineStart);
+		const nextLineBreak = [nextLineFeed, nextCarriageReturn]
+			.filter(index => index !== -1)
+			.reduce((nearest, index) => Math.min(nearest, index), Number.POSITIVE_INFINITY);
+		if (!Number.isFinite(nextLineBreak) || nextLineBreak >= end) {
+			break;
+		}
+		lineStart = nextLineBreak + 1;
+	}
+	return undefined;
+}
+
+function setRoutineBodyRanges(
+	source: string,
+	routines: RoutineDeclaration[],
+	declarationRanges: SourceRange[]
+): void {
+	for (const routine of routines) {
+		const bodyStart = routine.bodyRange.start;
+		const nextRoutineStart = routines
+			.filter(candidate => candidate.range.start > routine.range.start)
+			.reduce((nearest, candidate) => Math.min(nearest, candidate.range.start), source.length);
+		const nextDeclarationStart = declarationRanges
+			.filter(range => range.start > bodyStart)
+			.reduce((nearest, range) => Math.min(nearest, range.start), source.length);
+		routine.bodyRange.end = Math.min(nextRoutineStart, nextDeclarationStart, source.length);
+	}
+}
+
+function validateReservedNames(
+	source: string,
+	declarations: TypeDeclaration[],
+	globalVariables: GlobalVariableDeclaration[],
+	diagnostics: ParserDiagnostic[]
+): void {
+	for (const identifier of [
+		...declarations.map(declaration => declaration.name),
+		...globalVariables.map(declaration => declaration.name)
+	]) {
+		const words = /\p{L}+/gu;
+		const text = source.slice(identifier.range.start, identifier.range.end);
+		let match: RegExpExecArray | null;
+		while ((match = words.exec(text))) {
+			if (!reservedIdentifierWords.has(match[0].toLocaleLowerCase('pt-BR'))) {
+				continue;
+			}
+			const start = identifier.range.start + match.index;
+			diagnostics.push({
+				message: `Reserved word "${match[0]}" cannot be used in an identifier.`,
+				range: { start, end: start + match[0].length }
+			});
+		}
+	}
+}
+
+interface ParsedRoutineHeader {
+	name: TypeReference;
+	parameters: RoutineParameter[];
+	returnParameter?: RoutineParameter;
+	annotation?: 'rotina' | 'função';
+	isBooleanFunction: boolean;
+	isPrimary: boolean;
+	range: SourceRange;
+}
+
+function parseRoutineDeclarations(
+	source: string,
+	diagnostics: ParserDiagnostic[]
+): RoutineDeclaration[] {
+		const headerPattern = /(?:(rotina|função)\s+)?para\s+que\s+se(?:\s+(determine)\s+(se))?/giu;
+		const headers: ParsedRoutineHeader[] = [];
+		let match: RegExpExecArray | null;
+
+		while ((match = headerPattern.exec(source))) {
+			const lineStart = Math.max(
+				source.lastIndexOf('\n', match.index),
+				source.lastIndexOf('\r', match.index)
+			) + 1;
+			if (match.index !== lineStart) {
+				continue;
+			}
+
+			const terminatorIndex = source.slice(headerPattern.lastIndex, source.length)
+				.search(/[:;]/u);
+			if (terminatorIndex === -1) {
+				continue;
+			}
+			const headerEnd = headerPattern.lastIndex + terminatorIndex;
+			const usingMarker = findWord(source, headerPattern.lastIndex, headerEnd, 'usando');
+			const returningMarker = findWord(source, headerPattern.lastIndex, headerEnd, 'retornando');
+			const nameEnd = Math.min(
+				usingMarker?.start ?? headerEnd,
+				returningMarker?.start ?? headerEnd
+			);
+			const nameRange = trimRange(source, headerPattern.lastIndex, nameEnd);
+			if (nameRange.start === nameRange.end) {
+				diagnostics.push({
+					message: 'Routine name is required.',
+					range: { start: match.index, end: headerEnd }
+				});
+				headerPattern.lastIndex = headerEnd + 1;
+				continue;
+			}
+
+			const parametersEnd = returningMarker?.start ?? headerEnd;
+			const parameters = usingMarker
+				? parseRoutineParameters(source, usingMarker.end, parametersEnd, diagnostics)
+				: [];
+			if (usingMarker && parameters.length === 0) {
+				diagnostics.push({
+					message: 'At least one parameter is required after "usando".',
+					range: { start: usingMarker.start, end: usingMarker.end }
+				});
+			}
+			const returnParameter = returningMarker
+				? parseRoutineParameter(source, returningMarker.end, headerEnd)
+				: undefined;
+			if (returningMarker && !returnParameter) {
+				diagnostics.push({
+					message: 'A return type is required after "retornando".',
+					range: { start: returningMarker.start, end: headerEnd }
+				});
+			}
+
+			headers.push({
+				name: createTypeReference(source, nameRange),
+				parameters,
+				returnParameter,
+				annotation: match[1]?.toLocaleLowerCase('pt-BR') as 'rotina' | 'função' | undefined,
+				isBooleanFunction: Boolean(match[2]),
+				isPrimary: source[headerEnd] === ':',
+				range: { start: match.index, end: headerEnd + 1 }
+			});
+			headerPattern.lastIndex = headerEnd + 1;
+		}
+
+		const declarations: RoutineDeclaration[] = [];
+		let alternateHeaders: ParsedRoutineHeader[] = [];
+		let previousEnd: number | undefined;
+		for (const header of headers) {
+			if (
+				previousEnd !== undefined &&
+				source.slice(previousEnd, header.range.start).trim().length > 0
+			) {
+				alternateHeaders = [];
+			}
+			previousEnd = header.range.end;
+			if (!header.isPrimary) {
+				alternateHeaders.push(header);
+				continue;
+			}
+
+			declarations.push({
+				name: header.name,
+				alternateNames: alternateHeaders.map(alternate => alternate.name),
+				parameters: header.parameters,
+				returnParameter: header.returnParameter,
+				annotation: header.annotation,
+				isBooleanFunction: header.isBooleanFunction,
+				range: {
+					start: alternateHeaders[0]?.range.start ?? header.range.start,
+					end: header.range.end
+				},
+				bodyRange: { start: header.range.end, end: source.length }
+			});
+			alternateHeaders = [];
+		}
+
+		return declarations;
+	}
+
+function parseRoutineParameters(
+	source: string,
+	start: number,
+	end: number,
+	diagnostics: ParserDiagnostic[]
+): RoutineParameter[] {
+		const parameters: RoutineParameter[] = [];
+		let parameterStart = skipWhitespace(source, start, end);
+		while (parameterStart < end) {
+			const separator = findRoutineParameterSeparator(source, parameterStart, end);
+			const parameterEnd = separator?.start ?? end;
+			const parameter = parseRoutineParameter(source, parameterStart, parameterEnd);
+			if (!parameter) {
+				diagnostics.push({
+					message: 'Invalid routine parameter declaration.',
+					range: trimRange(source, parameterStart, parameterEnd)
+				});
+			} else {
+				parameters.push(parameter);
+			}
+			if (!separator) {
+				break;
+			}
+			parameterStart = separator.nextStart;
+		}
+		return parameters;
+	}
+
+function parseRoutineParameter(
+	source: string,
+	start: number,
+	end: number
+): RoutineParameter | undefined {
+		const parameterStart = skipWhitespace(source, start, end);
+		const article = readWord(source, parameterStart, end);
+		if (!article || !indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+			return undefined;
+		}
+
+		const markers = new Set([
+			'denominado', 'denominada', 'denominados', 'denominadas',
+			'chamado', 'chamada', 'chamados', 'chamadas'
+		]);
+		const marker = findAnyWord(source, article.end, end, markers);
+		const typeRange = trimRange(source, article.end, marker?.start ?? end);
+		const nameRange = marker
+			? trimRange(source, marker.end, end)
+			: typeRange;
+		if (typeRange.start === typeRange.end || nameRange.start === nameRange.end) {
+			return undefined;
+		}
+
+		return {
+			name: createTypeReference(source, nameRange),
+			type: createTypeReference(source, typeRange)
+		};
+	}
+
+function findRoutineParameterSeparator(
+	source: string,
+	start: number,
+	end: number
+): { start: number; nextStart: number } | undefined {
+		const commaIndex = source.indexOf(',', start);
+		let separator = commaIndex !== -1 && commaIndex < end
+			? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
+			: undefined;
+		const words = /\p{L}+/gu;
+		words.lastIndex = start;
+		let match: RegExpExecArray | null;
+		while ((match = words.exec(source)) && match.index < end) {
+			const wordEnd = match.index + match[0].length;
+			const word = match[0].toLocaleLowerCase('pt-BR');
+			if (
+				!conjunctions.has(word) ||
+				isWordCharacter(match.index > start ? source[match.index - 1] : '') ||
+				isWordCharacter(wordEnd < end ? source[wordEnd] : '')
+			) {
+				continue;
+			}
+			if (separator && separator.start < match.index) {
+				break;
+			}
+			const nextStart = skipWhitespace(source, wordEnd, end);
+			const nextArticle = readWord(source, nextStart, end);
+			if (nextArticle && indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR'))) {
+				separator = { start: match.index, nextStart };
+				break;
+			}
+		}
+		return separator;
+	}
+
+function resolveRoutineParameters(
+	source: string,
+	routines: RoutineDeclaration[],
+	symbols: TypeSymbolTable,
+	diagnostics: ParserDiagnostic[]
+): void {
+		for (const routine of routines) {
+			const parameters = [
+				...routine.parameters,
+				...(routine.returnParameter ? [routine.returnParameter] : [])
+			];
+			for (const parameter of parameters) {
+				const typeText = source.slice(parameter.type.range.start, parameter.type.range.end);
+				const words = [...typeText.matchAll(/\S+/gu)];
+				let resolvedType: TypeReference | undefined;
+				for (let firstWord = 0; firstWord < words.length; firstWord++) {
+					const candidateName = words.slice(firstWord).map(word => word[0]).join(' ');
+					if (!symbols.lookup(candidateName)) {
+						continue;
+					}
+					resolvedType = createTypeReference(source, {
+						start: parameter.type.range.start + words[firstWord].index!,
+						end: parameter.type.range.end
+					});
+					break;
+				}
+				if (!resolvedType) {
+					diagnostics.push({
+						message: `Unknown routine parameter type "${parameter.type.name}".`,
+						range: parameter.type.range
+					});
+					continue;
+				}
+				parameter.type = resolvedType;
+		}
+	}
+}
+
+function maskComments(source: string, diagnostics: ParserDiagnostic[]): string {
+	const characters = source.split('');
+	let inString = false;
+	let inBlockComment = false;
+
+	for (let index = 0; index < characters.length; index++) {
+		const character = characters[index];
+		const nextCharacter = characters[index + 1];
+
+		if (inBlockComment) {
+			if (character === ']') {
+				characters[index] = ' ';
+				inBlockComment = false;
+			} else if (/[\p{Cc}]/u.test(character)) {
+				diagnostics.push({
+					message: 'Non-printable characters are not allowed in comments.',
+					range: { start: index, end: index + 1 }
+				});
+				if (character !== '\n' && character !== '\r') {
+					characters[index] = ' ';
+				}
+			} else {
+				characters[index] = ' ';
+			}
+			continue;
+		}
+
+		if (inString) {
+			if (character === '"' && nextCharacter === '"') {
+				index++;
+				continue;
+			}
+			if (character === '"') {
+				inString = false;
+			}
+			continue;
+		}
+
+		if (character === '"') {
+			inString = true;
+			continue;
+		}
+
+		if (character === '[') {
+			characters[index] = ' ';
+			inBlockComment = true;
+			continue;
+		}
+
+		if (character === '\\') {
+			characters[index] = ' ';
+			for (; index < characters.length; index++) {
+				const commentCharacter = characters[index];
+				if (commentCharacter === '\n' || commentCharacter === '\r') {
+					break;
+				}
+				if (/[\p{Cc}]/u.test(commentCharacter)) {
+					diagnostics.push({
+						message: 'Non-printable characters are not allowed in comments.',
+						range: { start: index, end: index + 1 }
+					});
+				}
+				characters[index] = ' ';
+			}
+		}
+	}
+
+	return characters.join('');
 }
 
 function parseGlobalVariableDeclaration(
@@ -689,6 +1173,19 @@ export function findTypeReferenceAtOffset(
 			}
 		}
 	}
+	for (const routine of parsedDocument.routines) {
+		for (const parameter of [
+			...routine.parameters,
+			...(routine.returnParameter ? [routine.returnParameter] : [])
+		]) {
+			if (
+				offset >= parameter.type.range.start &&
+				offset <= parameter.type.range.end
+			) {
+				return parameter.type;
+			}
+		}
+	}
 	return undefined;
 }
 
@@ -915,6 +1412,28 @@ function findFieldMarker(
 			markers.has(match[0].toLocaleLowerCase('pt-BR'))
 		) {
 			return { start: match.index, end: wordEnd };
+		}
+	}
+	return undefined;
+}
+
+function findAnyWord(
+	source: string,
+	start: number,
+	end: number,
+	expectedWords: Set<string>
+): { start: number; end: number; value: string } | undefined {
+	const words = /\p{L}+/gu;
+	words.lastIndex = start;
+	let match: RegExpExecArray | null;
+	while ((match = words.exec(source)) && match.index < end) {
+		const wordEnd = match.index + match[0].length;
+		if (
+			!isWordCharacter(match.index > start ? source[match.index - 1] : '') &&
+			!isWordCharacter(wordEnd < end ? source[wordEnd] : '') &&
+			expectedWords.has(match[0].toLocaleLowerCase('pt-BR'))
+		) {
+			return { start: match.index, end: wordEnd, value: match[0] };
 		}
 	}
 	return undefined;

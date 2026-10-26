@@ -671,7 +671,7 @@ suite('Português Puro definitions', () => {
       'Uma string é uma estrutura.',
       'A fora de faixa é uma fração igual a 2147483648.',
       'A sintaxe incorreta é uma fração igual a 2-7/1.',
-      'A string com tab é uma string igual a "texto\ttab".'
+      'A stringcomtab é uma string igual a "texto\ttab".'
     ].join('\n'));
     await diagnosticsUpdated;
 
@@ -772,5 +772,252 @@ suite('Português Puro definitions', () => {
       document.positionAt(referenceMarkerOffset)
     );
     assert.deepEqual(referenceMarkerDefinition, []);
+  });
+
+  test('Ignores line and block comments while preserving source navigation ranges', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura. \\ comentário com ponto.',
+      'Uma string é uma estrutura.',
+      'Uma word é uma estrutura com',
+      '  Um byte denominado byte [comentário. e é um tipo] inicial e',
+      '  Um número.',
+      'O compilador é uma estrutura com',
+      '  Um número denominado contador [comentário com ponto.].',
+      'A mensagem é uma string igual a "texto [literal] \\ literal". \\ comentário final.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const numberOffset = text.indexOf('número', text.indexOf('Um número.'));
+    const typeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(numberOffset + 2)
+    );
+    assert.ok(typeDefinition);
+    assert.equal(typeDefinition.length, 1);
+    assert.equal(typeDefinition[0].range.start.line, 0);
+
+    const commentOffset = text.indexOf('[comentário', text.indexOf('Um byte denominado'));
+    const commentDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(commentOffset + 3)
+    );
+    assert.deepEqual(commentDefinition, []);
+  });
+
+  test('Reports non-printable characters in comments except line-comment terminators', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    const source = [
+      'Um número é uma estrutura [TAB\tCR\rLF\n]. \\ comentário de linha\r\n',
+      'A medida é um número.'
+    ].join('');
+    await setTestContent(source);
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    const blockStart = text.indexOf('[');
+    const blockEnd = text.indexOf(']', blockStart);
+    const expectedOffsets: number[] = [];
+    for (let offset = blockStart + 1; offset < blockEnd; offset++) {
+      if (/[\p{Cc}]/u.test(text[offset])) {
+        expectedOffsets.push(offset);
+      }
+    }
+    assert.ok(expectedOffsets.length >= 3);
+    assert.equal(diagnostics.length, expectedOffsets.length);
+    assert.ok(diagnostics.every(diagnostic =>
+      diagnostic.message === 'Non-printable characters are not allowed in comments.'
+    ));
+
+    assert.ok(diagnostics.every(diagnostic =>
+      expectedOffsets.some(offset =>
+        document.positionAt(offset).line === diagnostic.range.start.line
+      )
+    ));
+
+    const secondTypeOffset = text.lastIndexOf('número') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(secondTypeOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 0);
+  });
+
+  test('Parses routine aliases, named and inferred parameters, and return types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se calcule o IMC do usuário usando um número denominado peso e um segundo número retornando um número denominado IMC:',
+      '  código normal do corpo da rotina',
+      'para que se Baz;',
+      'para que se Bar;',
+      'para que se Foo:'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const parameterOffsets = [
+      text.indexOf('número denominado peso') + 2,
+      text.indexOf('segundo número') + 10,
+      text.lastIndexOf('número denominado IMC') + 2
+    ];
+    for (const offset of parameterOffsets) {
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+      assert.ok(definition);
+      assert.equal(definition.length, 1);
+      assert.equal(definition[0].range.start.line, 0);
+    }
+  });
+
+  test('Ends routine bodies at following top-level declarations and routine headers', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um byte é uma estrutura.',
+      'para que se Foo:',
+      '  corpo da rotina sem delimitador de bloco',
+      'Um identificador é um byte.',
+      'para que se Bar:',
+      '  corpo da segunda rotina',
+      'A variável global é um identificador.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const referenceOffset = text.lastIndexOf('identificador') + 4;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(referenceOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 3);
+  });
+
+  test('Reports unknown types used in routine parameters and return values', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent(
+      'para que se processe usando um tipo inexistente denominado entrada retornando uma saída inexistente:'
+    );
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 2);
+    assert.ok(diagnostics.every(diagnostic =>
+      diagnostic.message.includes('Unknown routine parameter type')
+    ));
+  });
+
+  test('Reports reserved words in type and global variable identifiers', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um tipo usando reservado é uma estrutura.',
+      'A variável retornando reservado é um tipo usando reservado.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 2);
+    assert.ok(diagnostics.every(diagnostic =>
+      diagnostic.message.includes('cannot be used in an identifier')
+    ));
+  });
+
+  test('Restricts punctuation in type and global variable identifiers', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um tipo: inválido é uma estrutura.',
+      'Um tipo é uma estrutura.',
+      'A variável; inválida é um tipo.',
+      'para que se nome alternativo;',
+      'para que se nome principal:'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 2);
+    assert.ok(diagnostics.some(diagnostic =>
+      diagnostic.message === 'The character ":" cannot appear in an identifier.'
+    ));
+    assert.ok(diagnostics.some(diagnostic =>
+      diagnostic.message === 'The character ";" cannot appear in an identifier.'
+    ));
   });
 });
