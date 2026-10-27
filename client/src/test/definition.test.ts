@@ -886,7 +886,8 @@ suite('Português Puro definitions', () => {
       '  código normal do corpo da rotina',
       'para que se Baz;',
       'para que se Bar;',
-      'para que se Foo:'
+      'para que se Foo:',
+      '  alguma instrução.'
     ].join('\n'));
     await diagnosticsUpdated;
 
@@ -958,15 +959,14 @@ suite('Português Puro definitions', () => {
       });
     });
     await setTestContent(
-      'para que se processe usando um tipo inexistente denominado entrada retornando uma saída inexistente:'
+      'para que se processe usando um tipo inexistente denominado entrada retornando uma saída inexistente:\n  alguma instrução.'
     );
     await diagnosticsUpdated;
 
     const diagnostics = vscode.languages.getDiagnostics(docUri);
-    assert.equal(diagnostics.length, 2);
-    assert.ok(diagnostics.every(diagnostic =>
+    assert.equal(diagnostics.filter(diagnostic =>
       diagnostic.message.includes('Unknown routine parameter type')
-    ));
+    ).length, 2);
   });
 
   test('Reports reserved words in type and global variable identifiers', async () => {
@@ -1012,12 +1012,327 @@ suite('Português Puro definitions', () => {
     await diagnosticsUpdated;
 
     const diagnostics = vscode.languages.getDiagnostics(docUri);
-    assert.equal(diagnostics.length, 2);
-    assert.ok(diagnostics.some(diagnostic =>
+    const errors = diagnostics.filter(diagnostic =>
+      diagnostic.severity === vscode.DiagnosticSeverity.Error
+    );
+    assert.equal(errors.length, 2);
+    assert.ok(errors.some(diagnostic =>
       diagnostic.message === 'The character ":" cannot appear in an identifier.'
     ));
-    assert.ok(diagnostics.some(diagnostic =>
+    assert.ok(errors.some(diagnostic =>
       diagnostic.message === 'The character ";" cannot appear in an identifier.'
     ));
+  });
+
+  test('Resolves routine calls with arguments and prioritizes exact no-parameter names', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se Foo:',
+      '  Bar 123.',
+      'Rotina para que se Bar um número:',
+      '  Baz o número.',
+      '  Baz este número.',
+      'Rotina para que se Baz um número:',
+      '  Escreva este número para StdOut.',
+      'Rotina para que se Baz o número:',
+      '  Escreva 456 para StdOut.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const cases = [
+      { reference: 'Bar 123', expectedLine: 3 },
+      { reference: 'Baz o número', expectedLine: 8 },
+      { reference: 'Baz este número', expectedLine: 6 }
+    ];
+    for (const testCase of cases) {
+      const offset = text.indexOf(testCase.reference) + 1;
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+      assert.ok(definition);
+      assert.equal(definition.length, 1);
+      assert.equal(definition[0].range.start.line, testCase.expectedLine);
+    }
+  });
+
+  test('Emits a hint when a routine body contains no statements', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent('Rotina para que se vazia:\n  [apenas comentário]');
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 1);
+    assert.equal(diagnostics[0].severity, vscode.DiagnosticSeverity.Hint);
+    assert.ok(diagnostics[0].message.includes('has no statements'));
+  });
+
+  test('Diagnoses equivalent alternate headers and hints on colon-terminated aliases', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se foo um número denominado quantidade;',
+      'Rotina para que se bar um número denominado valor;',
+      'Rotina para que se foo um número denominado contagem:',
+      '  alguma instrução.',
+      'Rotina para que se baz:',
+      'Rotina para que se qux:',
+      '  alguma instrução.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    const equivalentHeaderDiagnostics = diagnostics.filter(diagnostic =>
+      diagnostic.message.includes('semantically equivalent')
+    );
+    assert.equal(equivalentHeaderDiagnostics.length, 1);
+    assert.equal(equivalentHeaderDiagnostics[0].severity, vscode.DiagnosticSeverity.Error);
+
+    const colonTerminatorHints = diagnostics.filter(diagnostic =>
+      diagnostic.message.includes('Consecutive primary routine headers')
+    );
+    assert.equal(colonTerminatorHints.length, 1);
+    assert.equal(colonTerminatorHints[0].severity, vscode.DiagnosticSeverity.Hint);
+    assert.equal(colonTerminatorHints[0].range.start.line, 5);
+  });
+
+  test('Hints when primary routine headers follow an alternate header without a body', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se baz;',
+      'Rotina para que se bar:',
+      'Rotina para que se foo:'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    const consecutiveHeaderHints = diagnostics.filter(diagnostic =>
+      diagnostic.message.includes('Consecutive primary routine headers')
+    );
+    assert.equal(consecutiveHeaderHints.length, 1);
+    assert.equal(consecutiveHeaderHints[0].severity, vscode.DiagnosticSeverity.Hint);
+    assert.equal(consecutiveHeaderHints[0].range.start.line, 1);
+  });
+
+  test('Requires hexadecimal literals after the Decodifique instruction', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se execute:',
+      '  Decodifique $8B8508000000.',
+      '  Decodifique a letra.',
+      '  Decodifique 123.',
+      '  Decodifique "oi".',
+      '  Decodifique.',
+      'Rotina para que se decodifique a letra:',
+      '  Escreva "letra" para StdOut.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    const decodeErrors = diagnostics.filter(diagnostic =>
+      diagnostic.message === 'Expected a hexadecimal literal after "Decodifique".'
+    );
+    assert.equal(decodeErrors.length, 4);
+    assert.ok(decodeErrors.every(diagnostic =>
+      diagnostic.severity === vscode.DiagnosticSeverity.Error
+    ));
+    assert.deepEqual(diagnostics.filter(diagnostic =>
+      diagnostic.message.includes('has no statements')
+    ), []);
+  });
+
+  test('Allows bare Retorne statements and rejects values and routine names using the keyword', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se exemplo:',
+      '  Retorne.',
+      '  Retorne 0.',
+      '  Retorne o número.',
+      '  Retorne falso.',
+      'Rotina para que se retorne alguma coisa:',
+      '  Escreva "teste" para StdOut.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    const returnValueErrors = diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Retorne" does not accept a value or variable.'
+    );
+    assert.equal(returnValueErrors.length, 3);
+    assert.ok(returnValueErrors.every(diagnostic =>
+      diagnostic.severity === vscode.DiagnosticSeverity.Error
+    ));
+
+    const reservedNameErrors = diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Retorne" is a reserved statement keyword and cannot be used in a routine name.'
+    );
+    assert.equal(reservedNameErrors.length, 1);
+    assert.equal(reservedNameErrors[0].severity, vscode.DiagnosticSeverity.Error);
+  });
+
+  test('Requires boolean functions to return sim or não with Diga', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Função para que se determine se válido:',
+      '  Se uma condição for verdadeira, diga sim.',
+      'Função para que se determine se inválido:',
+      '  Diga talvez.',
+      'Função para que se determine se sem resposta:',
+      '  Escreva "sem retorno" para StdOut.',
+      'Função para que se determine se vazio:'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Diga" requires the boolean literal "sim" or "não".'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.'
+    ).length, 3);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message.includes('has no statements')
+    ).length, 1);
+  });
+
+  test('Rejects Diga in ordinary routines and routine names', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se diga sim:',
+      '  Diga sim.',
+      'Rotina para que se comum:',
+      '  Diga não.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Diga" can only be used in a boolean function.'
+    ).length, 2);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Diga" is a reserved statement keyword and cannot be used in a routine name.'
+    ).length, 1);
+  });
+
+  test('Preserves routine parameters by creating an original-name binding', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se subdivida um número denominado valor e um número denominado quantidade:',
+      '  Preserve o valor.',
+      '  Preserve a quantidade.',
+      '  Desloque o valor 16 bits para a direita.',
+      '  Preserve o valor.',
+      '  Preserve a variável inexistente.',
+      '  Preserve número.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    const preserveErrors = diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Preserve" must be followed by a definite article and the name of a routine parameter.'
+    );
+    assert.equal(preserveErrors.length, 2);
+    assert.ok(preserveErrors.every(diagnostic =>
+      diagnostic.severity === vscode.DiagnosticSeverity.Error
+    ));
+  });
+
+  test('Reserves Preserve in routine names', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se preserve um número:',
+      '  Escreva "teste" para StdOut.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Preserve" is a reserved statement keyword and cannot be used in a routine name.'
+    ).length, 1);
   });
 });

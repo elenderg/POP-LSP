@@ -1,1 +1,1 @@
-{"root":["./src/plural.ts","./src/server.ts","./src/typeparser.ts"],"version":"5.9.2"}
+{"root":["./src/example.ts","./src/plural.ts","./src/server.ts","./src/typeparser.ts"],"version":"5.9.2"}

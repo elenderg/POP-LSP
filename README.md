@@ -57,6 +57,32 @@ language-specific default.
   types are resolved against the type catalog. The routine body begins after
   the header colon and ends at the next top-level type declaration, global
   variable declaration, or routine header; no block delimiter is required.
+- Alternate headers that repeat the primary name and parameter types are
+  diagnosed as semantically equivalent. A colon-terminated header immediately
+  followed by another routine header receives a hint to use `;` for the
+  alternate header.
+- Statements in routine bodies end with a period. Routine calls are resolved
+  against declared names and aliases, matching calls without parameters first;
+  definite or demonstrative articles in arguments can identify passed
+  parameters. Calls resolve to the matching routine definition, and an empty
+  routine body receives a hint diagnostic.
+- The `Decodifique` instruction accepts a hexadecimal literal (for example,
+  `Decodifique $8B8508000000.`). A diagnostic is reported when it is followed
+  by another value or no value; routine names beginning with `Decodifique`
+  therefore cannot be invoked as normal calls.
+- The `Retorne` statement returns control to the caller and must appear without
+  a value or variable (for example, `Retorne.`). The keyword is reserved and
+  cannot be used in a routine name.
+- Routine parameters are passed by reference, so a routine can modify the
+  arguments supplied by its caller without returning a replacement value.
+- `Preserve` creates a local copy of a routine parameter. The copy keeps the
+  parameter's original name, while the received argument is renamed by adding
+  `original` (for example, preserving `valor` creates `valor` as the copy and
+  `valor original` as the original argument). It must be followed by a definite
+  article and a parameter name, and cannot be used in a routine name.
+- Boolean functions use the `para que se determine se` header and must contain
+  a `Diga sim.` or `Diga não.` statement. `Diga` accepts only these boolean
+  literals and cannot be used in ordinary routines or routine names.
 - A period terminates type and global-variable declarations and statements;
   it also terminates conditional blocks. A colon is used for the end of a
   routine header and start of its body. Semicolons separate statements in
