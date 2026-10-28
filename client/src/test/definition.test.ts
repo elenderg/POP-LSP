@@ -1335,4 +1335,166 @@ suite('Português Puro definitions', () => {
       diagnostic.message === '"Preserve" is a reserved statement keyword and cannot be used in a routine name.'
     ).length, 1);
   });
+
+  test('Parses arithmetic assignment operators from left to right', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se faça algo com um número e um segundo número:',
+      '  Atribua o número mais 2 menos 1 vezes o número dividido por 2 para o segundo número.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Parses both string concatenation operators in output expressions', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se faça algo:',
+      '  Escreva "Olá, " junto com o nome junto com o sobrenome seguido de "!" para StdOut.',
+      '  Escreva "junto com seguido de" junto com "!" para StdOut.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Declares local variables through routine-call arguments and resolves their types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se foo:',
+      '  bar 42.',
+      '  bar um número denominado contagem.',
+      '  baz a contagem.',
+      '  bar um segundo número.',
+      '  baz o segundo número.',
+      '  Atribua 123 para um número denominado valor de exemplo.',
+      'Rotina para que se bar um número:',
+      '  Retorne.',
+      'Rotina para que se baz um número:',
+      '  Retorne.',
+      'Rotina para que se atribua um número para um segundo número:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const cases = [
+      { call: 'bar 42', expectedLine: 8 },
+      { call: 'bar um número denominado contagem', expectedLine: 8 },
+      { call: 'baz a contagem', expectedLine: 10 },
+      { call: 'bar um segundo número', expectedLine: 8 },
+      { call: 'baz o segundo número', expectedLine: 10 },
+      { call: 'Atribua 123', expectedLine: 12 }
+    ];
+    for (const testCase of cases) {
+      const offset = text.indexOf(testCase.call) + 1;
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+      assert.ok(definition, testCase.call);
+      assert.equal(definition.length, 1, testCase.call);
+      assert.equal(definition[0].range.start.line, testCase.expectedLine, testCase.call);
+    }
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Does not resolve routine calls when an existing argument has an incompatible type', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma string é uma estrutura.',
+      'A mensagem é uma string.',
+      'Rotina para que se execute:',
+      '  processe a mensagem.',
+      'Rotina para que se processe um número:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const callOffset = document.getText().indexOf('processe a mensagem') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.deepEqual(definition, []);
+  });
+
+  test('Local variables shadow global variables with the same name', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma string é uma estrutura.',
+      'O nome é um número.',
+      'Rotina para que se execute:',
+      '  Atribua "João" para uma string denominada nome.',
+      '  consuma o nome.',
+      'Rotina para que se atribua uma string para uma string:',
+      '  Retorne.',
+      'Rotina para que se consuma uma string:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const callOffset = text.indexOf('consuma o nome') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 8);
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
 });

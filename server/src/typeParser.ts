@@ -76,11 +76,56 @@ export interface PreservedRoutineParameter {
 	range: SourceRange;
 }
 
+export type ExpressionOperator =
+	| 'mais'
+	| 'menos'
+	| 'vezes'
+	| 'dividido por'
+	| 'junto com'
+	| 'seguido de';
+
+export interface RoutineExpressionOperand {
+	kind: 'operand';
+	text: string;
+	range: SourceRange;
+}
+
+export interface RoutineExpressionBinary {
+	kind: 'binary';
+	operator: ExpressionOperator;
+	left: RoutineExpression;
+	right: RoutineExpression;
+	range: SourceRange;
+}
+
+export type RoutineExpression = RoutineExpressionOperand | RoutineExpressionBinary;
+
+export interface RoutineAssignment {
+	target: TypeReference;
+	expression: RoutineExpression;
+	range: SourceRange;
+}
+
+export interface RoutineOutput {
+	expression: RoutineExpression;
+	destination: TypeReference;
+	range: SourceRange;
+}
+
+export interface RoutineLocalVariable {
+	name: TypeReference;
+	type: TypeReference;
+	range: SourceRange;
+}
+
 export interface RoutineDeclaration {
 	name: TypeReference;
 	alternateNames: TypeReference[];
 	parameters: RoutineParameter[];
 	preservedParameters: PreservedRoutineParameter[];
+	assignments: RoutineAssignment[];
+	outputs: RoutineOutput[];
+	localVariables: RoutineLocalVariable[];
 	returnParameter?: RoutineParameter;
 	calls: RoutineCall[];
 	annotation?: 'rotina' | 'função';
@@ -92,6 +137,7 @@ export interface RoutineDeclaration {
 export interface RoutineCall {
 	name: TypeReference;
 	arguments: TypeReference[];
+	localVariable?: RoutineLocalVariable;
 	target?: RoutineDeclaration;
 }
 
@@ -374,7 +420,7 @@ export function parseTypeDeclarations(source: string): ParsedDocument {
 	);
 	resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
 	resolveRoutineParameters(parserSource, routines, symbols, diagnostics);
-	resolveRoutineCalls(parserSource, routines, diagnostics);
+	resolveRoutineCalls(parserSource, routines, globalVariables, symbols, diagnostics);
 
 	return {
 		declarations,
@@ -452,8 +498,11 @@ function setRoutineBodyRanges(
 function resolveRoutineCalls(
 	source: string,
 	routines: RoutineDeclaration[],
+	globalVariables: GlobalVariableDeclaration[],
+	symbols: TypeSymbolTable,
 	diagnostics: ParserDiagnostic[]
 ): void {
+	const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
 	for (const routine of routines) {
 		const body = source.slice(routine.bodyRange.start, routine.bodyRange.end);
 		let hasValidBooleanReturn = false;
@@ -471,6 +520,20 @@ function resolveRoutineCalls(
 			const statementRange = trimRange(source, statementStart, periodIndex);
 			if (statementRange.start < statementRange.end) {
 				if (validatePreserveStatement(source, statementRange, routine, diagnostics)) {
+					statementStart = periodIndex + 1;
+					periodIndex = findDeclarationPeriod(source, statementStart);
+					continue;
+				}
+				const assignment = parseRoutineAssignment(source, statementRange, diagnostics);
+				if (assignment) {
+					routine.assignments.push(assignment);
+					statementStart = periodIndex + 1;
+					periodIndex = findDeclarationPeriod(source, statementStart);
+					continue;
+				}
+				const output = parseRoutineOutput(source, statementRange, diagnostics);
+				if (output) {
+					routine.outputs.push(output);
 					statementStart = periodIndex + 1;
 					periodIndex = findDeclarationPeriod(source, statementStart);
 					continue;
@@ -496,9 +559,19 @@ function resolveRoutineCalls(
 					periodIndex = findDeclarationPeriod(source, statementStart);
 					continue;
 				}
-				const call = resolveRoutineCall(source, statementRange, routines);
+				const call = resolveRoutineCall(
+					source,
+					statementRange,
+					routines,
+					routine,
+					globalVariableSymbols,
+					symbols
+				);
 				if (call) {
 					routine.calls.push(call);
+					if (call.localVariable) {
+						routine.localVariables.push(call.localVariable);
+					}
 				}
 			}
 			statementStart = periodIndex + 1;
@@ -512,6 +585,171 @@ function resolveRoutineCalls(
 			});
 		}
 	}
+}
+
+function parseRoutineAssignment(
+	source: string,
+	statement: SourceRange,
+	diagnostics: ParserDiagnostic[]
+): RoutineAssignment | undefined {
+	const keyword = readWord(source, statement.start, statement.end);
+	if (!keyword || keyword.value.toLocaleLowerCase('pt-BR') !== 'atribua') {
+		return undefined;
+	}
+
+	const destinationMarker = findWordOutsideStrings(source, keyword.end, statement.end, 'para');
+	if (!destinationMarker) {
+		return undefined;
+	}
+	const expressionRange = trimRange(source, keyword.end, destinationMarker.start);
+	const targetRange = trimRange(source, destinationMarker.end, statement.end);
+	const targetArticle = readWord(source, targetRange.start, targetRange.end);
+	if (targetArticle && indefiniteArticles.has(targetArticle.value.toLocaleLowerCase('pt-BR'))) {
+		return undefined;
+	}
+	const expression = parseRoutineExpression(source, expressionRange, diagnostics);
+	if (!expression || targetRange.start === targetRange.end) {
+		return undefined;
+	}
+
+	return {
+		target: createTypeReference(source, targetRange),
+		expression,
+		range: statement
+	};
+}
+
+function parseRoutineOutput(
+	source: string,
+	statement: SourceRange,
+	diagnostics: ParserDiagnostic[]
+): RoutineOutput | undefined {
+	const keyword = readWord(source, statement.start, statement.end);
+	if (!keyword || keyword.value.toLocaleLowerCase('pt-BR') !== 'escreva') {
+		return undefined;
+	}
+
+	const destinationMarker = findWordOutsideStrings(source, keyword.end, statement.end, 'para');
+	if (!destinationMarker) {
+		return undefined;
+	}
+	const expressionRange = trimRange(source, keyword.end, destinationMarker.start);
+	const destinationRange = trimRange(source, destinationMarker.end, statement.end);
+	const expression = parseRoutineExpression(source, expressionRange, diagnostics);
+	if (!expression || destinationRange.start === destinationRange.end) {
+		return undefined;
+	}
+
+	return {
+		expression,
+		destination: createTypeReference(source, destinationRange),
+		range: statement
+	};
+}
+
+function parseRoutineExpression(
+	source: string,
+	range: SourceRange,
+	diagnostics: ParserDiagnostic[]
+): RoutineExpression | undefined {
+	const words = /\p{L}+/gu;
+	words.lastIndex = range.start;
+	const quotedRanges = findQuotedRanges(source, range);
+	const operators: { operator: ExpressionOperator; range: SourceRange }[] = [];
+	let match: RegExpExecArray | null;
+	while ((match = words.exec(source)) && match.index < range.end) {
+		const wordStart = match.index;
+		if (quotedRanges.some(quoted => wordStart >= quoted.start && wordStart < quoted.end)) {
+			continue;
+		}
+		const word = match[0].toLocaleLowerCase('pt-BR');
+		if (!['mais', 'menos', 'vezes', 'dividido', 'junto', 'seguido'].includes(word)) {
+			continue;
+		}
+		const wordEnd = match.index + match[0].length;
+		const start = match.index > range.start ? source[match.index - 1] : '';
+		const end = wordEnd < range.end ? source[wordEnd] : '';
+		if (isWordCharacter(start) || isWordCharacter(end)) {
+			continue;
+		}
+
+		if (word === 'dividido') {
+			const nextWord = readWord(source, wordEnd, range.end);
+			if (!nextWord || nextWord.value.toLocaleLowerCase('pt-BR') !== 'por') {
+				continue;
+			}
+			operators.push({
+				operator: 'dividido por',
+				range: { start: match.index, end: nextWord.end }
+			});
+			words.lastIndex = nextWord.end;
+		} else if (word === 'junto' || word === 'seguido') {
+			const nextWord = readWord(source, wordEnd, range.end);
+			const expectedNextWord = word === 'junto' ? 'com' : 'de';
+			if (!nextWord || nextWord.value.toLocaleLowerCase('pt-BR') !== expectedNextWord) {
+				continue;
+			}
+			operators.push({
+				operator: word === 'junto' ? 'junto com' : 'seguido de',
+				range: { start: match.index, end: nextWord.end }
+			});
+			words.lastIndex = nextWord.end;
+		} else {
+			operators.push({
+				operator: word as ExpressionOperator,
+				range: { start: match.index, end: wordEnd }
+			});
+		}
+	}
+
+	if (operators.length === 0) {
+		return undefined;
+	}
+
+	const operands: RoutineExpressionOperand[] = [];
+	let operandStart = range.start;
+	for (const operator of operators) {
+		const operandRange = trimRange(source, operandStart, operator.range.start);
+		if (operandRange.start === operandRange.end) {
+			diagnostics.push({
+				message: `Expected an operand before "${operator.operator}".`,
+				range: operator.range
+			});
+			return undefined;
+		}
+		operands.push({
+			kind: 'operand',
+			text: source.slice(operandRange.start, operandRange.end),
+			range: operandRange
+		});
+		operandStart = operator.range.end;
+	}
+
+	const finalOperandRange = trimRange(source, operandStart, range.end);
+	if (finalOperandRange.start === finalOperandRange.end) {
+		diagnostics.push({
+			message: `Expected an operand after "${operators[operators.length - 1].operator}".`,
+			range: operators[operators.length - 1].range
+		});
+		return undefined;
+	}
+	operands.push({
+		kind: 'operand',
+		text: source.slice(finalOperandRange.start, finalOperandRange.end),
+		range: finalOperandRange
+	});
+
+	let expression: RoutineExpression = operands[0];
+	for (let index = 0; index < operators.length; index++) {
+		expression = {
+			kind: 'binary',
+			operator: operators[index].operator,
+			left: expression,
+			right: operands[index + 1],
+			range: { start: expression.range.start, end: operands[index + 1].range.end }
+		};
+	}
+	return expression;
 }
 
 function validatePreserveStatement(
@@ -639,7 +877,10 @@ function validateDecodeStatement(
 function resolveRoutineCall(
 	source: string,
 	statementRange: SourceRange,
-	routines: RoutineDeclaration[]
+	routines: RoutineDeclaration[],
+	caller: RoutineDeclaration,
+	globalVariables: GlobalVariableSymbolTable,
+	symbols: TypeSymbolTable
 ): RoutineCall | undefined {
 	const statement = normalizeTypeName(source.slice(statementRange.start, statementRange.end));
 	const exactMatch = routines.find(routine =>
@@ -668,11 +909,44 @@ function resolveRoutineCall(
 				nameEnd,
 				statementRange.end
 			);
-			const argumentsList = splitRoutineArguments(source, argumentRange);
+			const localVariable = parseLocalVariableDeclaration(
+				source,
+				argumentRange,
+				symbols
+			);
+			const precedingArgumentsRange = localVariable
+				? trimTrailingWord(
+					source,
+					trimRange(source, argumentRange.start, localVariable.range.start),
+					'para'
+				)
+				: argumentRange;
+			const argumentsList = localVariable
+				? [
+					...splitRoutineArguments(
+						source,
+						precedingArgumentsRange
+					).filter(argument =>
+						normalizeTypeName(source.slice(argument.start, argument.end)) !== 'para'
+					),
+					localVariable.name.range
+				]
+				: splitRoutineArguments(source, argumentRange);
+			const localVariableIndex = localVariable ? argumentsList.length - 1 : -1;
 			if (
 				argumentsList.length !== routine.parameters.length ||
 				!argumentsList.every((argument, index) =>
-					routineArgumentMatchesType(source, argument, routine.parameters[index].type)
+					localVariableIndex === index
+						? localVariable !== undefined &&
+							isCompatibleType(localVariable.type, routine.parameters[index].type, symbols)
+						: routineArgumentMatchesType(
+							source,
+							argument,
+							routine.parameters[index].type,
+							caller,
+							globalVariables,
+							symbols
+						)
 				)
 			) {
 				continue;
@@ -683,6 +957,7 @@ function resolveRoutineCall(
 					end: nameEnd
 				}),
 				arguments: argumentsList.map(range => createTypeReference(source, range)),
+				localVariable,
 				target: routine
 			};
 		}
@@ -740,12 +1015,18 @@ function splitRoutineArguments(source: string, range: SourceRange): SourceRange[
 function routineArgumentMatchesType(
 	source: string,
 	argument: SourceRange,
-	type: TypeReference
+	type: TypeReference,
+	caller: RoutineDeclaration,
+	globalVariables: GlobalVariableSymbolTable,
+	symbols: TypeSymbolTable
 ): boolean {
-	const text = normalizeTypeName(source.slice(argument.start, argument.end));
 	const literal = parseGlobalVariableLiteral(source, argument);
 	if (literal) {
-		return normalizeTypeName(inferGlobalVariableTypeName(literal)) === type.normalizedName;
+		return isCompatibleType(
+			{ name: inferGlobalVariableTypeName(literal), normalizedName: normalizeTypeName(inferGlobalVariableTypeName(literal)), range: argument },
+			type,
+			symbols
+		);
 	}
 	const firstWord = readWord(source, argument.start, argument.end);
 	if (
@@ -753,10 +1034,131 @@ function routineArgumentMatchesType(
 		(definiteArticles.has(firstWord.value.toLocaleLowerCase('pt-BR')) ||
 			['este', 'esta', 'estes', 'estas'].includes(firstWord.value.toLocaleLowerCase('pt-BR')))
 	) {
-		const referenceType = normalizeTypeName(source.slice(firstWord.end, argument.end));
-		return referenceType === type.normalizedName || referenceType.endsWith(` ${type.normalizedName}`);
+		const variableName = normalizeTypeName(source.slice(firstWord.end, argument.end));
+		const variableType = resolveVariableType(
+			caller,
+			globalVariables,
+			variableName
+		);
+		const variableTypeName = variableType?.name;
+		if (!variableTypeName) {
+			return false;
+		}
+		return isCompatibleType(
+			variableType,
+			type,
+			symbols
+		);
 	}
-	return text === type.normalizedName || text.endsWith(` ${type.normalizedName}`);
+	return false;
+}
+
+function resolveVariableType(
+	routine: RoutineDeclaration,
+	globalVariables: GlobalVariableSymbolTable,
+	name: string
+): TypeReference | undefined {
+	const localVariable = findRoutineVariable(routine, name);
+	if (localVariable) {
+		return localVariable.type;
+	}
+
+	const globalVariable = globalVariables.lookup(name);
+	const typeName = globalVariable?.typeName;
+	return typeName
+		? {
+			name: typeName,
+			normalizedName: normalizeTypeName(typeName),
+			range: globalVariable.type?.range ?? globalVariable.declaration.name.range
+		}
+		: undefined;
+}
+
+function findRoutineVariable(
+	routine: RoutineDeclaration,
+	name: string
+): RoutineParameter | RoutineLocalVariable | undefined {
+	const localVariable = [...routine.localVariables]
+		.reverse()
+		.find(variable => variable.name.normalizedName === name);
+	return localVariable ?? routine.parameters.find(parameter => parameter.name.normalizedName === name);
+}
+
+function isCompatibleType(
+	actual: TypeReference,
+	expected: TypeReference,
+	symbols: TypeSymbolTable
+): boolean {
+	const actualType = symbols.lookup(actual.name);
+	const expectedType = symbols.lookup(expected.name);
+	return actualType && expectedType
+		? actualType === expectedType
+		: actual.normalizedName === expected.normalizedName;
+}
+
+function parseLocalVariableDeclaration(
+	source: string,
+	argumentsRange: SourceRange,
+	symbols: TypeSymbolTable
+): RoutineLocalVariable | undefined {
+	const articles = /\p{L}+/gu;
+	articles.lastIndex = argumentsRange.start;
+	let articleMatch: RegExpExecArray | null;
+	let localVariable: RoutineLocalVariable | undefined;
+	while ((articleMatch = articles.exec(source)) && articleMatch.index < argumentsRange.end) {
+		const article = articleMatch[0].toLocaleLowerCase('pt-BR');
+		if (!indefiniteArticles.has(article)) {
+			continue;
+		}
+		const articleEnd = articleMatch.index + articleMatch[0].length;
+		const markers = new Set([
+			'denominado', 'denominada', 'denominados', 'denominadas',
+			'chamado', 'chamada', 'chamados', 'chamadas'
+		]);
+		const marker = findAnyWord(source, articleEnd, argumentsRange.end, markers);
+		const typeRange = trimRange(source, articleEnd, marker?.start ?? argumentsRange.end);
+		if (typeRange.start === typeRange.end) {
+			continue;
+		}
+
+		const typeWords = [...source.slice(typeRange.start, typeRange.end).matchAll(/\S+/gu)];
+		let resolvedType: TypeReference | undefined;
+		for (let firstWord = 0; firstWord < typeWords.length; firstWord++) {
+			const candidateName = typeWords.slice(firstWord).map(word => word[0]).join(' ');
+			if (!symbols.lookup(candidateName)) {
+				continue;
+			}
+			const typeStart = typeRange.start + typeWords[firstWord].index!;
+			resolvedType = createTypeReference(source, { start: typeStart, end: typeRange.end });
+			break;
+		}
+		if (!resolvedType) {
+			continue;
+		}
+
+		const nameRange = marker
+			? trimRange(source, marker.end, argumentsRange.end)
+			: typeRange;
+		if (nameRange.start === nameRange.end) {
+			continue;
+		}
+		localVariable = {
+			name: createTypeReference(source, nameRange),
+			type: resolvedType,
+			range: { start: articleMatch.index, end: argumentsRange.end }
+		};
+		articles.lastIndex = argumentsRange.end;
+	}
+	return localVariable;
+}
+
+function trimTrailingWord(source: string, range: SourceRange, word: string): SourceRange {
+	const words = [...source.slice(range.start, range.end).matchAll(/\p{L}+/gu)];
+	const lastWord = words[words.length - 1];
+	if (!lastWord || lastWord[0].toLocaleLowerCase('pt-BR') !== word) {
+		return range;
+	}
+	return trimRange(source, range.start, range.start + lastWord.index!);
 }
 
 export function findRoutineDeclarationAtOffset(
@@ -938,6 +1340,9 @@ function parseRoutineDeclarations(
 				alternateNames: alternateHeaders.map(alternate => alternate.name),
 				parameters: header.parameters,
 				preservedParameters: [],
+				assignments: [],
+				outputs: [],
+				localVariables: [],
 				returnParameter: header.returnParameter,
 				calls: [],
 				annotation: header.annotation,
@@ -1063,7 +1468,7 @@ function findRoutineParameterSeparator(
 			const wordEnd = match.index + match[0].length;
 			const word = match[0].toLocaleLowerCase('pt-BR');
 			if (
-				!conjunctions.has(word) ||
+				(!conjunctions.has(word) && word !== 'para') ||
 				isWordCharacter(match.index > start ? source[match.index - 1] : '') ||
 				isWordCharacter(wordEnd < end ? source[wordEnd] : '')
 			) {
@@ -1959,6 +2364,60 @@ function findWord(
 		}
 	}
 	return undefined;
+}
+
+function findWordOutsideStrings(
+	source: string,
+	start: number,
+	end: number,
+	expectedWord: string
+): { start: number; end: number } | undefined {
+	const quotedRanges = findQuotedRanges(source, { start, end });
+	const words = /\p{L}+/gu;
+	words.lastIndex = start;
+	let match: RegExpExecArray | null;
+	while ((match = words.exec(source)) && match.index < end) {
+		const wordStart = match.index;
+		if (quotedRanges.some(quoted => wordStart >= quoted.start && wordStart < quoted.end)) {
+			continue;
+		}
+		const wordEnd = match.index + match[0].length;
+		if (
+			!isWordCharacter(match.index > start ? source[match.index - 1] : '') &&
+			!isWordCharacter(wordEnd < end ? source[wordEnd] : '') &&
+			match[0].toLocaleLowerCase('pt-BR') === expectedWord
+		) {
+			return { start: match.index, end: wordEnd };
+		}
+	}
+	return undefined;
+}
+
+function findQuotedRanges(source: string, range: SourceRange): SourceRange[] {
+	const quotedRanges: SourceRange[] = [];
+	let index = range.start;
+	while (index < range.end) {
+		if (source[index] !== '"') {
+			index++;
+			continue;
+		}
+
+		const quoteStart = index++;
+		while (index < range.end) {
+			if (source[index] !== '"') {
+				index++;
+				continue;
+			}
+			if (source[index + 1] === '"') {
+				index += 2;
+				continue;
+			}
+			index++;
+			break;
+		}
+		quotedRanges.push({ start: quoteStart, end: index });
+	}
+	return quotedRanges;
 }
 
 function readWord(
