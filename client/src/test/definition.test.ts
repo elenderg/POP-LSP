@@ -1497,4 +1497,80 @@ suite('Português Puro definitions', () => {
     assert.equal(definition[0].range.start.line, 8);
     assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
+
+  test('Diagnoses missing routines and unresolved variables passed to routine parameters', async () => {
+    await activate(docUri);
+    const updateContent = async (lines: string[]) => {
+      const diagnosticsUpdated = new Promise<void>(resolve => {
+        const listener = vscode.languages.onDidChangeDiagnostics(event => {
+          if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+            listener.dispose();
+            resolve();
+          }
+        });
+      });
+      await setTestContent(lines.join('\n'));
+      await diagnosticsUpdated;
+      return vscode.languages.getDiagnostics(docUri);
+    };
+
+    const missingRoutineDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se bar:',
+      '  Baz a string.',
+      '  Retorne.'
+    ]);
+    assert.equal(missingRoutineDiagnostics.filter(diagnostic =>
+      diagnostic.message.includes('No compatible routine found')
+    ).length, 1);
+
+    const missingVariableDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se bar:',
+      '  Baz a string.',
+      '  Retorne.',
+      'Rotina para que se baz uma string:',
+      '  Retorne.'
+    ]);
+    assert.equal(missingVariableDiagnostics.filter(diagnostic =>
+      diagnostic.message.includes('Unknown variable "string"')
+    ).length, 1);
+    assert.equal(missingVariableDiagnostics.filter(diagnostic =>
+      diagnostic.message.includes('No compatible routine found')
+    ).length, 0);
+
+    const globalVariableDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'A string é uma string igual a "teste".',
+      'Rotina para que se bar:',
+      '  Baz a string.',
+      '  Retorne.',
+      'Rotina para que se baz uma string:',
+      '  Retorne.'
+    ]);
+    assert.deepEqual(globalVariableDiagnostics, []);
+
+    const localVariableDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se bar:',
+      '  Baz uma string.',
+      '  Retorne.',
+      'Rotina para que se baz uma string:',
+      '  Retorne.'
+    ]);
+    assert.deepEqual(localVariableDiagnostics, []);
+
+    const wrongArityDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se foo:',
+      '  Baz uma string.',
+      '  Retorne.',
+      'Rotina para que se baz:',
+      '  Retorne.'
+    ]);
+    const wrongArityError = wrongArityDiagnostics.find(diagnostic =>
+      diagnostic.message.includes('No compatible routine found for "Baz uma string"')
+    );
+    assert.ok(wrongArityError);
+  });
 });

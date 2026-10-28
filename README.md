@@ -75,11 +75,36 @@ language-specific default.
   cannot be used in a routine name.
 - Routine parameters are passed by reference, so a routine can modify the
   arguments supplied by its caller without returning a replacement value.
+- Routine calls accept compatible literal values or variables/parameters of the
+  expected type. An indefinite article in a call argument declares a local
+  variable of the following type, optionally named with `denominado/a/os/as`
+  (for example, `bar um número denominado contagem.`). Without an explicit
+  name, the type phrase supplies the variable name and may be reduced to find
+  its base type. A variable can then be passed to later calls using a definite
+  article, as in `baz a contagem.`. Declarations can also be initialized in
+  the call, for example `Atribua 123 para um número denominado valor.`.
+- Local variables take precedence over global variables with the same
+  normalized name throughout the containing routine. Thus, declaring a local
+  `nome` shadows a global `nome` when resolving later arguments and references.
+- Routine calls that have no matching declared routine produce a diagnostic.
+  When a parameter call passes an unresolved variable name (for example,
+  `Baz a string.` for a routine expecting a `string`), the parser reports the
+  missing variable. A matching global variable or a local declaration such as
+  `Baz uma string.` resolves the argument instead.
 - `Preserve` creates a local copy of a routine parameter. The copy keeps the
   parameter's original name, while the received argument is renamed by adding
   `original` (for example, preserving `valor` creates `valor` as the copy and
   `valor original` as the original argument). It must be followed by a definite
   article and a parameter name, and cannot be used in a routine name.
+- Arithmetic assignment expressions support `mais`, `menos`, `vezes`, and
+  `dividido por`. They are evaluated strictly from left to right with no
+  precedence rules; for example, `Atribua o número mais 2 menos 1 vezes o
+  número dividido por 2 para o segundo número.` is grouped as sequential
+  left-associated operations.
+- String expressions support the equivalent concatenation operators `junto
+  com` and `seguido de`. They may be mixed in one expression and are evaluated
+  left to right, for example: `Escreva "Olá, " junto com o nome junto com o
+  sobrenome seguido de "!" para StdOut.`
 - Boolean functions use the `para que se determine se` header and must contain
   a `Diga sim.` or `Diga não.` statement. `Diga` accepts only these boolean
   literals and cannot be used in ordinary routines or routine names.

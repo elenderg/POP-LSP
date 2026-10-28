@@ -336,6 +336,11 @@ export interface ParsedDocument {
 const indefiniteArticles = new Set(['um', 'uma', 'uns', 'umas']);
 const definiteArticles = new Set(['o', 'os', 'a', 'as']);
 const conjunctions = new Set(['e', 'ou', 'nem']);
+const builtInStatementStarts = new Set([
+	'atribua', 'escreva', 'diga', 'retorne', 'decodifique', 'preserve', 'se',
+	'adicione', 'incremente', 'feche', 'defina', 'ative', 'converta', 'dobre',
+	'multiplique', 'desloque', 'subtraia', 'faça'
+]);
 const routineNameDelimiters = new Set([
 	'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
 	'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
@@ -572,6 +577,16 @@ function resolveRoutineCalls(
 					if (call.localVariable) {
 						routine.localVariables.push(call.localVariable);
 					}
+				} else {
+					diagnoseUnresolvedRoutineCall(
+						source,
+						statementRange,
+						routines,
+						routine,
+						globalVariableSymbols,
+						symbols,
+						diagnostics
+					);
 				}
 			}
 			statementStart = periodIndex + 1;
@@ -961,6 +976,104 @@ function resolveRoutineCall(
 				target: routine
 			};
 		}
+	}
+	return undefined;
+}
+
+function diagnoseUnresolvedRoutineCall(
+	source: string,
+	statement: SourceRange,
+	routines: RoutineDeclaration[],
+	caller: RoutineDeclaration,
+	globalVariables: GlobalVariableSymbolTable,
+	symbols: TypeSymbolTable,
+	diagnostics: ParserDiagnostic[]
+): void {
+	const firstWord = readWord(source, statement.start, statement.end);
+	if (!firstWord || builtInStatementStarts.has(firstWord.value.toLocaleLowerCase('pt-BR'))) {
+		return;
+	}
+
+	const rest = trimRange(source, firstWord.end, statement.end);
+	const definiteArticle = findAnyWord(source, rest.start, rest.end, definiteArticles);
+	const matchesDeclaredRoutineName = routines.some(candidate =>
+		routineNames(candidate).some(name => {
+			const nameEnd = matchRoutineNamePrefix(source, statement, name);
+			return nameEnd !== undefined &&
+				/\s/u.test(source[nameEnd] ?? '') &&
+				trimRange(source, nameEnd, statement.end).start < statement.end;
+		})
+	);
+	const looksLikeCall = rest.start === rest.end ||
+		Boolean(definiteArticle || parseGlobalVariableLiteral(source, rest) || matchesDeclaredRoutineName);
+	if (!looksLikeCall) {
+		return;
+	}
+
+	for (const candidate of routines) {
+		if (!candidate.parameters.length) {
+			continue;
+		}
+		for (const name of routineNames(candidate)) {
+			const nameEnd = matchRoutineNamePrefix(source, statement, name);
+			if (nameEnd === undefined || !/\s/u.test(source[nameEnd] ?? '')) {
+				continue;
+			}
+			const argumentsRange = trimRange(source, nameEnd, statement.end);
+			const argumentsList = splitRoutineArguments(source, argumentsRange);
+			if (argumentsList.length !== candidate.parameters.length) {
+				continue;
+			}
+			for (let index = 0; index < argumentsList.length; index++) {
+				const argument = argumentsList[index];
+				const article = readWord(source, argument.start, argument.end);
+				if (
+					!article ||
+					!definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))
+				) {
+					continue;
+				}
+				const variableNameRange = trimRange(source, article.end, argument.end);
+				const variableName = normalizeTypeName(
+					source.slice(variableNameRange.start, variableNameRange.end)
+				);
+				if (resolveVariableType(caller, globalVariables, variableName)) {
+					continue;
+				}
+				const argumentType = findTypeSuffix(source, variableNameRange, symbols);
+				if (
+					argumentType &&
+					isCompatibleType(argumentType, candidate.parameters[index].type, symbols)
+				) {
+					diagnostics.push({
+						message: `Unknown variable "${source.slice(variableNameRange.start, variableNameRange.end)}" passed to routine "${name.name}".`,
+						range: variableNameRange
+					});
+					return;
+				}
+			}
+		}
+	}
+
+	diagnostics.push({
+		message: `No compatible routine found for "${source.slice(statement.start, statement.end)}".`,
+		range: statement
+	});
+}
+
+function findTypeSuffix(
+	source: string,
+	nameRange: SourceRange,
+	symbols: TypeSymbolTable
+): TypeReference | undefined {
+	const words = [...source.slice(nameRange.start, nameRange.end).matchAll(/\S+/gu)];
+	for (let firstWord = 0; firstWord < words.length; firstWord++) {
+		const candidateName = words.slice(firstWord).map(word => word[0]).join(' ');
+		if (!symbols.lookup(candidateName)) {
+			continue;
+		}
+		const typeStart = nameRange.start + words[firstWord].index!;
+		return createTypeReference(source, { start: typeStart, end: nameRange.end });
 	}
 	return undefined;
 }
