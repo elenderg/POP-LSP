@@ -16,6 +16,7 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
 	findRoutineDeclarationAtOffset,
+	findRoutineFieldAtOffset,
 	findTypeReferenceAtOffset,
 	parseTypeDeclarations
 } from './typeParser';
@@ -75,9 +76,17 @@ connection.onDefinition((params: TextDocumentPositionParams) => {
 	if (!parsedDocument) {
 		return undefined;
 	}
+	const offset = document.offsetAt(params.position);
+	const field = findRoutineFieldAtOffset(parsedDocument, offset);
+	if (field) {
+		return Location.create(document.uri, {
+			start: document.positionAt(field.name.range.start),
+			end: document.positionAt(field.name.range.end)
+		});
+	}
 	const reference = findTypeReferenceAtOffset(
 		parsedDocument,
-		document.offsetAt(params.position)
+		offset
 	);
 	if (reference) {
 		const candidates = [
