@@ -135,6 +135,10 @@ export interface RoutineDeclaration {
   outputs: RoutineOutput[];
   localVariables: RoutineLocalVariable[];
   conditionals: RoutineConditionalBlock[];
+  processes: RoutineProcess[];
+  loopInstructions: RoutineLoopInstruction[];
+  computedFieldAccesses: RoutineComputedFieldAccess[];
+  computedField?: RoutineComputedField;
   returnParameter?: RoutineParameter;
   calls: RoutineCall[];
   annotation?: 'rotina' | 'função';
@@ -147,8 +151,37 @@ export interface RoutineCall {
   name: TypeReference;
   arguments: TypeReference[];
   fieldAccesses?: RoutineFieldAccess[];
+  computedFieldAccesses?: RoutineComputedFieldAccess[];
   localVariable?: RoutineLocalVariable;
   target?: RoutineDeclaration;
+}
+
+export interface RoutineProcess {
+  kind: 'internal' | 'external';
+  target?: TypeReference;
+  library?: string;
+  functionName?: string;
+  arguments: TypeReference[];
+  fieldAccesses: RoutineFieldAccess[];
+  computedFieldAccesses?: RoutineComputedFieldAccess[];
+  returnVariable?: RoutineLocalVariable;
+  range: SourceRange;
+}
+
+export interface RoutineLoopInstruction {
+  kind: 'iterate' | 'break' | 'repeat';
+  range: SourceRange;
+}
+
+export interface RoutineComputedField {
+  name: TypeReference;
+  structureType: TypeReference;
+  valueType?: TypeReference;
+}
+
+export interface RoutineComputedFieldAccess {
+  reference: TypeReference;
+  target: RoutineDeclaration;
 }
 
 export interface RoutineFieldAccess {
@@ -458,9 +491,9 @@ const articlesAfterPrepositionA = new Set([
   'um', 'uma', 'uns', 'umas', 'o', 'a', 'os', 'as'
 ]);
 const builtInStatementStarts = new Set([
-  'atribua', 'escreva', 'diga', 'retorne', 'decodifique', 'preserve', 'se',
-  'adicione', 'incremente', 'feche', 'defina', 'ative', 'converta', 'dobre',
-  'multiplique', 'desloque', 'subtraia', 'faça'
+  'atribua', 'escreva', 'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
+  'processe', 'itere', 'pare', 'reitere', 'adicione', 'incremente', 'feche', 'defina',
+  'ative', 'converta', 'dobre', 'multiplique', 'desloque', 'subtraia', 'faça'
 ]);
 const routineNameDelimiters = new Set([
   'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
@@ -565,6 +598,7 @@ export function parseTypeDeclarations(source: string): ParsedDocument {
   );
   resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
   resolveRoutineParameters(parserSource, routines, symbols, diagnostics);
+  resolveComputedFields(routines, symbols, diagnostics);
   resolveRoutineCalls(parserSource, routines, globalVariables, symbols, diagnostics);
 
   return {
@@ -732,6 +766,26 @@ function processRoutineStatement(
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[]
 ): boolean {
+  const statementKeyword = readWord(source, statement.start, statement.end);
+  if (
+    statementKeyword &&
+    ['atribua', 'escreva'].includes(statementKeyword.value.toLocaleLowerCase('pt-BR'))
+  ) {
+    const destinationMarker =
+      findWordOutsideStrings(source, statementKeyword.end, statement.end, 'para') ??
+      findWordOutsideStrings(source, statementKeyword.end, statement.end, 'à');
+    if (destinationMarker) {
+      resolveFieldAccessRange(
+        source,
+        trimRange(source, statementKeyword.end, destinationMarker.start),
+        caller,
+        routines,
+        globalVariables,
+        symbols,
+        diagnostics
+      );
+    }
+  }
   if (validatePreserveStatement(source, statement, caller, diagnostics)) {
     return false;
   }
@@ -754,13 +808,48 @@ function processRoutineStatement(
   if (validateDecodeStatement(source, statement, diagnostics)) {
     return false;
   }
+  if (validatePushStatement(
+    source,
+    statement,
+    caller,
+    routines,
+    globalVariables,
+    symbols,
+    diagnostics
+  )) {
+    return false;
+  }
+  const firstWord = readWord(source, statement.start, statement.end);
+  const loopInstruction = parseLoopInstruction(source, statement, diagnostics);
+  if (loopInstruction) {
+    caller.loopInstructions.push(loopInstruction);
+    return false;
+  }
+  if (firstWord?.value.toLocaleLowerCase('pt-BR') === 'processe') {
+    const process = parseRoutineProcess(
+      source,
+      statement,
+      caller,
+      routines,
+      globalVariables,
+      symbols,
+      diagnostics
+    );
+    if (process) {
+      caller.processes.push(process);
+      if (process.returnVariable) {
+        caller.localVariables.push(process.returnVariable);
+      }
+    }
+    return false;
+  }
   const call = resolveRoutineCall(
     source,
     statement,
     routines,
     caller,
     globalVariables,
-    symbols
+    symbols,
   );
   if (call) {
     caller.calls.push(call);
@@ -900,6 +989,7 @@ function resolveBooleanCondition(
         }
         const distances: number[] = [];
         const fieldAccesses: RoutineFieldAccess[] = [];
+        const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
         for (let index = 0; index < argumentsList.length; index++) {
           const actualType = resolveRoutineArgumentType(
             source,
@@ -907,7 +997,9 @@ function resolveBooleanCondition(
             caller,
             globalVariables,
             symbols,
-            fieldAccesses
+            fieldAccesses,
+            routines,
+            computedFieldAccesses
           );
           const distance = actualType
             ? symbols.getBaseTypeDistance(
@@ -928,6 +1020,7 @@ function resolveBooleanCondition(
             name: createTypeReference(source, { start: nameStart, end: nameEnd }),
             arguments: argumentsList.map(range => createTypeReference(source, range)),
             fieldAccesses,
+            computedFieldAccesses,
             target: routine
           },
           distance: distances.reduce((total, distance) => total + distance, 0)
@@ -948,7 +1041,9 @@ function parseRoutineAssignment(
     return undefined;
   }
 
-  const destinationMarker = findWordOutsideStrings(source, keyword.end, statement.end, 'para');
+  const destinationMarker =
+    findWordOutsideStrings(source, keyword.end, statement.end, 'para') ??
+    findWordOutsideStrings(source, keyword.end, statement.end, 'à');
   if (!destinationMarker) {
     return undefined;
   }
@@ -1201,6 +1296,35 @@ function validateReturnStatement(
   return true;
 }
 
+function parseLoopInstruction(
+  source: string,
+  statement: SourceRange,
+  diagnostics: ParserDiagnostic[]
+): RoutineLoopInstruction | undefined {
+  const keyword = readWord(source, statement.start, statement.end);
+  if (!keyword) {
+    return undefined;
+  }
+  const instructionKinds = new Map<string, RoutineLoopInstruction['kind']>([
+    ['itere', 'iterate'],
+    ['pare', 'break'],
+    ['reitere', 'repeat']
+  ] as const);
+  const kind = instructionKinds.get(keyword.value.toLocaleLowerCase('pt-BR'));
+  if (!kind) {
+    return undefined;
+  }
+
+  const valueRange = trimRange(source, keyword.end, statement.end);
+  if (valueRange.start < valueRange.end) {
+    diagnostics.push({
+      message: `"${keyword.value}" does not accept an argument.`,
+      range: valueRange
+    });
+  }
+  return { kind, range: statement };
+}
+
 function validateDecodeStatement(
   source: string,
   statement: SourceRange,
@@ -1223,6 +1347,396 @@ function validateDecodeStatement(
       : { start: keyword.start, end: keyword.end }
   });
   return true;
+}
+
+function validatePushStatement(
+  source: string,
+  statement: SourceRange,
+  caller: RoutineDeclaration,
+  routines: RoutineDeclaration[],
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): boolean {
+  const keyword = readWord(source, statement.start, statement.end);
+  if (!keyword || keyword.value.toLocaleLowerCase('pt-BR') !== 'empilhe') {
+    return false;
+  }
+
+  const valueRange = trimRange(source, keyword.end, statement.end);
+  const literal = parseGlobalVariableLiteral(source, valueRange);
+  if (literal && literal.kind !== 'string') {
+    return true;
+  }
+
+  const article = readWord(source, valueRange.start, valueRange.end);
+  if (article && definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+    const variableNameRange = trimRange(source, article.end, valueRange.end);
+    const variableType = resolveRoutineArgumentType(
+      source,
+      valueRange,
+      caller,
+      globalVariables,
+      symbols
+    );
+    if (!variableType) {
+      diagnostics.push({
+        message: `Unknown variable "${source.slice(variableNameRange.start, variableNameRange.end)}" after "Empilhe".`,
+        range: variableNameRange.start < variableNameRange.end
+          ? variableNameRange
+          : { start: keyword.start, end: keyword.end }
+      });
+      return true;
+    }
+
+    if (isPushableNumericType(variableType.name, symbols)) {
+      return true;
+    }
+    diagnostics.push({
+      message: '"Empilhe" only accepts variables of type "byte", "word", or "número".',
+      range: valueRange
+    });
+    return true;
+  }
+
+  diagnostics.push({
+    message: 'Expected a numeric literal or a definite-article variable after "Empilhe".',
+    range: valueRange.start < valueRange.end
+      ? valueRange
+      : { start: keyword.start, end: keyword.end }
+  });
+  return true;
+}
+
+function isPushableNumericType(typeName: string, symbols: TypeSymbolTable): boolean {
+  return ['byte', 'word', 'número'].some(baseType =>
+    symbols.getBaseTypeDistance(typeName, baseType) !== undefined
+  );
+}
+
+function parseRoutineProcess(
+  source: string,
+  statement: SourceRange,
+  caller: RoutineDeclaration,
+  routines: RoutineDeclaration[],
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): RoutineProcess | undefined {
+  const keyword = readWord(source, statement.start, statement.end);
+  if (!keyword) {
+    return undefined;
+  }
+
+  const returnMarker = findWordOutsideStrings(source, keyword.end, statement.end, 'retornando');
+  const invocationEnd = returnMarker?.start ?? statement.end;
+  const withMarker = findWordOutsideStrings(source, keyword.end, invocationEnd, 'com');
+  const targetRange = trimRange(source, keyword.end, withMarker?.start ?? invocationEnd);
+  const fieldAccesses: RoutineFieldAccess[] = [];
+  const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
+  let kind: RoutineProcess['kind'];
+  let target: TypeReference | undefined;
+  let library: string | undefined;
+  let functionName: string | undefined;
+
+  const quotedRanges = findQuotedRanges(source, targetRange);
+  if (quotedRanges.length > 0) {
+    const first = quotedRanges[0];
+    const second = quotedRanges[1];
+    const isExternalTarget = first.start === targetRange.start &&
+      second !== undefined &&
+      trimRange(source, first.end, second.start).start ===
+        trimRange(source, first.end, second.start).end &&
+      trimRange(source, second.end, targetRange.end).start ===
+        trimRange(source, second.end, targetRange.end).end &&
+      isValidStringLiteral(source.slice(first.start, first.end)) &&
+      isValidStringLiteral(source.slice(second.start, second.end));
+    if (!isExternalTarget) {
+      diagnostics.push({
+        message: '"Processe" external calls require a library name and function name as string literals.',
+        range: targetRange
+      });
+      return undefined;
+    }
+
+    kind = 'external';
+    library = source.slice(first.start + 1, first.end - 1).replace(/""/gu, '"');
+    functionName = source.slice(second.start + 1, second.end - 1).replace(/""/gu, '"');
+  } else {
+    kind = 'internal';
+    const article = readWord(source, targetRange.start, targetRange.end);
+    if (!article || !definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+      diagnostics.push({
+        message: '"Processe" internal calls require a definite article and a function identifier.',
+        range: targetRange.start < targetRange.end
+          ? targetRange
+          : { start: keyword.start, end: keyword.end }
+      });
+      return undefined;
+    }
+    target = createTypeReference(source, targetRange);
+    if (!resolveRoutineArgumentType(
+      source,
+      targetRange,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses
+    )) {
+      diagnostics.push({
+        message: `Unknown function pointer "${source.slice(targetRange.start, targetRange.end)}".`,
+        range: targetRange
+      });
+      return undefined;
+    }
+  }
+
+  const argumentsList: SourceRange[] = [];
+  if (withMarker) {
+    const argumentsRange = trimRange(source, withMarker.end, invocationEnd);
+    argumentsList.push(...splitProcessArguments(source, argumentsRange));
+    if (argumentsList.length === 0) {
+      diagnostics.push({
+        message: '"Processe" requires at least one argument after "com".',
+        range: { start: withMarker.start, end: withMarker.end }
+      });
+      return undefined;
+    }
+  }
+
+  for (const argument of argumentsList) {
+    if (parseGlobalVariableLiteral(source, argument)) {
+      continue;
+    }
+    const article = readWord(source, argument.start, argument.end);
+    if (!article || !definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+      diagnostics.push({
+        message: '"Processe" arguments must be literals or variables introduced by a definite article.',
+        range: argument
+      });
+      return undefined;
+    }
+    if (!resolveRoutineArgumentType(
+      source,
+      argument,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses
+    )) {
+      diagnostics.push({
+        message: `Unknown variable or field "${source.slice(argument.start, argument.end)}" passed to "Processe".`,
+        range: argument
+      });
+      return undefined;
+    }
+  }
+
+  const returnVariable = returnMarker
+    ? parseProcessReturnVariable(source, returnMarker.end, statement.end, symbols, diagnostics)
+    : undefined;
+  if (returnMarker && !returnVariable) {
+    return undefined;
+  }
+
+  return {
+    kind,
+    target,
+    library,
+    functionName,
+    arguments: argumentsList.map(argument => createTypeReference(source, argument)),
+    fieldAccesses,
+    computedFieldAccesses,
+    returnVariable,
+    range: statement
+  };
+}
+
+function splitProcessArguments(source: string, range: SourceRange): SourceRange[] {
+  const argumentsList: SourceRange[] = [];
+  const quotedRanges = findQuotedRanges(source, range);
+  const words = /\p{L}+/gu;
+  words.lastIndex = range.start;
+  let argumentStart = range.start;
+  let match: RegExpExecArray | null;
+  while ((match = words.exec(source)) && match.index < range.end) {
+    if (quotedRanges.some(quoted => match!.index >= quoted.start && match!.index < quoted.end)) {
+      continue;
+    }
+    const wordEnd = match.index + match[0].length;
+    if (
+      match[0].toLocaleLowerCase('pt-BR') !== 'e' ||
+      isWordCharacter(match.index > range.start ? source[match.index - 1] : '') ||
+      isWordCharacter(wordEnd < range.end ? source[wordEnd] : '')
+    ) {
+      continue;
+    }
+    const argument = trimRange(source, argumentStart, match.index);
+    if (argument.start === argument.end) {
+      return [];
+    }
+    argumentsList.push(argument);
+    argumentStart = wordEnd;
+  }
+  const finalArgument = trimRange(source, argumentStart, range.end);
+  if (finalArgument.start === finalArgument.end) {
+    return [];
+  }
+  argumentsList.push(finalArgument);
+  return argumentsList;
+}
+
+function parseProcessReturnVariable(
+  source: string,
+  start: number,
+  end: number,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): RoutineLocalVariable | undefined {
+  const article = readWord(source, start, end);
+  if (!article || !indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+    diagnostics.push({
+      message: '"Processe" return values require an indefinite article and a return type.',
+      range: trimRange(source, start, end)
+    });
+    return undefined;
+  }
+
+  const markers = new Set([
+    'denominado', 'denominada', 'denominados', 'denominadas',
+    'chamado', 'chamada', 'chamados', 'chamadas'
+  ]);
+  const marker = findAnyWord(source, article.end, end, markers);
+  const typeRange = trimRange(source, article.end, marker?.start ?? end);
+  const words = [...source.slice(typeRange.start, typeRange.end).matchAll(/\S+/gu)];
+  let type: TypeReference | undefined;
+  for (let firstWord = 0; firstWord < words.length; firstWord++) {
+    const candidate = words.slice(firstWord).map(word => word[0]).join(' ');
+    if (!symbols.lookup(candidate)) {
+      continue;
+    }
+    type = createTypeReference(source, {
+      start: typeRange.start + words[firstWord].index!,
+      end: typeRange.end
+    });
+    break;
+  }
+  if (!type) {
+    diagnostics.push({
+      message: `Unknown "Processe" return type "${source.slice(typeRange.start, typeRange.end)}".`,
+      range: typeRange
+    });
+    return undefined;
+  }
+
+  const nameRange = marker
+    ? trimRange(source, marker.end, end)
+    : type.range;
+  if (nameRange.start === nameRange.end) {
+    diagnostics.push({
+      message: 'A variable name is required after "denominado" in a "Processe" return clause.',
+      range: marker ?? typeRange
+    });
+    return undefined;
+  }
+  return {
+    name: createTypeReference(source, nameRange),
+    type,
+    range: trimRange(source, start, end)
+  };
+}
+
+function resolveExpressionFieldAccesses(
+  source: string,
+  expression: RoutineExpression,
+  caller: RoutineDeclaration,
+  routines: RoutineDeclaration[],
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): void {
+  if (expression.kind === 'binary') {
+    resolveExpressionFieldAccesses(
+      source,
+      expression.left,
+      caller,
+      routines,
+      globalVariables,
+      symbols,
+      diagnostics
+    );
+    resolveExpressionFieldAccesses(
+      source,
+      expression.right,
+      caller,
+      routines,
+      globalVariables,
+      symbols,
+      diagnostics
+    );
+    return;
+  }
+  resolveFieldAccessRange(
+    source,
+    expression.range,
+    caller,
+    routines,
+    globalVariables,
+    symbols,
+    diagnostics
+  );
+}
+
+function resolveFieldAccessRange(
+  source: string,
+  range: SourceRange,
+  caller: RoutineDeclaration,
+  routines: RoutineDeclaration[],
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): void {
+  if (findStructureAccessMarkers(source, range).length === 0) {
+    return;
+  }
+  const expression = parseRoutineExpression(source, range, []);
+  if (expression) {
+    resolveExpressionFieldAccesses(
+      source,
+      expression,
+      caller,
+      routines,
+      globalVariables,
+      symbols,
+      diagnostics
+    );
+    return;
+  }
+
+  const fieldAccesses: RoutineFieldAccess[] = [];
+  const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
+  const resolvedType = resolveRoutineArgumentType(
+    source,
+    range,
+    caller,
+    globalVariables,
+    symbols,
+    fieldAccesses,
+    routines,
+    computedFieldAccesses
+  );
+  if (!resolvedType) {
+    diagnostics.push({
+      message: `Unknown structure field access "${source.slice(range.start, range.end)}".`,
+      range
+    });
+    return;
+  }
+  caller.computedFieldAccesses.push(...computedFieldAccesses);
 }
 
 function resolveRoutineCall(
@@ -1291,6 +1805,7 @@ function resolveRoutineCall(
 
       const distances: number[] = [];
       const fieldAccesses: RoutineFieldAccess[] = [];
+      const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
       for (let index = 0; index < argumentsList.length; index++) {
         const argumentType = localVariableIndex === index
           ? localVariable?.type
@@ -1300,7 +1815,9 @@ function resolveRoutineCall(
             caller,
             globalVariables,
             symbols,
-            fieldAccesses
+            fieldAccesses,
+            routines,
+            computedFieldAccesses
           );
         const distance = argumentType
           ? symbols.getBaseTypeDistance(
@@ -1325,6 +1842,7 @@ function resolveRoutineCall(
           }),
           arguments: argumentsList.map(range => createTypeReference(source, range)),
           fieldAccesses,
+          computedFieldAccesses,
           localVariable,
           target: routine
         },
@@ -1487,7 +2005,9 @@ function resolveRoutineArgumentType(
   caller: RoutineDeclaration,
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
-  fieldAccesses: RoutineFieldAccess[] = []
+  fieldAccesses: RoutineFieldAccess[] = [],
+  routines: RoutineDeclaration[] = [],
+  computedFieldAccesses: RoutineComputedFieldAccess[] = []
 ): TypeReference | undefined {
   const fieldAccessType = resolveStructureFieldAccess(
     source,
@@ -1495,7 +2015,9 @@ function resolveRoutineArgumentType(
     caller,
     globalVariables,
     symbols,
-    fieldAccesses
+    fieldAccesses,
+    routines,
+    computedFieldAccesses
   );
   if (fieldAccessType) {
     return fieldAccessType;
@@ -1529,7 +2051,9 @@ function resolveStructureFieldAccess(
   caller: RoutineDeclaration,
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
-  fieldAccesses: RoutineFieldAccess[]
+  fieldAccesses: RoutineFieldAccess[],
+  routines: RoutineDeclaration[],
+  computedFieldAccesses: RoutineComputedFieldAccess[]
 ): TypeReference | undefined {
   const segments: SourceRange[] = [];
   const accessMarkers = findStructureAccessMarkers(source, argument);
@@ -1561,10 +2085,16 @@ function resolveStructureFieldAccess(
     definiteArticles.has(rootArticle.value.toLocaleLowerCase('pt-BR'))
     ? trimRange(source, rootArticle.end, rootRange.end)
     : rootRange;
+  const rootName = normalizeTypeName(source.slice(rootNameRange.start, rootNameRange.end));
   const rootType = resolveVariableType(
     caller,
     globalVariables,
-    normalizeTypeName(source.slice(rootNameRange.start, rootNameRange.end))
+    rootName
+  ) ?? (
+    caller.computedField &&
+      normalizeTypeName(caller.computedField.structureType.name) === rootName
+      ? caller.computedField.structureType
+      : undefined
   );
   if (!rootType || fieldRanges.some(fieldRange => fieldRange.start === fieldRange.end)) {
     return undefined;
@@ -1576,7 +2106,21 @@ function resolveStructureFieldAccess(
     const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
     const field = findStructureField(currentType.name, fieldName, symbols);
     if (!field) {
-      return undefined;
+      const computedField = findComputedFieldRoutine(
+        currentType.name,
+        fieldName,
+        routines,
+        symbols
+      );
+      if (!computedField?.computedField?.valueType) {
+        return undefined;
+      }
+      computedFieldAccesses.push({
+        reference: createTypeReference(source, fieldRange),
+        target: computedField
+      });
+      currentType = computedField.computedField.valueType;
+      continue;
     }
     resolvedAccesses.push({
       reference: createTypeReference(source, fieldRange),
@@ -1586,6 +2130,33 @@ function resolveStructureFieldAccess(
   }
   fieldAccesses.push(...resolvedAccesses);
   return currentType;
+}
+
+function findComputedFieldRoutine(
+  structureType: string,
+  fieldName: string,
+  routines: RoutineDeclaration[],
+  symbols: TypeSymbolTable
+): RoutineDeclaration | undefined {
+  return routines
+    .filter(routine =>
+      routine.computedField &&
+      routine.computedField.name.normalizedName === fieldName &&
+      symbols.getBaseTypeDistance(
+        structureType,
+        routine.computedField.structureType.name
+      ) !== undefined
+    )
+    .sort((first, second) =>
+      (symbols.getBaseTypeDistance(
+        structureType,
+        first.computedField!.structureType.name
+      ) ?? Number.MAX_SAFE_INTEGER) -
+      (symbols.getBaseTypeDistance(
+        structureType,
+        second.computedField!.structureType.name
+      ) ?? Number.MAX_SAFE_INTEGER)
+    )[0];
 }
 
 function findStructureAccessMarkers(
@@ -1755,6 +2326,15 @@ export function findRoutineFieldAtOffset(
   offset: number
 ): NamedTypeField | undefined {
   for (const routine of parsedDocument.routines) {
+  	for (const process of routine.processes) {
+  	  const access = process.fieldAccesses.find(candidate =>
+  	    offset >= candidate.reference.range.start &&
+  	    offset <= candidate.reference.range.end
+  	  );
+  	  if (access) {
+  	    return access.target;
+  	  }
+  	}
   	for (const call of routine.calls) {
   		const access = call.fieldAccesses?.find(candidate =>
   			offset >= candidate.reference.range.start &&
@@ -1797,11 +2377,61 @@ function validateReservedNames(
 interface ParsedRoutineHeader {
   name: TypeReference;
   parameters: RoutineParameter[];
+  computedField?: RoutineComputedField;
   returnParameter?: RoutineParameter;
   annotation?: 'rotina' | 'função';
   isBooleanFunction: boolean;
   isPrimary: boolean;
   range: SourceRange;
+}
+
+function parseComputedFieldHeader(
+  source: string,
+  start: number,
+  end: number
+): {
+  name: TypeReference;
+  structureType: TypeReference;
+  returnMarker: SourceRange;
+} | undefined {
+  const verb = readWord(source, start, end);
+  if (!verb || verb.value.toLocaleLowerCase('pt-BR') !== 'atribua') {
+  	return undefined;
+  }
+  const fieldArticle = readWord(source, verb.end, end);
+  if (!fieldArticle || !definiteArticles.has(fieldArticle.value.toLocaleLowerCase('pt-BR'))) {
+  	return undefined;
+  }
+  const structureMarker = findAnyWord(
+  	source,
+  	fieldArticle.end,
+  	end,
+  	new Set(['dum', 'duma', 'duns', 'dumas'])
+  );
+  if (!structureMarker) {
+  	return undefined;
+  }
+  const structureStart = skipWhitespace(source, structureMarker.end, end);
+  const returnMarker = findWord(source, structureStart, end, 'para');
+  if (!returnMarker) {
+  	return undefined;
+  }
+  const nameRange = trimRange(source, fieldArticle.end, structureMarker.start);
+  const structureRange = trimRange(source, structureStart, returnMarker.start);
+  const returnArticle = readWord(source, returnMarker.end, end);
+  if (
+  	nameRange.start === nameRange.end ||
+  	structureRange.start === structureRange.end ||
+  	!returnArticle ||
+  	!indefiniteArticles.has(returnArticle.value.toLocaleLowerCase('pt-BR'))
+  ) {
+  	return undefined;
+  }
+  return {
+  	name: createTypeReference(source, nameRange),
+  	structureType: createTypeReference(source, structureRange),
+  	returnMarker
+  };
 }
 
 function parseRoutineDeclarations(
@@ -1836,6 +2466,11 @@ function parseRoutineDeclarations(
       const returningMarker = findWord(source, headerPattern.lastIndex, headerEnd, 'retornando');
       const signatureEnd = returningMarker?.start ?? headerEnd;
       const isBooleanFunction = Boolean(match[2]);
+      const computedField = parseComputedFieldHeader(
+        source,
+        headerPattern.lastIndex,
+        headerEnd
+      );
       const parameterArticle = findAnyWord(
         source,
         usingMarker?.end ?? headerPattern.lastIndex,
@@ -1863,6 +2498,8 @@ function parseRoutineDeclarations(
       );
       const nameRange = predicateMarker
         ? { start: predicateMarker.start, end: predicateMarker.end }
+        : computedField
+          ? trimRange(source, headerPattern.lastIndex, computedField.returnMarker.start)
         : trimRange(source, headerPattern.lastIndex, nameEnd);
       if (nameRange.start === nameRange.end) {
         diagnostics.push({
@@ -1872,14 +2509,26 @@ function parseRoutineDeclarations(
         headerPattern.lastIndex = headerEnd + 1;
         continue;
       }
-      for (const reservedKeyword of ['retorne', 'diga', 'preserve']) {
+      for (const reservedKeyword of [
+        'retorne', 'diga', 'preserve', 'empilhe', 'processe', 'itere', 'pare', 'reitere'
+      ]) {
         const reservedWord = findWord(source, nameRange.start, nameRange.end, reservedKeyword);
         if (!reservedWord) {
           continue;
         }
         const displayName = reservedKeyword === 'preserve'
           ? 'Preserve'
-          : reservedKeyword === 'diga' ? 'Diga' : 'Retorne';
+          : reservedKeyword === 'empilhe'
+            ? 'Empilhe'
+            : reservedKeyword === 'processe'
+              ? 'Processe'
+              : reservedKeyword === 'itere'
+                ? 'Itere'
+                : reservedKeyword === 'pare'
+                  ? 'Pare'
+                  : reservedKeyword === 'reitere'
+                    ? 'Reitere'
+                    : reservedKeyword === 'diga' ? 'Diga' : 'Retorne';
         diagnostics.push({
           message: `"${displayName}" is a reserved statement keyword and cannot be used in a routine name.`,
           range: reservedWord
@@ -1912,6 +2561,12 @@ function parseRoutineDeclarations(
       headers.push({
         name: createTypeReference(source, nameRange),
         parameters,
+        computedField: computedField
+          ? {
+            name: computedField.name,
+            structureType: computedField.structureType
+          }
+          : undefined,
         returnParameter,
         annotation: match[1]?.toLocaleLowerCase('pt-BR') as 'rotina' | 'função' | undefined,
         isBooleanFunction,
@@ -1955,6 +2610,10 @@ function parseRoutineDeclarations(
         outputs: [],
         localVariables: [],
         conditionals: [],
+        processes: [],
+        loopInstructions: [],
+        computedFieldAccesses: [],
+        computedField: header.computedField,
         returnParameter: header.returnParameter,
         calls: [],
         annotation: header.annotation,
@@ -2134,6 +2793,42 @@ function resolveRoutineParameters(
         }
         parameter.type = resolvedType;
     }
+  }
+}
+
+function resolveComputedFields(
+  routines: RoutineDeclaration[],
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): void {
+  for (const routine of routines) {
+  	const computedField = routine.computedField;
+  	if (!computedField) {
+  		continue;
+  	}
+
+  	const structure = symbols.lookup(computedField.structureType.name);
+  	if (!structure) {
+  		diagnostics.push({
+  			message: `Unknown computed field structure type "${computedField.structureType.name}".`,
+  			range: computedField.structureType.range
+  		});
+  		continue;
+  	}
+  	if (symbols.getBaseTypeDistance(structure.name, 'estrutura') === undefined) {
+  		diagnostics.push({
+  			message: `Type "${computedField.structureType.name}" is not a structure and cannot own a computed field.`,
+  			range: computedField.structureType.range
+  		});
+  	}
+  	if (routine.parameters.length !== 1) {
+  		diagnostics.push({
+  			message: 'A computed field routine must declare exactly one result parameter after "para".',
+  			range: routine.name.range
+  		});
+  		continue;
+  	}
+  	computedField.valueType = routine.parameters[0].type;
   }
 }
 
@@ -2606,6 +3301,14 @@ export function findTypeReferenceAtOffset(
     }
   }
   for (const routine of parsedDocument.routines) {
+    for (const localVariable of routine.localVariables) {
+      if (
+        offset >= localVariable.type.range.start &&
+        offset <= localVariable.type.range.end
+      ) {
+        return localVariable.type;
+      }
+    }
     for (const parameter of [
       ...routine.parameters,
       ...(routine.returnParameter ? [routine.returnParameter] : [])
@@ -2625,6 +3328,16 @@ export function findTypeReferenceAtOffset(
         offset <= localVariableType.range.end
       ) {
         return localVariableType;
+      }
+    }
+    for (const process of routine.processes) {
+      const returnType = process.returnVariable?.type;
+      if (
+        returnType &&
+        offset >= returnType.range.start &&
+        offset <= returnType.range.end
+      ) {
+        return returnType;
       }
     }
   }

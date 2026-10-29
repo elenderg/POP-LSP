@@ -350,6 +350,69 @@ suite('Português Puro definitions', () => {
     assert.equal(definitions[0].range.start.line, 0);
   });
 
+  test('Resolves computed structure fields through their assigning function', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma posição é uma estrutura.',
+      'Uma localização é uma estrutura com Uma posição denominada posição X, Uma posição denominada posição Y.',
+      'Um retângulo é uma estrutura com Uma posição denominada posição X1, Uma posição denominada posição X2.',
+      'A localização é uma localização.',
+      'Função para que se atribua o centro dum retângulo para uma localização:',
+      '  Atribua a posição X1 deste retângulo mais a posição X2 deste retângulo à posição X desta localização.',
+      'para que se consuma uma localização:',
+      '  Retorne.',
+      'para que se faça algo com um retângulo:',
+      '  Consuma o centro deste retângulo.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Reports invalid computed-field owners and unresolved computed fields', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma posição é uma estrutura.',
+      'Um retângulo é uma estrutura.',
+      'Função para que se atribua o centro dum byte para uma posição:',
+      '  Retorne.',
+      'Função para que se atribua o raio dum polígono para uma posição:',
+      '  Retorne.',
+      'Função para que se calcule o diâmetro dum retângulo para uma posição:',
+      '  Retorne.',
+      'para que se faça algo com um retângulo:',
+      '  Atribua o diâmetro deste retângulo para uma posição.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.ok(diagnostics.some(diagnostic =>
+      diagnostic.message.includes('cannot own a computed field')
+    ));
+    assert.ok(diagnostics.some(diagnostic =>
+      diagnostic.message.includes('Unknown computed field structure type "polígono"')
+    ));
+    assert.ok(diagnostics.some(diagnostic =>
+      diagnostic.message.includes('Unknown structure field access')
+    ));
+  });
+
   test('Parses union fields introduced by sob without absorbing the target into the field name', async () => {
     await activate(docUri);
     await setTestContent([
@@ -1223,6 +1286,131 @@ suite('Português Puro definitions', () => {
     ), []);
   });
 
+  test('Empilhe accepts numeric literals and numeric variables only', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um word é um byte.',
+      'Um word duplo é um word.',
+      'Um número é um byte.',
+      'Uma contagem é um número.',
+      'Uma string é uma estrutura.',
+      'Rotina para que se execute usando um byte denominado octeto, um word duplo denominado palavra, uma contagem denominada quantidade e uma string denominada texto:',
+      '  Empilhe 123.',
+      '  Empilhe $7B.',
+      '  Empilhe o octeto.',
+      '  Empilhe a palavra.',
+      '  Empilhe a quantidade.',
+      '  Empilhe o texto.',
+      '  Empilhe a variável inexistente.',
+      '  Empilhe.',
+      'Rotina para que se empilhe um número:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Empilhe" only accepts variables of type "byte", "word", or "número".'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message.startsWith('Unknown variable "') &&
+      diagnostic.message.endsWith('" after "Empilhe".')
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'Expected a numeric literal or a definite-article variable after "Empilhe".'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Empilhe" is a reserved statement keyword and cannot be used in a routine name.'
+    ).length, 1);
+  });
+
+  test('Parses internal and external Processe instructions with arguments and returns', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um ponteiro é um byte.',
+      'Uma estrutura de exemplo é uma estrutura com',
+      '  Um ponteiro denominado ponteiro de função.',
+      'A estrutura é uma estrutura de exemplo.',
+      'Rotina para que se foo:',
+      '  Processe o ponteiro de função desta estrutura.',
+      'Rotina para que se bar usando um número:',
+      '  Processe o ponteiro de função desta estrutura com 1 e o número retornando um número denominado resultado.',
+      '  Empilhe o resultado.',
+      'Rotina para que se baz:',
+      '  Processe o ponteiro de função desta estrutura retornando um número.',
+      '  Empilhe o número.',
+      'Rotina para que se feche a área de transferência:',
+      '  Processe "user32.dll" "CloseClipboard".',
+      'Rotina para que se emita um bipe usando um número denominado bipe:',
+      '  Processe "user32.dll" "MessageBeep" com o bipe retornando um número denominado resultado.',
+      '  Empilhe o resultado.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const fieldOffset = text.indexOf('ponteiro de função desta estrutura') + 2;
+    const fieldDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(fieldOffset)
+    );
+    assert.ok(fieldDefinition);
+    assert.equal(fieldDefinition.length, 1);
+    assert.equal(fieldDefinition[0].range.start.line, 3);
+
+    const returnTypeOffset = text.indexOf('número denominado resultado') + 2;
+    const returnTypeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(returnTypeOffset)
+    );
+    assert.ok(returnTypeDefinition);
+    assert.equal(returnTypeDefinition.length, 1);
+    assert.equal(returnTypeDefinition[0].range.start.line, 0);
+  });
+
+  test('Reserves Processe in routine names', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se processe:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Processe" is a reserved statement keyword and cannot be used in a routine name.'
+    ).length, 1);
+  });
+
   test('Allows bare Retorne statements and rejects values and routine names using the keyword', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -1742,6 +1930,73 @@ suite('Português Puro definitions', () => {
 
     const diagnostics = vscode.languages.getDiagnostics(docUri);
     assert.deepEqual(diagnostics, []);
+  });
+
+  test('Parses loop control instructions and keeps block variables in routine scope', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se faça algo:',
+      '  Se válido,',
+      '    Atribua "oi" para uma string denominada string de teste.',
+      '  Bar a string de teste.',
+      '  Itere.',
+      '    Atribua "olá" para uma string denominada nova string.',
+      '    Se válido, reitere.',
+      '    Pare.',
+      '  Reitere.',
+      '  Bar a nova string.',
+      'Rotina para que se atribua uma string para uma segunda string:',
+      '  Retorne.',
+      'Rotina para que se bar uma string:',
+      '  Retorne.',
+      'Função para que se determine se válido:',
+      '  Diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Rejects arguments on loop control instructions and reserves their names', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se itere algo:',
+      '  Itere 1.',
+      '  Pare agora.',
+      '  Reitere outra vez.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Itere" is a reserved statement keyword and cannot be used in a routine name.'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Itere" does not accept an argument.'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Pare" does not accept an argument.'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Reitere" does not accept an argument.'
+    ).length, 1);
   });
 
   test('Resolves conditional boolean functions with typed arguments', async () => {

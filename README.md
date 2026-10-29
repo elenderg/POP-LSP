@@ -28,8 +28,10 @@ language-specific default.
   treated as a type reference for navigation.
 - Scalar declarations can use integer multipliers (for example,
   `Uma dezena são 10 unidades.`). Type lookup accepts generated plural names,
-  and scalar types store their reduced scale as a fraction relative to the
-  declared type `número`.
+  pluralizing every word in compound names except `de` and the words after it
+  (for example, `casa do pato` becomes `casas dos patos`, while `escova de
+  dente` becomes `escovas de dente`). Scalar types store their reduced scale
+  as a fraction relative to the declared type `número`.
 - Type names are case-insensitive for lookup, and runs of whitespace (including
   line breaks and tabs) are normalized.
 - Unknown base types are reported as errors on the type name, including names
@@ -53,10 +55,15 @@ language-specific default.
 - Routine and function headers use `para que se`, optionally preceded by
   `Rotina` or `Função`. Semicolon-terminated alternate names are associated
   with the following colon-terminated header. Headers may declare parameters
-  after `usando` and a return value after `retornando`; parameter and return
-  types are resolved against the type catalog. The routine body begins after
-  the header colon and ends at the next top-level type declaration, global
-  variable declaration, or routine header; no block delimiter is required.
+  after `usando` (or its equivalents `desde`, `dado/a(s)`, `com`, and
+  `contendo`) and a return value after `retornando`; parameter and return types
+  are resolved against the type catalog. Routine-name matching normalizes the
+  specified verb forms (for example, `for` to `é`), prepositions (`sob` to
+  `sobre`, `em` to `para`), and Portuguese contractions (for example, `ao`
+  to `a o`, then `a` before an article to `para`). The routine body begins
+  after the header colon and ends at the next top-level type declaration,
+  global variable declaration, or routine header; no block delimiter is
+  required.
 - Alternate headers that repeat the primary name and parameter types are
   diagnosed as semantically equivalent. A colon-terminated header immediately
   followed by another routine header receives a hint to use `;` for the
@@ -70,9 +77,26 @@ language-specific default.
   `Decodifique $8B8508000000.`). A diagnostic is reported when it is followed
   by another value or no value; routine names beginning with `Decodifique`
   therefore cannot be invoked as normal calls.
+- The `Empilhe` instruction accepts a numeric literal or a variable introduced
+  by a definite article (for example, `Empilhe 123.` or `Empilhe o byte.`).
+  Variables must have type `byte`, `word`, or `número`, or derive from one of
+  those types. The keyword is reserved and cannot be used in a routine name.
+- The `Processe` instruction invokes an internal function pointer or an
+  external function identified by library and function string literals.
+  Optional arguments follow `com` and are separated by `e`; each argument is
+  a literal or definite-article variable. An optional `retornando` clause
+  declares a local variable from the return type, with an optional name after
+  `denominado/a/os/as`. The keyword is reserved and cannot be used in a routine
+  name.
 - The `Retorne` statement returns control to the caller and must appear without
   a value or variable (for example, `Retorne.`). The keyword is reserved and
   cannot be used in a routine name.
+- Loops use `Itere.` to begin a loop, `Pare.` to leave the loop, and `Reitere.`
+  to restart it. A loop beginning at the start of a routine may omit `Itere`;
+  `Reitere` inside a condition also continues from the loop start, while
+  `Retorne` still returns from the routine. These instructions do not create a
+  separate variable scope: locals declared in conditional or loop statements
+  remain visible throughout the routine.
 - Routine parameters are passed by reference, so a routine can modify the
   arguments supplied by its caller without returning a replacement value.
 - Routine calls accept compatible literal values or variables/parameters of the
@@ -83,6 +107,22 @@ language-specific default.
   its base type. A variable can then be passed to later calls using a definite
   article, as in `baz a contagem.`. Declarations can also be initialized in
   the call, for example `Atribua 123 para um número denominado valor.`.
+- Structure fields can be accessed in routine arguments with `deste`, `desta`,
+  `destes`, or `destas`. For example, `Bar o nome deste cliente.` accesses
+  `nome` on `cliente`; chains such as
+  `Bar o logradouro deste endereço deste cliente.` access nested fields.
+  Field access resolves the final field type for routine argument matching,
+  supports inherited structure fields, and navigates to the field definition.
+- Computed structure fields are declared by functions named
+  `para que se atribua <artigo definido> <campo> dum/duma/duns/dumas
+  <estrutura> para <artigo indefinido> <tipo de resultado>`. For example,
+  `Função para que se atribua o centro dum retângulo para uma localização:`
+  defines `centro` as a computed field of `retângulo`, with result type
+  `localização`. The owner must be a defined structure type, and the result
+  type is declared as the function's single parameter. Computed fields are
+  resolved as fallback after physical fields, including when matching routine
+  arguments; an unresolved access is diagnosed. Unlike physical fields,
+  computed fields do not navigate to a definition.
 - Local variables take precedence over global variables with the same
   normalized name throughout the containing routine. Thus, declaring a local
   `nome` shadows a global `nome` when resolving later arguments and references.
@@ -91,6 +131,10 @@ language-specific default.
   `Baz a string.` for a routine expecting a `string`), the parser reports the
   missing variable. A matching global variable or a local declaration such as
   `Baz uma string.` resolves the argument instead.
+- A routine parameter accepts values of its declared type and any derived
+  subtype. When multiple overloads match, the parser selects the closest
+  declared parameter type first, following the derived type's base chain; it
+  falls back to more general overloads only when no closer match exists.
 - `Preserve` creates a local copy of a routine parameter. The copy keeps the
   parameter's original name, while the received argument is renamed by adding
   `original` (for example, preserving `valor` creates `valor` as the copy and
@@ -108,6 +152,14 @@ language-specific default.
 - Boolean functions use the `para que se determine se` header and must contain
   a `Diga sim.` or `Diga não.` statement. `Diga` accepts only these boolean
   literals and cannot be used in ordinary routines or routine names.
+- Conditional blocks use `Se <condition>,` and end at the final period.
+  Intermediate statements are separated with semicolons; the last statement
+  ends the block. Conditions resolve to boolean functions, including functions
+with parameters. For example, `Se o número for 2,` resolves to a boolean
+function declared with parameters for a number and a second number; `for` is
+normalized to `é` when matching the predicate. Argument types may match
+through the type inheritance chain. Else/elseif clauses and nested
+conditionals are not supported.
 - A period terminates type and global-variable declarations and statements;
   it also terminates conditional blocks. A colon is used for the end of a
   routine header and start of its body. Semicolons separate statements in
