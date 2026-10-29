@@ -228,6 +228,44 @@ suite('Português Puro definitions', () => {
     assert.equal(millisecondDefinitions[0].range.start.line, 4);
   });
 
+  test('Pluralizes every word in compound type names except after "de"', async () => {
+    await activate(docUri);
+    await setTestContent([
+      'Uma casa do pato é uma estrutura.',
+      'Uma casa da Maria são umas casas dos patos.',
+      'Um conjunto são umas casas das Marias.',
+      'Uma escova de dente é uma estrutura.',
+      'Uma caixa de texto são umas escovas de dente.',
+      'Um ponto osmosiano é uma estrutura.',
+      'Uns extra pontos osmosianos são uns pontos osmosianos.'
+    ].join('\n'));
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const cases = [
+      { reference: 'casas dos patos', declarationLine: 0 },
+      { reference: 'casas das Marias', declarationLine: 1 },
+      { reference: 'escovas de dente', declarationLine: 3 },
+      { reference: 'pontos osmosianos', declarationLine: 5 }
+    ];
+
+    for (const testCase of cases) {
+      const offset = text.lastIndexOf(testCase.reference) + 2;
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+      assert.ok(definition, `Expected a definition for "${testCase.reference}".`);
+      assert.equal(definition.length, 1, `Unexpected definition count for "${testCase.reference}".`);
+      assert.equal(
+        definition[0].range.start.line,
+        testCase.declarationLine,
+        `Unexpected declaration for "${testCase.reference}".`
+      );
+    }
+  });
+
   test('Requires a final period and treats line breaks as whitespace', async () => {
     await activate(docUri);
     await setTestContent([
@@ -1333,6 +1371,530 @@ suite('Português Puro definitions', () => {
     const diagnostics = vscode.languages.getDiagnostics(docUri);
     assert.equal(diagnostics.filter(diagnostic =>
       diagnostic.message === '"Preserve" is a reserved statement keyword and cannot be used in a routine name.'
+    ).length, 1);
+  });
+
+  test('Parses arithmetic assignment operators from left to right', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se faça algo com um número e um segundo número:',
+      '  Atribua o número mais 2 menos 1 vezes o número dividido por 2 para o segundo número.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Parses both string concatenation operators in output expressions', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se faça algo:',
+      '  Escreva "Olá, " junto com o nome junto com o sobrenome seguido de "!" para StdOut.',
+      '  Escreva "junto com seguido de" junto com "!" para StdOut.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Declares local variables through routine-call arguments and resolves their types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se foo:',
+      '  bar 42.',
+      '  bar um número denominado contagem.',
+      '  baz a contagem.',
+      '  bar um segundo número.',
+      '  baz o segundo número.',
+      '  Atribua 123 para um número denominado valor de exemplo.',
+      'Rotina para que se bar um número:',
+      '  Retorne.',
+      'Rotina para que se baz um número:',
+      '  Retorne.',
+      'Rotina para que se atribua um número para um segundo número:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const cases = [
+      { call: 'bar 42', expectedLine: 8 },
+      { call: 'bar um número denominado contagem', expectedLine: 8 },
+      { call: 'baz a contagem', expectedLine: 10 },
+      { call: 'bar um segundo número', expectedLine: 8 },
+      { call: 'baz o segundo número', expectedLine: 10 },
+      { call: 'Atribua 123', expectedLine: 12 }
+    ];
+    for (const testCase of cases) {
+      const offset = text.indexOf(testCase.call) + 1;
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+      assert.ok(definition, testCase.call);
+      assert.equal(definition.length, 1, testCase.call);
+      assert.equal(definition[0].range.start.line, testCase.expectedLine, testCase.call);
+    }
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Resolves type definitions within local-variable routine arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um caractere é um byte.',
+      'Rotina para que se foo:',
+      '  bar um caractere.',
+      'Rotina para que se bar um byte:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const callOffset = text.indexOf('bar um caractere') + 1;
+    const callDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.ok(callDefinition);
+    assert.equal(callDefinition.length, 1);
+    assert.equal(callDefinition[0].range.start.line, 3);
+
+    const typeOffset = text.indexOf('caractere', text.indexOf('bar um')) + 2;
+    const typeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(typeOffset)
+    );
+    assert.ok(typeDefinition);
+    assert.equal(typeDefinition.length, 1);
+    assert.equal(typeDefinition[0].range.start.line, 0);
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Does not resolve routine calls when an existing argument has an incompatible type', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma string é uma estrutura.',
+      'A mensagem é uma string.',
+      'Rotina para que se execute:',
+      '  processe a mensagem.',
+      'Rotina para que se processe um número:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const callOffset = document.getText().indexOf('processe a mensagem') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.deepEqual(definition, []);
+  });
+
+  test('Local variables shadow global variables with the same name', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma string é uma estrutura.',
+      'O nome é um número.',
+      'Rotina para que se execute:',
+      '  Atribua "João" para uma string denominada nome.',
+      '  consuma o nome.',
+      'Rotina para que se atribua uma string para uma string:',
+      '  Retorne.',
+      'Rotina para que se consuma uma string:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const callOffset = text.indexOf('consuma o nome') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 8);
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Diagnoses missing routines and unresolved variables passed to routine parameters', async () => {
+    await activate(docUri);
+    const updateContent = async (lines: string[]) => {
+      const diagnosticsUpdated = new Promise<void>(resolve => {
+        const listener = vscode.languages.onDidChangeDiagnostics(event => {
+          if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+            listener.dispose();
+            resolve();
+          }
+        });
+      });
+      await setTestContent(lines.join('\n'));
+      await diagnosticsUpdated;
+      return vscode.languages.getDiagnostics(docUri);
+    };
+
+    const missingRoutineDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se bar:',
+      '  Baz a string.',
+      '  Retorne.'
+    ]);
+    assert.equal(missingRoutineDiagnostics.filter(diagnostic =>
+      diagnostic.message.includes('No compatible routine found')
+    ).length, 1);
+
+    const missingVariableDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se bar:',
+      '  Baz a string.',
+      '  Retorne.',
+      'Rotina para que se baz uma string:',
+      '  Retorne.'
+    ]);
+    assert.equal(missingVariableDiagnostics.filter(diagnostic =>
+      diagnostic.message.includes('Unknown variable "string"')
+    ).length, 1);
+    assert.equal(missingVariableDiagnostics.filter(diagnostic =>
+      diagnostic.message.includes('No compatible routine found')
+    ).length, 0);
+
+    const globalVariableDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'A string é uma string igual a "teste".',
+      'Rotina para que se bar:',
+      '  Baz a string.',
+      '  Retorne.',
+      'Rotina para que se baz uma string:',
+      '  Retorne.'
+    ]);
+    assert.deepEqual(globalVariableDiagnostics, []);
+
+    const localVariableDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se bar:',
+      '  Baz uma string.',
+      '  Retorne.',
+      'Rotina para que se baz uma string:',
+      '  Retorne.'
+    ]);
+    assert.deepEqual(localVariableDiagnostics, []);
+
+    const wrongArityDiagnostics = await updateContent([
+      'Uma string é uma estrutura.',
+      'Rotina para que se foo:',
+      '  Baz uma string.',
+      '  Retorne.',
+      'Rotina para que se baz:',
+      '  Retorne.'
+    ]);
+    const wrongArityError = wrongArityDiagnostics.find(diagnostic =>
+      diagnostic.message.includes('No compatible routine found for "Baz uma string"')
+    );
+    assert.ok(wrongArityError);
+  });
+
+  test('Resolves routine overloads through derived types from most to least specific', async () => {
+    await activate(docUri);
+    const updateContent = async (lines: string[]) => {
+      const diagnosticsUpdated = new Promise<void>(resolve => {
+        const listener = vscode.languages.onDidChangeDiagnostics(event => {
+          if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+            listener.dispose();
+            resolve();
+          }
+        });
+      });
+      await setTestContent(lines.join('\n'));
+      await diagnosticsUpdated;
+    };
+
+    await updateContent([
+      'Um número é uma estrutura.',
+      'Uma contagem é um número.',
+      'Uma quantidade é um número.',
+      'Um contador é uma contagem.',
+      'Rotina para que se foo:',
+      '  Baz um contador.',
+      'Rotina para que se baz uma contagem:',
+      '  Retorne.',
+      'Rotina para que se baz um número:',
+      '  Retorne.'
+    ]);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const callOffset = document.getText().indexOf('Baz um contador') + 1;
+    const specificDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.ok(specificDefinition);
+    assert.equal(specificDefinition.length, 1);
+    assert.equal(specificDefinition[0].range.start.line, 6);
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    await updateContent([
+      'Um número é uma estrutura.',
+      'Uma contagem é um número.',
+      'Um contador é uma contagem.',
+      'Rotina para que se foo:',
+      '  Baz um contador.',
+      'Rotina para que se baz um número:',
+      '  Retorne.'
+    ]);
+
+    const fallbackDocument = await vscode.workspace.openTextDocument(docUri);
+    const fallbackOffset = fallbackDocument.getText().indexOf('Baz um contador') + 1;
+    const fallbackDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      fallbackDocument.positionAt(fallbackOffset)
+    );
+    assert.ok(fallbackDefinition);
+    assert.equal(fallbackDefinition.length, 1);
+    assert.equal(fallbackDefinition[0].range.start.line, 5);
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Parses conditional blocks and resolves their boolean conditions', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se foo:',
+      '  Se válido,',
+      '    Bar;',
+      '    Retorne.',
+      'Função para que se determine se válido:',
+      '  Diga sim.',
+      'Rotina para que se bar:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.deepEqual(diagnostics, []);
+  });
+
+  test('Resolves conditional boolean functions with typed arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma contagem é um número.',
+      'Rotina para que se foo contendo uma contagem:',
+      '  Se a contagem for 2,',
+      '    Retorne.',
+      'Função para que se determine se um número é um segundo número:',
+      '  Diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const predicateOffset = document.getText().indexOf('for 2') + 1;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(predicateOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 5);
+  });
+
+  test('Normalizes routine prepositions and contractions when resolving calls', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se foo:',
+      '  Bar ao número.',
+      'Rotina para que se bar para o número:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const callOffset = document.getText().indexOf('Bar ao número') + 1;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 2);
+  });
+
+  test('Resolves direct and nested structure field accesses as routine arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma string é uma estrutura.',
+      'Um número é uma estrutura.',
+      'Um endereço é uma estrutura com',
+      '  Uma string denominada logradouro,',
+      '  Um número denominado número da casa,',
+      '  Um número denominado código postal.',
+      'Uma pessoa é uma estrutura com',
+      '  Uma string denominada nome,',
+      '  Um endereço.',
+      'O cliente é uma pessoa.',
+      'Rotina para que se foo:',
+      '  Bar o nome deste cliente.',
+      '  Bar o logradouro deste endereço deste cliente.',
+      'Rotina para que se bar uma string:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const directFieldOffset = text.indexOf('nome deste cliente') + 1;
+    const directFieldDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(directFieldOffset)
+    );
+    assert.ok(directFieldDefinition);
+    assert.equal(directFieldDefinition.length, 1);
+    assert.equal(directFieldDefinition[0].range.start.line, 7);
+
+    const nestedFieldOffset = text.indexOf('logradouro deste endereço') + 2;
+    const nestedFieldDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(nestedFieldOffset)
+    );
+    assert.ok(nestedFieldDefinition);
+    assert.equal(nestedFieldDefinition.length, 1);
+    assert.equal(nestedFieldDefinition[0].range.start.line, 3);
+  });
+
+  test('Diagnoses missing boolean conditions and nested conditional blocks', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se foo:',
+      '  Se inexistente,',
+      '    Se também inexistente,',
+      '      Bar;',
+      '    Retorne.',
+      'Rotina para que se bar:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'No boolean function found for condition "inexistente".'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'No boolean function found for condition "também inexistente".'
+    ).length, 0);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'Conditional blocks cannot be nested.'
     ).length, 1);
   });
 });
