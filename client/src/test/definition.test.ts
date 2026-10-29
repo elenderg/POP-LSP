@@ -1217,6 +1217,56 @@ suite('Português Puro definitions', () => {
     }
   });
 
+  test('Uses tal como and tal qual to type routine arguments without changing variables', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma cifra binária é um byte.',
+      'Uma cifra hexadecimal é um byte.',
+      'Uma string é uma estrutura.',
+      'Rotina para que se receba um byte:',
+      '  Retorne.',
+      'Rotina para que se receba uma cifra hexadecimal:',
+      '  Retorne.',
+      'Rotina para que se receba uma string:',
+      '  Retorne.',
+      'Rotina para que se teste com uma string:',
+      '  Receba a string tal como uma cifra binária.',
+      '  Receba a string tal qual uma cifra hexadecimal.',
+      '  Receba a string.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.deepEqual(diagnostics, []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const calls = [
+      { reference: 'Receba a string tal como', expectedLine: 3 },
+      { reference: 'Receba a string tal qual', expectedLine: 5 },
+      { reference: 'Receba a string.', expectedLine: 7 }
+    ];
+    for (const testCase of calls) {
+      const offset = text.indexOf(testCase.reference, text.indexOf('teste'));
+      const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset + 2)
+      );
+      assert.ok(definitions);
+      assert.equal(definitions.length, 1);
+      assert.equal(definitions[0].range.start.line, testCase.expectedLine);
+    }
+  });
+
   test('Emits a hint when a routine body contains no statements', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {

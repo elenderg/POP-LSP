@@ -2009,6 +2009,21 @@ function resolveRoutineArgumentType(
   routines: RoutineDeclaration[] = [],
   computedFieldAccesses: RoutineComputedFieldAccess[] = []
 ): TypeReference | undefined {
+  const cast = parseTypeCast(source, argument, symbols);
+  if (cast) {
+    const originalType = resolveRoutineArgumentType(
+      source,
+      cast.valueRange,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses
+    );
+    return originalType ? cast.type : undefined;
+  }
+
   const fieldAccessType = resolveStructureFieldAccess(
     source,
     argument,
@@ -2043,6 +2058,43 @@ function resolveRoutineArgumentType(
     return variableType;
   }
   return undefined;
+}
+
+function parseTypeCast(
+  source: string,
+  argument: SourceRange,
+  symbols: TypeSymbolTable
+): { valueRange: SourceRange; type: TypeReference } | undefined {
+  const markerPattern = /\btal\s+(?:como|qual)\b/giu;
+  markerPattern.lastIndex = argument.start;
+  const marker = markerPattern.exec(source);
+  if (!marker || marker.index >= argument.end) {
+    return undefined;
+  }
+  const valueRange = trimRange(source, argument.start, marker.index);
+  const typeRange = trimRange(
+    source,
+    marker.index + marker[0].length,
+    argument.end
+  );
+  const article = readWord(source, typeRange.start, typeRange.end);
+  if (
+    valueRange.start === valueRange.end ||
+    !article ||
+    !indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'))
+  ) {
+    return undefined;
+  }
+
+  const typeNameRange = trimRange(source, article.end, typeRange.end);
+  const type = symbols.lookup(source.slice(typeNameRange.start, typeNameRange.end));
+  if (!type) {
+    return undefined;
+  }
+  return {
+    valueRange,
+    type: createTypeReference(source, typeNameRange)
+  };
 }
 
 function resolveStructureFieldAccess(
@@ -2356,11 +2408,17 @@ function parseLocalVariableDeclaration(
   argumentsRange: SourceRange,
   symbols: TypeSymbolTable
 ): RoutineLocalVariable | undefined {
+  const castMarker = /\btal\s+(?:como|qual)\b/giu;
+  castMarker.lastIndex = argumentsRange.start;
+  const castMatch = castMarker.exec(source);
+  const declarationEnd = castMatch && castMatch.index < argumentsRange.end
+    ? castMatch.index
+    : argumentsRange.end;
   const articles = /\p{L}+/gu;
   articles.lastIndex = argumentsRange.start;
   let articleMatch: RegExpExecArray | null;
   let localVariable: RoutineLocalVariable | undefined;
-  while ((articleMatch = articles.exec(source)) && articleMatch.index < argumentsRange.end) {
+  while ((articleMatch = articles.exec(source)) && articleMatch.index < declarationEnd) {
     const article = articleMatch[0].toLocaleLowerCase('pt-BR');
     if (!indefiniteArticles.has(article)) {
       continue;
@@ -2370,8 +2428,8 @@ function parseLocalVariableDeclaration(
       'denominado', 'denominada', 'denominados', 'denominadas',
       'chamado', 'chamada', 'chamados', 'chamadas'
     ]);
-    const marker = findAnyWord(source, articleEnd, argumentsRange.end, markers);
-    const typeRange = trimRange(source, articleEnd, marker?.start ?? argumentsRange.end);
+    const marker = findAnyWord(source, articleEnd, declarationEnd, markers);
+    const typeRange = trimRange(source, articleEnd, marker?.start ?? declarationEnd);
     if (typeRange.start === typeRange.end) {
       continue;
     }
@@ -2400,9 +2458,9 @@ function parseLocalVariableDeclaration(
     localVariable = {
       name: createTypeReference(source, nameRange),
       type: resolvedType,
-      range: { start: articleMatch.index, end: argumentsRange.end }
+      range: { start: articleMatch.index, end: declarationEnd }
     };
-    articles.lastIndex = argumentsRange.end;
+    articles.lastIndex = declarationEnd;
   }
   return localVariable;
 }

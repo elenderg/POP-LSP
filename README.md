@@ -143,6 +143,11 @@ language-specific default.
   subtype. When multiple overloads match, the parser selects the closest
   declared parameter type first, following the derived type's base chain; it
   falls back to more general overloads only when no closer match exists.
+- Routine arguments may use `tal como` or `tal qual` followed by an indefinite
+  article and a type to match the value as that type (for example,
+  `Foo a cifra binária tal como um byte.`). This only affects argument
+  compatibility for that call; it does not convert or change the variable's
+  declared type.
 - `Preserve` creates a local copy of a routine parameter. The copy keeps the
   parameter's original name, while the received argument is renamed by adding
   `original` (for example, preserving `valor` creates `valor` as the copy and
