@@ -2072,11 +2072,22 @@ function resolveStructureFieldAccess(
   }
 
   const firstArticle = readWord(source, segments[0].start, segments[0].end);
-  if (!firstArticle || !definiteArticles.has(firstArticle.value.toLocaleLowerCase('pt-BR'))) {
+  const firstArticleWord = firstArticle?.value.toLocaleLowerCase('pt-BR');
+  const hasArticle = Boolean(firstArticleWord && definiteArticles.has(firstArticleWord));
+  const firstSegmentStart = hasArticle ? firstArticle!.end : segments[0].start;
+  const firstSegmentName = normalizeTypeName(
+    source.slice(firstSegmentStart, segments[0].end)
+  );
+  const firstIsTypeOperator = [
+    'endereçamento',
+    'magnitude',
+    'conteúdo'
+  ].includes(firstSegmentName);
+  if (!hasArticle && !firstIsTypeOperator) {
     return undefined;
   }
   const fieldRanges = [
-    trimRange(source, firstArticle.end, segments[0].end),
+    trimRange(source, firstSegmentStart, segments[0].end),
     ...segments.slice(1, -1)
   ].reverse();
   const rootRange = segments[segments.length - 1];
@@ -2096,6 +2107,17 @@ function resolveStructureFieldAccess(
       ? caller.computedField.structureType
       : undefined
   );
+  if (!rootType && fieldRanges.length === 1) {
+    const operatorName = normalizeTypeName(
+      source.slice(fieldRanges[0].start, fieldRanges[0].end)
+    );
+    if (operatorName === 'magnitude') {
+      return createSyntheticTypeReference('número', fieldRanges[0]);
+    }
+    if (operatorName === 'endereçamento') {
+      return createSyntheticTypeReference('ponteiro', fieldRanges[0]);
+    }
+  }
   if (!rootType || fieldRanges.some(fieldRange => fieldRange.start === fieldRange.end)) {
     return undefined;
   }
@@ -2104,6 +2126,51 @@ function resolveStructureFieldAccess(
   const resolvedAccesses: RoutineFieldAccess[] = [];
   for (const fieldRange of fieldRanges) {
     const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
+    if (['endereçamento', 'magnitude', 'conteúdo'].includes(fieldName)) {
+      const operatorType = resolveTypeOperator(fieldName, currentType, symbols);
+      if (operatorType) {
+        currentType = operatorType;
+      }
+      continue;
+    }
+
+    const operator = fieldName.match(/^(endereçamento|magnitude|conteúdo)\s+(.+)$/u);
+    if (operator) {
+      const memberName = normalizeTypeName(operator[2]);
+      const member = findStructureField(currentType.name, memberName, symbols);
+      if (!member) {
+        const computedField = findComputedFieldRoutine(
+          currentType.name,
+          memberName,
+          routines,
+          symbols
+        );
+        if (!computedField?.computedField?.valueType) {
+          return undefined;
+        }
+        computedFieldAccesses.push({
+          reference: createTypeReference(source, fieldRange),
+          target: computedField
+        });
+        currentType = computedField.computedField.valueType;
+      } else {
+        resolvedAccesses.push({
+          reference: createTypeReference(source, fieldRange),
+          target: member
+        });
+        currentType = member.type;
+      }
+      const operatorType = resolveTypeOperator(
+        operator[1],
+        currentType,
+        symbols
+      );
+      if (operatorType) {
+        currentType = operatorType;
+      }
+      continue;
+    }
+
     const field = findStructureField(currentType.name, fieldName, symbols);
     if (!field) {
       const computedField = findComputedFieldRoutine(
@@ -2130,6 +2197,52 @@ function resolveStructureFieldAccess(
   }
   fieldAccesses.push(...resolvedAccesses);
   return currentType;
+}
+
+function resolveTypeOperator(
+  operator: string,
+  type: TypeReference,
+  symbols: TypeSymbolTable
+): TypeReference | undefined {
+  if (operator === 'magnitude') {
+    const numberType = symbols.lookup('número');
+    return numberType
+      ? createSyntheticTypeReference(numberType.name, type.range)
+      : undefined;
+  }
+  if (operator === 'endereçamento') {
+    const pointerType = symbols.entries
+      .filter(symbol =>
+        symbol.pointedType &&
+        symbols.getBaseTypeDistance(type.name, symbol.pointedType.name) !== undefined
+      )
+      .sort((first, second) =>
+        (symbols.getBaseTypeDistance(type.name, first.pointedType!.name) ?? Number.MAX_SAFE_INTEGER) -
+        (symbols.getBaseTypeDistance(type.name, second.pointedType!.name) ?? Number.MAX_SAFE_INTEGER)
+      )[0];
+    if (pointerType) {
+      return createSyntheticTypeReference(pointerType.name, type.range);
+    }
+    const genericPointer = symbols.lookup('ponteiro');
+    return genericPointer
+      ? createSyntheticTypeReference(genericPointer.name, type.range)
+      : undefined;
+  }
+  if (operator === 'conteúdo') {
+    const pointer = symbols.lookup(type.name);
+    return pointer?.pointedType
+      ? createSyntheticTypeReference(pointer.pointedType.name, type.range)
+      : undefined;
+  }
+  return undefined;
+}
+
+function createSyntheticTypeReference(name: string, range: SourceRange): TypeReference {
+  return {
+    name,
+    normalizedName: normalizeTypeName(name),
+    range
+  };
 }
 
 function findComputedFieldRoutine(

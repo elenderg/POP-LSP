@@ -413,6 +413,54 @@ suite('Português Puro definitions', () => {
     ));
   });
 
+  test('Resolves endereçamento, magnitude, and conteúdo as type operators', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um caractere é um byte.',
+      'Um ponteiro é uma estrutura.',
+      'Um pchar é um ponteiro para um caractere.',
+      'Um número é uma estrutura.',
+      'Uma string é uma estrutura com',
+      '  Um caractere inicial,',
+      '  Um caractere final.',
+      'Um caractere inicial é um ponteiro para um byte.',
+      'Um caractere final é um ponteiro para um byte.',
+      'O conteúdo é uma string igual a "conteúdo".',
+      'A magnitude é uma string igual a "magnitude".',
+      'O endereçamento é uma string igual a "endereçamento".',
+      'Rotina para que se faça algo com um caractere:',
+      '  Atribua endereçamento deste caractere para um pchar denominado endereço.',
+      '  Atribua "oi" para uma string.',
+      '  Atribua a magnitude desta string para um número denominado tamanho.',
+      'Rotina para que se use um número:',
+      '  Retorne.',
+      'Rotina para que se use um byte:',
+      '  Retorne.',
+      'Um ppcinicial é um ponteiro para um caractere inicial.',
+      'Rotina para que se use um ppcinicial:',
+      '  Retorne.',
+      'Rotina para que se faça algo com uma string:',
+      '  Atribua o conteúdo deste caractere inicial desta string para um byte denominado valor.',
+      '  Atribua a magnitude deste caractere inicial desta string para um número denominado tamanho do caractere.',
+      '  Atribua o endereçamento deste caractere inicial desta string para um pchar denominado endereço do caractere.',
+      '  Use a magnitude deste caractere inicial desta string.',
+      '  Use o conteúdo deste caractere inicial desta string.',
+      '  Use o endereçamento deste caractere inicial desta string.',
+      '  Escreva o conteúdo junto com o endereçamento junto com a magnitude para StdOut.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
   test('Parses union fields introduced by sob without absorbing the target into the field name', async () => {
     await activate(docUri);
     await setTestContent([

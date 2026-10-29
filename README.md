@@ -123,6 +123,14 @@ language-specific default.
   resolved as fallback after physical fields, including when matching routine
   arguments; an unresolved access is diagnosed. Unlike physical fields,
   computed fields do not navigate to a definition.
+- The type operators `endereçamento`, `magnitude`, and `conteúdo` can be used
+  before a type or field access. `endereçamento deste caractere` represents the
+  address of the value, `a magnitude desta string` represents its size in bytes,
+  and `o conteúdo deste ponteiro` represents the pointed-to value. `conteúdo`
+  can follow a physical or computed field in a chained access. These operators
+  do not require a matching structure member or computed-field function. Their
+  words remain valid in ordinary identifiers, such as a variable named
+  `conteúdo`.
 - Local variables take precedence over global variables with the same
   normalized name throughout the containing routine. Thus, declaring a local
   `nome` shadows a global `nome` when resolving later arguments and references.
