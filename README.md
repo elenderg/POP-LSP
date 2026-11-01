@@ -10,6 +10,14 @@ language-specific default.
 - Go to Definition for declared types, including multi-word names and
   declarations in other open `.pop` documents, as well as both the base type
   and pointed-to type in pointer declarations.
+- Document Symbols for type declarations, global variables, routines,
+  parameters, local variables, and structure fields.
+- Workspace Symbol search across `.pop` files in configured workspace folders,
+  including files that are not currently open.
+- Find All References for types, routines, fields, and variables, with optional
+  declaration inclusion and workspace-wide lookup for non-local symbols.
+- Rename Symbol creates workspace edits for every parsed occurrence of types,
+  routines, fields, and variables across open and closed `.pop` files.
 - Each open document's symbol table is refreshed when the document opens,
   changes, or is saved, and discarded when it closes.
 - Initial parser and type symbol table in `server/src/typeParser.ts`, recognizing
@@ -20,8 +28,8 @@ language-specific default.
 - Structure fields may include an unnamed contiguous byte array, such as
   `4 bytes.`. Other array element types are reported as errors.
 - A field may omit `denominado/a/os/as` to infer its name from the field type.
-  Multi-word aliases such as `primeiro byte` are resolved by removing leading
-  words until a known type suffix is found; unresolved aliases and duplicate
+  Multi-word aliases such as `primeiro byte` and `coordenada X` are resolved
+  by matching a known type suffix or prefix; unresolved aliases and duplicate
   field names are reported as errors.
 - Structure fields may end with `(referência)` to mark that the field stores a
   reference to its type. The marker is excluded from the field name and is not
@@ -43,8 +51,8 @@ language-specific default.
   named, inferred, aliased, union, byte-array, and reference-marker rules as
   structure types.
 - Global variables may be initialized with signed 32-bit integers, fractions,
-  mixed numbers, hexadecimal values, or quoted strings. String literals support
-  doubled quotes as escapes and reject control characters.
+  mixed numbers, hexadecimal values, null literals, or quoted strings. String
+  literals support doubled quotes as escapes and reject control characters.
 - Global variable types may be inferred from abbreviated literal initializers:
   integers infer `número`, fractions and mixed numbers infer `fração`,
   hexadecimal values infer `texto hexadecimal`, and strings infer `string`.
@@ -64,6 +72,12 @@ language-specific default.
   after the header colon and ends at the next top-level type declaration,
   global variable declaration, or routine header; no block delimiter is
   required.
+- Parenthesized groups at the end of routine headers and calls distinguish
+  otherwise similar routine names, for example
+  `para que se centralize uma caixa (horizontalmente)` and
+  `para que se centralize uma caixa (verticalmente)`. Their contents are
+  literal name qualifiers, not syntax: keywords and articles inside them do
+  not define statements or parameters, and line breaks are allowed.
 - Alternate headers that repeat the primary name and parameter types are
   diagnosed as semantically equivalent. A colon-terminated header immediately
   followed by another routine header receives a hint to use `;` for the
@@ -113,6 +127,13 @@ language-specific default.
   `Bar o logradouro deste endereço deste cliente.` access nested fields.
   Field access resolves the final field type for routine argument matching,
   supports inherited structure fields, and navigates to the field definition.
+- A type derived from `lista` is also treated as a pointer for routine argument
+  compatibility. List types support implicit fields: `primeiro/primeira`,
+  `último/última`, and `próximo/próxima` followed by the element type name,
+  plus the list type name followed by `anterior` or `precedente`. For example,
+  `o primeiro vértice deste polígono`, `o próximo vértice deste vértice`, and
+  `o fragmento anterior deste fragmento` resolve to their respective list
+  element types. These implicit fields can be chained with physical fields.
 - Computed structure fields are declared by functions named
   `para que se atribua <artigo definido> <campo> dum/duma/duns/dumas
   <estrutura> para <artigo indefinido> <tipo de resultado>`. For example,
@@ -158,6 +179,17 @@ language-specific default.
   precedence rules; for example, `Atribua o número mais 2 menos 1 vezes o
   número dividido por 2 para o segundo número.` is grouped as sequential
   left-associated operations.
+- Numeric expressions also accept unary `-` and `+` before an operand, as in
+  `Atribua - o número para o número negativo.` and
+  `Atribua + o número para o número inalterado.`. The `/` operator forms a
+  fraction from variable or literal numerator and denominator values, for
+  example `Atribua o numerador / 123 para uma fração.`.
+- Null literals are `nulo`, `nula`, `nulos`, `nulas`, `inexistente`,
+  `inexistentes`, `zerado`, and `nil`. They are accepted as assignment values
+  and routine arguments and match routine parameters as null pointer values.
+  In conditions, they are resolved as arguments to ordinary boolean function
+  signatures; for example, `Se o ponteiro for inexistente,` matches a function
+  declared as `para que se determine se um ponteiro é um segundo ponteiro`.
 - String expressions support the equivalent concatenation operators `junto
   com` and `seguido de`. They may be mixed in one expression and are evaluated
   left to right, for example: `Escreva "Olá, " junto com o nome junto com o
@@ -173,6 +205,9 @@ function declared with parameters for a number and a second number; `for` is
 normalized to `é` when matching the predicate. Argument types may match
 through the type inheritance chain. Else/elseif clauses and nested
 conditionals are not supported.
+The word `não` may negate a condition and is ignored when matching its
+boolean function; it is not part of the function signature and is diagnosed
+if it appears in a boolean function header.
 - A period terminates type and global-variable declarations and statements;
   it also terminates conditional blocks. A colon is used for the end of a
   routine header and start of its body. Semicolons separate statements in

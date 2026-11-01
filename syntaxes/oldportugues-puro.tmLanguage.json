@@ -1,0 +1,187 @@
+{"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json"
+,"name": "PoP"
+,"scopeName": "source.escopo.portugues"
+,"patterns": [
+     {"include": "#comment"}
+    ,{"include": "#strings"}
+    ,{"include": "#constants"}
+    ,{"include": "#keywords"}
+    ,{"include": "#operators"}
+    ,{"include": "#functions"}    
+    ,{"include": "#global-variables"}
+    ,{"include": "#local-variables"}
+    ,{"include": "#parameters"}
+    ,{"include": "#types"}
+    ,{"include": "#struct-fields"}
+  ]
+  ,"repository": {
+    "comment": {
+      "patterns": [
+        {
+           "name": "comment.line.character.pop"
+          ,"match": "\\\\.*$"
+        }
+       ,{
+          "name": "comment.block.pop"
+         ,"begin": "\\["
+         ,"beginCaptures": {"0": {"name": "punctuation.definition.comment.begin.pop"}}
+         ,"end": "\\]",
+          "endCaptures": {"0": {"name": "punctuation.definition.comment.end.pop"}}
+        }
+      ]
+    }
+   ,"strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.pop"
+         ,"begin": "\""
+         ,"beginCaptures": {"0": {"name": "punctuation.definition.string.begin.pop"}}
+         ,"end": "\"(?!\")"
+         ,"endCaptures": {"0": {"name": "punctuation.definition.string.end.pop"}}
+         ,"patterns": [{"name": "constant.character.escape.pop","match": "\"\""}]
+        }
+      ]
+    }
+   ,"constants": {
+      "patterns": [
+        {
+          "name": "constant.numeric.integer.mixed.pop",
+          "match": "(?<![\\w$])([+-]?\\d+)\\+([+-]?\\d+)/([+-]?\\d+)(?![\\w/])"
+        },
+        {
+          "name": "constant.numeric.fraction.pop",
+          "match": "(?<![\\w$])([+-]?\\d+)/([+-]?\\d+)(?![\\w/])"
+        },
+        {
+          "name": "constant.numeric.integer.hexadecimal.pop",
+          "match": "\\$[a-fA-F0-9]+"
+        },
+        {
+          "name": "constant.numeric.integer.decimal.pop",
+          "match": "(?<![\\w$])[+-]?\\d+(?![\\w/])"
+        },
+        {
+          "name": "constant.language.boolean.pop",
+          "match": "\\b(?i:sim|não)\\b"
+        },
+        {
+          "name": "constant.language.null.pop",
+          "match": "\\b(?i:nulo|nula|nulos|nulas|inexistente|inexistentes|zerado)\\b"
+        }
+      ]
+    }
+   ,"types": {
+  "patterns": [
+    {
+      "name": "meta.type.declaration.structure.pop",
+      "begin": "(?i)\\b(um|uma|uns|umas)\\s+(.+?)\\s+(é|são)\\s+(um|uma|uns|umas)\\s+(estrutura)\\s+(com)\\b",
+      "beginCaptures": {
+        "1": {"name": "keyword.language.article.pop"},
+        "2": {"name": "entity.name.type.struct.pop"},
+        "3": {"name": "keyword.control.pop"},
+        "4": {"name": "keyword.language.article.pop"},
+        "5": {"name": "storage.type.struct.pop"},
+        "6": {"name": "keyword.control.pop"}
+      },
+      "end": "(\\.)",
+      "endCaptures": {
+        "1": {"name": "punctuation.terminator.pop"}
+      },
+      "patterns": [
+        {"include": "#comment"},
+        {
+          "name": "meta.type.struct.field.named.pop",
+          "match": "(?i)\\b(um|uma|uns|umas)\\s+(.+?)\\s+(denominado|denominada|denominados|denominadas)\\s+(.+?)(?=\\s*(?:,|;|\\.|\\b(?:e|ou|sob)\\b))",
+          "captures": {
+            "1": {"name": "keyword.language.article.pop"},
+            "2": {"name": "support.type.pop"},
+            "3": {"name": "keyword.other.declaration.pop"},
+            "4": {"name": "variable.other.member.pop"}
+          }
+          ,"include": "#comment"
+        },
+        {
+          "name": "meta.type.struct.field.array.named.pop",
+          "match": "(?i)\\b(\\d+)\\s+(bytes)\\s+(denominado|denominada|denominados|denominadas)\\s+(.+?)(?=\\s*(?:,|;|\\.|\\b(?:e|ou|sob)\\b))",
+          "captures": {
+            "1": {"name": "constant.numeric.integer.decimal.pop"},
+            "2": {"name": "support.type.pop"},
+            "3": {"name": "keyword.other.declaration.pop"},
+            "4": {"name": "variable.other.member.pop"}
+          },"include": "#comment"
+        },
+        {
+          "name": "meta.type.struct.field.array.pop",
+          "match": "(?i)\\b(\\d+)\\s+(bytes)(?=\\s*(?:,|;|\\.|\\b(?:e|ou)\\b))",
+          "captures": {
+            "1": {"name": "constant.numeric.integer.decimal.pop"},
+            "2": {"name": "support.type.pop"}
+          },"include": "#comment"
+        },
+        {
+          "name": "meta.type.struct.field.union.pop",
+          "match": "(?i)\\b(sob)\\s+(o|a|os|as)\\s+(.+?)(?=\\s*(?:,|;|\\.|\\b(?:e|ou)\\b))",
+          "captures": {
+            "1": {"name": "keyword.control.union.pop"},
+            "2": {"name": "keyword.language.article.pop"},
+            "3": {"name": "variable.other.member.pop"}
+          },"include": "#comment"
+        },
+        {
+          "name": "meta.type.struct.field.reference.pop",
+          "match": "(?i)\\(referência\\)",
+          "captures": {
+            "0": {"name": "keyword.other.reference.pop"}
+          },"include": "#comment"
+        },
+        {
+          "name": "meta.type.struct.field.unnamed.pop",
+          "match": "(?i)\\b(um|uma|uns|umas)\\s+(.+?)(?=\\s*(?:,|;|\\.|\\b(?:e|ou|sob)\\b))",
+          "captures": {
+            "1": {"name": "keyword.language.article.pop"},
+            "2": {"name": "variable.other.member.pop"}
+          },"include": "#comment"
+        },
+        {
+          "name": "punctuation.separator.field.pop",
+          "match": "[,;]"
+        },
+        {
+          "name": "keyword.control.field.separator.pop",
+          "match": "(?i)\\b(e|ou)\\b"
+        }
+      ]
+    },
+    {
+      "name": "meta.type.declaration.pointer.pop",
+      "match": "(?i)\\b(um|uma|uns|umas)\\s+(.+?)\\s+(é|são)\\s+(um|uma|uns|umas)\\s+(ponteiro)\\s+para\\s+(um|uma|uns|umas)\\s+(.+?)\\s*\\.",
+      "captures": {
+        "1": {"name": "keyword.language.article.pop"},
+        "2": {"name": "entity.name.type.pop"},
+        "3": {"name": "keyword.control.pop"},
+        "4": {"name": "keyword.language.article.pop"},
+        "5": {"name": "storage.type.pointer.pop"},
+        "6": {"name": "keyword.language.article.pop"},
+        "7": {"name": "support.type.pop"}
+      }
+    },
+    {
+      "name": "meta.type.declaration.scalar.pop",
+      "match": "(?i)\\b(um|uma|uns|umas)\\s+(.+?)\\s+(é|são)\\s+(\\d+)\\s+(.+?)\\s*\\.",
+      "captures": {
+        "1": {"name": "keyword.language.article.pop"},
+        "2": {"name": "entity.name.type.pop"},
+        "3": {"name": "keyword.control.pop"},
+        "4": {"name": "constant.numeric.integer.decimal.pop"},
+        "5": {"name": "support.type.pop"}
+      }
+    },
+    {
+      "name": "meta.type.declaration.simple.pop",
+      "match": "(?i)\\b(um|uma|uns|umas)(?:\\s+)((?:\\[[^\\]]*\\])*(?:\\s+))?(.+?)(?:\\s+)((?:\\[[^\\]]*\\])*(?:\\s+))?(é|são)(?:\\s+)((?:\\[[^\\]]*\\])*(?:\\s+))?(um|uma|uns|umas)(?:\\s+)((?:\\[[^\\]]*\\])*(?:\\s+))?(.+?)(((.+?)(\\.))|((?:\\[[^\\]]*\\])*(?:\\s+))(\\.))"
+      
+    }
+  ]
+}
+  }
+}

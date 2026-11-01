@@ -5,7 +5,8 @@
 
 import * as vscode from 'vscode';
 import * as assert from 'assert';
-import { activate, getDocUri, setTestContent } from './helper';
+import { unlink, writeFile } from 'node:fs/promises';
+import { activate, getDocPath, getDocUri, setTestContent } from './helper';
 
 suite('Português Puro definitions', () => {
   const docUri = getDocUri('definition.pop');
@@ -41,6 +42,295 @@ suite('Português Puro definitions', () => {
       new vscode.Position(0, 3),
       new vscode.Position(0, 15)
     ));
+  });
+
+  test('Resolves definitions of global variables in assignment targets', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'A variável global é um byte.',
+      'rotina para que se faça algo:',
+      '  Atribua 1 para a variável global.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const usageOffset = text.lastIndexOf('variável global') + 4;
+    const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(usageOffset)
+    );
+
+    assert.ok(definitions);
+    assert.equal(definitions.length, 1);
+    assert.deepEqual(definitions[0].range, new vscode.Range(
+      new vscode.Position(0, 2),
+      new vscode.Position(0, 17)
+    ));
+  });
+
+  test('Resolves type definitions for global variables and structure fields', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    const source = [
+      'Uma string é uma estrutura.',
+      'Um número é uma estrutura.',
+      '',
+      'Uma pessoa é uma estrutura com',
+      '  Uma string denominada nome,',
+      '  Um número denominado idade,',
+      '  Um endereço.',
+      '',
+      'Um endereço é uma estrutura com',
+      '  Uma string denominada logradouro,',
+      '  Um número denominado número da casa.',
+      '',
+      'O cliente é uma pessoa.',
+      '',
+      'Rotina para que se consuma uma pessoa:',
+      '  Retorne.',
+      '',
+      'Rotina para que se exemplifique:',
+      '  Consuma o cliente.',
+      '  Atribua "João" para o nome deste cliente.',
+      '  Atribua "Rua José da Silva" para o logradouro deste endereço deste cliente.'
+    ].join('\n');
+    await setTestContent(source);
+    await diagnosticsUpdated;
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const typeDefinitionAt = async (offset: number): Promise<vscode.Location[] | undefined> =>
+      vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeTypeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+
+    const globalDeclarationName = text.indexOf('cliente');
+    const globalTypeDefinition = await typeDefinitionAt(globalDeclarationName + 2);
+    assert.ok(globalTypeDefinition);
+    assert.equal(globalTypeDefinition.length, 1);
+    assert.deepEqual(globalTypeDefinition[0].range, new vscode.Range(
+      new vscode.Position(3, 4),
+      new vscode.Position(3, 10)
+    ));
+
+    const globalReferenceName = text.lastIndexOf('cliente');
+    const globalReferenceTypeDefinition = await typeDefinitionAt(globalReferenceName + 2);
+    assert.ok(globalReferenceTypeDefinition);
+    assert.equal(globalReferenceTypeDefinition.length, 1);
+    assert.deepEqual(globalReferenceTypeDefinition[0].range, new vscode.Range(
+      new vscode.Position(3, 4),
+      new vscode.Position(3, 10)
+    ));
+
+    const routineCallVariable = text.indexOf('cliente.', text.indexOf('Consuma'));
+    const routineCallTypeDefinition = await typeDefinitionAt(routineCallVariable + 2);
+    assert.ok(routineCallTypeDefinition);
+    assert.equal(routineCallTypeDefinition.length, 1);
+    assert.deepEqual(routineCallTypeDefinition[0].range, new vscode.Range(
+      new vscode.Position(3, 4),
+      new vscode.Position(3, 10)
+    ));
+
+    const fieldName = text.lastIndexOf('logradouro');
+    const fieldTypeDefinition = await typeDefinitionAt(fieldName + 2);
+    assert.ok(fieldTypeDefinition);
+    assert.equal(fieldTypeDefinition.length, 1);
+    assert.deepEqual(fieldTypeDefinition[0].range, new vscode.Range(
+      new vscode.Position(0, 4),
+      new vscode.Position(0, 10)
+    ));
+  });
+
+  test('Provides hierarchical document symbols for declarations and fields', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma pessoa é uma estrutura com',
+      '  Um número denominado idade.',
+      'O cliente é uma pessoa.',
+      'Rotina para que se exemplifique com uma pessoa:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+      'vscode.executeDocumentSymbolProvider',
+      docUri
+    );
+    assert.ok(symbols);
+    assert.deepEqual(symbols.map(symbol => symbol.name), [
+      'pessoa',
+      'cliente',
+      'exemplifique'
+    ]);
+    assert.equal(symbols[0].kind, vscode.SymbolKind.Struct);
+    assert.equal(symbols[0].children?.[0].name, 'idade');
+    assert.equal(symbols[1].kind, vscode.SymbolKind.Variable);
+    assert.equal(symbols[2].kind, vscode.SymbolKind.Function);
+    assert.equal(symbols[2].children?.[0].name, 'pessoa');
+  });
+
+  test('Searches symbols in closed workspace source files', async () => {
+    await activate(docUri);
+    const filePath = getDocPath('workspace-symbol-test.pop');
+    const fileUri = vscode.Uri.file(filePath);
+    await writeFile(filePath, 'Um WorkspaceSymbolProbe é uma estrutura.\n', 'ascii');
+    try {
+      const symbols = await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
+        'vscode.executeWorkspaceSymbolProvider',
+        'WorkspaceSymbolProbe'
+      );
+      const match = symbols?.find(symbol => symbol.name === 'WorkspaceSymbolProbe');
+      assert.ok(match);
+      assert.equal(match.location.uri.toString(), fileUri.toString());
+    } finally {
+      await unlink(filePath);
+    }
+  });
+
+  test('Finds type, routine, and global-variable references across the workspace', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    const source = [
+      'Um carro é uma estrutura.',
+      'Um esportivo é um carro.',
+      'Uma garagem é uma estrutura com um carro denominado veículo.',
+      'O carro atual é um carro.',
+      'O carro destino é um carro.',
+      'Rotina para que se conduza um carro:',
+      '  Retorne.',
+      'Rotina para que se teste:',
+      '  Conduza o carro atual.',
+      '  Atribua o carro atual para o carro destino.'
+    ].join('\n');
+    await setTestContent(source);
+    await diagnosticsUpdated;
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const externalPath = getDocPath('references-test.pop');
+    const externalUri = vscode.Uri.file(externalPath);
+    await writeFile(externalPath, 'Um conversivel é um carro.\n', 'latin1');
+    try {
+      const referencesAt = (offset: number) =>
+        vscode.commands.executeCommand<vscode.Location[]>(
+          'vscode.executeReferenceProvider',
+          docUri,
+          document.positionAt(offset),
+          true
+        );
+
+      const typeOffset = text.indexOf('carro') + 1;
+      const typeReferences = await referencesAt(typeOffset);
+      assert.ok(typeReferences);
+      assert.ok(typeReferences.length >= 5);
+      assert.ok(typeReferences.some(reference =>
+        reference.uri.toString() === externalUri.toString()
+      ));
+
+      const routineOffset = text.indexOf('conduza') + 2;
+      const routineReferences = await referencesAt(routineOffset);
+      assert.ok(routineReferences);
+      assert.equal(routineReferences.length, 2);
+
+      const variableOffset = text.indexOf('carro atual') + 2;
+      const variableReferences = await referencesAt(variableOffset);
+      assert.ok(variableReferences);
+      assert.equal(variableReferences.length, 3);
+    } finally {
+      await unlink(externalPath);
+    }
+  });
+
+  test('Renames types, routines, and global variables across the workspace', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um veiculo é uma estrutura.',
+      'Um esportivo é um veiculo.',
+      'Um carro é uma estrutura com um byte denominado cor.',
+      'O veiculo atual é um carro.',
+      'O carro destino é um carro.',
+      'Rotina para que se conduza um carro:',
+      '  Retorne.',
+      'Rotina para que se teste:',
+      '  Conduza o veiculo atual.',
+      '  Atribua o veiculo atual para o carro destino.',
+      '  Atribua 1 para a cor deste veiculo atual.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const externalPath = getDocPath('rename-test.pop');
+    const externalUri = vscode.Uri.file(externalPath);
+    await writeFile(externalPath, 'Um caminhao é um veiculo.\n', 'latin1');
+    try {
+      const renameAt = (offset: number, newName: string) =>
+        vscode.commands.executeCommand<vscode.WorkspaceEdit>(
+          'vscode.executeDocumentRenameProvider',
+          docUri,
+          document.positionAt(offset),
+          newName
+        );
+
+      const typeRename = await renameAt(text.indexOf('veiculo') + 1, 'transporte');
+      assert.ok(typeRename);
+      assert.equal(typeRename.get(docUri).length, 2);
+      assert.equal(typeRename.get(externalUri).length, 1);
+
+      const routineRename = await renameAt(text.indexOf('conduza') + 2, 'dirija');
+      assert.ok(routineRename);
+      assert.equal(routineRename.get(docUri).length, 2);
+
+      const variableRename = await renameAt(text.indexOf('veiculo atual') + 2, 'automovel atual');
+      assert.ok(variableRename);
+      assert.equal(variableRename.get(docUri).length, 4);
+
+      const fieldRename = await renameAt(text.indexOf('cor') + 1, 'pintura');
+      assert.ok(fieldRename);
+      assert.equal(fieldRename.get(docUri).length, 2);
+    } finally {
+      await unlink(externalPath);
+    }
   });
 
   test('Resolves a user-defined type whose name includes a primitive type word', async () => {
@@ -805,6 +1095,34 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
+  test('Recognizes null literals in initializers, assignments, process arguments, and conditions', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um ponteiro é uma estrutura.',
+      'O ponteiro nulo é um ponteiro igual a nulo.',
+      'Rotina para que se consuma um ponteiro:',
+      '  Retorne.',
+      'Rotina para que se faça algo com um ponteiro:',
+      '  Atribua nulo ao ponteiro.',
+      '  Consuma nulo.',
+      '  Processe "lib.dll" "consume" com nulo e nula e nulos e nulas e inexistente e inexistentes e zerado e nil.',
+      '  Se o ponteiro for inexistente, retorne.',
+      'Função para que se determine se um ponteiro é um segundo ponteiro:',
+      '  Diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
   test('Reports invalid initialized global variable literals', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -1267,6 +1585,59 @@ suite('Português Puro definitions', () => {
     }
   });
 
+  test('Uses parenthetical header qualifiers to distinguish routines', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma caixa é uma estrutura.',
+      'A janela é uma caixa.',
+      'Rotina para que se centralize uma caixa:',
+      '  Retorne.',
+      'Rotina para que se centralize uma caixa (horizontalmente):',
+      '  Retorne.',
+      'Rotina para que se centralize uma caixa (verticalmente):',
+      '  Retorne.',
+      'Rotina para que se finalize (itere uma string',
+      '  decodifique):',
+      '  Retorne.',
+      'Rotina para que se teste:',
+      '  Centralize a janela.',
+      '  Centralize a janela (horizontalmente).',
+      '  Centralize a janela (verticalmente).',
+      '  Finalize (itere uma string',
+      '    decodifique).'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const cases = [
+      { reference: 'Centralize a janela.', expectedLine: 2 },
+      { reference: 'Centralize a janela (horizontalmente)', expectedLine: 4 },
+      { reference: 'Centralize a janela (verticalmente)', expectedLine: 6 },
+      { reference: 'Finalize (itere uma string', expectedLine: 8 }
+    ];
+    for (const testCase of cases) {
+      const offset = text.indexOf(testCase.reference, text.indexOf('teste'));
+      const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset + 2)
+      );
+      assert.ok(definitions);
+      assert.equal(definitions.length, 1);
+      assert.equal(definitions[0].range.start.line, testCase.expectedLine);
+    }
+  });
+
   test('Emits a hint when a routine body contains no statements', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -1674,6 +2045,31 @@ suite('Português Puro definitions', () => {
       'Um número é uma estrutura.',
       'Rotina para que se faça algo com um número e um segundo número:',
       '  Atribua o número mais 2 menos 1 vezes o número dividido por 2 para o segundo número.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Parses unary numeric signs and fraction division in assignments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma fração é uma estrutura.',
+      'Rotina para que se exemplifique com um número, um segundo número, uma fração:',
+      '  Atribua - o número para o segundo número.',
+      '  Atribua + o número para o segundo número.',
+      '  Atribua o número / o segundo número para a fração.',
+      '  Atribua o número / 123 para a fração.',
+      '  Atribua 456 / o segundo número para a fração.'
     ].join('\n'));
     await diagnosticsUpdated;
 
@@ -2132,6 +2528,46 @@ suite('Português Puro definitions', () => {
     assert.equal(definition[0].range.start.line, 5);
   });
 
+  test('Ignores não in boolean conditions and rejects it in boolean headers', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Rotina para que se foo usando um número:',
+      '  Se o número não for positivo, retorne.',
+      'Função para que se determine se um número é positivo:',
+      '  Diga sim.',
+      'Função para que se determine se um número não é negativo:',
+      '  Diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.length, 1);
+    assert.equal(
+      diagnostics[0].message,
+      '"não" cannot be part of a boolean function header.'
+    );
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const conditionOffset = document.getText().indexOf('positivo', document.getText().indexOf('Se '));
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(conditionOffset + 2)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 3);
+  });
+
   test('Normalizes routine prepositions and contractions when resolving calls', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -2216,6 +2652,63 @@ suite('Português Puro definitions', () => {
     assert.ok(nestedFieldDefinition);
     assert.equal(nestedFieldDefinition.length, 1);
     assert.equal(nestedFieldDefinition[0].range.start.line, 3);
+  });
+
+  test('Resolves hidden fields for linked-list types and derived lists', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um ponteiro é uma estrutura.',
+      'Uma lista é um ponteiro para uma lista estruturada.',
+      'Uma lista estruturada é uma estrutura com',
+      '  Uma lista denominada lista posterior e',
+      '  Uma lista denominada lista anterior.',
+      'Um número é uma estrutura.',
+      'Uma coordenada é um número.',
+      'Uma localização é uma estrutura com',
+      '  Uma coordenada denominada coordenada X e',
+      '  Uma coordenada denominada coordenada Y.',
+      'Um vértice é uma lista com',
+      '  Uma coordenada X,',
+      '  Uma coordenada Y,',
+      '  Uma localização sob a coordenada X.',
+      'Um polígono é uma lista com uns vértices.',
+      'Uma etiqueta é um número.',
+      'Um fragmento é uma lista com uma etiqueta.',
+      'Rotina para que se receba um vértice:',
+      '  Retorne.',
+      'Rotina para que se receba uma localização:',
+      '  Retorne.',
+      'Rotina para que se receba uma coordenada:',
+      '  Retorne.',
+      'Rotina para que se receba um fragmento:',
+      '  Retorne.',
+      'Rotina para que se receba um ponteiro:',
+      '  Retorne.',
+      'Rotina para que se teste com um polígono, um vértice, um fragmento:',
+      '  Receba o primeiro vértice deste polígono.',
+      '  Receba a primeira vértice deste polígono.',
+      '  Receba o último vértice deste polígono.',
+      '  Receba a última vértice deste polígono.',
+      '  Receba o próximo vértice deste vértice.',
+      '  Receba o vértice anterior deste vértice.',
+      '  Receba o vértice precedente deste vértice.',
+      '  Receba a localização deste primeiro vértice deste polígono.',
+      '  Receba a coordenada X desta localização deste primeiro vértice deste polígono.',
+      '  Receba o fragmento anterior deste fragmento.',
+      '  Receba o fragmento precedente deste fragmento.',
+      '  Receba este polígono.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
   test('Diagnoses missing boolean conditions and nested conditional blocks', async () => {
