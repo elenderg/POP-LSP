@@ -9,7 +9,59 @@ const assert = require("assert");
 const promises_1 = require("node:fs/promises");
 const helper_1 = require("./helper");
 suite('Português Puro definitions', () => {
-    const docUri = (0, helper_1.getDocUri)('definition.pop');
+    const docUri = (0, helper_1.getDocUri)('definitions/definition.pop');
+    test('Resolves declarations and diagnostics from sibling source files', async () => {
+        await (0, helper_1.activate)(docUri);
+        const externalPath = (0, helper_1.getDocPath)('definitions/cross-file-types.pop');
+        const externalUri = vscode.Uri.file(externalPath);
+        await (0, promises_1.writeFile)(externalPath, [
+            'Um caractere é um byte.',
+            'O símbolo externo é um caractere.',
+            'para que se conte um caractere:',
+            '  Retorne.'
+        ].join('\n'), 'latin1');
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        try {
+            await (0, helper_1.setTestContent)([
+                'Uma letra é um caractere.',
+                'O símbolo local é um caractere.',
+                'Rotina para que se teste:',
+                '  Conte um caractere.',
+                '  Atribua 1 para o símbolo externo.'
+            ].join('\n'));
+            await diagnosticsUpdated;
+            const document = await vscode.workspace.openTextDocument(docUri);
+            const text = document.getText();
+            const diagnostics = vscode.languages.getDiagnostics(docUri);
+            assert.deepEqual(diagnostics.filter(diagnostic => /Unknown (base type|global variable type|variable)|No compatible routine found/u
+                .test(diagnostic.message)), []);
+            const typeOffset = text.indexOf('caractere');
+            const typeDefinitions = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(typeOffset + 2));
+            assert.ok(typeDefinitions);
+            assert.equal(typeDefinitions[0].uri.toString(), externalUri.toString());
+            const typeDefinition = await vscode.commands.executeCommand('vscode.executeTypeDefinitionProvider', docUri, document.positionAt(text.indexOf('símbolo local') + 2));
+            assert.ok(typeDefinition);
+            assert.equal(typeDefinition[0].uri.toString(), externalUri.toString());
+            const routineOffset = text.indexOf('Conte') + 1;
+            const routineDefinitions = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(routineOffset));
+            assert.ok(routineDefinitions);
+            assert.equal(routineDefinitions[0].uri.toString(), externalUri.toString());
+            const variableOffset = text.lastIndexOf('símbolo externo') + 3;
+            const variableDefinitions = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(variableOffset));
+            assert.ok(variableDefinitions);
+            assert.equal(variableDefinitions[0].uri.toString(), externalUri.toString());
+        }
+        finally {
+            await (0, promises_1.unlink)(externalPath);
+        }
+    });
     test('Resolves a multi-word type name without confusing similar names', async () => {
         await (0, helper_1.activate)(docUri);
         const document = await vscode.workspace.openTextDocument(docUri);
@@ -225,7 +277,7 @@ suite('Português Puro definitions', () => {
     });
     test('Searches symbols in closed workspace source files', async () => {
         await (0, helper_1.activate)(docUri);
-        const filePath = (0, helper_1.getDocPath)('workspace-symbol-test.pop');
+        const filePath = (0, helper_1.getDocPath)('definitions/workspace-symbol-test.pop');
         const fileUri = vscode.Uri.file(filePath);
         await (0, promises_1.writeFile)(filePath, 'Um WorkspaceSymbolProbe é uma estrutura.\n', 'ascii');
         try {
@@ -264,7 +316,7 @@ suite('Português Puro definitions', () => {
         await diagnosticsUpdated;
         const document = await vscode.workspace.openTextDocument(docUri);
         const text = document.getText();
-        const externalPath = (0, helper_1.getDocPath)('references-test.pop');
+        const externalPath = (0, helper_1.getDocPath)('definitions/references-test.pop');
         const externalUri = vscode.Uri.file(externalPath);
         await (0, promises_1.writeFile)(externalPath, 'Um conversivel é um carro.\n', 'latin1');
         try {
@@ -313,7 +365,7 @@ suite('Português Puro definitions', () => {
         await diagnosticsUpdated;
         const document = await vscode.workspace.openTextDocument(docUri);
         const text = document.getText();
-        const externalPath = (0, helper_1.getDocPath)('rename-test.pop');
+        const externalPath = (0, helper_1.getDocPath)('definitions/rename-test.pop');
         const externalUri = vscode.Uri.file(externalPath);
         await (0, promises_1.writeFile)(externalPath, 'Um caminhao é um veiculo.\n', 'latin1');
         try {

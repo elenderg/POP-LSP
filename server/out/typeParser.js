@@ -355,7 +355,7 @@ function pluralizeTypeName(name) {
         ? word
         : (0, plural_1.default)(word)).join(' ');
 }
-function parseTypeDeclarations(source) {
+function parseTypeDeclarations(source, workspaceSymbols) {
     const diagnostics = [];
     const parserSource = maskComments(source, diagnostics);
     const declarations = [];
@@ -383,8 +383,14 @@ function parseTypeDeclarations(source) {
         segmentStart = periodIndex + 1;
         periodIndex = findDeclarationPeriod(parserSource, segmentStart);
     }
-    const symbols = new TypeSymbolTable(declarations);
-    const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
+    const symbols = new TypeSymbolTable([
+        ...declarations,
+        ...(workspaceSymbols?.declarations ?? [])
+    ]);
+    const globalVariableSymbols = new GlobalVariableSymbolTable([
+        ...globalVariables,
+        ...(workspaceSymbols?.globalVariables ?? [])
+    ]);
     const routineSymbols = new RoutineSymbolTable(routines);
     setRoutineBodyRanges(parserSource, routines, [...declarations, ...globalVariables].map(declaration => declaration.range));
     validateBaseTypes(declarations, symbols, diagnostics);
@@ -394,7 +400,7 @@ function parseTypeDeclarations(source) {
     resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
     resolveRoutineParameters(parserSource, routines, symbols, diagnostics);
     resolveComputedFields(routines, symbols, diagnostics);
-    resolveRoutineCalls(parserSource, routines, globalVariables, symbols, diagnostics);
+    resolveRoutineCalls(parserSource, routines, globalVariableSymbols.entries.map(symbol => symbol.declaration), symbols, diagnostics, [...routines, ...(workspaceSymbols?.routines ?? [])]);
     validateRoutineVariableNames(routines, diagnostics);
     return {
         declarations,
@@ -455,7 +461,7 @@ function setRoutineBodyRanges(source, routines, declarationRanges) {
         routine.bodyRange.end = Math.min(nextRoutineStart, nextDeclarationStart, source.length);
     }
 }
-function resolveRoutineCalls(source, routines, globalVariables, symbols, diagnostics) {
+function resolveRoutineCalls(source, routines, globalVariables, symbols, diagnostics, routineCandidates = routines) {
     const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
     for (const routine of routines) {
         const body = source.slice(routine.bodyRange.start, routine.bodyRange.end);
@@ -472,7 +478,7 @@ function resolveRoutineCalls(source, routines, globalVariables, symbols, diagnos
         while (periodIndex !== -1 && periodIndex < routine.bodyRange.end) {
             const statementRange = trimRange(source, statementStart, periodIndex);
             if (statementRange.start < statementRange.end) {
-                const conditional = parseConditionalBlock(source, statementRange, periodIndex, routines, routine, globalVariableSymbols, symbols, diagnostics);
+                const conditional = parseConditionalBlock(source, statementRange, periodIndex, routineCandidates, routine, globalVariableSymbols, symbols, diagnostics);
                 if (conditional) {
                     routine.conditionals.push(conditional.block);
                     if (conditional.nestedRange) {
@@ -484,12 +490,12 @@ function resolveRoutineCalls(source, routines, globalVariables, symbols, diagnos
                     for (const conditionalStatement of conditional.block.statements) {
                         if (!conditional.nestedRange ||
                             conditionalStatement.start < conditional.nestedRange.start) {
-                            hasValidBooleanReturn = processRoutineStatement(source, conditionalStatement, routine, routines, globalVariableSymbols, symbols, diagnostics) || hasValidBooleanReturn;
+                            hasValidBooleanReturn = processRoutineStatement(source, conditionalStatement, routine, routineCandidates, globalVariableSymbols, symbols, diagnostics) || hasValidBooleanReturn;
                         }
                     }
                 }
                 else {
-                    hasValidBooleanReturn = processRoutineStatement(source, statementRange, routine, routines, globalVariableSymbols, symbols, diagnostics) || hasValidBooleanReturn;
+                    hasValidBooleanReturn = processRoutineStatement(source, statementRange, routine, routineCandidates, globalVariableSymbols, symbols, diagnostics) || hasValidBooleanReturn;
                 }
             }
             statementStart = periodIndex + 1;

@@ -35,8 +35,7 @@ export function activate(context: ExtensionContext) {
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [{ scheme: 'file', language: 'portugues-puro' }],
 		synchronize: {
-			// Notify the server about file changes to '.clientrc files contained in the workspace
-			fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+			fileEvents: workspace.createFileSystemWatcher('**/*.pop')
 		}
 	};
 

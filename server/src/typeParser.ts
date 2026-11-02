@@ -429,6 +429,12 @@ export interface ParsedDocument {
   diagnostics: ParserDiagnostic[];
 }
 
+export interface ParserSymbolCatalog {
+  declarations: TypeDeclaration[];
+  globalVariables: GlobalVariableDeclaration[];
+  routines: RoutineDeclaration[];
+}
+
 export interface ParsedReference {
   kind: 'type' | 'routine' | 'variable' | 'field';
   name: string;
@@ -632,7 +638,10 @@ function pluralizeTypeName(name: string): string {
   ).join(' ');
 }
 
-export function parseTypeDeclarations(source: string): ParsedDocument {
+export function parseTypeDeclarations(
+  source: string,
+  workspaceSymbols?: ParserSymbolCatalog
+): ParsedDocument {
   const diagnostics: ParserDiagnostic[] = [];
   const parserSource = maskComments(source, diagnostics);
   const declarations: TypeDeclaration[] = [];
@@ -665,8 +674,14 @@ export function parseTypeDeclarations(source: string): ParsedDocument {
     segmentStart = periodIndex + 1;
     periodIndex = findDeclarationPeriod(parserSource, segmentStart);
   }
-  const symbols = new TypeSymbolTable(declarations);
-  const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
+  const symbols = new TypeSymbolTable([
+    ...declarations,
+    ...(workspaceSymbols?.declarations ?? [])
+  ]);
+  const globalVariableSymbols = new GlobalVariableSymbolTable([
+    ...globalVariables,
+    ...(workspaceSymbols?.globalVariables ?? [])
+  ]);
   const routineSymbols = new RoutineSymbolTable(routines);
   setRoutineBodyRanges(
     parserSource,
@@ -684,7 +699,14 @@ export function parseTypeDeclarations(source: string): ParsedDocument {
   resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
   resolveRoutineParameters(parserSource, routines, symbols, diagnostics);
   resolveComputedFields(routines, symbols, diagnostics);
-  resolveRoutineCalls(parserSource, routines, globalVariables, symbols, diagnostics);
+  resolveRoutineCalls(
+    parserSource,
+    routines,
+    globalVariableSymbols.entries.map(symbol => symbol.declaration),
+    symbols,
+    diagnostics,
+    [...routines, ...(workspaceSymbols?.routines ?? [])]
+  );
   validateRoutineVariableNames(routines, diagnostics);
 
   return {
@@ -765,7 +787,8 @@ function resolveRoutineCalls(
   routines: RoutineDeclaration[],
   globalVariables: GlobalVariableDeclaration[],
   symbols: TypeSymbolTable,
-  diagnostics: ParserDiagnostic[]
+  diagnostics: ParserDiagnostic[],
+  routineCandidates: RoutineDeclaration[] = routines
 ): void {
   const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
   for (const routine of routines) {
@@ -788,7 +811,7 @@ function resolveRoutineCalls(
           source,
           statementRange,
           periodIndex,
-          routines,
+          routineCandidates,
           routine,
           globalVariableSymbols,
           symbols,
@@ -811,7 +834,7 @@ function resolveRoutineCalls(
                 source,
                 conditionalStatement,
                 routine,
-                routines,
+                routineCandidates,
                 globalVariableSymbols,
                 symbols,
                 diagnostics
@@ -823,7 +846,7 @@ function resolveRoutineCalls(
             source,
             statementRange,
             routine,
-            routines,
+            routineCandidates,
             globalVariableSymbols,
             symbols,
             diagnostics

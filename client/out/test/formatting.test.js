@@ -4,7 +4,7 @@ const vscode = require("vscode");
 const assert = require("assert");
 const helper_1 = require("./helper");
 suite('Português Puro document formatting', () => {
-    const docUri = (0, helper_1.getDocUri)('formatting.pop');
+    const docUri = (0, helper_1.getDocUri)('formatting/formatting.pop');
     async function format(source) {
         await (0, helper_1.activate)(docUri);
         await (0, helper_1.setTestContent)(source);

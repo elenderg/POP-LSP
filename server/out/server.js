@@ -14,6 +14,7 @@ const documentFormatter_1 = require("./documentFormatter");
 const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
 const documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
 const parsedDocuments = new Map();
+let workspaceDocumentIndex;
 connection.onInitialize(() => ({
     capabilities: {
         textDocumentSync: node_1.TextDocumentSyncKind.Incremental,
@@ -94,9 +95,19 @@ connection.onHover((params) => {
         }
     };
 });
-function updateDocumentSymbols(document) {
-    const parsedDocument = (0, typeParser_1.parseTypeDeclarations)(document.getText());
-    parsedDocuments.set(document.uri, parsedDocument);
+async function updateDocumentSymbols() {
+    workspaceDocumentIndex = undefined;
+    const workspaceDocuments = await getWorkspaceDocuments();
+    for (const document of documents.all()) {
+        const parsedDocument = workspaceDocuments.get(document.uri)?.parsed;
+        if (!parsedDocument) {
+            continue;
+        }
+        parsedDocuments.set(document.uri, parsedDocument);
+        publishDiagnostics(document, parsedDocument);
+    }
+}
+function publishDiagnostics(document, parsedDocument) {
     const diagnostics = parsedDocument.diagnostics.map(diagnostic => ({
         severity: diagnostic.severity === 'hint'
             ? node_1.DiagnosticSeverity.Hint
@@ -110,28 +121,48 @@ function updateDocumentSymbols(document) {
     }));
     connection.sendDiagnostics({ uri: document.uri, diagnostics });
 }
-documents.onDidOpen(({ document }) => {
-    updateDocumentSymbols(document);
+documents.onDidOpen(() => {
+    void updateDocumentSymbols();
 });
-documents.onDidChangeContent(({ document }) => {
-    updateDocumentSymbols(document);
+documents.onDidChangeContent(() => {
+    void updateDocumentSymbols();
 });
-documents.onDidSave(({ document }) => {
-    updateDocumentSymbols(document);
+documents.onDidSave(() => {
+    void updateDocumentSymbols();
 });
 documents.onDidClose(({ document }) => {
     parsedDocuments.delete(document.uri);
     connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+    void updateDocumentSymbols();
 });
-connection.onDefinition((params) => {
+connection.onDidChangeWatchedFiles(() => {
+    void updateDocumentSymbols();
+});
+connection.onInitialized(async () => {
+    workspaceDocumentIndex = undefined;
+    const workspaceDocuments = await getWorkspaceDocuments();
+    for (const document of documents.all()) {
+        const parsedDocument = workspaceDocuments.get(document.uri)?.parsed;
+        if (!parsedDocument) {
+            continue;
+        }
+        parsedDocuments.set(document.uri, parsedDocument);
+        publishDiagnostics(document, parsedDocument);
+    }
+});
+connection.onDefinition(async (params) => {
     const document = documents.get(params.textDocument.uri);
     if (!document) {
         return undefined;
     }
-    const parsedDocument = parsedDocuments.get(document.uri);
+    const workspaceDocuments = await refreshWorkspaceDocuments();
+    const parsedDocument = workspaceDocuments.get(document.uri)?.parsed ??
+        parsedDocuments.get(document.uri);
     if (!parsedDocument) {
         return undefined;
     }
+    const documentDirectory = (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri));
+    const candidates = [...workspaceDocuments.values()].filter(candidate => (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(candidate.document.uri)) === documentDirectory);
     const offset = document.offsetAt(params.position);
     const parsedReference = (0, typeParser_1.findParsedReferenceAtOffset)(parsedDocument, offset);
     if (parsedReference?.kind === 'variable') {
@@ -163,10 +194,45 @@ connection.onDefinition((params) => {
         }
         else {
             const globalVariable = parsedDocument.globalVariableSymbols.lookup(parsedReference.name);
-            if (globalVariable) {
-                return node_1.Location.create(document.uri, {
-                    start: document.positionAt(globalVariable.declaration.name.range.start),
-                    end: document.positionAt(globalVariable.declaration.name.range.end)
+            const owner = globalVariable && candidates.find(candidate => candidate.parsed.globalVariables.some(declaration => declaration.name.normalizedName ===
+                globalVariable.declaration.name.normalizedName &&
+                declaration.name.range.start === globalVariable.declaration.name.range.start &&
+                declaration.name.range.end === globalVariable.declaration.name.range.end));
+            if (globalVariable && owner) {
+                return node_1.Location.create(owner.document.uri, {
+                    start: owner.document.positionAt(globalVariable.declaration.name.range.start),
+                    end: owner.document.positionAt(globalVariable.declaration.name.range.end)
+                });
+            }
+        }
+    }
+    if (parsedReference?.kind === 'routine') {
+        const callTarget = parsedDocument.routines
+            .flatMap(routine => routine.calls)
+            .find(call => offset >= call.name.range.start &&
+            offset <= call.name.range.end)?.target;
+        if (callTarget) {
+            const owner = candidates.find(candidate => candidate.parsed.routines.some(routine => routine.name.normalizedName === callTarget.name.normalizedName &&
+                (0, typeParser_1.normalizeTypeName)(routine.qualifier ?? '') ===
+                    (0, typeParser_1.normalizeTypeName)(callTarget.qualifier ?? '') &&
+                routine.parameters.length === callTarget.parameters.length &&
+                routine.parameters.every((parameter, index) => (0, typeParser_1.normalizeTypeName)(parameter.type.name) ===
+                    (0, typeParser_1.normalizeTypeName)(callTarget.parameters[index].type.name))));
+            if (owner) {
+                return node_1.Location.create(owner.document.uri, {
+                    start: owner.document.positionAt(callTarget.name.range.start),
+                    end: owner.document.positionAt(callTarget.name.range.end)
+                });
+            }
+        }
+        for (const candidate of candidates) {
+            const declaration = (0, typeParser_1.getParsedReferences)(candidate.parsed).find(reference => reference.kind === 'routine' &&
+                reference.name === parsedReference.name &&
+                reference.declaration);
+            if (declaration) {
+                return node_1.Location.create(candidate.document.uri, {
+                    start: candidate.document.positionAt(declaration.range.start),
+                    end: candidate.document.positionAt(declaration.range.end)
                 });
             }
         }
@@ -180,23 +246,15 @@ connection.onDefinition((params) => {
     }
     const reference = (0, typeParser_1.findTypeReferenceAtOffset)(parsedDocument, offset);
     if (reference) {
-        const candidates = [
-            { document, parsed: parsedDocument },
-            ...documents.all()
-                .filter(openDocument => openDocument.uri !== document.uri)
-                .flatMap(openDocument => {
-                const parsed = parsedDocuments.get(openDocument.uri);
-                return parsed ? [{ document: openDocument, parsed }] : [];
-            })
-        ];
-        for (const candidate of candidates) {
-            const symbol = candidate.parsed.symbols.lookup(reference.name);
-            if (symbol?.declaration) {
-                return node_1.Location.create(candidate.document.uri, {
-                    start: candidate.document.positionAt(symbol.declaration.name.range.start),
-                    end: candidate.document.positionAt(symbol.declaration.name.range.end)
-                });
-            }
+        const symbol = parsedDocument.symbols.lookup(reference.name);
+        const owner = symbol?.declaration && candidates.find(candidate => candidate.parsed.declarations.some(declaration => declaration.name.normalizedName === symbol.declaration.name.normalizedName &&
+            declaration.name.range.start === symbol.declaration.name.range.start &&
+            declaration.name.range.end === symbol.declaration.name.range.end));
+        if (symbol?.declaration && owner) {
+            return node_1.Location.create(owner.document.uri, {
+                start: owner.document.positionAt(symbol.declaration.name.range.start),
+                end: owner.document.positionAt(symbol.declaration.name.range.end)
+            });
         }
     }
     const routine = (0, typeParser_1.findRoutineDeclarationAtOffset)(parsedDocument, document.offsetAt(params.position));
@@ -208,12 +266,14 @@ connection.onDefinition((params) => {
     }
     return undefined;
 });
-connection.onTypeDefinition((params) => {
+connection.onTypeDefinition(async (params) => {
     const document = documents.get(params.textDocument.uri);
     if (!document) {
         return undefined;
     }
-    const parsedDocument = parsedDocuments.get(document.uri);
+    const workspaceDocuments = await refreshWorkspaceDocuments();
+    const parsedDocument = workspaceDocuments.get(document.uri)?.parsed ??
+        parsedDocuments.get(document.uri);
     if (!parsedDocument) {
         return undefined;
     }
@@ -221,21 +281,21 @@ connection.onTypeDefinition((params) => {
     if (!reference) {
         return undefined;
     }
-    const candidates = [
-        { document, parsed: parsedDocument },
-        ...documents.all()
-            .filter(openDocument => openDocument.uri !== document.uri)
-            .flatMap(openDocument => {
-            const parsed = parsedDocuments.get(openDocument.uri);
-            return parsed ? [{ document: openDocument, parsed }] : [];
-        })
-    ];
-    for (const candidate of candidates) {
-        const symbol = candidate.parsed.symbols.lookup(reference.name);
-        if (symbol?.declaration) {
+    const documentDirectory = (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri));
+    for (const candidate of workspaceDocuments.values()) {
+        if ((0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(candidate.document.uri)) !== documentDirectory) {
+            continue;
+        }
+        const symbol = parsedDocument.symbols.lookup(reference.name);
+        const declaration = symbol?.declaration &&
+            candidate.parsed.declarations.find(candidateDeclaration => candidateDeclaration.name.normalizedName ===
+                symbol.declaration.name.normalizedName &&
+                candidateDeclaration.name.range.start === symbol.declaration.name.range.start &&
+                candidateDeclaration.name.range.end === symbol.declaration.name.range.end);
+        if (declaration) {
             return node_1.Location.create(candidate.document.uri, {
-                start: candidate.document.positionAt(symbol.declaration.name.range.start),
-                end: candidate.document.positionAt(symbol.declaration.name.range.end)
+                start: candidate.document.positionAt(declaration.name.range.start),
+                end: candidate.document.positionAt(declaration.name.range.end)
             });
         }
     }
@@ -250,7 +310,7 @@ connection.onDocumentSymbol(params => {
     return createDocumentSymbols(parsedDocument, document);
 });
 connection.onWorkspaceSymbol(async (params) => {
-    const workspaceDocuments = await getWorkspaceDocuments();
+    const workspaceDocuments = await refreshWorkspaceDocuments();
     const query = (0, typeParser_1.normalizeTypeName)(params.query);
     const results = [];
     for (const { document, parsed } of workspaceDocuments.values()) {
@@ -273,7 +333,9 @@ connection.onWorkspaceSymbol(async (params) => {
 });
 connection.onReferences(async (params) => {
     const document = documents.get(params.textDocument.uri);
-    const parsedDocument = document && parsedDocuments.get(document.uri);
+    const workspaceDocuments = await refreshWorkspaceDocuments();
+    const parsedDocument = document &&
+        (workspaceDocuments.get(document.uri)?.parsed ?? parsedDocuments.get(document.uri));
     if (!document || !parsedDocument) {
         return undefined;
     }
@@ -281,10 +343,13 @@ connection.onReferences(async (params) => {
     if (!target) {
         return undefined;
     }
-    const workspaceDocuments = await getWorkspaceDocuments();
     const results = [];
     const seen = new Set();
     for (const [uri, candidate] of workspaceDocuments) {
+        if ((0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(candidate.document.uri)) !==
+            (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri))) {
+            continue;
+        }
         if (target.scope !== undefined && uri !== document.uri) {
             continue;
         }
@@ -331,7 +396,9 @@ connection.onPrepareRename((params) => {
 });
 connection.onRenameRequest(async (params) => {
     const document = documents.get(params.textDocument.uri);
-    const parsed = document && parsedDocuments.get(document.uri);
+    const workspaceDocuments = await refreshWorkspaceDocuments();
+    const parsed = document &&
+        (workspaceDocuments.get(document.uri)?.parsed ?? parsedDocuments.get(document.uri));
     const newName = params.newName.trim();
     if (!document || !parsed || !newName) {
         return undefined;
@@ -340,10 +407,13 @@ connection.onRenameRequest(async (params) => {
     if (!target) {
         return undefined;
     }
-    const workspaceDocuments = await getWorkspaceDocuments();
     const changes = {};
     const seen = new Set();
     for (const [uri, candidate] of workspaceDocuments) {
+        if ((0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(candidate.document.uri)) !==
+            (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri))) {
+            continue;
+        }
         if (target.scope !== undefined && uri !== document.uri) {
             continue;
         }
@@ -423,48 +493,64 @@ function createDocumentSymbols(parsed, document) {
         first.range.start.character - second.range.start.character);
 }
 async function getWorkspaceDocuments() {
-    const result = new Map();
+    if (workspaceDocumentIndex) {
+        return workspaceDocumentIndex;
+    }
+    return refreshWorkspaceDocuments();
+}
+async function refreshWorkspaceDocuments() {
+    const sourceDocuments = new Map();
+    const directories = new Set();
     for (const document of documents.all()) {
-        const parsed = parsedDocuments.get(document.uri);
-        if (parsed) {
-            result.set(document.uri, { document, parsed });
-        }
+        const directory = (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri));
+        directories.add(directory);
+        sourceDocuments.set(document.uri, { document, directory });
     }
     const folders = await connection.workspace.getWorkspaceFolders();
     for (const folder of folders ?? []) {
-        await collectWorkspacePopFiles((0, node_url_1.fileURLToPath)(folder.uri), result);
+        directories.add((0, node_url_1.fileURLToPath)(folder.uri));
     }
-    return result;
-}
-async function collectWorkspacePopFiles(directory, result) {
-    const ignoredDirectories = new Set([
-        '.git',
-        '.vscode',
-        'node_modules',
-        'out',
-        'dist',
-        '.vscode-test'
-    ]);
-    const entries = await (0, promises_1.readdir)(directory, { withFileTypes: true });
-    for (const entry of entries) {
-        const filePath = (0, node_path_1.join)(directory, entry.name);
-        if (entry.isDirectory()) {
-            if (!ignoredDirectories.has(entry.name)) {
-                await collectWorkspacePopFiles(filePath, result);
+    for (const directory of directories) {
+        const entries = await (0, promises_1.readdir)(directory, { withFileTypes: true });
+        for (const entry of entries) {
+            if (!entry.isFile() || (0, node_path_1.extname)(entry.name).toLocaleLowerCase() !== '.pop') {
+                continue;
             }
-            continue;
+            const filePath = (0, node_path_1.join)(directory, entry.name);
+            const uri = (0, node_url_1.pathToFileURL)(filePath).toString();
+            if (sourceDocuments.has(uri)) {
+                continue;
+            }
+            const content = new TextDecoder('windows-1252').decode(await (0, promises_1.readFile)(filePath));
+            sourceDocuments.set(uri, {
+                document: vscode_languageserver_textdocument_1.TextDocument.create(uri, 'portugues-puro', 0, content),
+                directory
+            });
         }
-        if (!entry.isFile() || (0, node_path_1.extname)(entry.name).toLocaleLowerCase() !== '.pop') {
-            continue;
-        }
-        const uri = (0, node_url_1.pathToFileURL)(filePath).toString();
-        if (result.has(uri)) {
-            continue;
-        }
-        const content = new TextDecoder('windows-1252').decode(await (0, promises_1.readFile)(filePath));
-        const document = vscode_languageserver_textdocument_1.TextDocument.create(uri, 'portugues-puro', 0, content);
-        result.set(uri, { document, parsed: (0, typeParser_1.parseTypeDeclarations)(content) });
     }
+    const groups = new Map();
+    for (const [uri, { document, directory }] of sourceDocuments) {
+        const group = groups.get(directory) ?? [];
+        group.push({ uri, document, baseParsed: (0, typeParser_1.parseTypeDeclarations)(document.getText()) });
+        groups.set(directory, group);
+    }
+    const result = new Map();
+    for (const group of groups.values()) {
+        for (const entry of group) {
+            const siblings = group.filter(candidate => candidate.uri !== entry.uri);
+            const catalog = {
+                declarations: siblings.flatMap(sibling => sibling.baseParsed.declarations),
+                globalVariables: siblings.flatMap(sibling => sibling.baseParsed.globalVariables),
+                routines: siblings.flatMap(sibling => sibling.baseParsed.routines)
+            };
+            result.set(entry.uri, {
+                document: entry.document,
+                parsed: (0, typeParser_1.parseTypeDeclarations)(entry.document.getText(), catalog)
+            });
+        }
+    }
+    workspaceDocumentIndex = result;
+    return workspaceDocumentIndex;
 }
 documents.listen(connection);
 connection.listen();

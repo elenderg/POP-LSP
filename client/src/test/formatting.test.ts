@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import { activate, getDocUri, setTestContent } from './helper';
 
 suite('Português Puro document formatting', () => {
-  const docUri = getDocUri('formatting.pop');
+  const docUri = getDocUri('formatting/formatting.pop');
 
   async function format(source: string): Promise<string> {
     await activate(docUri);

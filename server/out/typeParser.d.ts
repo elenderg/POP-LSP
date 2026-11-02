@@ -228,6 +228,11 @@ export interface ParsedDocument {
     routineSymbols: RoutineSymbolTable;
     diagnostics: ParserDiagnostic[];
 }
+export interface ParserSymbolCatalog {
+    declarations: TypeDeclaration[];
+    globalVariables: GlobalVariableDeclaration[];
+    routines: RoutineDeclaration[];
+}
 export interface ParsedReference {
     kind: 'type' | 'routine' | 'variable' | 'field';
     name: string;
@@ -237,7 +242,7 @@ export interface ParsedReference {
     declaration?: boolean;
 }
 export declare function normalizeTypeName(name: string): string;
-export declare function parseTypeDeclarations(source: string): ParsedDocument;
+export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog): ParsedDocument;
 export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDocument, offset: number): RoutineDeclaration | undefined;
 export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): NamedTypeField | undefined;
 export declare function findTypeDefinitionReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;

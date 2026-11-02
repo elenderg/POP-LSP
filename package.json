@@ -37,7 +37,7 @@
     "grammars": [
       {
         "language": "portugues-puro",
-        "scopeName": "source.escopo.portugues",
+        "scopeName": "source.escopo.pop",
         "path": "./syntaxes/portugues-puro.tmLanguage.json"
       }],
     "configurationDefaults": {

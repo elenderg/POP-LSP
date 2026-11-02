@@ -26,8 +26,7 @@ function activate(context) {
     const clientOptions = {
         documentSelector: [{ scheme: 'file', language: 'portugues-puro' }],
         synchronize: {
-            // Notify the server about file changes to '.clientrc files contained in the workspace
-            fileEvents: vscode_1.workspace.createFileSystemWatcher('**/.clientrc')
+            fileEvents: vscode_1.workspace.createFileSystemWatcher('**/*.pop')
         }
     };
     // Create the language client and start the client.
