@@ -26,6 +26,7 @@ export interface ByteArrayField {
   kind: 'byte-array';
   count: string;
   elementType: TypeReference;
+  name?: TypeReference;
   range: SourceRange;
 }
 
@@ -391,7 +392,8 @@ export class TypeSymbolTable {
       isNumberTypeName(symbol.declaration.baseType.name) &&
       this.lookup(symbol.declaration.baseType.name)
     ) {
-      symbol.scale = formatFraction(BigInt(symbol.scalarFactor), 1n);
+      const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor);
+      symbol.scale = formatFraction(factorNumerator, factorDenominator);
       symbol.isScalar = true;
       symbol.kind = 'scalar';
       return true;
@@ -405,8 +407,11 @@ export class TypeSymbolTable {
     }
 
     const [baseNumerator, baseDenominator] = parseFraction(baseType.scale);
-    const numerator = baseNumerator * BigInt(symbol.scalarFactor);
-    symbol.scale = formatFraction(numerator, baseDenominator);
+    const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor);
+    symbol.scale = formatFraction(
+      baseNumerator * factorNumerator,
+      baseDenominator * factorDenominator
+    );
     symbol.isScalar = true;
     symbol.kind = 'scalar';
     resolving.delete(symbol);
@@ -574,7 +579,7 @@ const reservedIdentifierWords = new Set([
   ...routineNameDelimiters,
   ...conjunctions,
   'denominado', 'denominada', 'denominados', 'denominadas', 'chamado', 'chamada',
-  'chamados', 'chamadas', 'para', 'que', 'se', 'determine', 'rotina', 'função'
+  'chamados', 'chamadas', 'para', 'que', 'se', 'determine'
 ]);
 
 export function normalizeTypeName(name: string): string {
@@ -2970,24 +2975,24 @@ export function findRoutineFieldAtOffset(
         return access.target;
       }
     }
-  	for (const process of routine.processes) {
-  	  const access = process.fieldAccesses.find(candidate =>
-  	    offset >= candidate.reference.range.start &&
-  	    offset <= candidate.reference.range.end
-  	  );
-  	  if (access) {
-  	    return access.target;
-  	  }
-  	}
-  	for (const call of routine.calls) {
-  		const access = call.fieldAccesses?.find(candidate =>
-  			offset >= candidate.reference.range.start &&
-  			offset <= candidate.reference.range.end
-  		);
-  		if (access) {
-  			return access.target;
-  		}
-  	}
+    for (const process of routine.processes) {
+      const access = process.fieldAccesses.find(candidate =>
+        offset >= candidate.reference.range.start &&
+        offset <= candidate.reference.range.end
+      );
+      if (access) {
+        return access.target;
+      }
+    }
+    for (const call of routine.calls) {
+      const access = call.fieldAccesses?.find(candidate =>
+        offset >= candidate.reference.range.start &&
+        offset <= candidate.reference.range.end
+      );
+      if (access) {
+        return access.target;
+      }
+    }
   }
   return undefined;
 }
@@ -3088,41 +3093,41 @@ function parseComputedFieldHeader(
 } | undefined {
   const verb = readWord(source, start, end);
   if (!verb || verb.value.toLocaleLowerCase('pt-BR') !== 'atribua') {
-  	return undefined;
+    return undefined;
   }
   const fieldArticle = readWord(source, verb.end, end);
   if (!fieldArticle || !definiteArticles.has(fieldArticle.value.toLocaleLowerCase('pt-BR'))) {
-  	return undefined;
+    return undefined;
   }
   const structureMarker = findAnyWord(
-  	source,
-  	fieldArticle.end,
-  	end,
-  	new Set(['dum', 'duma', 'duns', 'dumas'])
+    source,
+    fieldArticle.end,
+    end,
+    new Set(['dum', 'duma', 'duns', 'dumas'])
   );
   if (!structureMarker) {
-  	return undefined;
+    return undefined;
   }
   const structureStart = skipWhitespace(source, structureMarker.end, end);
   const returnMarker = findWord(source, structureStart, end, 'para');
   if (!returnMarker) {
-  	return undefined;
+    return undefined;
   }
   const nameRange = trimRange(source, fieldArticle.end, structureMarker.start);
   const structureRange = trimRange(source, structureStart, returnMarker.start);
   const returnArticle = readWord(source, returnMarker.end, end);
   if (
-  	nameRange.start === nameRange.end ||
-  	structureRange.start === structureRange.end ||
-  	!returnArticle ||
-  	!indefiniteArticles.has(returnArticle.value.toLocaleLowerCase('pt-BR'))
+    nameRange.start === nameRange.end ||
+    structureRange.start === structureRange.end ||
+    !returnArticle ||
+    !indefiniteArticles.has(returnArticle.value.toLocaleLowerCase('pt-BR'))
   ) {
-  	return undefined;
+    return undefined;
   }
   return {
-  	name: createTypeReference(source, nameRange),
-  	structureType: createTypeReference(source, structureRange),
-  	returnMarker
+    name: createTypeReference(source, nameRange),
+    structureType: createTypeReference(source, structureRange),
+    returnMarker
   };
 }
 
@@ -3661,33 +3666,33 @@ function resolveComputedFields(
   diagnostics: ParserDiagnostic[]
 ): void {
   for (const routine of routines) {
-  	const computedField = routine.computedField;
-  	if (!computedField) {
-  		continue;
-  	}
+    const computedField = routine.computedField;
+    if (!computedField) {
+      continue;
+    }
 
-  	const structure = symbols.lookup(computedField.structureType.name);
-  	if (!structure) {
-  		diagnostics.push({
-  			message: `Unknown computed field structure type "${computedField.structureType.name}".`,
-  			range: computedField.structureType.range
-  		});
-  		continue;
-  	}
-  	if (symbols.getBaseTypeDistance(structure.name, 'estrutura') === undefined) {
-  		diagnostics.push({
-  			message: `Type "${computedField.structureType.name}" is not a structure and cannot own a computed field.`,
-  			range: computedField.structureType.range
-  		});
-  	}
-  	if (routine.parameters.length !== 1) {
-  		diagnostics.push({
-  			message: 'A computed field routine must declare exactly one result parameter after "para".',
-  			range: routine.name.range
-  		});
-  		continue;
-  	}
-  	computedField.valueType = routine.parameters[0].type;
+    const structure = symbols.lookup(computedField.structureType.name);
+    if (!structure) {
+      diagnostics.push({
+        message: `Unknown computed field structure type "${computedField.structureType.name}".`,
+        range: computedField.structureType.range
+      });
+      continue;
+    }
+    if (symbols.getBaseTypeDistance(structure.name, 'estrutura') === undefined) {
+      diagnostics.push({
+        message: `Type "${computedField.structureType.name}" is not a structure and cannot own a computed field.`,
+        range: computedField.structureType.range
+      });
+    }
+    if (routine.parameters.length !== 1) {
+      diagnostics.push({
+        message: 'A computed field routine must declare exactly one result parameter after "para".',
+        range: routine.name.range
+      });
+      continue;
+    }
+    computedField.valueType = routine.parameters[0].type;
   }
 }
 
@@ -4116,7 +4121,7 @@ function resolveFields(
 }
 
 function parseFraction(fraction: string): [bigint, bigint] {
-  const [numerator, denominator] = fraction.split('/');
+  const [numerator, denominator = '1'] = fraction.split('/');
   return [BigInt(numerator), BigInt(denominator)];
 }
 
@@ -4272,6 +4277,12 @@ export function getParsedReferences(parsed: ParsedDocument): ParsedReference[] {
   ): void => {
     for (const field of fields ?? []) {
       if (field.kind === 'byte-array') {
+        if (field.name) {
+          add('field', field.name.name, field.name.range, {
+            container: normalizeTypeName(ownerTypeName),
+            declaration: true
+          });
+        }
         addType(field.elementType);
         continue;
       }
@@ -4429,7 +4440,7 @@ function parseDeclaration(
   }
 
   const derivedNameRange = trimRange(source, derivedArticle.end, operator.start);
-  const scalarFactor = readInteger(source, operator.end, periodIndex);
+  const scalarFactor = readScalarFactor(source, operator.end, periodIndex);
   let baseNameRange: SourceRange;
   let pointedType: TypeReference | undefined;
   let fields: TypeField[] | undefined;
@@ -4509,17 +4520,28 @@ function parseFields(
     const count = readInteger(source, fieldStart, end);
     if (count) {
       const typeStart = skipWhitespace(source, count.end, end);
-      const separator = findFieldSeparator(source, typeStart, end);
-      const typeRange = trimRange(source, typeStart, separator?.start ?? end);
+      const marker = findFieldMarker(source, typeStart, end);
+      const separator = findFieldSeparator(source, marker?.end ?? typeStart, end);
+      const typeRange = trimRange(
+        source,
+        typeStart,
+        marker?.start ?? separator?.start ?? end
+      );
       if (typeRange.start === typeRange.end) {
         return undefined;
       }
+      const nameRange = marker
+        ? trimRange(source, marker.end, separator?.start ?? end)
+        : undefined;
       const elementType = createTypeReference(source, typeRange);
       fields.push({
         kind: 'byte-array',
         count: count.value,
         elementType,
-        range: { start: count.start, end: typeRange.end }
+        name: nameRange && nameRange.start < nameRange.end
+          ? createTypeReference(source, nameRange)
+          : undefined,
+        range: { start: count.start, end: (separator?.start ?? end) }
       });
       if (!['byte', 'bytes'].includes(elementType.normalizedName)) {
         diagnostics.push({
@@ -4707,6 +4729,30 @@ function readInteger(
   }
   const match = /^\d+/u.exec(source.slice(numberStart, end));
   if (!match || !/\s/u.test(source[numberStart + match[0].length] ?? '')) {
+    return undefined;
+  }
+  return {
+    value: match[0],
+    start: numberStart,
+    end: numberStart + match[0].length
+  };
+}
+
+function readScalarFactor(
+  source: string,
+  start: number,
+  end: number
+): { value: string; start: number; end: number } | undefined {
+  let numberStart = start;
+  while (numberStart < end && /\s/u.test(source[numberStart])) {
+    numberStart++;
+  }
+  const match = /^\d+(?:\/\d+)?/u.exec(source.slice(numberStart, end));
+  if (!match || !/\s/u.test(source[numberStart + match[0].length] ?? '')) {
+    return undefined;
+  }
+  const fraction = match[0].split('/');
+  if (fraction.length === 2 && BigInt(fraction[1]) === 0n) {
     return undefined;
   }
   return {

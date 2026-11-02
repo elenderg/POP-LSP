@@ -3,22 +3,10 @@
   "name": "portugues-puro",
   "scopeName": "source.escopo.pop",
   "patterns": [
-    {
-      "include": "#comment"
-    },
-    {
-      "include": "#strings"
-    },
-    {
-      "include": "#global"
-    },
-    {
-      "include": "#constant"
-    },
-    {
-      "include": "#types"
-    }
-
+    {"include": "#comment"},
+    {"include": "#strings"},
+    {"include": "#literal-constants"},
+    {"include": "#types"}
   ],
   "repository": {
     "comment": {
@@ -69,7 +57,7 @@
         }
       ]
     },
-    "constant": {
+    "literal-constants": {
       "patterns": [
         {
           "name": "constant.numeric.integer.mixed.pop",
@@ -98,10 +86,11 @@
       ]
     },
     "types": {
-      "patterns": [
+      "patterns": [        
         {
           "name": "meta.type.declaration.simple.pop",
-          "begin": "(?i)^\\s*(um|uma|uns|umas)\\b",
+          "begin": "(?i)^[ \\t]*(um|uma|uns|umas)\\b(?=[^\\r\\n]*\\b(?:é|são)\\b)(?![^\\r\\n]*\\b(?:estrutura|lista)[ \\t]+com\\b)(?![^\\r\\n]*\\bponteiro[ \\t]+para\\b)(?![^\\r\\n]*\\b(?:é|são)[ \\t]+(?!um\\b|uma\\b|uns\\b|umas\\b)\\S)",
+          
           "beginCaptures": {
             "1": {
               "name": "storage.type.language.article.pop"

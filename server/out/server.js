@@ -445,9 +445,9 @@ function createDocumentSymbols(parsed, document) {
     });
     const fieldSymbol = (field) => {
         if (field.kind === 'byte-array') {
-            const name = `${field.count} bytes`;
-            const range = toRange(field.range);
-            return node_1.DocumentSymbol.create(name, field.elementType.name, node_1.SymbolKind.Field, range, range);
+            const name = field.name?.name ?? `${field.count} bytes`;
+            const range = toRange(field.name?.range ?? field.range);
+            return node_1.DocumentSymbol.create(name, `${field.count} ${field.elementType.name}`, node_1.SymbolKind.Field, range, range);
         }
         return node_1.DocumentSymbol.create(field.name.name, field.type.name, node_1.SymbolKind.Field, toRange({
             start: Math.min(field.name.range.start, field.type.range.start),

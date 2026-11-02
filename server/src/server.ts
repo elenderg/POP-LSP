@@ -584,11 +584,11 @@ function createDocumentSymbols(
   });
   const fieldSymbol = (field: NamedTypeField | ByteArrayField): DocumentSymbol => {
     if (field.kind === 'byte-array') {
-      const name = `${field.count} bytes`;
-      const range = toRange(field.range);
+      const name = field.name?.name ?? `${field.count} bytes`;
+      const range = toRange(field.name?.range ?? field.range);
       return DocumentSymbol.create(
         name,
-        field.elementType.name,
+        `${field.count} ${field.elementType.name}`,
         SymbolKind.Field,
         range,
         range

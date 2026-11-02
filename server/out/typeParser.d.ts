@@ -21,6 +21,7 @@ export interface ByteArrayField {
     kind: 'byte-array';
     count: string;
     elementType: TypeReference;
+    name?: TypeReference;
     range: SourceRange;
 }
 export type TypeField = NamedTypeField | ByteArrayField;

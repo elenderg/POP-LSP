@@ -710,6 +710,39 @@ suite('Português Puro definitions', () => {
     assert.equal(millisecondDefinitions[0].range.start.line, 4);
   });
 
+  test('Accepts unsigned fractional scalar factors', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma polegada é um número.',
+      'Um centímetro são 254/100 polegadas.',
+      'Um milímetro é 1/10 centímetros.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const baseOffset = text.indexOf('polegadas', text.indexOf('centímetro'));
+    const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(baseOffset + 3)
+    );
+    assert.ok(definitions);
+    assert.equal(definitions.length, 1);
+    assert.equal(definitions[0].range.start.line, 1);
+  });
+
   test('Pluralizes every word in compound type names except after "de"', async () => {
     await activate(docUri);
     await setTestContent([
@@ -1004,7 +1037,9 @@ suite('Português Puro definitions', () => {
     await setTestContent([
       'Um número é uma estrutura com',
       '  4 bytes,',
-      '  4 palavras.'
+      '  4 palavras.',
+      'Um tipo de exemplo é uma estrutura com',
+      '  32 bytes denominados bytes de teste.'
     ].join('\n'));
     await diagnosticsUpdated;
 
@@ -1016,6 +1051,15 @@ suite('Português Puro definitions', () => {
       new vscode.Position(2, 4),
       new vscode.Position(2, 12)
     ));
+
+    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+      'vscode.executeDocumentSymbolProvider',
+      docUri
+    );
+    const namedByteArray = symbols?.find(symbol => symbol.name === 'tipo de exemplo')
+      ?.children?.find(symbol => symbol.name === 'bytes de teste');
+    assert.ok(namedByteArray);
+    assert.equal(namedByteArray.detail, '32 bytes');
   });
 
   test('Infers field names and resolves type aliases from their longest suffix', async () => {

@@ -146,7 +146,8 @@ class TypeSymbolTable {
         }
         if (isNumberTypeName(symbol.declaration.baseType.name) &&
             this.lookup(symbol.declaration.baseType.name)) {
-            symbol.scale = formatFraction(BigInt(symbol.scalarFactor), 1n);
+            const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor);
+            symbol.scale = formatFraction(factorNumerator, factorDenominator);
             symbol.isScalar = true;
             symbol.kind = 'scalar';
             return true;
@@ -158,8 +159,8 @@ class TypeSymbolTable {
             return false;
         }
         const [baseNumerator, baseDenominator] = parseFraction(baseType.scale);
-        const numerator = baseNumerator * BigInt(symbol.scalarFactor);
-        symbol.scale = formatFraction(numerator, baseDenominator);
+        const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor);
+        symbol.scale = formatFraction(baseNumerator * factorNumerator, baseDenominator * factorDenominator);
         symbol.isScalar = true;
         symbol.kind = 'scalar';
         resolving.delete(symbol);
@@ -301,7 +302,7 @@ const reservedIdentifierWords = new Set([
     ...routineNameDelimiters,
     ...conjunctions,
     'denominado', 'denominada', 'denominados', 'denominadas', 'chamado', 'chamada',
-    'chamados', 'chamadas', 'para', 'que', 'se', 'determine', 'rotina', 'função'
+    'chamados', 'chamadas', 'para', 'que', 'se', 'determine'
 ]);
 function normalizeTypeName(name) {
     return name.trim().replace(/\s+/gu, ' ').toLocaleLowerCase('pt-BR');
@@ -2857,7 +2858,7 @@ function resolveFields(source, declarations, symbols, diagnostics) {
     }
 }
 function parseFraction(fraction) {
-    const [numerator, denominator] = fraction.split('/');
+    const [numerator, denominator = '1'] = fraction.split('/');
     return [BigInt(numerator), BigInt(denominator)];
 }
 function formatFraction(numerator, denominator) {
@@ -2985,6 +2986,12 @@ function getParsedReferences(parsed) {
     const addFields = (fields, ownerTypeName) => {
         for (const field of fields ?? []) {
             if (field.kind === 'byte-array') {
+                if (field.name) {
+                    add('field', field.name.name, field.name.range, {
+                        container: normalizeTypeName(ownerTypeName),
+                        declaration: true
+                    });
+                }
                 addType(field.elementType);
                 continue;
             }
@@ -3117,7 +3124,7 @@ function parseDeclaration(source, segmentStart, periodIndex, diagnostics) {
         return undefined;
     }
     const derivedNameRange = trimRange(source, derivedArticle.end, operator.start);
-    const scalarFactor = readInteger(source, operator.end, periodIndex);
+    const scalarFactor = readScalarFactor(source, operator.end, periodIndex);
     let baseNameRange;
     let pointedType;
     let fields;
@@ -3184,17 +3191,24 @@ function parseFields(source, start, end) {
         const count = readInteger(source, fieldStart, end);
         if (count) {
             const typeStart = skipWhitespace(source, count.end, end);
-            const separator = findFieldSeparator(source, typeStart, end);
-            const typeRange = trimRange(source, typeStart, separator?.start ?? end);
+            const marker = findFieldMarker(source, typeStart, end);
+            const separator = findFieldSeparator(source, marker?.end ?? typeStart, end);
+            const typeRange = trimRange(source, typeStart, marker?.start ?? separator?.start ?? end);
             if (typeRange.start === typeRange.end) {
                 return undefined;
             }
+            const nameRange = marker
+                ? trimRange(source, marker.end, separator?.start ?? end)
+                : undefined;
             const elementType = createTypeReference(source, typeRange);
             fields.push({
                 kind: 'byte-array',
                 count: count.value,
                 elementType,
-                range: { start: count.start, end: typeRange.end }
+                name: nameRange && nameRange.start < nameRange.end
+                    ? createTypeReference(source, nameRange)
+                    : undefined,
+                range: { start: count.start, end: (separator?.start ?? end) }
             });
             if (!['byte', 'bytes'].includes(elementType.normalizedName)) {
                 diagnostics.push({
@@ -3341,6 +3355,25 @@ function readInteger(source, start, end) {
     }
     const match = /^\d+/u.exec(source.slice(numberStart, end));
     if (!match || !/\s/u.test(source[numberStart + match[0].length] ?? '')) {
+        return undefined;
+    }
+    return {
+        value: match[0],
+        start: numberStart,
+        end: numberStart + match[0].length
+    };
+}
+function readScalarFactor(source, start, end) {
+    let numberStart = start;
+    while (numberStart < end && /\s/u.test(source[numberStart])) {
+        numberStart++;
+    }
+    const match = /^\d+(?:\/\d+)?/u.exec(source.slice(numberStart, end));
+    if (!match || !/\s/u.test(source[numberStart + match[0].length] ?? '')) {
+        return undefined;
+    }
+    const fraction = match[0].split('/');
+    if (fraction.length === 2 && BigInt(fraction[1]) === 0n) {
         return undefined;
     }
     return {
