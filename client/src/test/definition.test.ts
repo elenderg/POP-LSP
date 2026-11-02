@@ -1721,6 +1721,36 @@ suite('Português Puro definitions', () => {
     ));
   });
 
+  test('Allows reserved words joined by hyphens, slashes, or apostrophes', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'O caractere EM é um byte igual a 25.',
+      'A letra E maiúscula é um byte igual a 69.',
+      "O 'E' maiúsculo é um byte igual a 69.",
+      'O e minúsculo é um byte igual a 101.',
+      'O sinal de mais-ou-menos é um byte igual a 177.',
+      'O little-e-acute byte é um byte igual a 233.',
+      'A tecla E/e é uma tecla igual a 69.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.deepEqual(
+      diagnostics.filter(diagnostic =>
+        diagnostic.message.includes('cannot be used in an identifier')
+      ),
+      []
+    );
+  });
+
   test('Restricts punctuation in type and global variable identifiers', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {

@@ -563,14 +563,14 @@ const builtInStatementStarts = new Set([
   'ative', 'converta', 'dobre', 'multiplique', 'desloque', 'subtraia', 'faça'
 ]);
 const routineNameDelimiters = new Set([
-  'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
+  'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente', 
   'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
   'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante',
   'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
   'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão',
   'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob',
   'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada',
-  'voltado', 'cima', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',
+  'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',
   'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
   'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
   'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas'
@@ -579,7 +579,7 @@ const reservedIdentifierWords = new Set([
   ...routineNameDelimiters,
   ...conjunctions,
   'denominado', 'denominada', 'denominados', 'denominadas', 'chamado', 'chamada',
-  'chamados', 'chamadas', 'para', 'que', 'se', 'determine'
+  'chamados', 'chamadas', 'para', 'se', 'determine'
 ]);
 
 export function normalizeTypeName(name: string): string {
@@ -3058,7 +3058,19 @@ function validateReservedNames(
     const text = source.slice(identifier.range.start, identifier.range.end);
     let match: RegExpExecArray | null;
     while ((match = words.exec(text))) {
-      if (!reservedIdentifierWords.has(match[0].toLocaleLowerCase('pt-BR'))) {
+      const reservedWord = match[0].toLocaleLowerCase('pt-BR');
+      if (!reservedIdentifierWords.has(reservedWord)) {
+        continue;
+      }
+      const previousCharacter = match.index > 0 ? text[match.index - 1] : '';
+      const nextCharacter = text[match.index + match[0].length] ?? '';
+      if (isIdentifierJoiner(previousCharacter) || isIdentifierJoiner(nextCharacter)) {
+        continue;
+      }
+      if (
+        match[0] === 'EM' ||
+        reservedWord === 'e' && isLetterName(text, match.index, match[0].length)
+      ) {
         continue;
       }
       const start = identifier.range.start + match.index;
@@ -3068,6 +3080,17 @@ function validateReservedNames(
       });
     }
   }
+}
+
+function isIdentifierJoiner(character: string): boolean {
+  return character === '-' || character === '/' || character === "'";
+}
+
+function isLetterName(text: string, start: number, length: number): boolean {
+  const prefix = text.slice(0, start);
+  const suffix = text.slice(start + length);
+  return /^(?:(?:o|a|letra)\s*)?$/iu.test(prefix) &&
+    /^\s+(?:maiúscul[oa]|minúscul[oa])(?:\s|$)/iu.test(suffix);
 }
 
 interface ParsedRoutineHeader {
