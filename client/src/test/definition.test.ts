@@ -1062,6 +1062,32 @@ suite('Português Puro definitions', () => {
     assert.equal(namedByteArray.detail, '32 bytes');
   });
 
+  test('Keeps named byte fields separate from neighboring byte arrays', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma estrutura de exemplo é uma estrutura com',
+      '  3 bytes,',
+      '  Um byte denominado x,',
+      '  1 byte.',
+      '',
+      'Uma nova estrutura de exemplo é uma estrutura com',
+      '  3 bytes,',
+      '  1 byte denominado x,',
+      '  1 byte.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
   test('Infers field names and resolves type aliases from their longest suffix', async () => {
     await activate(docUri);
     await setTestContent([

@@ -4520,8 +4520,15 @@ function parseFields(
     const count = readInteger(source, fieldStart, end);
     if (count) {
       const typeStart = skipWhitespace(source, count.end, end);
-      const marker = findFieldMarker(source, typeStart, end);
-      const separator = findFieldSeparator(source, marker?.end ?? typeStart, end);
+      const fieldSeparator = findFieldSeparator(source, typeStart, end);
+      const marker = findFieldMarker(
+        source,
+        typeStart,
+        fieldSeparator?.start ?? end
+      );
+      const separator = marker
+        ? findFieldSeparator(source, marker.end, end)
+        : fieldSeparator;
       const typeRange = trimRange(
         source,
         typeStart,
