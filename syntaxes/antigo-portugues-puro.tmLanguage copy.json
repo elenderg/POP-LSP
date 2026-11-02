@@ -1,0 +1,526 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "portugues-puro",
+  "scopeName": "source.pop",
+  "fileTypes": ["pop"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#program-structure" },
+    { "include": "#type-section" },
+    { "include": "#constant-declarations" },
+    { "include": "#variable-declarations" },
+    { "include": "#declaration-keywords" },
+    { "include": "#routine-declarations" },
+    { "include": "#control-flow" },
+    { "include": "#built-in-types" },
+    { "include": "#constants" },
+    { "include": "#function-calls" },
+    { "include": "#operators" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.pop",
+          "match": "\\\\.*$"
+        },
+        {
+          "name": "comment.block.brackets.pop",
+          "begin": "\\[(?!\\$)",
+          "end": "\\]"
+        },
+        {
+          "name": "comment.block.parentheses.pop",
+          "begin": "\\(\\*(?!\\$)",
+          "end": "\\*\\)"
+        }
+      ]
+    },   
+    "strings": {
+      "name": "string.quoted.single.pop",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.pop" }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.pop" }
+      },
+      "patterns": [
+        {
+          "name": "constant.character.escape.pop",
+          "match": "\"\""
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hexadecimal.pop",
+          "match": "\\$[0-9A-Fa-f]+\\b"
+        },
+        {
+          "name": "constant.numeric.float.pop",
+          "match": "\\b[0-9]+(?:\\.[0-9]+)?[Ee][+-]?[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.float.pop",
+          "match": "\\b[0-9]+\\.[0-9]+(?:[Ee][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.pop",
+          "match": "\\b[0-9]+\\b"
+        },
+        {
+          "name": "constant.character.code.pop",
+          "match": "#(?:[0-9]+|\\$[0-9A-Fa-f]+)"
+        }
+      ]
+    },
+    "program-structure": {
+      "patterns": [
+        {
+          "match": "(?i)\\b(program|unit|library|package)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.other.program.pop" },
+            "2": { "name": "entity.name.type.section.pop" }
+          }
+        },
+        {
+          "match": "(?i)\\b(uses)\\b",
+          "captures": {
+            "1": { "name": "keyword.other.uses.pop" }
+          }
+        },
+        {
+          "name": "entity.name.namespace.pop",
+          "match": "(?i)(?<=\\buses\\s)(?:[A-Za-z_][A-Za-z0-9_]*\\.)*[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
+          "name": "keyword.other.section.pop",
+          "match": "(?i)\\b(interface|implementation|initialization|finalization)\\b"
+        }
+      ]
+    },
+    "type-section": {
+      "begin": "(?i)\\b(type)\\b",
+      "beginCaptures": {
+        "1": { "name": "storage.type.section.pop" }
+      },
+      "end": "(?i)(?=\\b(var|threadvar|const|resourcestring|procedure|function|constructor|destructor|operator|begin|initialization|finalization|implementation)\\b)",
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#compiler-directives" },
+        { "include": "#type-declaration" }
+      ]
+    },
+    "type-declaration": {
+      "patterns": [
+        {
+          "name": "meta.array.index.pop",
+          "begin": "(?i)\\b(array)\\s*(\\[)",
+          "beginCaptures": {
+            "1": { "name": "storage.type.modifier.pop" },
+            "2": { "name": "punctuation.section.group.pop" }
+          },
+          "end": "\\]",
+          "endCaptures": {
+            "0": { "name": "punctuation.section.group.pop" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#numbers" },
+            { "include": "#built-in-types" },
+            {
+              "name": "entity.name.type.constant.other.reference.pop",
+              "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b(?=\\s*\\.\\.)"
+            },
+            {
+              "match": "(?<=\\.\\.)\\s*([A-Za-z_][A-Za-z0-9_]*)\\b",
+              "captures": {
+                "1": { "name": "entity.name.type.constant.other.reference.pop" }
+              }
+            },
+            {
+              "name": "entity.name.type.pop",
+              "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+            },
+            { "include": "#operators" },
+            { "include": "#punctuation" }
+          ]
+        },
+        {
+          "match": "(?<=\\.\\.)\\s*([A-Za-z_][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": { "name": "entity.name.type.constant.other.reference.pop" }
+          }
+        },
+        {
+          "match": "(?i)([A-Za-z_][A-Za-z0-9_]*)\\s*(=)\\s*(\\^)\\s*(?:(Boolean|ByteBool|WordBool|LongBool|Byte|ShortInt|SmallInt|Integer|LongInt|LongWord|Cardinal|Int64|QWord|NativeInt|NativeUInt|Word|Real|Single|Double|Extended|Comp|Currency|Char|AnsiChar|WideChar|UnicodeChar|String|ShortString|AnsiString|WideString|UnicodeString|PChar|PAnsiChar|PWideChar|Pointer|Variant|TObject|TClass|TComponent|Text|File)\\b|([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\b)",
+          "captures": {
+            "1": { "name": "entity.name.type.pop" },
+            "2": { "name": "keyword.operator.assignment.pop" },
+            "3": { "name": "keyword.operator.pointer.pop" },
+            "4": { "name": "storage.type.built-in.pop" },
+            "5": { "name": "entity.name.type.pop" }
+          }
+        },
+        {
+          "match": "(?i)\\b(of)(\\s+)(\\^?\\s*(Boolean|ByteBool|WordBool|LongBool|Byte|ShortInt|SmallInt|Integer|LongInt|LongWord|Cardinal|Int64|QWord|NativeInt|NativeUInt|Word|Real|Single|Double|Extended|Comp|Currency|Char|AnsiChar|WideChar|UnicodeChar|String|ShortString|AnsiString|WideString|UnicodeString|PChar|PAnsiChar|PWideChar|Pointer|Variant|TObject|TClass|TComponent|Text|File)\\b)",
+          "captures": {
+            "1": { "name": "storage.type.modifier.pop" },
+            "3": { "name": "storage.type.built-in.pop" }
+          }
+        },
+        {
+          "match": "(?i)\\b(of)(\\s+)(\\^?\\s*[A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.type.modifier.pop" },
+            "3": { "name": "entity.name.type.pop" }
+          }
+        },
+        {
+          "begin": "(?i)([A-Za-z_][A-Za-z0-9_]*)\\s*(=)\\s*\\(",
+          "beginCaptures": {
+            "1": { "name": "entity.name.type.pop" },
+            "2": { "name": "keyword.operator.assignment.pop" },
+            "0": { "name": "meta.type.enum.pop" }
+          },
+          "end": "\\)\\s*;",
+          "endCaptures": {
+            "0": { "name": "punctuation.section.group.end.pop" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#compiler-directives" },
+            { "include": "#strings" },
+            { "include": "#numbers" },
+            {
+              "name": "entity.name.type.constant.other.enum.pop",
+              "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+            },
+            { "include": "#operators" },
+            { "include": "#punctuation" }
+          ]
+        },
+        {
+          "begin": "(?i)([A-Za-z_][A-Za-z0-9_]*)\\s*(=)\\s*(?:(packed)\\s+)?(class|record|object|interface|dispinterface|class\\s+of|record\\s+helper|class\\s+helper|type\\s+helper)\\b",
+          "beginCaptures": {
+            "1": { "name": "entity.name.type.pop" },
+            "2": { "name": "keyword.operator.assignment.pop" },
+            "3": { "name": "storage.modifier.pop" },
+            "4": { "name": "storage.type.pop" }
+          },
+          "end": "(?i)\\bend\\s*;",
+          "endCaptures": {
+            "0": { "name": "keyword.control.end.pop" }
+          },
+          "name": "meta.type.definition.pop",
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#compiler-directives" },
+            { "include": "#visibility" },
+            { "include": "#routine-declarations" },
+            { "include": "#member-declarations" },
+            { "include": "#declaration-modifiers" },
+            { "include": "#built-in-types" },
+            { "include": "#constants" },
+            { "include": "#control-flow" },
+            { "include": "#operators" },
+            { "include": "#punctuation" }
+          ]
+        },
+        {
+          "match": "(?i)([A-Za-z_][A-Za-z0-9_]*)\\s*(=)",
+          "captures": {
+            "1": { "name": "entity.name.type.pop" },
+            "2": { "name": "keyword.operator.assignment.pop" }
+          }
+        },
+        {
+          "name": "storage.type.modifier.pop",
+          "match": "(?i)\\b(packed|array|of|set|file|specialize|generic|helper)\\b"
+        },
+        {
+          "name": "entity.name.type.pop",
+          "match": "(?<=\\bas\\s)[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "visibility": {
+      "name": "storage.modifier.visibility.pop",
+      "match": "(?i)\\b(strict\\s+private|strict\\s+protected|private|protected|public|published|automated)\\b"
+    },
+    "member-declarations": {
+      "patterns": [
+        {
+          "match": "(?i)(?<=:)\\s*(\\^?\\s*)((?!(?:Boolean|ByteBool|WordBool|LongBool|Byte|ShortInt|SmallInt|Integer|LongInt|LongWord|Cardinal|Int64|QWord|NativeInt|NativeUInt|Word|Real|Single|Double|Extended|Comp|Currency|Char|AnsiChar|WideChar|UnicodeChar|String|ShortString|AnsiString|WideString|UnicodeString|PChar|PAnsiChar|PWideChar|Pointer|Variant|TObject|TClass|TComponent|Text|File)\\b)[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\b",
+          "captures": {
+            "2": { "name": "entity.name.type.pop" }
+          }
+        },
+        {
+          "match": "([A-Za-z_][A-Za-z0-9_]*(?:\\s*,\\s*[A-Za-z_][A-Za-z0-9_]*)*)\\s*(:)",
+          "captures": {
+            "1": { "name": "variable.other.property.pop" },
+            "2": { "name": "punctuation.separator.type.pop" }
+          }
+        },
+        {
+          "match": "(?i)\\b(property)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.other.property.pop" },
+            "2": { "name": "variable.other.property.pop" }
+          }
+        },
+        {
+          "name": "keyword.other.property.pop",
+          "match": "(?i)\\b(read|write|stored|default|implements|index|nodefault)\\b"
+        }
+      ]
+    },
+    "declaration-keywords": {
+      "patterns": [
+        {
+          "name": "storage.type.variable.pop",
+          "match": "(?i)\\b(var|threadvar|const|resourcestring|label)\\b"
+        },
+        {
+          "match": "(?i)\\b(absolute|external|export|name|public|weakexternal)\\b",
+          "captures": {
+            "1": { "name": "storage.modifier.pop" }
+          }
+        }
+      ]
+    },
+    "variable-declarations": {
+      "patterns": [
+        {
+          "begin": "(?i)\\b(var|threadvar)\\b",
+          "beginCaptures": {
+            "1": { "name": "storage.type.variable.pop" }
+          },
+          "end": "(?i)(?=\\b(begin|procedure|function|constructor|destructor|operator|type|const|resourcestring|label|var|threadvar|initialization|finalization|implementation)\\b)",
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#compiler-directives" },
+            {
+              "match": "^\\s*((?:[A-Za-z_][A-Za-z0-9_]*\\s*,\\s*)*[A-Za-z_][A-Za-z0-9_]*)(\\s*:)(?=\\s*[A-Za-z_^(@])",
+              "captures": {
+                "1": { "name": "variable.other.declaration.pop" },
+                "2": { "name": "punctuation.separator.type.pop" }
+              }
+            },
+            { "include": "#built-in-types" },
+            {
+              "match": "(?i)(?<=:)\\s*\\^?\\s*((?!(?:Boolean|ByteBool|WordBool|LongBool|Byte|ShortInt|SmallInt|Integer|LongInt|LongWord|Cardinal|Int64|QWord|NativeInt|NativeUInt|Word|Real|Single|Double|Extended|Comp|Currency|Char|AnsiChar|WideChar|UnicodeChar|String|ShortString|AnsiString|WideString|UnicodeString|PChar|PAnsiChar|PWideChar|Pointer|Variant|TObject|TClass|TComponent|Text|File)\\b)[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\b",
+              "captures": {
+                "1": { "name": "entity.name.type.pop" }
+              }
+            },
+            { "include": "#operators" },
+            { "include": "#punctuation" }
+          ]
+        },
+        {
+          "match": "^\\s*((?:[A-Za-z_][A-Za-z0-9_]*\\s*,\\s*)*[A-Za-z_][A-Za-z0-9_]*)(\\s*:)(?=\\s*[A-Za-z_^(@])",
+          "captures": {
+            "1": { "name": "variable.other.declaration.pop" },
+            "2": { "name": "punctuation.separator.type.pop" }
+          }
+        }
+      ]
+    },
+    "constant-declarations": {
+      "patterns": [
+        {
+          "begin": "(?i)\\b(const)\\b",
+          "beginCaptures": {
+            "1": { "name": "storage.type.constant.pop" }
+          },
+          "end": "(?i)(?=\\b(type|var|threadvar|resourcestring|label|procedure|function|constructor|destructor|operator|begin|initialization|finalization|implementation)\\b)",
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#compiler-directives" },
+            {
+              "match": "^\\s*([A-Za-z_][A-Za-z0-9_]*)(\\s*)(=)(?!=)",
+              "captures": {
+                "1": { "name": "variable.other.constant.definition.pop" },
+                "3": { "name": "keyword.operator.assignment.pop" }
+              }
+            },
+            { "include": "#built-in-types" },
+            { "include": "#numbers" },
+            { "include": "#strings" },
+            { "include": "#operators" },
+            { "include": "#punctuation" }
+          ]
+        }
+      ]
+    },
+    "routine-declarations": {
+      "patterns": [
+        {
+          "begin": "(?i)\\b(procedure|function|constructor|destructor|operator)\\s+((?:[A-Za-z_][A-Za-z0-9_]*\\.)*[A-Za-z_][A-Za-z0-9_]*|\\[\\])",
+          "beginCaptures": {
+            "1": { "name": "storage.type.function.pop" },
+            "2": { "name": "entity.name.function.pop" }
+          },
+          "end": "(?i)(?=\\b(begin|assembler)\\b|;)",
+          "patterns": [
+            {
+              "name": "meta.parameters.pop",
+              "begin": "\\(",
+              "beginCaptures": {
+                "0": { "name": "punctuation.section.parameters.begin.pop" }
+              },
+              "end": "\\)",
+              "endCaptures": {
+                "0": { "name": "punctuation.section.parameters.end.pop" }
+              },
+              "patterns": [
+                { "include": "#comments" },
+                { "include": "#built-in-types" },
+                {
+                  "match": "(?i)\\b(var|const|out|constref)\\s+([A-Za-z_][A-Za-z0-9_]*(?:\\s*,\\s*[A-Za-z_][A-Za-z0-9_]*)*)\\s*(:)",
+                  "captures": {
+                    "1": { "name": "storage.modifier.parameter.pop" },
+                    "2": { "name": "variable.parameter.pop" },
+                    "3": { "name": "punctuation.separator.type.pop" }
+                  }
+                },
+                {
+                  "match": "([A-Za-z_][A-Za-z0-9_]*(?:\\s*,\\s*[A-Za-z_][A-Za-z0-9_]*)*)\\s*(:)",
+                  "captures": {
+                    "1": { "name": "variable.parameter.pop" },
+                    "2": { "name": "punctuation.separator.type.pop" }
+                  }
+                },
+                {
+                  "match": "(?i)(?<=:)\\s*\\^?\\s*((?!(?:Boolean|ByteBool|WordBool|LongBool|Byte|ShortInt|SmallInt|Integer|LongInt|LongWord|Cardinal|Int64|QWord|NativeInt|NativeUInt|Word|Real|Single|Double|Extended|Comp|Currency|Char|AnsiChar|WideChar|UnicodeChar|String|ShortString|AnsiString|WideString|UnicodeString|PChar|PAnsiChar|PWideChar|Pointer|Variant|TObject|TClass|TComponent|Text|File)\\b)[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\b",
+                  "captures": {
+                    "1": { "name": "entity.name.type.pop" }
+                  }
+                },
+                { "include": "#operators" },
+                { "include": "#punctuation" }
+              ]
+            },
+            { "include": "#comments" },
+            { "include": "#strings" },
+            { "include": "#numbers" },
+            { "include": "#built-in-types" },
+            { "include": "#declaration-modifiers" },
+            { "include": "#operators" },
+            { "include": "#punctuation" },
+            {
+              "match": "(?i)(?<=:)\\s*\\^?\\s*((?!(?:Boolean|ByteBool|WordBool|LongBool|Byte|ShortInt|SmallInt|Integer|LongInt|LongWord|Cardinal|Int64|QWord|NativeInt|NativeUInt|Word|Real|Single|Double|Extended|Comp|Currency|Char|AnsiChar|WideChar|UnicodeChar|String|ShortString|AnsiString|WideString|UnicodeString|PChar|PAnsiChar|PWideChar|Pointer|Variant|TObject|TClass|TComponent|Text|File)\\b)[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\b",
+              "captures": {
+                "1": { "name": "entity.name.type.pop" }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "declaration-modifiers": {
+      "name": "storage.modifier.routine.pop",
+      "match": "(?i)\\b(virtual|dynamic|override|abstract|overload|reintroduce|inline|static|assembler|external|forward|deprecated|platform|experimental|message|varargs|cdecl|stdcall|safecall|register|pop|cdecl|interrupt|nostackframe|inline)\\b"
+    },
+    "control-flow": {
+      "patterns": [
+        {
+          "name": "keyword.control.pop",
+          "match": "(?i)\\b(begin|end|if|then|else|case|of|for|to|downto|do|while|repeat|until|try|except|finally|raise|on|with|goto|break|continue|exit|inherited|yield|await)\\b"
+        },
+        {
+          "name": "keyword.other.section.pop",
+          "match": "(?i)\\b(interface|implementation|initialization|finalization|uses)\\b"
+        }
+      ]
+    },
+    "built-in-types": {
+      "name": "storage.type.built-in.pop",
+      "match": "(?i)\\b(Boolean|ByteBool|WordBool|LongBool|Byte|ShortInt|SmallInt|Integer|LongInt|LongWord|Cardinal|Int64|QWord|NativeInt|NativeUInt|Word|Real|Single|Double|Extended|Comp|Currency|Char|AnsiChar|WideChar|UnicodeChar|String|ShortString|AnsiString|WideString|UnicodeString|PChar|PAnsiChar|PWideChar|Pointer|Variant|TObject|TClass|TComponent|Text|File)\\b"
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.pop",
+          "match": "(?i)\\b(true|false|nil)\\b"
+        },
+        {
+          "name": "variable.language.pop",
+          "match": "(?i)\\b(Self|Result)\\b"
+        }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        {
+          "name": "entity.name.function.call.pop",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
+        },
+        {
+          "name": "variable.other.member.pop",
+          "match": "(?<=\\.)[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
+          "name": "variable.other.pop",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.control.operator.word.pop",
+          "match": "(?i)\\b(and|or|not|xor|shl|shr|div|mod|in|is|as)\\b"
+        },
+        {
+          "name": "keyword.operator.assignment.pop",
+          "match": ":=|\\+=|-=|\\*=|/=|\\*\\*="
+        },
+        {
+          "name": "keyword.operator.comparison.pop",
+          "match": "<=|>=|<>|=|<|>"
+        },
+        {
+          "name": "keyword.operator.arithmetic.pop",
+          "match": "\\+|-|\\*\\*|\\*|/"
+        },
+        {
+          "name": "keyword.operator.address.pop",
+          "match": "@"
+        },
+        {
+          "name": "keyword.operator.pointer.pop",
+          "match": "\\^"
+        },
+        {
+          "name": "punctuation.accessor.pop",
+          "match": "\\."
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.terminator.statement.pop",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.pop",
+          "match": ",|:"
+        },
+        {
+          "name": "punctuation.section.group.pop",
+          "match": "[()\\[\\]]"
+        }
+      ]
+    }
+  }
+}

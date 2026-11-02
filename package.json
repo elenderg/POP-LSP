@@ -21,7 +21,7 @@
   "contributes": {
     "languages": [
       {
-        "id": "pop",
+        "id": "portugues-puro",
         "aliases": [
           "Português Puro",
           "portugues-puro",
@@ -36,7 +36,7 @@
     ],
     "grammars": [
       {
-        "language": "pop",
+        "language": "portugues-puro",
         "scopeName": "source.escopo.portugues",
         "path": "./syntaxes/portugues-puro.tmLanguage.json"
       }],

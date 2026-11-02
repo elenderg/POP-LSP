@@ -44,6 +44,50 @@ suite('Português Puro definitions', () => {
     ));
   });
 
+  test('Shows documentation for primitive byte and structure types on hover', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um caractere é um byte.',
+      'Uma pessoa é uma estrutura.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const hoverAt = async (term: string): Promise<vscode.Hover[] | undefined> => {
+      const offset = text.indexOf(term);
+      return vscode.commands.executeCommand<vscode.Hover[]>(
+        'vscode.executeHoverProvider',
+        docUri,
+        document.positionAt(offset + 1)
+      );
+    };
+    const hoverText = (hover: vscode.Hover | undefined): string =>
+      hover?.contents.map(content =>
+        typeof content === 'string' ? content : content.value
+      ).join('\n') ?? '';
+
+    const byteHover = (await hoverAt('byte'))?.[0];
+    assert.ok(byteHover);
+    assert.match(hoverText(byteHover), /Representa um valor inteiro sem sinal de 8 bits/u);
+    assert.match(hoverText(byteHover), /`0` a `255`/u);
+    assert.match(hoverText(byteHover), /`1 byte`/u);
+
+    const structureHover = (await hoverAt('estrutura'))?.[0];
+    assert.ok(structureHover);
+    assert.match(hoverText(structureHover), /tipo de dado composto/u);
+    assert.match(hoverText(structureHover), /Permite agrupar diferentes campos/u);
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
   test('Resolves definitions of global variables in assignment targets', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -76,6 +120,75 @@ suite('Português Puro definitions', () => {
       new vscode.Position(0, 2),
       new vscode.Position(0, 17)
     ));
+  });
+
+  test('Resolves local variable declarations and references in Go to Definition', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um contador é um byte.',
+      'rotina para que se exemplifique:',
+      '  Foo um contador.',
+      '  Atribua 0 para um contador denominado segundo contador.',
+      '  Foo para o segundo contador.',
+      'para que se foo um contador:',
+      '  Retorne.',
+      'para que se foo para um contador:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const declarationOffset = text.indexOf('segundo contador');
+    const usageOffset = text.lastIndexOf('segundo contador');
+    const definitionAt = async (offset: number): Promise<vscode.Location[] | undefined> =>
+      vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset + 2)
+      );
+    const expectedRange = new vscode.Range(
+      document.positionAt(declarationOffset),
+      document.positionAt(declarationOffset + 'segundo contador'.length)
+    );
+
+    for (const definitions of [
+      await definitionAt(declarationOffset),
+      await definitionAt(usageOffset)
+    ]) {
+      assert.ok(definitions);
+      assert.equal(definitions.length, 1);
+      assert.deepEqual(definitions[0].range, expectedRange);
+    }
+
+    const typeDefinitionAt = async (
+      offset: number
+    ): Promise<vscode.Location[] | undefined> =>
+      vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeTypeDefinitionProvider',
+        docUri,
+        document.positionAt(offset + 2)
+      );
+    for (const typeDefinitions of [
+      await typeDefinitionAt(declarationOffset),
+      await typeDefinitionAt(usageOffset)
+    ]) {
+      assert.ok(typeDefinitions);
+      assert.equal(typeDefinitions.length, 1);
+      assert.deepEqual(typeDefinitions[0].range, new vscode.Range(
+        new vscode.Position(0, 3),
+        new vscode.Position(0, 11)
+      ));
+    }
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
   test('Resolves type definitions for global variables and structure fields', async () => {
@@ -186,7 +299,7 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(symbols.map(symbol => symbol.name), [
       'pessoa',
       'cliente',
-      'exemplifique'
+      'exemplifique com'
     ]);
     assert.equal(symbols[0].kind, vscode.SymbolKind.Struct);
     assert.equal(symbols[0].children?.[0].name, 'idade');
@@ -2149,6 +2262,35 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
+  test('Diagnoses local variables that reuse routine parameter names', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'para que se foo um byte:',
+      '  Adicione 1 para o byte.',
+      '  Bar um byte.',
+      'para que se bar um byte:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const duplicateDiagnostic = vscode.languages.getDiagnostics(docUri).find(
+      diagnostic => diagnostic.message.includes('already declared in this routine')
+    );
+    assert.ok(duplicateDiagnostic);
+    assert.deepEqual(
+      duplicateDiagnostic.range,
+      new vscode.Range(new vscode.Position(2, 9), new vscode.Position(2, 13))
+    );
+  });
+
   test('Resolves type definitions within local-variable routine arguments', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -2240,7 +2382,7 @@ suite('Português Puro definitions', () => {
       'Rotina para que se execute:',
       '  Atribua "João" para uma string denominada nome.',
       '  consuma o nome.',
-      'Rotina para que se atribua uma string para uma string:',
+      'Rotina para que se atribua uma string para uma segunda string:',
       '  Retorne.',
       'Rotina para que se consuma uma string:',
       '  Retorne.'
@@ -2598,6 +2740,58 @@ suite('Português Puro definitions', () => {
     assert.ok(definition);
     assert.equal(definition.length, 1);
     assert.equal(definition[0].range.start.line, 2);
+  });
+
+  test('Keeps routine parameter prepositions distinct while matching their synonyms', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um contador é um número.',
+      'Rotina para que se exemplifique:',
+      '  Foo um contador.',
+      '  Atribua 0 para um contador denominado segundo contador.',
+      '  Foo para o segundo contador.',
+      '  Foo em um contador denominado terceiro contador.',
+      '  Atribua 1 para um contador denominado quarto contador.',
+      '  Foo com o quarto contador.',
+      '  Foo usando um contador denominado quinto contador.',
+      '  Foo com um sexto contador.',
+      'para que se foo um contador:',
+      '  Retorne.',
+      'para que se foo para um contador:',
+      '  Retorne.',
+      'para que se foo com um contador:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+    const document = await vscode.workspace.openTextDocument(docUri);
+    for (const [callText, expectedLine] of [
+      ['Foo um contador', 11],
+      ['Foo para o segundo contador', 13],
+      ['Foo em um contador', 13],
+      ['Foo com o quarto contador', 15],
+      ['Foo usando um contador', 15]
+    ] as const) {
+      const offset = document.getText().indexOf(callText) + 1;
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(offset)
+      );
+      assert.ok(definition);
+      assert.equal(definition.length, 1);
+      assert.equal(definition[0].range.start.line, expectedLine);
+    }
   });
 
   test('Resolves direct and nested structure field accesses as routine arguments', async () => {

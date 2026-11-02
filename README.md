@@ -18,6 +18,9 @@ language-specific default.
   declaration inclusion and workspace-wide lookup for non-local symbols.
 - Rename Symbol creates workspace edits for every parsed occurrence of types,
   routines, fields, and variables across open and closed `.pop` files.
+- Format Document applies two-space indentation to structure fields, routine
+  statements, conditional and loop blocks, and wraps supported expression
+  operators and `retornando` clauses while preserving strings and comments.
 - Each open document's symbol table is refreshed when the document opens,
   changes, or is saved, and discarded when it closes.
 - Initial parser and type symbol table in `server/src/typeParser.ts`, recognizing

@@ -7,8 +7,10 @@ import {
   Diagnostic,
   DiagnosticSeverity,
   DocumentSymbol,
+  DocumentFormattingParams,
   InitializeResult,
   Location,
+  MarkupKind,
   PrepareRenameParams,
   ProposedFeatures,
   ReferenceParams,
@@ -40,6 +42,7 @@ import {
   normalizeTypeName,
   parseTypeDeclarations
 } from './typeParser';
+import { formatDocument } from './documentFormatter';
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
@@ -50,12 +53,90 @@ connection.onInitialize((): InitializeResult => ({
     textDocumentSync: TextDocumentSyncKind.Incremental,
     definitionProvider: true,
     typeDefinitionProvider: true,
+    hoverProvider: true,
     documentSymbolProvider: true,
     workspaceSymbolProvider: true,
     referencesProvider: true,
-    renameProvider: { prepareProvider: true }
+    renameProvider: { prepareProvider: true },
+    documentFormattingProvider: true
   }
 }));
+
+connection.onDocumentFormatting((params: DocumentFormattingParams) => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return [];
+  }
+  const original = document.getText();
+  const formatted = formatDocument(original);
+  if (formatted === original) {
+    return [];
+  }
+  return [TextEdit.replace({
+    start: document.positionAt(0),
+    end: document.positionAt(original.length)
+  }, formatted)];
+});
+
+connection.onHover((params: TextDocumentPositionParams) => {
+  const document = documents.get(params.textDocument.uri);
+  const parsedDocument = document && parsedDocuments.get(document.uri);
+  if (!document || !parsedDocument) {
+    return undefined;
+  }
+
+  const reference = findTypeReferenceAtOffset(
+    parsedDocument,
+    document.offsetAt(params.position)
+  );
+  if (!reference) {
+    return undefined;
+  }
+
+  const normalizedName = normalizeTypeName(reference.name);
+  const primitiveName = normalizedName === 'byte' || normalizedName === 'bytes'
+    ? 'byte'
+    : normalizedName === 'estrutura' || normalizedName === 'estruturas'
+      ? 'estrutura'
+      : undefined;
+  if (!primitiveName) {
+    return undefined;
+  }
+
+  const contents = primitiveName === 'byte'
+    ? [
+      '*byte*',
+      '',
+      'Tipo primitivo',
+      'Representa um valor inteiro sem sinal de 8 bits.',
+      '',
+      '*Intervalo de valores*',
+      '`0` a `255`',
+      '',
+      '*Tamanho*',
+      '`1 byte`'
+    ].join('\n')
+    : [
+      '*estrutura*',
+      '',
+      'Tipo primitivo',
+      'Representa um tipo de dado composto, formado por um conjunto de campos que podem possuir diferentes tipos de dados.',
+      '',
+      '*Características*',
+      '',
+      '- Permite agrupar diferentes campos em uma única unidade de dados.',
+      '- Cada campo possui seu próprio tipo.',
+      '- Os campos são acessíveis individualmente.'
+    ].join('\n');
+
+  return {
+    contents: { kind: MarkupKind.Markdown, value: contents },
+    range: {
+      start: document.positionAt(reference.range.start),
+      end: document.positionAt(reference.range.end)
+    }
+  };
+});
 
 function updateDocumentSymbols(document: TextDocument): void {
   const parsedDocument = parseTypeDeclarations(document.getText());
@@ -103,13 +184,48 @@ connection.onDefinition((params: TextDocumentPositionParams) => {
   }
   const offset = document.offsetAt(params.position);
   const parsedReference = findParsedReferenceAtOffset(parsedDocument, offset);
-  if (parsedReference?.kind === 'variable' && !parsedReference.scope) {
-    const globalVariable = parsedDocument.globalVariableSymbols.lookup(parsedReference.name);
-    if (globalVariable) {
-      return Location.create(document.uri, {
-        start: document.positionAt(globalVariable.declaration.name.range.start),
-        end: document.positionAt(globalVariable.declaration.name.range.end)
-      });
+  if (parsedReference?.kind === 'variable') {
+    const isTypePosition = parsedReference.scope !== undefined &&
+      parsedDocument.routines
+        .filter(routine => routine.range.start === parsedReference.scope)
+        .some(routine => {
+          const variables = [
+            ...routine.parameters,
+            ...(routine.returnParameter ? [routine.returnParameter] : []),
+            ...routine.localVariables,
+            ...routine.calls.flatMap(call =>
+              call.localVariable ? [call.localVariable] : []
+            ),
+            ...routine.processes.flatMap(process =>
+              process.returnVariable ? [process.returnVariable] : []
+            )
+          ];
+          return variables.some(variable =>
+            offset >= variable.type.range.start &&
+            offset < variable.type.range.end
+          );
+        });
+    if (parsedReference.scope !== undefined && !isTypePosition) {
+      const declaration = getParsedReferences(parsedDocument).find(reference =>
+        reference.kind === 'variable' &&
+        reference.name === parsedReference.name &&
+        reference.scope === parsedReference.scope &&
+        reference.declaration
+      );
+      if (declaration) {
+        return Location.create(document.uri, {
+          start: document.positionAt(declaration.range.start),
+          end: document.positionAt(declaration.range.end)
+        });
+      }
+    } else {
+      const globalVariable = parsedDocument.globalVariableSymbols.lookup(parsedReference.name);
+      if (globalVariable) {
+        return Location.create(document.uri, {
+          start: document.positionAt(globalVariable.declaration.name.range.start),
+          end: document.positionAt(globalVariable.declaration.name.range.end)
+        });
+      }
     }
   }
   const field = findRoutineFieldAtOffset(parsedDocument, offset);
