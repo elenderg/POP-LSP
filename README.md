@@ -229,3 +229,26 @@ if it appears in a boolean function header.
   language server.
 - Run `npm test` to compile and execute the VS Code end-to-end tests against
   this workspace, including the language-specific encoding setting.
+- Set `POP_LSP_PROFILE=1` in the environment before launching VS Code to emit
+  optional `[POP-LSP profile]` timing and catalog-size records, including
+  per-request timings, to the language server output. The parser has no token
+  stream or separate lexer, so lexical scanning is included in the syntax phase
+  rather than reported as a separate measurement.
+
+The workspace catalog and parsed references are reused while source text is
+unchanged, regardless of LSP document-version changes. A source change or
+watched `.pop` file update rebuilds context-sensitive results for documents in
+the same directory. True
+declaration-level incremental parsing is not currently safe: parsing and
+resolution scan full source text and routine calls, fields, and types can
+depend on declarations elsewhere in the document or directory. A future
+incremental parser should first expose stable declaration boundaries and an
+explicit dependency graph so edits can invalidate dependent symbols without
+leaving stale diagnostics or navigation results.
+
+Routine-call resolution indexes normalized names per parse instead of
+comparing every call against every routine. Routine parsing also tracks
+parenthesis depth in one pass, and searches for cast markers are bounded to
+their argument ranges to avoid rescanning the rest of large documents. Type
+name normalization uses a bounded string cache, and computed-field routine
+lookup indexes candidates by field name.

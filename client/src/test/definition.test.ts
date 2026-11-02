@@ -11,6 +11,27 @@ import { activate, getDocPath, getDocUri, setTestContent } from './helper';
 suite('Português Puro definitions', () => {
   const docUri = getDocUri('definitions/definition.pop');
 
+  test('Provides document symbols for an open source document', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent('Um tipo é um byte.');
+    await diagnosticsUpdated;
+
+    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+      'vscode.executeDocumentSymbolProvider',
+      docUri
+    );
+
+    assert.ok(symbols?.some(symbol => symbol.name === 'tipo'));
+  });
+
   test('Resolves declarations and diagnostics from sibling source files', async () => {
     await activate(docUri);
     const externalPath = getDocPath('definitions/cross-file-types.pop');
@@ -643,6 +664,119 @@ suite('Português Puro definitions', () => {
       new vscode.Position(3, 3),
       new vscode.Position(3, 8)
     ));
+  });
+
+  test('Reuses parsed catalogs across requests and refreshes them after edits and renames', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma letra é um byte.',
+      'Um símbolo é uma letra.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const referenceOffset = text.lastIndexOf('letra') + 2;
+    const requestDefinitions = () => vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(referenceOffset)
+    );
+    const requestReferences = () => vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeReferenceProvider',
+      docUri,
+      document.positionAt(text.indexOf('letra') + 1),
+      true
+    );
+
+    for (let request = 0; request < 2; request++) {
+      const definitions = await requestDefinitions();
+      assert.equal(definitions?.[0].range.start.line, 0);
+      assert.equal((await requestReferences())?.length, 2);
+      const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+        'vscode.executeDocumentSymbolProvider',
+        docUri
+      );
+      assert.deepEqual(symbols?.map(symbol => symbol.name), ['letra', 'símbolo']);
+    }
+
+    const rename = await vscode.commands.executeCommand<vscode.WorkspaceEdit>(
+      'vscode.executeDocumentRenameProvider',
+      docUri,
+      document.positionAt(text.indexOf('letra') + 1),
+      'caractere'
+    );
+    assert.equal(rename?.get(docUri).length, 2);
+
+    const renamedDiagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    assert.ok(await vscode.workspace.applyEdit(rename!));
+    await renamedDiagnosticsUpdated;
+
+    const renamedText = document.getText();
+    const renamedDefinitions = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(renamedText.lastIndexOf('caractere') + 2)
+    );
+    assert.equal(renamedDefinitions?.[0].range.start.line, 0);
+    const updatedSymbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+      'vscode.executeDocumentSymbolProvider',
+      docUri
+    );
+    assert.deepEqual(updatedSymbols?.map(symbol => symbol.name), ['caractere', 'símbolo']);
+  });
+
+  test('Builds type catalogs for small, medium, and large documents', async () => {
+    await activate(docUri);
+    const typeName = (value: number): string => {
+      let suffix = '';
+      do {
+        suffix = String.fromCharCode(97 + value % 26) + suffix;
+        value = Math.floor(value / 26) - 1;
+      } while (value >= 0);
+      return `tipo${suffix}`;
+    };
+
+    for (const size of [20, 1000, 6000]) {
+      const diagnosticsUpdated = new Promise<void>(resolve => {
+        const listener = vscode.languages.onDidChangeDiagnostics(event => {
+          if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+            listener.dispose();
+            resolve();
+          }
+        });
+      });
+      const source = Array.from({ length: size }, (_, index) =>
+        index === 0
+          ? `Um ${typeName(index)} é uma estrutura.`
+          : `Um ${typeName(index)} é uma estrutura com um ${typeName(index - 1)} denominado campo.`
+      ).join('\n');
+      await setTestContent(source);
+      await diagnosticsUpdated;
+
+      const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+        'vscode.executeDocumentSymbolProvider',
+        docUri
+      );
+      assert.equal(symbols?.length, size);
+      assert.equal(symbols?.[size - 1].children?.length, size > 1 ? 1 : 0);
+      assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+    }
   });
 
   test('Resolves a reference when the cursor is immediately after its final character', async () => {
