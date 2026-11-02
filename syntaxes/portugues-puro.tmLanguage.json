@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "PoP",
-  "scopeName": "source.escopo.portugues",
+  "name": "portugues-puro",
+  "scopeName": "source.escopo.pop",
   "patterns": [
     {
       "include": "#comment"
@@ -98,27 +98,82 @@
       ]
     },
     "types": {
-      "patterns": [        
+      "patterns": [
         {
           "name": "meta.type.declaration.simple.pop",
-          "match": "(?i)\\b(um|uma|uns|umas)\\s+(.+?)\\s+(é|são)\\s+(um|uma|uns|umas)\\s+(.+?)\\s*\\.",
-          "captures": {
+          "begin": "(?i)^\\s*(um|uma|uns|umas)\\b",
+          "beginCaptures": {
             "1": {
               "name": "storage.type.language.article.pop"
-            },
-            "2": {
-              "name": "entity.name.type.pop"
-            },
-            "3": {
-              "name": "keyword.control.pop"
-            },
-            "4": {
-              "name": "storage.type.language.article.pop"
-            },
-            "5": {
-              "name": "support.type.pop"
             }
-          }
+          },
+          "end": "\\.",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.terminator.pop"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "include": "#strings"
+            },
+            {
+              "name": "meta.type.name.pop",
+              "begin": "(?i)(?<=\\b(?:um|uma|uns|umas))\\s+",
+              "end": "(?i:\\b(?:é|são)\\b)",
+              "endCaptures": {
+                "0": {
+                  "name": "keyword.control.pop"
+                }
+              },
+              "patterns": [
+                {
+                  "include": "#comment"
+                },
+                {
+                  "include": "#strings"
+                },
+                {
+                  "name": "entity.name.type.pop",
+                  "match": "(?i)(?:(?!\\b(?:é|são)\\b)[^\\[\\]\"\\\\])+"
+                }
+              ]
+            },
+            {
+              "name": "meta.type.base.pop",
+              "begin": "(?i:\\b(?:um|uma|uns|umas)\\b)",
+              "beginCaptures": {
+                "0": {
+                  "name": "storage.type.language.article.pop"
+                }
+              },
+              "end": "(?=\\.)",
+              "patterns": [
+                {
+                  "include": "#comment"
+                },
+                {
+                  "include": "#strings"
+                },
+                {
+                  "name": "support.type.pop",
+                  "begin": "(?=\\S)",
+                  "end": "(?=\\.)",
+                  "patterns": [
+                    {
+                      "include": "#comment"
+                    },
+                    {
+                      "include": "#strings"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     }
