@@ -1350,7 +1350,9 @@ suite('Português Puro definitions', () => {
       'O código é um texto hexadecimal igual a $BeBaC0cA.',
       'O servidor SMTP é uma string igual a "localhost".',
       'O texto citado é uma string igual a "Ele disse:""Olá. João""".',
-      'As aspas duplas são um byte igual a 34.'
+      'As aspas duplas são um byte igual a 34.',
+      "A letra 'É' maiúscula é um byte igual a 201.",
+      "O 'É' maiúsculo é um byte igual a 201."
     ].join('\n'));
     await diagnosticsUpdated;
 

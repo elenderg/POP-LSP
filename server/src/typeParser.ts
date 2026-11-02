@@ -4804,7 +4804,12 @@ function findOperator(
     const wordEnd = match.index + match[0].length;
     const previousCharacter = match.index > start ? source[match.index - 1] : '';
     const nextCharacter = wordEnd < end ? source[wordEnd] : '';
-    if (isWordCharacter(previousCharacter) || isWordCharacter(nextCharacter)) {
+    if (
+      isWordCharacter(previousCharacter) ||
+      isWordCharacter(nextCharacter) ||
+      isIdentifierJoiner(previousCharacter) ||
+      isIdentifierJoiner(nextCharacter)
+    ) {
       continue;
     }
 
