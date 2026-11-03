@@ -2345,6 +2345,37 @@ suite('Português Puro definitions', () => {
     assert.equal(returnTypeDefinition[0].range.start.line, 0);
   });
 
+  test('Accepts endereçamento of a newly declared type as a Processe argument', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um status de erro é uma estrutura.',
+      'O número identificador do fluxo de entrada padrão é um número igual a 0.',
+      'Rotina para que se obtenha o modo do console:',
+      '  Processe "kernel32.dll" "GetConsoleMode" com',
+      '    O número identificador do fluxo de entrada padrão e',
+      '    O endereçamento dum número denominado modo do console',
+      '    Retornando um status de erro.',
+      '  Atribua 1 para o modo do console.',
+      'Rotina para que se obtenha o endereço de um byte:',
+      '  Processe "kernel32.dll" "GetConsoleMode" com',
+      '    O endereçamento dum byte denominado endereço de byte.',
+      'Rotina para que se consuma esse byte:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
   test('Stores a Processe return value in an existing routine parameter', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -2919,6 +2950,52 @@ suite('Português Puro definitions', () => {
       diagnostic.message.includes('No compatible routine found for "Baz uma string"')
     );
     assert.ok(wrongArityError);
+  });
+
+  test('Accepts scalar literals when routine parameters use plural type names', async () => {
+    await activate(docUri);
+    const updateContent = async (lines: string[]) => {
+      const diagnosticsUpdated = new Promise<void>(resolve => {
+        const listener = vscode.languages.onDidChangeDiagnostics(event => {
+          if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+            listener.dispose();
+            resolve();
+          }
+        });
+      });
+      await setTestContent(lines.join('\n'));
+      await diagnosticsUpdated;
+      return vscode.languages.getDiagnostics(docUri);
+    };
+
+    const pluralParameterDiagnostics = await updateContent([
+      'Um número é uma estrutura.',
+      'Um quadrado é um número.',
+      'Uma palavra de ordem é um número.',
+      'para que se exemplifique:',
+      '  Pinte 5 quadrados.',
+      '  Pinte 1/2 palavras de ordem.',
+      'para que se pinte uns quadrados:',
+      '  Retorne.',
+      'para que se pinte umas palavras de ordem:',
+      '  Retorne.'
+    ]);
+    assert.deepEqual(pluralParameterDiagnostics, []);
+
+    const singularParameterDiagnostics = await updateContent([
+      'Um número é uma estrutura.',
+      'Um quadrado é um número.',
+      'para que se exemplifique:',
+      '  Pinte 5 quadrados.',
+      'para que se pinte um quadrado:',
+      '  Retorne.'
+    ]);
+    assert.equal(
+      singularParameterDiagnostics.filter(diagnostic =>
+        diagnostic.message === 'No compatible routine found for "Pinte 5 quadrados".'
+      ).length,
+      1
+    );
   });
 
   test('Resolves routine overloads through derived types from most to least specific', async () => {

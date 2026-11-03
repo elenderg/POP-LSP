@@ -191,6 +191,7 @@ export interface RoutineProcess {
   library?: string;
   functionName?: string;
   arguments: TypeReference[];
+  argumentTypes: TypeReference[];
   fieldAccesses: RoutineFieldAccess[];
   variableAccesses?: RoutineVariableAccess[];
   computedFieldAccesses?: RoutineComputedFieldAccess[];
@@ -461,8 +462,12 @@ export interface ParsedReference {
   declaration?: boolean;
 }
 
-const indefiniteArticles = new Set(['um', 'uma', 'uns', 'umas']);
-const definiteArticles = new Set(['o', 'os', 'a', 'as']);
+const indefiniteArticles = new Set([
+  'um', 'uma', 'uns', 'umas', 'esse', 'essa', 'esses', 'essas'
+]);
+const definiteArticles = new Set([
+  'o', 'os', 'a', 'as', 'este', 'esta', 'estes', 'estas'
+]);
 const nullLiteralWords = new Set([
   'nulo',
   'nula',
@@ -1881,6 +1886,7 @@ function parseRoutineProcess(
   }
 
   const argumentsList: SourceRange[] = [];
+  const argumentTypes: TypeReference[] = [];
   if (withMarker) {
     const argumentsRange = trimRange(source, withMarker.end, invocationEnd);
     argumentsList.push(...splitProcessArguments(source, argumentsRange));
@@ -1894,7 +1900,25 @@ function parseRoutineProcess(
   }
 
   for (const argument of argumentsList) {
-    if (parseGlobalVariableLiteral(source, argument)) {
+    const literal = parseGlobalVariableLiteral(source, argument);
+    if (literal) {
+      argumentTypes.push(createSyntheticTypeReference(
+        literal.kind === 'null'
+          ? 'nulo'
+          : inferGlobalVariableTypeName(literal) ?? 'nulo',
+        argument
+      ));
+      continue;
+    }
+    const outputVariable = parseProcessAddressOutput(
+      source,
+      argument,
+      symbols,
+      diagnostics
+    );
+    if (outputVariable) {
+      caller.localVariables.push(outputVariable.variable);
+      argumentTypes.push(outputVariable.argumentType);
       continue;
     }
     const article = readWord(source, argument.start, argument.end);
@@ -1905,7 +1929,7 @@ function parseRoutineProcess(
       });
       return undefined;
     }
-    if (!resolveRoutineArgumentType(
+    const argumentType = resolveRoutineArgumentType(
       source,
       argument,
       caller,
@@ -1915,13 +1939,15 @@ function parseRoutineProcess(
       routines,
       computedFieldAccesses,
       variableAccesses
-    )) {
+    );
+    if (!argumentType) {
       diagnostics.push({
         message: `Unknown variable or field "${source.slice(argument.start, argument.end)}" passed to "Processe".`,
         range: argument
       });
       return undefined;
     }
+    argumentTypes.push(argumentType);
   }
 
   const parsedReturn = returnMarker
@@ -1949,6 +1975,7 @@ function parseRoutineProcess(
     library,
     functionName,
     arguments: argumentsList.map(argument => createTypeReference(source, argument)),
+    argumentTypes,
     fieldAccesses,
     variableAccesses,
     computedFieldAccesses,
@@ -1990,6 +2017,83 @@ function splitProcessArguments(source: string, range: SourceRange): SourceRange[
   }
   argumentsList.push(finalArgument);
   return argumentsList;
+}
+
+function parseProcessAddressOutput(
+  source: string,
+  argument: SourceRange,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): { variable: RoutineLocalVariable; argumentType: TypeReference } | undefined {
+  const outerArticle = readWord(source, argument.start, argument.end);
+  if (
+    !outerArticle ||
+    !definiteArticles.has(outerArticle.value.toLocaleLowerCase('pt-BR'))
+  ) {
+    return undefined;
+  }
+  const operator = readWord(source, outerArticle.end, argument.end);
+  if (
+    !operator ||
+    operator.value.toLocaleLowerCase('pt-BR') !== 'endereçamento'
+  ) {
+    return undefined;
+  }
+
+  const sourceAfterOperator = skipWhitespace(source, operator.end, argument.end);
+  const contraction = readWord(source, sourceAfterOperator, argument.end);
+  const expansion = contraction
+    ? routineContractions.get(contraction.value.toLocaleLowerCase('pt-BR'))
+    : undefined;
+  let typeArticle: ReturnType<typeof readWord>;
+  if (expansion?.startsWith('de ')) {
+    const expandedArticle = expansion.slice(3);
+    if (!indefiniteArticles.has(expandedArticle)) {
+      return undefined;
+    }
+    typeArticle = { start: contraction!.start, end: contraction!.end, value: expandedArticle };
+  } else {
+    const preposition = readWord(source, sourceAfterOperator, argument.end);
+    if (!preposition || preposition.value.toLocaleLowerCase('pt-BR') !== 'de') {
+      return undefined;
+    }
+    typeArticle = readWord(source, preposition.end, argument.end);
+    if (!typeArticle || !indefiniteArticles.has(typeArticle.value.toLocaleLowerCase('pt-BR'))) {
+      return undefined;
+    }
+  }
+
+  const markers = findAnyWord(source, typeArticle.end, argument.end, localVariableNameMarkers);
+  const typeRange = trimRange(source, typeArticle.end, markers?.start ?? argument.end);
+  const type = findTypeSuffix(source, typeRange, symbols);
+  if (!type) {
+    diagnostics.push({
+      message: `Unknown "Processe" output type "${source.slice(typeRange.start, typeRange.end)}".`,
+      range: typeRange
+    });
+    return undefined;
+  }
+
+  const nameRange = markers
+    ? trimRange(source, markers.end, argument.end)
+    : type.range;
+  if (nameRange.start === nameRange.end) {
+    diagnostics.push({
+      message: 'A variable name is required after the type in a "Processe" address argument.',
+      range: markers ?? typeRange
+    });
+    return undefined;
+  }
+
+  return {
+    variable: {
+      name: createTypeReference(source, nameRange),
+      type,
+      range: argument
+    },
+    argumentType: resolveTypeOperator('endereçamento', type, symbols) ??
+      createSyntheticTypeReference('ponteiro', type.range)
+  };
 }
 
 function parseProcessReturnVariable(
@@ -2330,9 +2434,18 @@ function resolveRoutineCall(
     const variableAccesses: RoutineVariableAccess[] = [];
     const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
     for (let index = 0; index < argumentsList.length; index++) {
+      const parameter = routine.parameters[index];
+      const scalarArgumentType = localVariableIndex === index
+        ? undefined
+        : resolveScalarRoutineArgumentType(
+          source,
+          argumentsList[index],
+          parameter.type,
+          symbols
+        );
       const argumentType = localVariableIndex === index
         ? localVariable?.type
-        : resolveRoutineArgumentType(
+        : scalarArgumentType ?? resolveRoutineArgumentType(
           source,
           argumentsList[index],
           caller,
@@ -2346,7 +2459,7 @@ function resolveRoutineCall(
       const distance = argumentType
         ? getRoutineArgumentTypeDistance(
           argumentType,
-          routine.parameters[index].type.name,
+          parameter.type.name,
           symbols
         )
         : undefined;
@@ -2737,6 +2850,53 @@ function resolveRoutineArgumentType(
     return variableType;
   }
   return undefined;
+}
+
+function resolveScalarRoutineArgumentType(
+  source: string,
+  argument: SourceRange,
+  expectedType: TypeReference,
+  symbols: TypeSymbolTable
+): TypeReference | undefined {
+  const expectedSymbol = symbols.lookup(expectedType.name);
+  if (
+    !expectedSymbol ||
+    expectedSymbol.pluralName !== expectedType.normalizedName
+  ) {
+    return undefined;
+  }
+
+  const text = source.slice(argument.start, argument.end);
+  const literalMatch = /^([+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?)(\s+)([\s\S]+)$/u.exec(text);
+  if (!literalMatch) {
+    return undefined;
+  }
+
+  const literalEnd = argument.start + literalMatch[1].length;
+  const literal = parseGlobalVariableLiteral(source, {
+    start: argument.start,
+    end: literalEnd
+  });
+  if (!literal || !['integer', 'fraction', 'mixed'].includes(literal.kind)) {
+    return undefined;
+  }
+
+  const typeRange = trimRange(
+    source,
+    literalEnd + literalMatch[2].length,
+    argument.end
+  );
+  const actualType = symbols.lookup(source.slice(typeRange.start, typeRange.end));
+  if (
+    !actualType ||
+    actualType.pluralName !== normalizeTypeName(
+      source.slice(typeRange.start, typeRange.end)
+    )
+  ) {
+    return undefined;
+  }
+
+  return createTypeReference(source, typeRange);
 }
 
 function parseTypeCast(
