@@ -141,6 +141,7 @@ export interface RoutineLocalVariable {
   name: TypeReference;
   type: TypeReference;
   range: SourceRange;
+  inputArgumentRange?: SourceRange;
 }
 
 export interface RoutineConditionalBlock {
@@ -511,6 +512,8 @@ const routineWordReplacements = new Map([
   ['termina', 'termina'],
   ['puder', 'pode'],
   ['puderem', 'pode'],
+  ['contém', 'contém'],
+  ['contiver', 'contém'],
   ['possuir', 'possui'],
   ['possui', 'possui'],
   ['cabe', 'cabe'],
@@ -858,6 +861,7 @@ function resolveRoutineCalls(
   for (const routine of routines) {
     const body = source.slice(routine.bodyRange.start, routine.bodyRange.end);
     let hasValidBooleanReturn = false;
+    let hasDecodeInstruction = false;
     if (!body.trim()) {
       diagnostics.push({
         message: `Routine "${routine.name.name}" has no statements.`,
@@ -890,6 +894,10 @@ function resolveRoutineCalls(
             });
           }
           for (const conditionalStatement of conditional.block.statements) {
+            hasDecodeInstruction = isDecodeInstruction(
+              source,
+              conditionalStatement
+            ) || hasDecodeInstruction;
             if (
               !conditional.nestedRange ||
               conditionalStatement.start < conditional.nestedRange.start
@@ -906,6 +914,10 @@ function resolveRoutineCalls(
             }
           }
         } else {
+          hasDecodeInstruction = isDecodeInstruction(
+            source,
+            statementRange
+          ) || hasDecodeInstruction;
           hasValidBooleanReturn = processRoutineStatement(
             source,
             statementRange,
@@ -921,7 +933,11 @@ function resolveRoutineCalls(
       periodIndex = findDeclarationPeriod(source, statementStart);
     }
 
-    if (routine.isBooleanFunction && !hasValidBooleanReturn) {
+    if (
+      routine.isBooleanFunction &&
+      !hasValidBooleanReturn &&
+      !hasDecodeInstruction
+    ) {
       diagnostics.push({
         message: 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.',
         range: routine.name.range
@@ -1701,7 +1717,11 @@ function validateDecodeStatement(
   diagnostics: ParserDiagnostic[]
 ): boolean {
   const keyword = readWord(source, statement.start, statement.end);
-  if (!keyword || keyword.value.toLocaleLowerCase('pt-BR') !== 'decodifique') {
+  if (!isDecodeInstruction(source, statement)) {
+    return false;
+  }
+
+  if (!keyword) {
     return false;
   }
 
@@ -1717,6 +1737,11 @@ function validateDecodeStatement(
       : { start: keyword.start, end: keyword.end }
   });
   return true;
+}
+
+function isDecodeInstruction(source: string, statement: SourceRange): boolean {
+  const keyword = readWord(source, statement.start, statement.end);
+  return keyword?.value.toLocaleLowerCase('pt-BR') === 'decodifique';
 }
 
 function validatePushStatement(
@@ -2229,13 +2254,15 @@ function resolveRoutineCall(
           ).filter(argument =>
             normalizeTypeName(source.slice(argument.start, argument.end)) !== 'para'
           ),
-          localVariable.name.range
+          localVariable.inputArgumentRange ?? localVariable.name.range
         ]
         : splitRoutineArguments(source, argumentRange);
       parsedArguments = {
         argumentsList,
         localVariable,
-        localVariableIndex: localVariable ? argumentsList.length - 1 : -1
+        localVariableIndex: localVariable && !localVariable.inputArgumentRange
+          ? argumentsList.length - 1
+          : -1
       };
       parsedArgumentsByNameEnd.set(nameEnd, parsedArguments);
     }
@@ -3059,6 +3086,32 @@ function parseLocalVariableDeclaration(
       continue;
     }
     const articleEnd = articleMatch.index + articleMatch[0].length;
+    const outputMarker = findWordOutsideStrings(
+      source,
+      articleEnd,
+      declarationEnd,
+      'sobre'
+    );
+    if (outputMarker) {
+      const inputArticle = readWord(source, outputMarker.end, declarationEnd);
+      const outputTypeRange = trimRange(source, articleEnd, outputMarker.start);
+      const outputType = findTypeSuffix(source, outputTypeRange, symbols);
+      if (
+        inputArticle &&
+        definiteArticles.has(inputArticle.value.toLocaleLowerCase('pt-BR')) &&
+        outputType
+      ) {
+        localVariable = {
+          name: createTypeReference(source, outputTypeRange),
+          type: outputType,
+          range: { start: articleMatch.index, end: declarationEnd },
+          inputArgumentRange: trimRange(source, inputArticle.start, declarationEnd)
+        };
+        articles.lastIndex = declarationEnd;
+        continue;
+      }
+    }
+
     const marker = findAnyWord(
       source,
       articleEnd,

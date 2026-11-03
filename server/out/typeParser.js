@@ -225,6 +225,8 @@ const routineWordReplacements = new Map([
     ['termina', 'termina'],
     ['puder', 'pode'],
     ['puderem', 'pode'],
+    ['contém', 'contém'],
+    ['contiver', 'contém'],
     ['possuir', 'possui'],
     ['possui', 'possui'],
     ['cabe', 'cabe'],

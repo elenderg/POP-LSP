@@ -2378,6 +2378,33 @@ suite('Português Puro definitions', () => {
     ).length, 1);
   });
 
+  test('Allows boolean functions with Decodifique instructions to manage their own return', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Função para que se determine se codificado:',
+      '  Decodifique $C7C001000000.',
+      '  Decodifique $8B9D08000000.',
+      'Função para que se determine se texto:',
+      '  Escreva "Decodifique" para StdOut.',
+      'Função para que se determine se comentário:',
+      '  Escreva "teste" para StdOut. \\ Decodifique $C7C001000000'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.'
+    ).length, 2);
+  });
+
   test('Rejects Diga in ordinary routines and routine names', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -2983,6 +3010,127 @@ suite('Português Puro definitions', () => {
     assert.ok(definition);
     assert.equal(definition.length, 1);
     assert.equal(definition[0].range.start.line, 5);
+  });
+
+  test('Resolves estar predicates and derived types in conditional expressions', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um ponteiro é uma estrutura.',
+      'Um caractere inicial é um ponteiro para um byte.',
+      'Um caractere final é um ponteiro para um byte.',
+      'Uma string é uma estrutura com',
+      '  Um caractere inicial e',
+      '  Um caractere final.',
+      'Um subtexto é uma string.',
+      'para que se faça algo com um subtexto:',
+      '  Se o subtexto estiver em branco, retorne.',
+      'Função para que se determine se uma string está em branco:',
+      '  Decodifique $B801000000.',
+      '  Decodifique $8B9D08000000.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.deepEqual(diagnostics, []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const predicateOffset = document.getText().indexOf('estiver') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(predicateOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 9);
+
+    const variableOffset = document.getText().indexOf('subtexto', document.getText().indexOf('Se '));
+    const typeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeTypeDefinitionProvider',
+      docUri,
+      document.positionAt(variableOffset + 2)
+    );
+    assert.ok(typeDefinition);
+    assert.equal(typeDefinition.length, 1);
+    assert.equal(typeDefinition[0].range.start.line, 6);
+  });
+
+  test('Resolves boolean conditions using locals introduced by calls inside loops', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se cite uma string:',
+      '  Lance um subtexto sobre a string.',
+      '  Itere.',
+      '    Se o subtexto estiver em branco, pare.',
+      '  Reitere.',
+      'Rotina para que se lance um subtexto sobre uma string:',
+      '  Decodifique $8B8508000000.',
+      '  Decodifique $8B9D0C000000.',
+      '  Decodifique $8B8B00000000.',
+      '  Decodifique $898800000000.',
+      '  Decodifique $8B8B04000000.',
+      '  Decodifique $898804000000.',
+      'Função para que se determine se uma string está em branco:',
+      '  Decodifique $B801000000.',
+      '  Decodifique $8B9D08000000.',
+      '  Decodifique $833B00.',
+      '  Decodifique $0F8410000000.',
+      '  Decodifique $8B5304.',
+      '  Decodifique $3B13.',
+      '  Decodifique $0F8C05000000.',
+      '  Decodifique $B800000000.',
+      'Um ponteiro é uma estrutura.',
+      'Um caractere inicial é um ponteiro para um byte.',
+      'Um caractere final é um ponteiro para um byte.',
+      'Uma string é uma estrutura com',
+      '  Um caractere inicial e',
+      '  Um caractere final.',
+      'Um subtexto é uma string.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'No boolean function found for condition "o subtexto estiver em branco".'
+    ).length, 0, diagnostics.map(diagnostic => diagnostic.message).join('\n'));
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const predicateOffset = text.indexOf('estiver') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(predicateOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 12);
+
+    const variableOffset = text.indexOf('subtexto', text.indexOf('Se '));
+    const typeDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeTypeDefinitionProvider',
+      docUri,
+      document.positionAt(variableOffset + 2)
+    );
+    assert.ok(typeDefinition);
+    assert.equal(typeDefinition.length, 1);
+    assert.equal(typeDefinition[0].range.start.line, 27);
   });
 
   test('Ignores não in boolean conditions and rejects it in boolean headers', async () => {
