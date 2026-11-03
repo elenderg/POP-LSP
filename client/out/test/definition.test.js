@@ -77,6 +77,47 @@ suite('Português Puro definitions', () => {
             await (0, promises_1.unlink)(externalPath);
         }
     });
+    test('Keeps invalid-call diagnostics consistent when routine headers have indentation', async () => {
+        await (0, helper_1.activate)(docUri);
+        const unindentedPath = (0, helper_1.getDocPath)('definitions/routine-unindented.pop');
+        const indentedPath = (0, helper_1.getDocPath)('definitions/routine-indented.pop');
+        const unindentedUri = vscode.Uri.file(unindentedPath);
+        const indentedUri = vscode.Uri.file(indentedPath);
+        const routine = 'para que se faça algo com um caractere: Foo.';
+        await (0, promises_1.writeFile)(unindentedPath, `Um caractere é um byte. ${routine}`, 'latin1');
+        await (0, promises_1.writeFile)(indentedPath, `Um caractere é um byte.       ${routine}`, 'latin1');
+        const waitForDiagnostics = (uri) => new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(changedUri => changedUri.toString() === uri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        try {
+            const unindentedDiagnosticsUpdated = waitForDiagnostics(unindentedUri);
+            const unindentedDocument = await vscode.workspace.openTextDocument(unindentedUri);
+            await vscode.window.showTextDocument(unindentedDocument);
+            await unindentedDiagnosticsUpdated;
+            const unindentedDiagnostics = vscode.languages.getDiagnostics(unindentedUri);
+            const indentedDiagnosticsUpdated = waitForDiagnostics(indentedUri);
+            const indentedDocument = await vscode.workspace.openTextDocument(indentedUri);
+            await vscode.window.showTextDocument(indentedDocument);
+            await indentedDiagnosticsUpdated;
+            const indentedDiagnostics = vscode.languages.getDiagnostics(indentedUri);
+            const invalidCallMessages = (diagnostics) => diagnostics
+                .map(diagnostic => diagnostic.message)
+                .filter(message => message.startsWith('No compatible routine found for '));
+            assert.deepEqual(invalidCallMessages(unindentedDiagnostics), [
+                'No compatible routine found for "Foo".'
+            ]);
+            assert.deepEqual(invalidCallMessages(indentedDiagnostics), invalidCallMessages(unindentedDiagnostics));
+        }
+        finally {
+            await (0, promises_1.unlink)(unindentedPath);
+            await (0, promises_1.unlink)(indentedPath);
+        }
+    });
     test('Resolves a multi-word type name without confusing similar names', async () => {
         await (0, helper_1.activate)(docUri);
         const document = await vscode.workspace.openTextDocument(docUri);

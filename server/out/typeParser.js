@@ -2372,10 +2372,6 @@ function parseRoutineDeclarations(source, diagnostics) {
         if (parenthesisDepth > 0) {
             continue;
         }
-        const lineStart = Math.max(source.lastIndexOf('\n', match.index), source.lastIndexOf('\r', match.index)) + 1;
-        if (match.index !== lineStart) {
-            continue;
-        }
         const headerEnd = findHeaderTerminator(source, headerPattern.lastIndex);
         if (headerEnd === -1) {
             continue;
