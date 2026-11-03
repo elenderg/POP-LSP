@@ -109,6 +109,7 @@ export interface RoutineLocalVariable {
     name: TypeReference;
     type: TypeReference;
     range: SourceRange;
+    inputArgumentRange?: SourceRange;
 }
 export interface RoutineConditionalBlock {
     condition: TypeReference;
@@ -158,6 +159,7 @@ export interface RoutineProcess {
     variableAccesses?: RoutineVariableAccess[];
     computedFieldAccesses?: RoutineComputedFieldAccess[];
     returnVariable?: RoutineLocalVariable;
+    returnVariableIsReference?: boolean;
     range: SourceRange;
 }
 export interface RoutineLoopInstruction {

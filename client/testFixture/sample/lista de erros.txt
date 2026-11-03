@@ -1,0 +1,1005 @@
+No boolean function found for condition "o subtexto estiver em branco".
+Unknown variable "conteúdo deste caractere inicial deste subtexto para a segunda string" passed to routine "acrescente".
+No boolean function found for condition "o conteúdo deste caractere inicial deste subtexto for as aspas duplas".
+Unknown variable "aspas duplas para a segunda string" passed to routine "acrescente".
+Unknown variable "aspas duplas para a segunda string" passed to routine "acrescente".
+No boolean function found for condition "o subtexto não estiver na string".
+Unknown structure field access "a quantidade de caracteres deste subtexto".
+No compatible routine found for "Acrescente o segmento inicial deste percorredor para o resultado".
+No compatible routine found for "Remova os caracteres finais desde o resultado usando 1".
+No boolean function found for condition "o segmento final deste percorredor estiver em branco".
+No boolean function found for condition "o segmento inicial deste percorredor for igual ao subtexto".
+No compatible routine found for "Remova os caracteres finais desde o resultado usando o comprimento menos 1".
+No compatible routine found for "Acrescente o segundo subtexto para o resultado".
+No boolean function found for condition "o segmento final deste percorredor não for igual ao subtexto".
+No compatible routine found for "Acrescente o conteúdo deste caractere final deste segmento inicial deste percorredor para o resultado".
+No compatible routine found for "Obtenha um máximo divisor comum usando o numerador desta fração e o denominador desta fração".
+Unknown variable "numerador desta fração pelo máximo divisor comum" passed to routine "divida".
+Unknown variable "denominador desta fração pelo máximo divisor comum" passed to routine "divida".
+No boolean function found for condition "o segundo número for menor do que 0".
+No boolean function found for condition "um contador estiver ultrapassando o segundo número".
+No compatible routine found for "Acrescente "0" para a string".
+Unknown variable "número inteiro deste numeral misto para a string" passed to routine "acrescente".
+Unknown variable "sinal de adição para a string" passed to routine "acrescente".
+Unknown variable "numerador deste numeral misto seguido de "/" junto com o denominador deste numeral misto para a string" passed to routine "acrescente".
+No compatible routine found for "Escolha aleatoriamente o número entre 0 e o maior número".
+No boolean function found for condition "o denominador desta fração for 0".
+Unknown variable or field "O número" passed to "Processe".
+No boolean function found for condition "o número for -1".
+Unknown variable "fração" passed to routine "reduza".
+No compatible routine found for "Rotina para que se avance um percorredor até encontrar o próximo espaço;
+ Rotina para que se avance um percorredor até o próximo espaço:
+  Itere".
+Unknown variable "percorredor" passed to routine "avance".
+No boolean function found for condition "o conteúdo deste caractere final deste segmento inicial deste percorredor não for o caractere de espaço".
+No boolean function found for condition "o conteúdo deste caractere final deste segmento inicial deste percorredor for o caractere de espaço".
+No compatible routine found for "Rotina para que se recue um percorredor até o próximo espaço;
+ Rotina para que se recue um percorredor até encontrar o próximo espaço:
+  Itere".
+Unknown variable "percorredor" passed to routine "recue".
+Unknown variable "percorredor" passed to routine "recue".
+No boolean function found for condition "o conteúdo deste caractere inicial deste segmento final deste percorredor não for o caractere de espaço".
+No boolean function found for condition "o conteúdo deste caractere inicial deste segmento final deste percorredor for o caractere de espaço".
+No boolean function found for condition "a figura geométrica for inexistente".
+No compatible routine found for "Acrescente a figura geométrica às figuras geométricas".
+No compatible routine found for "Acrescente a alternativa para as alternativas".
+No compatible routine found for "Acrescente o quora para o quora deste terminal".
+No compatible routine found for "Remova o quora descartável desde os quoras deste terminal".
+No compatible routine found for "Destrua o quora descartável".
+No compatible routine found for "Acrescente a localização para a figura geométrica".
+No compatible routine found for "Acrescente o conjunto de texto para os conjuntos de texto".
+No compatible routine found for "Conjuncione logicamente o atributo de arquivo com 16".
+Unknown structure field access "o endereçamento deste cFileName deste WIN32FINDDATA deste item".
+No compatible routine found for "acrescente "\" para o designador deste item".
+Unknown variable "extensão deste item desde o designador deste item tal como um endereço completo" passed to routine "extraia".
+No boolean function found for condition "a imagem for inexistente".
+No boolean function found for condition "o status de erro for 2147483648".
+No boolean function found for condition "o novo número for 0".
+No boolean function found for condition "o novo número for 1".
+No compatible routine found for "Obtenha uma largura usando a string e o contexto de dispositivo de memória".
+"Processe" return values require an indefinite article and a return type.
+No boolean function found for condition "o novo número for 0".
+No boolean function found for condition "o novo número for 1".
+No compatible routine found for "Obtenha uma segunda largura usando a string e a área de impressão".
+Unknown structure field access "a segunda largura dividido pela quantidade de caracteres desta string".
+"Processe" return values require an indefinite article and a return type.
+No boolean function found for condition "o status de erro for 2147483648".
+"Retorne" is a reserved statement keyword and cannot be used in a routine name.
+"Processe" return values require an indefinite article and a return type.
+Unknown "Processe" return type "número resultante".
+No boolean function found for condition "o número resultante for -1".
+Unknown variable or field "O      endereçamento dum número" passed to "Processe".
+No boolean function found for condition "o número resultante for 0".
+Unknown structure field access "a quantidade de caracteres desta string".
+No compatible routine found for "Reaponte o caractere inicial desta string usando a quantidade de caracteres desta string mais 1".
+"Preserve" must be followed by a definite article and the name of a routine parameter.
+No boolean function found for condition "a contagem for menor do que 1".
+Unknown variable "byte para a string" passed to routine "acrescente".
+Unknown variable "segunda string para a string" passed to routine "acrescente".
+Unknown variable "segunda string para a string" passed to routine "acrescente".
+Unknown variable "segunda string para a string" passed to routine "acrescente".
+Unknown variable "segunda string para a string" passed to routine "acrescente".
+No boolean function found for condition "o polígono for inexistente".
+No compatible routine found for "Acrescente o vértice para os vértices deste polígono".
+No compatible routine found for "Reaponte o caractere inicial desta segunda string usando a quantidade de caracteres agrupados".
+No compatible routine found for "Copie bytes desde o caractere inicial desta string para o ponteiro pelo quantidade de caracteres desta string".
+No compatible routine found for "Mova o percorredor (usando diretrizes de arquivos de texto)".
+No boolean function found for condition "o segmento inicial deste percorredor estiver em branco".
+No boolean function found for condition "o segmento inicial deste percorredor começa com "."".
+No compatible routine found for "acrescente "." para a segunda string".
+Unknown variable "segmento inicial deste percorredor para a segunda string" passed to routine "acrescente".
+"Preserve" must be followed by a definite article and the name of a routine parameter.
+No boolean function found for condition "a contagem for menor do que 1".
+Unknown variable "string para a segunda string" passed to routine "acrescente".
+No boolean function found for condition "a lista for inexistente".
+Unknown variable "lista desde as listas" passed to routine "remova".
+Unknown variable "lista para as outras listas" passed to routine "acrescente".
+Unknown variable "segunda string para a string" passed to routine "acrescente".
+No boolean function found for condition "o polígono for inexistente".
+No compatible routine found for "Acrescente o vértice para os vértices deste polígono".
+No boolean function found for condition "o polígono for inexistente".
+No compatible routine found for "Crie um vértice usando a coordenada X e a coordenada Y".
+No compatible routine found for "Acrescente o vértice para os vértices deste polígono".
+No boolean function found for condition "a quantidade de caracteres desta string for maior do que ou igual ao número".
+No compatible routine found for "Acrescente "0" para a string".
+No boolean function found for condition "a quantidade de bytes for 0".
+Unknown variable "ponteiro" passed to routine "esvazie".
+"Preserve" must be followed by a definite article and the name of a routine parameter.
+No compatible routine found for "Arredonde a quantidade de bytes para cima usando a próxima potência de dois".
+Unknown variable or field "A quantidade de bytes" passed to "Processe".
+No boolean function found for condition "o ponteiro não for inexistente".
+"Processe" return values require an indefinite article and a return type.
+Unknown variable or field "O endereçamento dum número denominado modo do console" passed to "Processe".
+No boolean function found for condition "o status de erro for 0".
+Unknown routine parameter type "trecho desde a STDIN".
+No compatible routine found for "Preencha o trecho com o caractere NULL usando 256".
+Unknown variable or field "O caractere inicial deste trecho" passed to "Processe".
+No boolean function found for condition "o status de erro for 0".
+No boolean function found for condition "o lpNumberOfBytesRead for menor do que 256".
+No compatible routine found for "Remova os caracteres finais desde o trecho usando a quantidade de caracteres NULL restantes".
+No compatible routine found for "Elimine os resíduos no trecho".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown structure field access "a altura desta fonte desta caixa de texto".
+Unknown structure field access "a caixa desta caixa de texto".
+No compatible routine found for "Encolha a caixa usando a quantidade de twips/pixel".
+No boolean function found for condition "a coordenada Y desta localização for menor do que a coordenada Y1 desta caixa".
+No boolean function found for condition "a coordenada Y desta localização for maior do que a coordenada Y2 desta caixa".
+No compatible routine found for "Inverta o sinal desse número Y deste valor da diferença".
+No boolean function found for condition "a coordenada X desta localização for menor do que a coordenada X1 desta caixa".
+No boolean function found for condition "a coordenada X desta localização for maior do que a coordenada X2 desta caixa".
+No compatible routine found for "Inverta o sinal desse número X deste valor da diferença".
+No boolean function found for condition "o sinalizador de rolagem horizontal desta caixa de texto não estiver ativo".
+No boolean function found for condition "o sinalizador de rolagem vertical desta caixa de texto não estiver ativo".
+Unknown variable "caixa de texto usando o valor da diferença" passed to routine "role".
+No compatible routine found for "Aguarde por 50 milissegundos".
+"Processe" return values require an indefinite article and a return type.
+Unknown routine parameter type "folha no modo paisagem".
+Unknown routine parameter type "folha no modo retrato".
+Unknown variable "folha usando a folha" passed to routine "inicie".
+No compatible routine found for "Inicie a folha tal como uma folha no modo retrato".
+Unknown routine parameter type "byte limitando-o".
+No boolean function found for condition "o byte for maior do que o terceiro byte".
+Unknown routine parameter type "número limitando-o".
+No boolean function found for condition "o número for maior do que o terceiro número".
+No boolean function found for condition "a caixa de texto for inexistente".
+No boolean function found for condition "a linha de texto for inexistente".
+No boolean function found for condition "a linha de texto na caixa de texto não estiver selecionado".
+No boolean function found for condition "a linha de texto estiver em branco".
+No compatible routine found for "Capitalize a string desta linha de texto".
+No boolean function found for condition "o subtexto estiver em branco".
+No boolean function found for condition "o conteúdo deste caractere inicial deste subtexto não for irrelevante".
+Unknown variable "conteúdo deste caractere inicial deste subtexto" passed to routine "uppercase".
+No boolean function found for condition "a caixa de texto for inexistente".
+No boolean function found for condition "a linha de texto for inexistente".
+No compatible routine found for "Capitalize a string desta linha de texto".
+Unknown variable "texto na caixa de texto" passed to routine "selecione".
+No compatible routine found for "Centralize a caixa na segunda caixa (horizontalmente)".
+Unknown structure field access "a altura desta caixa".
+Unknown structure field access "a coordenada Y2 desta segunda caixa".
+Unknown structure field access "a coordenada Y2 desta caixa".
+Unknown structure field access "a coordenada X deste centro desta segunda caixa".
+Unknown structure field access "a coordenada X deste centro desta caixa".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a caixa usando o número e 0".
+Unknown structure field access "a coordenada Y deste centro desta segunda caixa".
+Unknown structure field access "a coordenada Y deste centro desta caixa".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a caixa usando 0 e o número".
+No compatible routine found for "Centralize o ponto circular sobre a localização deste contexto".
+No compatible routine found for "Centralize a caixa desta elipse na caixa (horizontalmente)".
+No compatible routine found for "Centralize a caixa desta elipse na caixa (verticalmente)".
+Unknown structure field access "a coordenada X deste centro desta caixa".
+Unknown structure field access "a coordenada X deste centro desta linha reta".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a linha reta usando o número e 0".
+Unknown structure field access "a coordenada Y deste centro desta caixa".
+Unknown structure field access "a coordenada Y deste centro desta linha reta".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a linha reta usando 0 e o número".
+Unknown routine parameter type "imagem na tela".
+No boolean function found for condition "a imagem for inexistente".
+No compatible routine found for "Centralize a imagem na caixa desta tela (horizontalmente)".
+No compatible routine found for "Centralize a imagem na caixa desta tela (verticalmente)".
+No boolean function found for condition "a imagem for inexistente".
+No compatible routine found for "Centralize a imagem na caixa (horizontalmente)".
+No compatible routine found for "Centralize a imagem na caixa (verticalmente)".
+No boolean function found for condition "a imagem for inexistente".
+Unknown structure field access "a coordenada X deste centro desta caixa".
+Unknown structure field access "a coordenada X deste centro desta caixa desta imagem".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a imagem usando o número e 0".
+No boolean function found for condition "a imagem for inexistente".
+Unknown structure field access "a coordenada Y deste centro desta caixa".
+Unknown structure field access "a coordenada Y deste centro desta caixa desta imagem".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a imagem usando 0 e o número".
+No boolean function found for condition "o polígono for inexistente".
+Unknown structure field access "a coordenada X deste centro desta caixa".
+Unknown structure field access "a coordenada X deste centro desta caixa deste polígono".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova o polígono usando o número e 0".
+No boolean function found for condition "o polígono for inexistente".
+Unknown structure field access "o y deste centro desta caixa".
+Unknown structure field access "o y deste centro desta caixa deste polígono".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova o polígono usando 0 e o número".
+Unknown structure field access "a coordenada X deste centro desta caixa".
+Unknown structure field access "a coordenada X desta localização".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a localização usando o número e 0".
+Unknown structure field access "o y deste centro desta caixa".
+Unknown structure field access "a coordenada Y desta localização".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a localização usando 0 e o número".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown structure field access "a coordenada X deste centro desta caixa".
+Unknown structure field access "a coordenada X deste centro desta caixa desta caixa de texto".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a caixa de texto usando o número e 0".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown structure field access "a coordenada Y deste centro desta caixa".
+Unknown structure field access "a coordenada Y deste centro desta caixa desta caixa de texto".
+No compatible routine found for "Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel".
+No compatible routine found for "Mova a caixa de texto usando 0 e o número".
+Unknown variable "matiz desta cor deste contexto por os pontos osmosianos" passed to routine "mude".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown variable "texto na caixa de texto" passed to routine "selecione".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown structure field access "a origem desta caixa de texto dividido pela malha quadriculada desta caixa de texto".
+No compatible routine found for "Redimensione proporcionalmente a altura desta fonte desta caixa de texto usando o fator de escala desta caixa de texto".
+Unknown structure field access "a malha quadriculada desta caixa de texto".
+No compatible routine found for "Delimite a origem dessa caixa de texto".
+Unknown variable "texto na caixa de texto" passed to routine "selecione".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown variable "texto na caixa de texto" passed to routine "selecione".
+No compatible routine found for "Pinte a caixa desta tela com a cor preta e a cor preta".
+Unknown structure field access "a caixa desta tela".
+Unknown variable "caixa desta tela com a cor" passed to routine "pinte".
+Unknown structure field access "a caixa desta tela".
+No compatible routine found for "Pinte a caixa desta tela com a cor branca e a cor branca".
+No compatible routine found for "Atualize o tela".
+Unknown structure field access "a caixa desta tela".
+No compatible routine found for "Pinte a caixa desta tela com a cor preta e a cor preta".
+Unknown structure field access "a caixa desta tela".
+No compatible routine found for "Destrua o stack".
+No compatible routine found for "Destrua os quoras deste terminal".
+No compatible routine found for "Compare a string para a segunda string usando a quantidade de caracteres e a segunda quantidade de caracteres e o tabela de caracteres minúsculos ascii retornando o número".
+No boolean function found for condition "a mensagem for 006".
+Unknown variable "wParam" passed to routine "execute algum WM_ACTIVATE com".
+No boolean function found for condition "a mensagem for 258".
+Unknown variable "wParam" passed to routine "execute algum WM_CHAR com".
+No boolean function found for condition "a mensagem for 001".
+Unknown variable "janela do programa" passed to routine "execute algum WM_CREATE com".
+No boolean function found for condition "a mensagem for 002".
+No boolean function found for condition "a mensagem for 256".
+Unknown variable "wParam" passed to routine "execute algum WM_KEYDOWN com".
+No boolean function found for condition "a mensagem for 513".
+No boolean function found for condition "a mensagem for 515".
+No boolean function found for condition "a mensagem for 015".
+Unknown variable "janela do programa" passed to routine "execute algum WM_PAINT com".
+No boolean function found for condition "a mensagem for 516".
+No boolean function found for condition "a mensagem for 518".
+No boolean function found for condition "a mensagem for 032".
+No boolean function found for condition "a mensagem for 260".
+Unknown variable "wParam" passed to routine "execute algum WM_SYSKEYDOWN com".
+Unknown variable or field "A janela do programa" passed to "Processe".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown variable "posicionamento" passed to routine "limpe".
+No boolean function found for condition "a linha de texto for inexistente".
+Unknown variable "posicionamento" passed to routine "limpe".
+No boolean function found for condition "o posicionamento absoluto for menor do que 1".
+No boolean function found for condition "o caractere for "1"".
+Unknown variable "coordenada X1 desta caixa para a string" passed to routine "acrescente".
+No compatible routine found for "Acrescente " " para a string".
+Unknown variable "coordenada Y1 desta caixa para a string" passed to routine "acrescente".
+No compatible routine found for "Acrescente " " para a string".
+Unknown variable "coordenada X2 desta caixa para a string" passed to routine "acrescente".
+No compatible routine found for "Acrescente " " para a string".
+Unknown variable "coordenada Y2 desta caixa para a string" passed to routine "acrescente".
+No boolean function found for condition "a cifra binária for maior do que o número nove".
+Unknown variable "byte em uma cifra binária" passed to routine "subdivida".
+Unknown variable "segunda cifra hexadecimal para a cifra hexadecimal" passed to routine "acrescente".
+No boolean function found for condition "o byte estiver entre 48 e 57".
+No boolean function found for condition "o byte estiver entre 65 e 90".
+No boolean function found for condition "o byte estiver entre 97 e 122".
+No compatible routine found for "Redimensione proporcionalmente a saturação desta cor usando 240/1000".
+No compatible routine found for "Delimite a saturação desta cor para 1 e 239".
+No compatible routine found for "Redimensione proporcionalmente a luminosidade desta cor usando 240/1000".
+No compatible routine found for "Delimite a luminosidade desta cor para 1 e 239".
+No compatible routine found for "Redimensione proporcionalmente a matiz desta cor usando 240/3600".
+No compatible routine found for "Delimite a matiz desta cor para 1 e 239".
+"Processe" return values require an indefinite article and a return type.
+Unknown variable or field "O endereçamento dum word" passed to "Processe".
+No compatible routine found for "Redimensione proporcionalmente a matiz desta cor usando 3600/240".
+No compatible routine found for "Delimite a matiz desta cor para 0 e 3600".
+No compatible routine found for "Redimensione proporcionalmente a saturação desta cor usando 1000/240".
+No compatible routine found for "Delimite a saturação desta cor para 0 e 1000".
+No compatible routine found for "Redimensione proporcionalmente a luminosidade desta cor usando 1000/240".
+No compatible routine found for "Delimite a luminosidade desta cor para 0 e 1000".
+Unknown variable or field "O endereçamento dum SYSTEMTIME" passed to "Processe".
+No boolean function found for condition "o número for 0".
+Unknown structure field access "a string deste grupo data-hora".
+No compatible routine found for "Reaponte o caractere inicial deste texto hexadecimal usando a magnitude deste sinalizador".
+No compatible routine found for "Copie bytes desde o endereçamento deste sinalizador para o caractere inicial deste texto hexadecimal pela magnitude deste sinalizador".
+"Processe" arguments must be literals or variables introduced by a definite article.
+No compatible routine found for "Reaponte o caractere inicial deste texto hexadecimal usando a magnitude desta fração".
+No compatible routine found for "Copie bytes desde o endereçamento desta fração para o caractere inicial deste texto hexadecimal pela magnitude desta fração".
+No compatible routine found for "Divida o numerador desta fração pelo denominador desta fração usando o número inteiro deste numeral misto e um resto".
+Unknown variable "string" passed to routine "limpe".
+No boolean function found for condition "o número for menor do que 1".
+No compatible routine found for "Eleve o valor numérico para o número".
+No compatible routine found for "Zero preencha o valor numérico usando o número e acrescente o mesmo para a string".
+Unknown structure field access "a quantidade de caracteres desta string".
+No compatible routine found for "Insira "," para a string antes desse byte#".
+No boolean function found for condition "o conteúdo deste caractere inicial desta string for o ponto final".
+No compatible routine found for "Anteponha "0" para a string".
+No compatible routine found for "Anteponha "-" para a string".
+No compatible routine found for "Copie bytes desde o caractere inicial deste texto hexadecimal para o endereçamento desta fração pela magnitude desta fração".
+No compatible routine found for "Copie bytes desde o caractere inicial deste texto hexadecimal para o endereçamento destte número pela magnitude deste número".
+No compatible routine found for "Conjuncione logicamente a tecla com 255".
+"Processe" return values require an indefinite article and a return type.
+Unknown variable "lParam em uma word" passed to routine "subdivida".
+No boolean function found for condition "a cifra binária for maior do que 9".
+No compatible routine found for "Anteponha o número zero para a cifra hexadecimal".
+No boolean function found for condition "o subtexto estiver em branco".
+Unknown variable "cifra binária com a segunda cifra binária" passed to routine "disjuncione logicamente".
+Unknown variable "cifra binária para o texto hexadecimal" passed to routine "acrescente".
+No boolean function found for condition "o endereço do caractere for inexistente".
+No boolean function found for condition "o conteúdo deste endereço do caractere for o caractere null".
+Unknown variable "conteúdo deste endereço do caractere para a string" passed to routine "acrescente".
+No boolean function found for condition "o ponteiro for inexistente".
+No compatible routine found for "Reaponte o caractere inicial desta string usando a quantidade de caracteres".
+No compatible routine found for "Copie bytes desde o ponteiro para o caractere inicial desta string pelo quantidade de caracteres".
+No compatible routine found for "Reaponte o caractere inicial deste texto hexadecimal usando a magnitude deste número".
+No compatible routine found for "Copie bytes desde o endereçamento deste número para o caractere inicial deste texto hexadecimal pela magnitude deste número".
+Unknown variable "número em um word" passed to routine "subdivida".
+Unknown variable "segunda cifra hexadecimal para a cifra hexadecimal" passed to routine "acrescente".
+No boolean function found for condition "a caixa de texto for inexistente".
+Unknown variable "posicionamento absoluto" passed to routine "limpe".
+No boolean function found for condition "a linha de texto for inexistente".
+No boolean function found for condition "o número da linha desta linha de texto for menor do que o número da linha deste posicionamento".
+No boolean function found for condition "o subtexto estiver em branco".
+No boolean function found for condition "o conteúdo deste caractere inicial deste subtexto for o sinal de adição".
+No compatible routine found for "Acrescente " " para a string".
+No boolean function found for condition "o conteúdo deste caractere inicial deste subtexto não for o sinal de porcentagem".
+Unknown variable "conteúdo deste caractere inicial deste subtexto para a string" passed to routine "acrescente".
+No boolean function found for condition "a quantidade de caracteres deste subtexto for menor do que 3".
+Unknown variable "cifra binária com a segunda cifra binária" passed to routine "disjuncione logicamente".
+Unknown variable "cifra binária para a string" passed to routine "acrescente".
+No compatible routine found for "Obtenha uma linha de texto desde as linhas de texto".
+No boolean function found for condition "a linha de texto for inexistente".
+Unknown variable "string desta linha de texto para a string" passed to routine "acrescente".
+Unknown variable "quebra de linha para a string" passed to routine "acrescente".
+No compatible routine found for "Obtenha uma linha de texto desde as linhas de texto".
+No boolean function found for condition "a linha de texto for inexistente".
+Unknown variable "string desta linha de texto para a string" passed to routine "acrescente".
+No boolean function found for condition "o conteúdo deste caractere inicial deste subtexto for algum sinal aritmético".
+No boolean function found for condition "o subtexto estiver em branco".
+No compatible routine found for "Subdivida o subtexto em um subtexto numérico e um subtexto fracionário usando o sinal de adição".
+No boolean function found for condition "o subtexto numérico estiver em branco".
+No compatible routine found for "Subdivida a subtexto fracionário em um numerador textual e um denominador textual usando a barra inclinada".
+No boolean function found for condition "o número inteiro for negativo".
+No boolean function found for condition "o numerador número for negativo".
+No boolean function found for condition "o denominador número for negativo".
+No boolean function found for condition "o denominador número for 0".
+No boolean function found for condition "o número inteiro não for 0".
+No compatible routine found for "Inverta o sinal dessa fração".
+No boolean function found for condition "o subtexto estiver em branco".
+Unknown variable "segunda cifra hexadecimal para a cifra hexadecimal" passed to routine "acrescente".
+No boolean function found for condition "o subtexto estiver em branco".
+No boolean function found for condition "o conteúdo deste caractere inicial deste subtexto for algum sinal aritmético".
+No boolean function found for condition "o subtexto estiver em branco".
+Unknown structure field access "o conteúdo deste caractere inicial deste subtexto".
+Unknown variable "sinal desse número" passed to routine "inverta".
+No compatible routine found for "Delimite o número para o segundo número e o terceiro número".
+No boolean function found for condition "o subtexto estiver em branco".
+No boolean function found for condition "a contagem de deslocamentos for menor do que 0".
+Unknown structure field access "o conteúdo deste caractere inicial deste subtexto".
+Unknown variable "ponteiro tal como um número com o número" passed to routine "disjuncione logicamente".
+No boolean function found for condition "o subtexto estiver em branco".
+Unknown variable "query byte para o texto de consulta" passed to routine "acrescente".
+No compatible routine found for "Mova o percorredor (usando diretrizes de arquivos de texto)".
+No boolean function found for condition "o segmento inicial deste percorredor estiver em branco".
+No compatible routine found for "Crie uma linha de texto usando o segmento inicial deste percorredor".
+No compatible routine found for "Acrescente a linha de texto para as linhas de texto".
+No boolean function found for condition "o conteúdo deste caractere final desta string desta linha de texto for a quebra de linha".
+Unknown variable or field "O caractere inicial desta string de caracteres amplos" passed to "Processe".
+No boolean function found for condition "o subtexto estiver em branco".
+Unknown variable "conteúdo deste caractere inicial deste subtexto para a string de caracteres amplos" passed to routine "acrescente".
+Unknown variable "caractere null para a string de caracteres amplos" passed to routine "acrescente".
+Unknown routine parameter type "string de caracteres amplos e anexe o caractere NULL nela".
+Unknown variable "caractere NULL após a string de caracteres amplos" passed to routine "anexe".
+Unknown variable "word em um byte" passed to routine "subdivida".
+Unknown variable "segunda cifra hexadecimal para a cifra hexadecimal" passed to routine "acrescente".
+No boolean function found for condition "o evento for inexistente".
+No boolean function found for condition "o gpBitmap for inexistente".
+No boolean function found for condition "a caixa de texto for inexistente".
+No boolean function found for condition "a segunda caixa de texto for inexistente".
+No compatible routine found for "Copie as linhas de texto desta caixa de texto para as linhas de texto desta segunda caixa de texto".
+No boolean function found for condition "a imagem for inexistente".
+No compatible routine found for "Aloque memória para a segunda imagem".
+No compatible routine found for "Copie o gpBitmap desta imagem ao gpBitmap desta segunda imagem".
+No boolean function found for condition "o polígono for inexistente".
+No compatible routine found for "Aloque memória para o segundo polígono".
+No compatible routine found for "Copie os vértices deste polígono aos vértices deste segundo polígono".
+No boolean function found for condition "a linha de texto for inexistente".
+No compatible routine found for "Aloque memória para a segunda linha de texto".
+No compatible routine found for "Destrua as segundas linhas de texto".
+Unknown routine parameter type "requisição WinHTTP por posting".
+Unknown routine parameter type "número pela metade".
+"não" cannot be part of a boolean function header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Routine name is required.
+Unknown routine parameter type "tecla para go para baixo".
+Unknown routine parameter type "tecla para come back para cima".
+Unknown routine parameter type "tecla para come para cima".
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Routine name is required.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "linha reta aproximadamente uns twips em comprimento".
+Unknown routine parameter type "outros twips em comprimento".
+Unknown routine parameter type "linha reta uns twips em comprimento".
+Unknown routine parameter type "linha reta com uma cor aproximadamente uns twips em comprimento".
+Unknown routine parameter type "linha reta com uma cor uns twips em comprimento".
+Unknown routine parameter type "outros twips em comprimento".
+Unknown routine parameter type "orientação aleatória".
+Unknown routine parameter type "valor da díade usando as variáveis de ambiente".
+Unknown routine parameter type "letra desde o alfabeto".
+Unknown routine parameter type "número desde a stack".
+Unknown routine parameter type "tamanho usando um endereço completo no sistema de arquivos [endereço]".
+Unknown routine parameter type "largura inicial".
+Unknown routine parameter type "string desde o stack".
+Unknown routine parameter type "string desde a área de transferência do Windows".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "caixa com uma coordenada X1".
+Unknown routine parameter type "coordenada Y1".
+Unknown routine parameter type "coordenada X2".
+Unknown routine parameter type "coordenada Y2".
+Unknown routine parameter type "elipse com uma coordenada X1".
+Unknown routine parameter type "coordenada Y1".
+Unknown routine parameter type "coordenada X2".
+Unknown routine parameter type "coordenada Y2".
+Unknown routine parameter type "linha reta através de uma caixa uma fração no caminho para cima desde a base".
+Unknown routine parameter type "caixa arredondada com uma coordenada X1".
+Unknown routine parameter type "coordenada Y1".
+Unknown routine parameter type "coordenada X2".
+Unknown routine parameter type "coordenada Y2".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "índice e atribua it".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "quadrados na diagonal".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "janela do programa para a esquerda".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "janela do programa para a direita".
+Unknown routine parameter type "linha reta vertical".
+Unknown routine parameter type "cor sem passar pra próxima linha".
+Unknown routine parameter type "número sem passar pra próxima linha".
+Unknown routine parameter type "cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "wave e espere".
+Unknown routine parameter type "arquivo de som e espere".
+Unknown routine parameter type "número sobre o stack".
+Unknown routine parameter type "string sobre a área de transferência do Windows".
+Invalid routine parameter declaration.
+Unknown routine parameter type "segmento inicial sobre o stack".
+Unknown routine parameter type "localização em direção".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string e espere".
+Unknown routine parameter type "caixa de texto para a base".
+Unknown routine parameter type "caixa de texto para o cursor de texto e centralize-o".
+Unknown routine parameter type "caixa de texto para baixo one página".
+Unknown routine parameter type "caixa de texto para o topo".
+Unknown routine parameter type "caixa de texto para cima one página".
+Unknown routine parameter type "endereço completo para modo de leitura&gravação".
+Unknown routine parameter type "linhas de texto selecionadas".
+Unknown routine parameter type "string em um subtexto anterior".
+Unknown routine parameter type "listas em umas listas anteriores".
+Unknown routine parameter type "listas posteriores".
+Unknown routine parameter type "listas em umas listas anteriores".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Unknown routine parameter type "localização voltada para o east".
+Unknown routine parameter type "localização voltada para o north".
+Unknown routine parameter type "localização voltada para o south".
+Unknown routine parameter type "localização voltada para o west".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Unknown routine parameter type "linha reta vertical".
+Unknown routine parameter type "caixa voltada para o east".
+Unknown routine parameter type "caixa voltada para o north".
+Unknown routine parameter type "caixa voltada para o south".
+Unknown routine parameter type "caixa voltada para o west".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Alternate routine header is semantically equivalent to the primary header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "twips para a esquerda".
+Unknown routine parameter type "twips para a esquerda".
+Unknown routine parameter type "twips para o lado direito".
+Unknown routine parameter type "twips para o lado direito".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "pontos osmosianos para a esquerda".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "degraus para o lado direito".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "número para StdOut".
+Unknown routine parameter type "byte para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em verde para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em vermelho para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em azul para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em ciano para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em amarelo claro para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em reset para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em negrito para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com sublinhado para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com cores invertidas para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em preto brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em vermelho brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em verde brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em amarelo brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em azul brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em magenta brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em ciano brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em branco brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo preto brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo vermelho brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo verde brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo amarelo brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo azul brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo magenta brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo ciano brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo branco brilhante para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em preto opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em vermelho opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em verde opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em amarelo opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em azul opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em magenta opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em ciano opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em branco opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo preto opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo vermelho opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo verde opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo amarelo opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo azul opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo magenta opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo ciano opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo branco opaco para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em reset na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em negrito na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com sublinhado na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com cores invertidas na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em preto brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em vermelho brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em verde brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em amarelo brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em azul brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em magenta brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em ciano brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em branco brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo preto brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo vermelho brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo verde brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo amarelo brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo azul brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo magenta brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo ciano brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo branco brilhante na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em preto opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em vermelho opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em verde opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em amarelo opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em azul opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em magenta opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em ciano opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string em branco opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo preto opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo vermelho opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo verde opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo amarelo opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo azul opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo magenta opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo ciano opaco na nova linha de texto para StdOut".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "string com fundo branco opaco na nova linha de texto para StdOut".
+Unknown routine parameter type "string para StdOut".
+Unknown routine parameter type "byte sem passar pra próxima linha".
+Unknown routine parameter type "sinalizador sem passar pra próxima linha".
+Unknown routine parameter type "fração sem passar pra próxima linha".
+Unknown routine parameter type "número sem passar pra próxima linha".
+Unknown routine parameter type "número usando uma contagem e acrescente o mesmo".
+Unknown routine parameter type "índice e atribua it".
+Unknown routine parameter type "string sobre um console sem passar pra próxima linha".
+Unknown routine parameter type "string no meio da tela".
+Unknown routine parameter type "número para o fluxo de saída".
+Unknown routine parameter type "número para o fluxo de saída sem pular linhas".
+Unknown routine parameter type "string para o fluxo de saída".
+Unknown routine parameter type "string para o arquivo de saída".
+Unknown routine parameter type "string para o arquivo de saída sem passar pra próxima linha".
+Unknown routine parameter type "string para a pasta de saída sem passar pra próxima linha".
+Unknown routine parameter type "quadrados na diagonal".
+Unknown routine parameter type "linha reta vertical".
+Unknown routine parameter type "polígono sobre o tela".
+Unknown routine parameter type "coordenada X1".
+Unknown routine parameter type "coordenada Y1".
+Unknown routine parameter type "coordenada X2".
+Unknown routine parameter type "coordenada Y2".
+Unknown routine parameter type "coordenada X1".
+Unknown routine parameter type "coordenada Y1".
+Unknown routine parameter type "coordenada X2".
+Unknown routine parameter type "coordenada Y2".
+Unknown routine parameter type "coordenada X1".
+Unknown routine parameter type "coordenada Y1".
+Unknown routine parameter type "coordenada X2".
+Unknown routine parameter type "coordenada Y2".
+Unknown routine parameter type "linha reta vertical".
+Unknown routine parameter type "caixa sobre a tela".
+Unknown routine parameter type "localização em uma caixa aproximadamente uns twips acima do centro".
+Unknown routine parameter type "localização em uma caixa aproximadamente uns twips debaixo do centro".
+Unknown routine parameter type "outros twips acima do centro".
+Unknown routine parameter type "outros twips debaixo do centro".
+Unknown routine parameter type "vértice uns twips para a direita".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "caixa de texto uns twips para a direita".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "twips para a direita".
+Unknown routine parameter type "outros twips para baixo".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "twips para a direita".
+Unknown routine parameter type "outros twips para cima".
+Unknown routine parameter type "localização aproximadamente uns twips em algum direction".
+Unknown routine parameter type "localização uns twips para a direita".
+Unknown routine parameter type "localização uns twips para a direita".
+Unknown routine parameter type "outros twips para baixo".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+Unknown routine parameter type "twips para a esquerda".
+Unknown routine parameter type "outros twips para baixo".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+Unknown routine parameter type "twips para a esquerda".
+Unknown routine parameter type "outros twips para cima".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "caixa para a esquerda".
+Unknown routine parameter type "twips para trás".
+Unknown routine parameter type "localização sem passar pra próxima linha".
+Unknown routine parameter type "string sem passar pra próxima linha".
+Unknown routine parameter type "cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "caixa arredondada com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "caixa arredondada com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "polígono com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "polígono com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "elipse com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "elipse com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "caixa com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "caixa com uma cor da borda".
+Unknown routine parameter type "cor de preenchimento".
+Unknown routine parameter type "trecho por pdf output".
+Unknown routine parameter type "número para pdf em units usando um tamanho UPM".
+Unknown routine parameter type "larguras de fonte para pdf em units".
+Unknown routine parameter type "definição da fonte para pdf em units".
+Unknown routine parameter type "objeto pdf sem passar pra próxima linha".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "cor similar".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "bits em um byte para a direita".
+Unknown routine parameter type "byte uns bits para a direita".
+Unknown routine parameter type "número uns bits para a direita".
+Unknown routine parameter type "word uns bits para a direita".
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Invalid routine parameter declaration.
+At least one parameter is required in the routine header.
+Unknown routine parameter type "número para cima usando o potência de dois".
+Unknown routine parameter type "word para eax".
+Unknown routine parameter type "número para eax".
+Unknown routine parameter type "byte para eax".
+Routine name is required.
+Routine name is required.
+Não estão sendo exibidos 4915 erros e avisos adicionais.

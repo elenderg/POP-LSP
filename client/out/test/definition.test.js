@@ -1699,6 +1699,7 @@ suite('Português Puro definitions', () => {
         });
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
+            'Um bipe é um byte.',
             'Um ponteiro é um byte.',
             'Uma estrutura de exemplo é uma estrutura com',
             '  Um ponteiro denominado ponteiro de função.',
@@ -1713,8 +1714,8 @@ suite('Português Puro definitions', () => {
             '  Empilhe o número.',
             'Rotina para que se feche a área de transferência:',
             '  Processe "user32.dll" "CloseClipboard".',
-            'Rotina para que se emita um bipe usando um número denominado bipe:',
-            '  Processe "user32.dll" "MessageBeep" com o bipe retornando um número denominado resultado.',
+            'Rotina para que se emita um bipe usando um número denominado valor:',
+            '  Processe "user32.dll" "MessageBeep" com o valor retornando um número denominado resultado.',
             '  Empilhe o resultado.'
         ].join('\n'));
         await diagnosticsUpdated;
@@ -1725,12 +1726,47 @@ suite('Português Puro definitions', () => {
         const fieldDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(fieldOffset));
         assert.ok(fieldDefinition);
         assert.equal(fieldDefinition.length, 1);
-        assert.equal(fieldDefinition[0].range.start.line, 3);
+        assert.equal(fieldDefinition[0].range.start.line, 4);
         const returnTypeOffset = text.indexOf('número denominado resultado') + 2;
         const returnTypeDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(returnTypeOffset));
         assert.ok(returnTypeDefinition);
         assert.equal(returnTypeDefinition.length, 1);
         assert.equal(returnTypeDefinition[0].range.start.line, 0);
+    });
+    test('Stores a Processe return value in an existing routine parameter', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um número é uma estrutura.',
+            'O total global é um número igual a 0.',
+            'Uma fração é uma estrutura com',
+            '  Um número denominado numerador e',
+            '  Um número denominado denominador.',
+            'Rotina para que se multiplique um número por uma fração:',
+            '  Processe "kernel32.dll" "MulDiv" retornando o número.',
+            'Rotina para que se atualize:',
+            '  Processe "kernel32.dll" "GetTickCount" retornando o total global.',
+            'Rotina para que se crie um número:',
+            '  Retorne.',
+            'Rotina para que se use:',
+            '  Crie um número denominado valor local.',
+            '  Processe "kernel32.dll" "GetTickCount" retornando o valor local.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const returnedParameterOffset = document.getText().lastIndexOf('o número') + 3;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(returnedParameterOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 5);
     });
     test('Reserves Processe in routine names', async () => {
         await (0, helper_1.activate)(docUri);
@@ -1802,6 +1838,29 @@ suite('Português Puro definitions', () => {
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message === '"Diga" requires the boolean literal "sim" or "não".').length, 1);
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.').length, 3);
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message.includes('has no statements')).length, 1);
+    });
+    test('Allows boolean functions with Decodifique instructions to manage their own return', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Função para que se determine se codificado:',
+            '  Decodifique $C7C001000000.',
+            '  Decodifique $8B9D08000000.',
+            'Função para que se determine se texto:',
+            '  Escreva "Decodifique" para StdOut.',
+            'Função para que se determine se comentário:',
+            '  Escreva "teste" para StdOut. \\ Decodifique $C7C001000000'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.').length, 2);
     });
     test('Rejects Diga in ordinary routines and routine names', async () => {
         await (0, helper_1.activate)(docUri);
@@ -2303,6 +2362,188 @@ suite('Português Puro definitions', () => {
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 5);
     });
+    test('Resolves estar predicates and derived types in conditional expressions', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um ponteiro é uma estrutura.',
+            'Um caractere inicial é um ponteiro para um byte.',
+            'Um caractere final é um ponteiro para um byte.',
+            'Uma string é uma estrutura com',
+            '  Um caractere inicial e',
+            '  Um caractere final.',
+            'Um subtexto é uma string.',
+            'para que se faça algo com um subtexto:',
+            '  Se o subtexto estiver em branco, retorne.',
+            'Função para que se determine se uma string está em branco:',
+            '  Decodifique $B801000000.',
+            '  Decodifique $8B9D08000000.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.deepEqual(diagnostics, []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const predicateOffset = document.getText().indexOf('estiver') + 2;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(predicateOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 9);
+        const variableOffset = document.getText().indexOf('subtexto', document.getText().indexOf('Se '));
+        const typeDefinition = await vscode.commands.executeCommand('vscode.executeTypeDefinitionProvider', docUri, document.positionAt(variableOffset + 2));
+        assert.ok(typeDefinition);
+        assert.equal(typeDefinition.length, 1);
+        assert.equal(typeDefinition[0].range.start.line, 6);
+    });
+    test('Resolves boolean predicates followed by a preposition and second parameter', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um ponteiro é uma estrutura.',
+            'Rotina para que se teste um subtexto e uma string:',
+            '  Se o subtexto estiver na string, retorne.',
+            'Função para que se determine se uma string está em uma segunda string:',
+            '  Diga sim.',
+            'Um caractere inicial é um ponteiro para um byte.',
+            'Um caractere final é um ponteiro para um byte.',
+            'Uma string é uma estrutura com',
+            '  Um caractere inicial e',
+            '  Um caractere final.',
+            'Um subtexto é uma string.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const predicateOffset = document.getText().indexOf('estiver') + 2;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(predicateOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 3);
+    });
+    test('Resolves boolean conditions using locals introduced by calls inside loops', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Rotina para que se cite uma string:',
+            '  Lance um subtexto sobre a string.',
+            '  Itere.',
+            '    Se o subtexto estiver em branco, pare.',
+            '  Reitere.',
+            'Rotina para que se lance um subtexto sobre uma string:',
+            '  Decodifique $8B8508000000.',
+            '  Decodifique $8B9D0C000000.',
+            '  Decodifique $8B8B00000000.',
+            '  Decodifique $898800000000.',
+            '  Decodifique $8B8B04000000.',
+            '  Decodifique $898804000000.',
+            'Função para que se determine se uma string está em branco:',
+            '  Decodifique $B801000000.',
+            '  Decodifique $8B9D08000000.',
+            '  Decodifique $833B00.',
+            '  Decodifique $0F8410000000.',
+            '  Decodifique $8B5304.',
+            '  Decodifique $3B13.',
+            '  Decodifique $0F8C05000000.',
+            '  Decodifique $B800000000.',
+            'Um ponteiro é uma estrutura.',
+            'Um caractere inicial é um ponteiro para um byte.',
+            'Um caractere final é um ponteiro para um byte.',
+            'Uma string é uma estrutura com',
+            '  Um caractere inicial e',
+            '  Um caractere final.',
+            'Um subtexto é uma string.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'No boolean function found for condition "o subtexto estiver em branco".').length, 0, diagnostics.map(diagnostic => diagnostic.message).join('\n'));
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const text = document.getText();
+        const predicateOffset = text.indexOf('estiver') + 2;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(predicateOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 12);
+        const variableOffset = text.indexOf('subtexto', text.indexOf('Se '));
+        const typeDefinition = await vscode.commands.executeCommand('vscode.executeTypeDefinitionProvider', docUri, document.positionAt(variableOffset + 2));
+        assert.ok(typeDefinition);
+        assert.equal(typeDefinition.length, 1);
+        assert.equal(typeDefinition[0].range.start.line, 27);
+    });
+    test('Resolves appended structure fields and derived string arguments', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'As aspas duplas são um byte igual a 34.',
+            'Um ponteiro é uma estrutura.',
+            'Uma cifra hexadecimal é uma estrutura.',
+            'Um caractere inicial é um ponteiro para um byte.',
+            'Um caractere final é um ponteiro para um byte.',
+            'Uma string é uma estrutura com',
+            '  Um caractere inicial e',
+            '  Um caractere final.',
+            'Um subtexto é uma string.',
+            'Rotina para que se cite uma string:',
+            '  Atribua as aspas duplas para uma segunda string.',
+            '  Lance um subtexto sobre a string.',
+            '  Itere.',
+            '    Se o subtexto estiver em branco, pare.',
+            '    Acrescente o conteúdo deste caractere inicial deste subtexto para a segunda string.',
+            '  Reitere.',
+            '  Acrescente as aspas duplas para a segunda string.',
+            '  Atribua a segunda string à string.',
+            'Rotina para que se acrescente um byte para uma string:',
+            '  Retorne.',
+            'Rotina para que se lance um subtexto sobre uma string:',
+            '  Decodifique $8B8508000000.',
+            '  Decodifique $8B9D0C000000.',
+            '  Decodifique $8B8B00000000.',
+            '  Decodifique $898800000000.',
+            '  Decodifique $8B8B04000000.',
+            '  Decodifique $898804000000.',
+            'Rotina para que se acrescente um ponteiro para uma string:',
+            '  Converta o ponteiro para uma segunda string.',
+            '  Acrescente a segunda string para a string.',
+            'Rotina para que se acrescente uma string para uma segunda string:',
+            '  Se a string estiver em branco, retorne.',
+            'Rotina para que se converta um ponteiro para uma string:',
+            '  Converta o ponteiro para a string tal como uma cifra hexadecimal.',
+            'Rotina para que se converta um ponteiro para uma cifra hexadecimal:',
+            '  Retorne.',
+            'Função para que se determine se uma string está em branco:',
+            '  Decodifique $B801000000.',
+            '  Decodifique $8B9D08000000.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.deepEqual(diagnostics, []);
+    });
     test('Ignores não in boolean conditions and rejects it in boolean headers', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -2403,6 +2644,153 @@ suite('Português Puro definitions', () => {
             assert.equal(definition.length, 1);
             assert.equal(definition[0].range.start.line, expectedLine);
         }
+    });
+    test('Parses routine parameter lists around trailing and interleaved direction phrases', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Uma word é uma estrutura com',
+            '  Um byte denominado byte inicial e',
+            '  Um byte denominado byte final.',
+            'Uma word de ordem inferior é uma word.',
+            'Uma word de ordem superior é uma word.',
+            'Um número é uma estrutura com',
+            '  Um byte denominado primeiro byte,',
+            '  Um byte denominado segundo byte,',
+            '  Um byte denominado terceiro byte,',
+            '  Um byte denominado quarto byte,',
+            '  Uma word de ordem inferior sob o primeiro byte,',
+            '  Uma word de ordem superior sob o terceiro byte.',
+            'Uma unidade é um número.',
+            'Um bit é uma unidade.',
+            'Uns bits são umas unidades.',
+            'Rotina para que se desloque para a direita uns bits em um byte;',
+            'Rotina para que se desloque uns bits em um byte para a direita:',
+            '  Decodifique $8B8D0C000000.',
+            'Rotina para que se desloque um byte uns bits para a direita:',
+            '  Decodifique $8B8D0C000000.',
+            'Rotina para que se mova um byte para a esquerda uns bits:',
+            '  Decodifique $8B8D0C000000.',
+            'Rotina para que se efetue o deslocamento de uns bits para a esquerda em um byte:',
+            '  Decodifique $8B8D0C000000.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.deepEqual(diagnostics, []);
+        const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', docUri);
+        const shiftRoutines = symbols.filter(symbol => symbol.name === 'desloque');
+        assert.deepEqual(shiftRoutines.map(symbol => symbol.detail), ['rotina bits bits byte byte', 'rotina byte byte bits bits']);
+        const directionalRoutine = symbols.find(symbol => symbol.name === 'mova');
+        assert.equal(directionalRoutine?.detail, 'rotina byte byte bits bits');
+        const interleavedDirectionRoutine = symbols.find(symbol => symbol.name === 'efetue o deslocamento de');
+        assert.equal(interleavedDirectionRoutine?.detail, 'rotina bits bits byte byte');
+    });
+    test('Uses each indefinite article to start a routine parameter', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um bipe é um byte.',
+            'Um número é uma estrutura.',
+            'Rotina para que se emita um bipe usando um número denominado bipe:',
+            '  Retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.ok(diagnostics.some(diagnostic => diagnostic.message === 'Local variable "bipe" is already declared in this routine.'));
+        assert.ok(diagnostics.every(diagnostic => !diagnostic.message.startsWith('Unknown routine parameter type ')));
+    });
+    test('Ends a routine parameter type at any routine-name delimiter', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um ponteiro é uma estrutura com 4 bytes.',
+            'Uma word é uma estrutura com',
+            '  Um byte denominado byte inicial e',
+            '  Um byte denominado byte final.',
+            'Uma word de ordem inferior é uma word.',
+            'Uma word de ordem superior é uma word.',
+            'Um número é uma estrutura com',
+            '  Um byte denominado primeiro byte,',
+            '  Um byte denominado segundo byte,',
+            '  Um byte denominado terceiro byte,',
+            '  Um byte denominado quarto byte,',
+            '  Uma word de ordem inferior sob o primeiro byte,',
+            '  Uma word de ordem superior sob o terceiro byte.',
+            'Uma quantidade de bytes é uma estrutura.',
+            'Rotina para que se preencha bytes com um byte começando sob um ponteiro por um quantidade de bytes:',
+            '  Decodifique $8BBD0C000000.',
+            '  Decodifique $8B3F.',
+            '  Decodifique $8B8D10000000.',
+            '  Decodifique $8B09.',
+            '  Decodifique $8B8508000000.',
+            '  Decodifique $8A00.',
+            '  Decodifique $FC.',
+            '  Decodifique $F3AA.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.deepEqual(diagnostics, []);
+        const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', docUri);
+        const routine = symbols.find(symbol => symbol.name === 'preencha bytes com');
+        assert.equal(routine?.detail, 'rotina byte byte ponteiro ponteiro quantidade de bytes quantidade de bytes');
+    });
+    test('Keeps trailing routine-name phrases out of the final parameter type', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Rotina para que se arredonde um número para cima usando a potência de dois:',
+            '  Decodifique $8B8D08000000.',
+            'Rotina para que se atribua uma word para eax:',
+            '  Decodifique $8B9D08000000.',
+            '  Decodifique $0FBF03.',
+            'Rotina para que se atribua um número para eax:',
+            '  Decodifique $8B9D08000000.',
+            '  Decodifique $8B03.',
+            'Rotina para que se atribua um byte para eax:',
+            '  Decodifique $8B9D08000000.',
+            '  Decodifique $0FB603.',
+            'Uma word é uma estrutura.',
+            'Um número é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.deepEqual(diagnostics, []);
+        const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', docUri);
+        const routines = symbols.filter(symbol => ['arredonde', 'atribua'].includes(symbol.name));
+        assert.deepEqual(routines.map(symbol => symbol.detail), [
+            'rotina número número',
+            'rotina word word',
+            'rotina número número',
+            'rotina byte byte'
+        ]);
     });
     test('Resolves direct and nested structure field accesses as routine arguments', async () => {
         await (0, helper_1.activate)(docUri);
