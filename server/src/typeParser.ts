@@ -161,6 +161,7 @@ export interface RoutineDeclaration {
   assignments: RoutineAssignment[];
   outputs: RoutineOutput[];
   localVariables: RoutineLocalVariable[];
+  memoryAllocations: RoutineMemoryAllocation[];
   conditionals: RoutineConditionalBlock[];
   processes: RoutineProcess[];
   loopInstructions: RoutineLoopInstruction[];
@@ -170,6 +171,7 @@ export interface RoutineDeclaration {
   calls: RoutineCall[];
   annotation?: 'rotina' | 'função';
   isBooleanFunction: boolean;
+  isCompatible: boolean;
   range: SourceRange;
   bodyRange: SourceRange;
 }
@@ -178,11 +180,18 @@ export interface RoutineCall {
   name: TypeReference;
   qualifierRange?: SourceRange;
   arguments: TypeReference[];
+  addressType?: TypeReference;
   fieldAccesses?: RoutineFieldAccess[];
   variableAccesses?: RoutineVariableAccess[];
   computedFieldAccesses?: RoutineComputedFieldAccess[];
   localVariable?: RoutineLocalVariable;
   target?: RoutineDeclaration;
+}
+
+export interface RoutineMemoryAllocation {
+  type: TypeReference;
+  variableAccess?: RoutineVariableAccess;
+  range: SourceRange;
 }
 
 export interface RoutineProcess {
@@ -571,7 +580,8 @@ const articlesAfterPrepositionA = new Set([
 const builtInStatementStarts = new Set([
   'atribua', 'escreva', 'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere', 'adicione', 'incremente', 'feche', 'defina',
-  'ative', 'converta', 'dobre', 'multiplique', 'desloque', 'subtraia', 'faça'
+  'ative', 'converta', 'dobre', 'multiplique', 'desloque', 'subtraia', 'faça',
+  'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
 const routineNameDelimiters = new Set([
   'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente', 
@@ -1116,6 +1126,26 @@ function processRoutineStatement(
     return false;
   }
   const firstWord = readWord(source, statement.start, statement.end);
+  if (validateMemoryAllocationStatement(
+    source,
+    statement,
+    caller,
+    globalVariables,
+    symbols,
+    diagnostics
+  )) {
+    return false;
+  }
+  if (validateRoutineAddressStatement(
+    source,
+    statement,
+    caller,
+    routines,
+    symbols,
+    diagnostics
+  )) {
+    return false;
+  }
   const loopInstruction = parseLoopInstruction(source, statement, diagnostics);
   if (loopInstruction) {
     caller.loopInstructions.push(loopInstruction);
@@ -1794,6 +1824,212 @@ function validatePushStatement(
     range: valueRange.start < valueRange.end
       ? valueRange
       : { start: keyword.start, end: keyword.end }
+  });
+  return true;
+}
+
+function validateMemoryAllocationStatement(
+  source: string,
+  statement: SourceRange,
+  routine: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): boolean {
+  const keyword = readWord(source, statement.start, statement.end);
+  if (keyword?.value.toLocaleLowerCase('pt-BR') !== 'aloque') {
+    return false;
+  }
+
+  const instructionTail = trimRange(source, keyword.end, statement.end);
+  const prefix = /^memória\s+para\b/iu.exec(
+    source.slice(instructionTail.start, instructionTail.end)
+  );
+  const targetStart = prefix
+    ? skipWhitespace(source, instructionTail.start + prefix[0].length, instructionTail.end)
+    : instructionTail.end;
+  const article = readWord(source, targetStart, instructionTail.end);
+  if (
+    !prefix ||
+    !article ||
+    ![...indefiniteArticles, ...definiteArticles].includes(
+      article.value.toLocaleLowerCase('pt-BR')
+    )
+  ) {
+    diagnostics.push({
+      message: '"Aloque memória para" requires an article and a list variable or type.',
+      range: instructionTail.start < instructionTail.end
+        ? instructionTail
+        : { start: keyword.start, end: keyword.end }
+    });
+    return true;
+  }
+
+  const targetRange = trimRange(source, article.end, instructionTail.end);
+  const targetName = normalizeTypeName(source.slice(targetRange.start, targetRange.end));
+  const localVariable = findRoutineVariable(routine, targetName);
+  const globalVariable = globalVariables.lookup(targetName);
+  let type: TypeReference | undefined;
+  let variableAccess: RoutineVariableAccess | undefined;
+
+  if (localVariable) {
+    type = localVariable.type;
+    variableAccess = {
+      reference: createTypeReference(source, targetRange),
+      type,
+      scope: routine.range.start
+    };
+  } else if (globalVariable?.typeName) {
+    type = createSyntheticTypeReference(globalVariable.typeName, targetRange);
+    variableAccess = {
+      reference: createTypeReference(source, targetRange),
+      type
+    };
+  } else if (symbols.lookup(source.slice(targetRange.start, targetRange.end))) {
+    type = createTypeReference(source, targetRange);
+  }
+
+  if (!type) {
+    diagnostics.push({
+      message: `Unknown variable or type "${source.slice(targetRange.start, targetRange.end)}" after "Aloque memória para".`,
+      range: targetRange.start < targetRange.end
+        ? targetRange
+        : { start: keyword.start, end: keyword.end }
+    });
+    return true;
+  }
+
+  if (symbols.getBaseTypeDistance(type.name, 'lista') === undefined) {
+    diagnostics.push({
+      message: '"Aloque memória para" only accepts variables and types based on "lista".',
+      range: targetRange
+    });
+    return true;
+  }
+
+  routine.memoryAllocations.push({
+    type,
+    variableAccess,
+    range: statement
+  });
+  return true;
+}
+
+function validateRoutineAddressStatement(
+  source: string,
+  statement: SourceRange,
+  caller: RoutineDeclaration,
+  routines: RoutineDeclaration[],
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): boolean {
+  const keyword = readWord(source, statement.start, statement.end);
+  const instruction = keyword?.value.toLocaleLowerCase('pt-BR');
+  if (!keyword || !instruction || !['aponte', 'direcione', 'redirecione'].includes(instruction)) {
+    return false;
+  }
+
+  const typeArticle = readWord(source, keyword.end, statement.end);
+  if (
+    !typeArticle ||
+    !indefiniteArticles.has(typeArticle.value.toLocaleLowerCase('pt-BR'))
+  ) {
+    diagnostics.push({
+      message: `"${keyword.value}" requires an indefinite article and a pointer type before "para a rotina".`,
+      range: { start: keyword.start, end: statement.end }
+    });
+    return true;
+  }
+
+  let markerStart = -1;
+  let markerEnd = -1;
+  let type: TypeReference | undefined;
+  let searchStart = typeArticle.end;
+  while (searchStart < statement.end) {
+    const preposition = findWord(source, searchStart, statement.end, 'para');
+    if (!preposition) {
+      break;
+    }
+    const routineArticle = readWord(source, preposition.end, statement.end);
+    const routineWord = routineArticle
+      ? readWord(source, routineArticle.end, statement.end)
+      : undefined;
+    if (
+      routineArticle?.value.toLocaleLowerCase('pt-BR') === 'a' &&
+      routineWord?.value.toLocaleLowerCase('pt-BR') === 'rotina'
+    ) {
+      const candidateRange = trimRange(source, typeArticle.end, preposition.start);
+      const candidateType = symbols.lookup(source.slice(candidateRange.start, candidateRange.end));
+      if (candidateType) {
+        markerStart = preposition.start;
+        markerEnd = routineWord.end;
+        type = createTypeReference(source, candidateRange);
+        break;
+      }
+    }
+    searchStart = preposition.end;
+  }
+
+  if (!type || markerStart === -1) {
+    diagnostics.push({
+      message: `"${keyword.value}" requires a known pointer type followed by "para a rotina".`,
+      range: { start: typeArticle.end, end: statement.end }
+    });
+    return true;
+  }
+
+  if (symbols.getBaseTypeDistance(type.name, 'ponteiro') === undefined) {
+    diagnostics.push({
+      message: `"${keyword.value}" only accepts types based on "ponteiro".`,
+      range: type.range
+    });
+  }
+
+  const routineNameRange = trimRange(source, markerEnd, statement.end);
+  const qualifier = findTrailingParentheticalQualifier(
+    source,
+    routineNameRange.start,
+    routineNameRange.end
+  );
+  const routineRange = trimRange(
+    source,
+    routineNameRange.start,
+    qualifier?.start ?? routineNameRange.end
+  );
+  const normalizedRoutineName = normalizeRoutineName(
+    source.slice(routineRange.start, routineRange.end)
+  );
+  const candidates = routines.filter(candidate =>
+    candidate.qualifier === qualifier?.text &&
+    routineNames(candidate).some(name =>
+      normalizeRoutineName(name.name) === normalizedRoutineName
+    )
+  );
+  if (candidates.length === 0) {
+    diagnostics.push({
+      message: `No routine found for address reference "${source.slice(routineRange.start, routineRange.end)}".`,
+      range: routineRange
+    });
+    return true;
+  }
+
+  const target = candidates.find(candidate => candidate.isCompatible);
+  if (!target) {
+    diagnostics.push({
+      message: `Routine "${source.slice(routineRange.start, routineRange.end)}" must be declared with "compativelmente" to provide its address.`,
+      range: routineRange
+    });
+    return true;
+  }
+
+  caller.calls.push({
+    name: createTypeReference(source, routineRange),
+    qualifierRange: qualifier
+      ? { start: qualifier.start, end: routineNameRange.end }
+      : undefined,
+    arguments: [],
+    addressType: type,
+    target
   });
   return true;
 }
@@ -3513,6 +3749,15 @@ export function findTypeDefinitionReferenceAtOffset(
   }
 
   for (const routine of parsedDocument.routines) {
+    const allocationAccess = routine.memoryAllocations
+      .map(allocation => allocation.variableAccess)
+      .find(access => access &&
+        offset >= access.reference.range.start &&
+        offset <= access.reference.range.end
+      );
+    if (allocationAccess) {
+      return allocationAccess.type;
+    }
     const localVariable = routine.localVariables.find(variable =>
       offset >= variable.name.range.start &&
       offset <= variable.name.range.end
@@ -3595,6 +3840,7 @@ interface ParsedRoutineHeader {
   returnParameter?: RoutineParameter;
   annotation?: 'rotina' | 'função';
   isBooleanFunction: boolean;
+  isCompatible: boolean;
   isPrimary: boolean;
   range: SourceRange;
 }
@@ -3803,6 +4049,21 @@ function parseRoutineDeclarations(
           'não'
         )
         : syntaxSource;
+      const firstHeaderWordStart = skipWhitespace(
+        headerSyntaxSource,
+        headerPattern.lastIndex,
+        headerEnd
+      );
+      const firstHeaderWord = readWord(
+        headerSyntaxSource,
+        firstHeaderWordStart,
+        headerEnd
+      );
+      const isCompatible = firstHeaderWord?.value.toLocaleLowerCase('pt-BR') ===
+        'compativelmente';
+      const routineNameStart = isCompatible
+        ? firstHeaderWord.end
+        : headerPattern.lastIndex;
       const returningMarker = findWord(headerSyntaxSource, headerPattern.lastIndex, headerEnd, 'retornando');
       const signatureEnd = Math.min(
         returningMarker?.start ?? headerEnd,
@@ -3810,12 +4071,12 @@ function parseRoutineDeclarations(
       );
       const computedField = parseComputedFieldHeader(
         headerSyntaxSource,
-        headerPattern.lastIndex,
+        routineNameStart,
         headerEnd
       );
       const firstParameterArticle = findAnyWord(
         headerSyntaxSource,
-        headerPattern.lastIndex,
+        routineNameStart,
         signatureEnd,
         indefiniteArticles
       );
@@ -3823,7 +4084,7 @@ function parseRoutineDeclarations(
       const predicateMarker = isBooleanFunction
         ? findAnyWord(
           headerSyntaxSource,
-          parameterArticle?.end ?? headerPattern.lastIndex,
+          parameterArticle?.end ?? routineNameStart,
           signatureEnd,
           routinePredicateWords
         )
@@ -3856,8 +4117,8 @@ function parseRoutineDeclarations(
           end: predicateTailArticle?.start ?? signatureEnd
         }
         : computedField
-          ? trimRange(source, headerPattern.lastIndex, computedField.returnMarker.start)
-        : trimRange(source, headerPattern.lastIndex, nameEnd);
+        ? trimRange(source, routineNameStart, computedField.returnMarker.start)
+        : trimRange(source, routineNameStart, nameEnd);
       if (nameRange.start === nameRange.end) {
         diagnostics.push({
           message: 'Routine name is required.',
@@ -3867,7 +4128,8 @@ function parseRoutineDeclarations(
         continue;
       }
       for (const reservedKeyword of [
-        'retorne', 'diga', 'preserve', 'empilhe', 'processe', 'itere', 'pare', 'reitere'
+        'retorne', 'diga', 'preserve', 'empilhe', 'processe', 'itere', 'pare', 'reitere',
+        'aloque', 'aponte', 'direcione', 'redirecione'
       ]) {
         const reservedWord = findWord(headerSyntaxSource, nameRange.start, nameRange.end, reservedKeyword);
         if (!reservedWord) {
@@ -3885,7 +4147,15 @@ function parseRoutineDeclarations(
                   ? 'Pare'
                   : reservedKeyword === 'reitere'
                     ? 'Reitere'
-                    : reservedKeyword === 'diga' ? 'Diga' : 'Retorne';
+                  : reservedKeyword === 'aloque'
+                    ? 'Aloque'
+                    : reservedKeyword === 'aponte'
+                      ? 'Aponte'
+                      : reservedKeyword === 'direcione'
+                        ? 'Direcione'
+                        : reservedKeyword === 'redirecione'
+                          ? 'Redirecione'
+                  : reservedKeyword === 'diga' ? 'Diga' : 'Retorne';
         diagnostics.push({
           message: `"${displayName}" is a reserved statement keyword and cannot be used in a routine name.`,
           range: reservedWord
@@ -3951,6 +4221,7 @@ function parseRoutineDeclarations(
         returnParameter,
         annotation: match[1]?.toLocaleLowerCase('pt-BR') as 'rotina' | 'função' | undefined,
         isBooleanFunction,
+        isCompatible,
         isPrimary: source[headerEnd] === ':',
         range: { start: match.index, end: headerEnd + 1 }
       });
@@ -4002,8 +4273,11 @@ function parseRoutineDeclarations(
         computedField: header.computedField,
         returnParameter: header.returnParameter,
         calls: [],
+        memoryAllocations: [],
         annotation: header.annotation,
         isBooleanFunction: header.isBooleanFunction,
+        isCompatible: header.isCompatible ||
+          alternateHeaders.some(alternate => alternate.isCompatible),
         range: {
           start: alternateHeaders[0]?.range.start ?? header.range.start,
           end: header.range.end
@@ -4779,6 +5053,15 @@ export function findTypeReferenceAtOffset(
     }
   }
   for (const routine of parsedDocument.routines) {
+    for (const allocation of routine.memoryAllocations) {
+      if (
+        !allocation.variableAccess &&
+        offset >= allocation.type.range.start &&
+        offset <= allocation.type.range.end
+      ) {
+        return allocation.type;
+      }
+    }
     for (const localVariable of routine.localVariables) {
       if (
         offset >= localVariable.type.range.start &&
@@ -4799,6 +5082,13 @@ export function findTypeReferenceAtOffset(
       }
     }
     for (const call of routine.calls) {
+      if (
+        call.addressType &&
+        offset >= call.addressType.range.start &&
+        offset <= call.addressType.range.end
+      ) {
+        return call.addressType;
+      }
       const localVariableType = call.localVariable?.type;
       if (
         localVariableType &&
@@ -4961,8 +5251,16 @@ export function getParsedReferences(parsed: ParsedDocument): ParsedReference[] {
       if (call.target) {
         add('routine', call.target.name.name, call.name.range);
       }
+      addType(call.addressType);
       addVariableAccesses(call.variableAccesses, routine);
       addFieldAccesses(call.fieldAccesses);
+    }
+    for (const allocation of routine.memoryAllocations) {
+      addType(allocation.variableAccess ? undefined : allocation.type);
+      addVariableAccesses(
+        allocation.variableAccess ? [allocation.variableAccess] : undefined,
+        routine
+      );
     }
     for (const process of routine.processes) {
       addVariableAccesses(process.variableAccesses, routine);

@@ -2287,6 +2287,133 @@ suite('Português Puro definitions', () => {
     ).length, 1);
   });
 
+  test('Recognizes Aloque memória para on list variables and types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma lista é uma estrutura.',
+      'Um versículo é uma lista.',
+      'Uma imagem é uma lista.',
+      'A imagem é uma imagem.',
+      'para que se faça algumas alocações:',
+      '  Aloque memória para um versículo.',
+      '  Aloque memória para a imagem.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Validates list types and variables passed to Aloque memória para', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma lista é uma estrutura.',
+      'Um número é uma estrutura.',
+      'A contagem é um número.',
+      'para que se faça alocações:',
+      '  Aloque memória para a contagem.',
+      '  Aloque memória para uma variável desconhecida.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Aloque memória para" only accepts variables and types based on "lista".'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'Unknown variable or type "variável desconhecida" after "Aloque memória para".'
+    ).length, 1);
+  });
+
+  test('Resolves routine addresses through Direcione, Aponte, and Redirecione', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um ponteiro é uma estrutura.',
+      'Um ponteiro de rotina é um ponteiro.',
+      'para que se demonstre os direcionamentos:',
+      '  Direcione um ponteiro de rotina para a rotina faça alguma coisa.',
+      '  Aponte um ponteiro de rotina para a rotina faça alguma coisa.',
+      '  Redirecione um ponteiro de rotina para a rotina faça alguma coisa.',
+      'para que se compativelmente faça alguma coisa:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const routineNameOffset = text.indexOf('Direcione um ponteiro de rotina para a rotina') +
+      'Direcione um ponteiro de rotina para a rotina '.length + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(routineNameOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 6);
+  });
+
+  test('Requires routine addresses to use pointer types and compatible routines', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um ponteiro é uma estrutura.',
+      'Um número é uma estrutura.',
+      'para que se demonstre os direcionamentos:',
+      '  Direcione um número para a rotina faça alguma coisa.',
+      'para que se faça alguma coisa:',
+      '  Retorne.',
+      'para que se redirecione:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Direcione" only accepts types based on "ponteiro".'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === 'Routine "faça alguma coisa" must be declared with "compativelmente" to provide its address.'
+    ).length, 1);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message.includes('No compatible routine found')
+    ).length, 0);
+    assert.equal(diagnostics.filter(diagnostic =>
+      diagnostic.message === '"Redirecione" is a reserved statement keyword and cannot be used in a routine name.'
+    ).length, 1);
+  });
+
   test('Parses internal and external Processe instructions with arguments and returns', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {

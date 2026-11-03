@@ -98,6 +98,13 @@ language-specific default.
   by a definite article (for example, `Empilhe 123.` or `Empilhe o byte.`).
   Variables must have type `byte`, `word`, or `número`, or derive from one of
   those types. The keyword is reserved and cannot be used in a routine name.
+- `Aloque memória para` accepts a variable or type based on `lista` (for
+  example, `Aloque memória para a imagem.`).
+- `Direcione`, `Aponte`, and `Redirecione` accept a type based on `ponteiro`
+  followed by `para a rotina` and the name of a routine declared with
+  `compativelmente` (for example,
+  `Direcione um ponteiro para a rotina faça alguma coisa.`). The routine name
+  is resolved as a reference to its declaration.
 - The `Processe` instruction invokes an internal function pointer or an
   external function identified by library and function string literals.
   Optional arguments follow `com` and are separated by `e`; each argument is
