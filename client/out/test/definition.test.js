@@ -3201,8 +3201,8 @@ suite('Português Puro definitions', () => {
         const routine = symbols.find(symbol => symbol.name === 'preencha bytes com');
         assert.equal(routine?.detail, 'rotina byte byte ponteiro ponteiro quantidade de bytes quantidade de bytes');
         assert.deepEqual(symbols.filter(symbol => symbol.name === 'avance').map(symbol => symbol.detail), [
-            'rotina byte byte segundo byte byte terceiro byte byte',
-            'rotina número número segundo número número terceiro número número'
+            'rotina byte byte byte segundo byte byte terceiro byte',
+            'rotina número número número segundo número número terceiro número'
         ]);
     });
     test('Keeps trailing routine-name phrases out of the final parameter type', async () => {

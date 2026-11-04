@@ -4051,8 +4051,8 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(
       symbols.filter(symbol => symbol.name === 'avance').map(symbol => symbol.detail),
       [
-        'rotina byte byte segundo byte byte terceiro byte byte',
-        'rotina número número segundo número número terceiro número número'
+        'rotina byte byte byte segundo byte byte terceiro byte',
+        'rotina número número número segundo número número terceiro número'
       ]
     );
   });
