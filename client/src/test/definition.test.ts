@@ -2694,6 +2694,53 @@ suite('Português Puro definitions', () => {
     ).length, 1);
   });
 
+  test('Parses boolean headers with additional predicate verbs', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um endereço de byte é um ponteiro para um byte.',
+      'Um índice é um endereço de byte.',
+      'Uma string é uma estrutura.',
+      'Uma lista é uma estrutura.',
+      'Uma caixa de texto é uma lista.',
+      'Um ponteiro é uma estrutura.',
+      'Função para que se determine se um índice ultrapassou o fim de uma string:',
+      '  Decodifique $0.',
+      'Função para que se determine se um ponteiro existe:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma string termina com uma segunda string:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma string começa com uma segunda string:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma string começa com um byte:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma string termina com um byte:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma caixa de texto pode ser refeita:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma caixa de texto pode ser desfeita:',
+      '  Decodifique $0.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.deepEqual(
+      diagnostics.filter(diagnostic =>
+        diagnostic.message === 'Routine name is required.' ||
+        diagnostic.message.startsWith('Unknown routine parameter type ')
+      ),
+      []
+    );
+  });
+
   test('Allows boolean functions with Decodifique instructions to manage their own return', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -2990,6 +3037,79 @@ suite('Português Puro definitions', () => {
       '  Retorne.',
       'Rotina para que se converta uma word para uma cifra hexadecimal:',
       '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Resolves routine parameter types for rounded-box phrases', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um twip é um número.',
+      'Uma coordenada é uns twips.',
+      'Um par de números é uma estrutura.',
+      'Uma localização é um par de números com',
+      '  Uma coordenada denominada coordenada X [left] e',
+      '  Uma coordenada denominada coordenada Y. [top]',
+      'Uma caixa é uma estrutura com',
+      '  Uma coordenada denominada coordenada X1, [left]',
+      '  Uma coordenada denominada coordenada Y1, [top]',
+      '  Uma coordenada denominada coordenada X2, [right]',
+      '  Uma coordenada denominada coordenada Y2, [bottom]',
+      '  Uma localização denominada canto superior esquerdo sob a coordenada X1, [left-top]',
+      '  Uma localização denominada canto inferior direito sob a coordenada X2, [right-bottom]',
+      '  Uma localização denominada canto esquerdo superior sob a coordenada X1, [top-left]',
+      '  Uma localização denominada canto direito inferior sob a coordenada X2. [bottom-right]',
+      'Uma caixa arredondada é uma caixa com',
+      '  Uma coordenada denominada coordenada X1,',
+      '  Uma coordenada denominada coordenada Y1,',
+      '  Uma coordenada denominada coordenada X2,',
+      '  Uma coordenada denominada coordenada Y2,',
+      '  Uma localização denominada canto superior esquerdo sob a coordenada X1,',
+      '  Uma localização denominada canto inferior direito sob a coordenada X2, e',
+      '  Um raio.',
+      'Um raio é um twip.',
+      'Uma fração é um número.',
+      'Um percentual é um número.',
+      'Uma cor é uma estrutura.',
+      'Um hRgn é um ponteiro.',
+      'Um ponteiro é uma estrutura.',
+      'Rotina para que se mude uma caixa arredondada usando um raio:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma localização está em uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Função para que se determine se uma localização está sobre uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se crie uma hRgn usando uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se pinte uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se pinte uma caixa arredondada com uma cor:',
+      '  Decodifique $0.',
+      'Rotina para que se crie uma hRgn usando uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se cubra internamente uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se cubra somente dentro de uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se cubra somente fora de uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se cubra externamente uma caixa arredondada:',
+      '  Decodifique $0.',
+      'Rotina para que se redimensione proporcionalmente uma caixa arredondada usando uma fração:',
+      '  Decodifique $0.',
+      'Rotina para que se redimensione proporcionalmente uma caixa arredondada para um percentual:',
+      '  Decodifique $0.'
     ].join('\n'));
     await diagnosticsUpdated;
 
@@ -3682,6 +3802,8 @@ suite('Português Puro definitions', () => {
       '  Se o número não for positivo, retorne.',
       'Função para que se determine se um número é positivo:',
       '  Diga sim.',
+      'Função para que se determine se um byte é algum caractere não-alfanumérico:',
+      '  Diga sim.',
       'Função para que se determine se um número não é negativo:',
       '  Diga sim.'
     ].join('\n'));
@@ -3907,7 +4029,11 @@ suite('Português Puro definitions', () => {
       '  Decodifique $8B8508000000.',
       '  Decodifique $8A00.',
       '  Decodifique $FC.',
-      '  Decodifique $F3AA.'
+      '  Decodifique $F3AA.',
+      'Rotina para que se avance um byte limitando-o para um segundo byte e um terceiro byte:',
+      '  Retorne.',
+      'Rotina para que se avance um número limitando-o para um segundo número e um terceiro número:',
+      '  Retorne.'
     ].join('\n'));
     await diagnosticsUpdated;
 
@@ -3921,6 +4047,13 @@ suite('Português Puro definitions', () => {
     assert.equal(
       routine?.detail,
       'rotina byte byte ponteiro ponteiro quantidade de bytes quantidade de bytes'
+    );
+    assert.deepEqual(
+      symbols.filter(symbol => symbol.name === 'avance').map(symbol => symbol.detail),
+      [
+        'rotina byte byte segundo byte byte terceiro byte byte',
+        'rotina número número segundo número número terceiro número número'
+      ]
     );
   });
 
