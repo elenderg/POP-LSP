@@ -127,6 +127,7 @@ export interface RoutineDeclaration {
     assignments: RoutineAssignment[];
     outputs: RoutineOutput[];
     localVariables: RoutineLocalVariable[];
+    memoryAllocations: RoutineMemoryAllocation[];
     conditionals: RoutineConditionalBlock[];
     processes: RoutineProcess[];
     loopInstructions: RoutineLoopInstruction[];
@@ -136,6 +137,7 @@ export interface RoutineDeclaration {
     calls: RoutineCall[];
     annotation?: 'rotina' | 'função';
     isBooleanFunction: boolean;
+    isCompatible: boolean;
     range: SourceRange;
     bodyRange: SourceRange;
 }
@@ -143,11 +145,17 @@ export interface RoutineCall {
     name: TypeReference;
     qualifierRange?: SourceRange;
     arguments: TypeReference[];
+    addressType?: TypeReference;
     fieldAccesses?: RoutineFieldAccess[];
     variableAccesses?: RoutineVariableAccess[];
     computedFieldAccesses?: RoutineComputedFieldAccess[];
     localVariable?: RoutineLocalVariable;
     target?: RoutineDeclaration;
+}
+export interface RoutineMemoryAllocation {
+    type: TypeReference;
+    variableAccess?: RoutineVariableAccess;
+    range: SourceRange;
 }
 export interface RoutineProcess {
     kind: 'internal' | 'external';
@@ -155,6 +163,7 @@ export interface RoutineProcess {
     library?: string;
     functionName?: string;
     arguments: TypeReference[];
+    argumentTypes: TypeReference[];
     fieldAccesses: RoutineFieldAccess[];
     variableAccesses?: RoutineVariableAccess[];
     computedFieldAccesses?: RoutineComputedFieldAccess[];

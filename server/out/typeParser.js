@@ -173,8 +173,12 @@ function isNumberTypeName(name) {
     const normalizedName = normalizeTypeName(name);
     return normalizedName === 'número' || normalizedName === normalizeTypeName((0, plural_1.default)('número'));
 }
-const indefiniteArticles = new Set(['um', 'uma', 'uns', 'umas']);
-const definiteArticles = new Set(['o', 'os', 'a', 'as']);
+const indefiniteArticles = new Set([
+    'um', 'uma', 'uns', 'umas', 'esse', 'essa', 'esses', 'essas'
+]);
+const definiteArticles = new Set([
+    'o', 'os', 'a', 'as', 'este', 'esta', 'estes', 'estas'
+]);
 const nullLiteralWords = new Set([
     'nulo',
     'nula',
@@ -278,7 +282,8 @@ const articlesAfterPrepositionA = new Set([
 const builtInStatementStarts = new Set([
     'atribua', 'escreva', 'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
     'processe', 'itere', 'pare', 'reitere', 'adicione', 'incremente', 'feche', 'defina',
-    'ative', 'converta', 'dobre', 'multiplique', 'desloque', 'subtraia', 'faça'
+    'ative', 'converta', 'dobre', 'multiplique', 'desloque', 'subtraia', 'faça',
+    'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
 const routineNameDelimiters = new Set([
     'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
@@ -645,6 +650,12 @@ function processRoutineStatement(source, statement, caller, routines, globalVari
         return false;
     }
     const firstWord = readWord(source, statement.start, statement.end);
+    if (validateMemoryAllocationStatement(source, statement, caller, globalVariables, symbols, diagnostics)) {
+        return false;
+    }
+    if (validateRoutineAddressStatement(source, statement, caller, routines, symbols, diagnostics)) {
+        return false;
+    }
     const loopInstruction = parseLoopInstruction(source, statement, diagnostics);
     if (loopInstruction) {
         caller.loopInstructions.push(loopInstruction);
@@ -1143,6 +1154,161 @@ function validatePushStatement(source, statement, caller, routines, globalVariab
     });
     return true;
 }
+function validateMemoryAllocationStatement(source, statement, routine, globalVariables, symbols, diagnostics) {
+    const keyword = readWord(source, statement.start, statement.end);
+    if (keyword?.value.toLocaleLowerCase('pt-BR') !== 'aloque') {
+        return false;
+    }
+    const instructionTail = trimRange(source, keyword.end, statement.end);
+    const prefix = /^memória\s+para\b/iu.exec(source.slice(instructionTail.start, instructionTail.end));
+    const targetStart = prefix
+        ? skipWhitespace(source, instructionTail.start + prefix[0].length, instructionTail.end)
+        : instructionTail.end;
+    const article = readWord(source, targetStart, instructionTail.end);
+    if (!prefix ||
+        !article ||
+        ![...indefiniteArticles, ...definiteArticles].includes(article.value.toLocaleLowerCase('pt-BR'))) {
+        diagnostics.push({
+            message: '"Aloque memória para" requires an article and a list variable or type.',
+            range: instructionTail.start < instructionTail.end
+                ? instructionTail
+                : { start: keyword.start, end: keyword.end }
+        });
+        return true;
+    }
+    const targetRange = trimRange(source, article.end, instructionTail.end);
+    const targetName = normalizeTypeName(source.slice(targetRange.start, targetRange.end));
+    const localVariable = findRoutineVariable(routine, targetName);
+    const globalVariable = globalVariables.lookup(targetName);
+    let type;
+    let variableAccess;
+    if (localVariable) {
+        type = localVariable.type;
+        variableAccess = {
+            reference: createTypeReference(source, targetRange),
+            type,
+            scope: routine.range.start
+        };
+    }
+    else if (globalVariable?.typeName) {
+        type = createSyntheticTypeReference(globalVariable.typeName, targetRange);
+        variableAccess = {
+            reference: createTypeReference(source, targetRange),
+            type
+        };
+    }
+    else if (symbols.lookup(source.slice(targetRange.start, targetRange.end))) {
+        type = createTypeReference(source, targetRange);
+    }
+    if (!type) {
+        diagnostics.push({
+            message: `Unknown variable or type "${source.slice(targetRange.start, targetRange.end)}" after "Aloque memória para".`,
+            range: targetRange.start < targetRange.end
+                ? targetRange
+                : { start: keyword.start, end: keyword.end }
+        });
+        return true;
+    }
+    if (symbols.getBaseTypeDistance(type.name, 'lista') === undefined) {
+        diagnostics.push({
+            message: '"Aloque memória para" only accepts variables and types based on "lista".',
+            range: targetRange
+        });
+        return true;
+    }
+    routine.memoryAllocations.push({
+        type,
+        variableAccess,
+        range: statement
+    });
+    return true;
+}
+function validateRoutineAddressStatement(source, statement, caller, routines, symbols, diagnostics) {
+    const keyword = readWord(source, statement.start, statement.end);
+    const instruction = keyword?.value.toLocaleLowerCase('pt-BR');
+    if (!keyword || !instruction || !['aponte', 'direcione', 'redirecione'].includes(instruction)) {
+        return false;
+    }
+    const typeArticle = readWord(source, keyword.end, statement.end);
+    if (!typeArticle ||
+        !indefiniteArticles.has(typeArticle.value.toLocaleLowerCase('pt-BR'))) {
+        diagnostics.push({
+            message: `"${keyword.value}" requires an indefinite article and a pointer type before "para a rotina".`,
+            range: { start: keyword.start, end: statement.end }
+        });
+        return true;
+    }
+    let markerStart = -1;
+    let markerEnd = -1;
+    let type;
+    let searchStart = typeArticle.end;
+    while (searchStart < statement.end) {
+        const preposition = findWord(source, searchStart, statement.end, 'para');
+        if (!preposition) {
+            break;
+        }
+        const routineArticle = readWord(source, preposition.end, statement.end);
+        const routineWord = routineArticle
+            ? readWord(source, routineArticle.end, statement.end)
+            : undefined;
+        if (routineArticle?.value.toLocaleLowerCase('pt-BR') === 'a' &&
+            routineWord?.value.toLocaleLowerCase('pt-BR') === 'rotina') {
+            const candidateRange = trimRange(source, typeArticle.end, preposition.start);
+            const candidateType = symbols.lookup(source.slice(candidateRange.start, candidateRange.end));
+            if (candidateType) {
+                markerStart = preposition.start;
+                markerEnd = routineWord.end;
+                type = createTypeReference(source, candidateRange);
+                break;
+            }
+        }
+        searchStart = preposition.end;
+    }
+    if (!type || markerStart === -1) {
+        diagnostics.push({
+            message: `"${keyword.value}" requires a known pointer type followed by "para a rotina".`,
+            range: { start: typeArticle.end, end: statement.end }
+        });
+        return true;
+    }
+    if (symbols.getBaseTypeDistance(type.name, 'ponteiro') === undefined) {
+        diagnostics.push({
+            message: `"${keyword.value}" only accepts types based on "ponteiro".`,
+            range: type.range
+        });
+    }
+    const routineNameRange = trimRange(source, markerEnd, statement.end);
+    const qualifier = findTrailingParentheticalQualifier(source, routineNameRange.start, routineNameRange.end);
+    const routineRange = trimRange(source, routineNameRange.start, qualifier?.start ?? routineNameRange.end);
+    const normalizedRoutineName = normalizeRoutineName(source.slice(routineRange.start, routineRange.end));
+    const candidates = routines.filter(candidate => candidate.qualifier === qualifier?.text &&
+        routineNames(candidate).some(name => normalizeRoutineName(name.name) === normalizedRoutineName));
+    if (candidates.length === 0) {
+        diagnostics.push({
+            message: `No routine found for address reference "${source.slice(routineRange.start, routineRange.end)}".`,
+            range: routineRange
+        });
+        return true;
+    }
+    const target = candidates.find(candidate => candidate.isCompatible);
+    if (!target) {
+        diagnostics.push({
+            message: `Routine "${source.slice(routineRange.start, routineRange.end)}" must be declared with "compativelmente" to provide its address.`,
+            range: routineRange
+        });
+        return true;
+    }
+    caller.calls.push({
+        name: createTypeReference(source, routineRange),
+        qualifierRange: qualifier
+            ? { start: qualifier.start, end: routineNameRange.end }
+            : undefined,
+        arguments: [],
+        addressType: type,
+        target
+    });
+    return true;
+}
 function isPushableNumericType(typeName, symbols) {
     return ['byte', 'word', 'número'].some(baseType => symbols.getBaseTypeDistance(typeName, baseType) !== undefined);
 }
@@ -1207,6 +1373,7 @@ function parseRoutineProcess(source, statement, caller, routines, globalVariable
         }
     }
     const argumentsList = [];
+    const argumentTypes = [];
     if (withMarker) {
         const argumentsRange = trimRange(source, withMarker.end, invocationEnd);
         argumentsList.push(...splitProcessArguments(source, argumentsRange));
@@ -1219,7 +1386,17 @@ function parseRoutineProcess(source, statement, caller, routines, globalVariable
         }
     }
     for (const argument of argumentsList) {
-        if (parseGlobalVariableLiteral(source, argument)) {
+        const literal = parseGlobalVariableLiteral(source, argument);
+        if (literal) {
+            argumentTypes.push(createSyntheticTypeReference(literal.kind === 'null'
+                ? 'nulo'
+                : inferGlobalVariableTypeName(literal) ?? 'nulo', argument));
+            continue;
+        }
+        const outputVariable = parseProcessAddressOutput(source, argument, symbols, diagnostics);
+        if (outputVariable) {
+            caller.localVariables.push(outputVariable.variable);
+            argumentTypes.push(outputVariable.argumentType);
             continue;
         }
         const article = readWord(source, argument.start, argument.end);
@@ -1230,13 +1407,15 @@ function parseRoutineProcess(source, statement, caller, routines, globalVariable
             });
             return undefined;
         }
-        if (!resolveRoutineArgumentType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses)) {
+        const argumentType = resolveRoutineArgumentType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+        if (!argumentType) {
             diagnostics.push({
                 message: `Unknown variable or field "${source.slice(argument.start, argument.end)}" passed to "Processe".`,
                 range: argument
             });
             return undefined;
         }
+        argumentTypes.push(argumentType);
     }
     const parsedReturn = returnMarker
         ? parseProcessReturnVariable(source, returnMarker.end, statement.end, caller, globalVariables, symbols, fieldAccesses, variableAccesses, computedFieldAccesses, routines, diagnostics)
@@ -1250,6 +1429,7 @@ function parseRoutineProcess(source, statement, caller, routines, globalVariable
         library,
         functionName,
         arguments: argumentsList.map(argument => createTypeReference(source, argument)),
+        argumentTypes,
         fieldAccesses,
         variableAccesses,
         computedFieldAccesses,
@@ -1288,6 +1468,70 @@ function splitProcessArguments(source, range) {
     }
     argumentsList.push(finalArgument);
     return argumentsList;
+}
+function parseProcessAddressOutput(source, argument, symbols, diagnostics) {
+    const outerArticle = readWord(source, argument.start, argument.end);
+    if (!outerArticle ||
+        !definiteArticles.has(outerArticle.value.toLocaleLowerCase('pt-BR'))) {
+        return undefined;
+    }
+    const operator = readWord(source, outerArticle.end, argument.end);
+    if (!operator ||
+        operator.value.toLocaleLowerCase('pt-BR') !== 'endereçamento') {
+        return undefined;
+    }
+    const sourceAfterOperator = skipWhitespace(source, operator.end, argument.end);
+    const contraction = readWord(source, sourceAfterOperator, argument.end);
+    const expansion = contraction
+        ? routineContractions.get(contraction.value.toLocaleLowerCase('pt-BR'))
+        : undefined;
+    let typeArticle;
+    if (expansion?.startsWith('de ')) {
+        const expandedArticle = expansion.slice(3);
+        if (!indefiniteArticles.has(expandedArticle)) {
+            return undefined;
+        }
+        typeArticle = { start: contraction.start, end: contraction.end, value: expandedArticle };
+    }
+    else {
+        const preposition = readWord(source, sourceAfterOperator, argument.end);
+        if (!preposition || preposition.value.toLocaleLowerCase('pt-BR') !== 'de') {
+            return undefined;
+        }
+        typeArticle = readWord(source, preposition.end, argument.end);
+        if (!typeArticle || !indefiniteArticles.has(typeArticle.value.toLocaleLowerCase('pt-BR'))) {
+            return undefined;
+        }
+    }
+    const markers = findAnyWord(source, typeArticle.end, argument.end, localVariableNameMarkers);
+    const typeRange = trimRange(source, typeArticle.end, markers?.start ?? argument.end);
+    const type = findTypeSuffix(source, typeRange, symbols);
+    if (!type) {
+        diagnostics.push({
+            message: `Unknown "Processe" output type "${source.slice(typeRange.start, typeRange.end)}".`,
+            range: typeRange
+        });
+        return undefined;
+    }
+    const nameRange = markers
+        ? trimRange(source, markers.end, argument.end)
+        : type.range;
+    if (nameRange.start === nameRange.end) {
+        diagnostics.push({
+            message: 'A variable name is required after the type in a "Processe" address argument.',
+            range: markers ?? typeRange
+        });
+        return undefined;
+    }
+    return {
+        variable: {
+            name: createTypeReference(source, nameRange),
+            type,
+            range: argument
+        },
+        argumentType: resolveTypeOperator('endereçamento', type, symbols) ??
+            createSyntheticTypeReference('ponteiro', type.range)
+    };
 }
 function parseProcessReturnVariable(source, start, end, caller, globalVariables, symbols, fieldAccesses, variableAccesses, computedFieldAccesses, routines, diagnostics) {
     const valueRange = trimRange(source, start, end);
@@ -1470,11 +1714,15 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
         const variableAccesses = [];
         const computedFieldAccesses = [];
         for (let index = 0; index < argumentsList.length; index++) {
+            const parameter = routine.parameters[index];
+            const scalarArgumentType = localVariableIndex === index
+                ? undefined
+                : resolveScalarRoutineArgumentType(source, argumentsList[index], parameter.type, symbols);
             const argumentType = localVariableIndex === index
                 ? localVariable?.type
-                : resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+                : scalarArgumentType ?? resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
             const distance = argumentType
-                ? getRoutineArgumentTypeDistance(argumentType, routine.parameters[index].type.name, symbols)
+                ? getRoutineArgumentTypeDistance(argumentType, parameter.type.name, symbols)
                 : undefined;
             if (distance === undefined) {
                 break;
@@ -1746,6 +1994,33 @@ function resolveRoutineArgumentType(source, argument, caller, globalVariables, s
         return variableType;
     }
     return undefined;
+}
+function resolveScalarRoutineArgumentType(source, argument, expectedType, symbols) {
+    const expectedSymbol = symbols.lookup(expectedType.name);
+    if (!expectedSymbol ||
+        expectedSymbol.pluralName !== expectedType.normalizedName) {
+        return undefined;
+    }
+    const text = source.slice(argument.start, argument.end);
+    const literalMatch = /^([+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?)(\s+)([\s\S]+)$/u.exec(text);
+    if (!literalMatch) {
+        return undefined;
+    }
+    const literalEnd = argument.start + literalMatch[1].length;
+    const literal = parseGlobalVariableLiteral(source, {
+        start: argument.start,
+        end: literalEnd
+    });
+    if (!literal || !['integer', 'fraction', 'mixed'].includes(literal.kind)) {
+        return undefined;
+    }
+    const typeRange = trimRange(source, literalEnd + literalMatch[2].length, argument.end);
+    const actualType = symbols.lookup(source.slice(typeRange.start, typeRange.end));
+    if (!actualType ||
+        actualType.pluralName !== normalizeTypeName(source.slice(typeRange.start, typeRange.end))) {
+        return undefined;
+    }
+    return createTypeReference(source, typeRange);
 }
 function parseTypeCast(source, argument, symbols) {
     const marker = /\btal\s+(?:como|qual)\b/iu.exec(source.slice(argument.start, argument.end));
@@ -2182,6 +2457,14 @@ function findTypeDefinitionReferenceAtOffset(parsedDocument, offset) {
         return field.type;
     }
     for (const routine of parsedDocument.routines) {
+        const allocationAccess = routine.memoryAllocations
+            .map(allocation => allocation.variableAccess)
+            .find(access => access &&
+            offset >= access.reference.range.start &&
+            offset <= access.reference.range.end);
+        if (allocationAccess) {
+            return allocationAccess.type;
+        }
         const localVariable = routine.localVariables.find(variable => offset >= variable.name.range.start &&
             offset <= variable.name.range.end);
         if (localVariable) {
@@ -2391,13 +2674,20 @@ function parseRoutineDeclarations(source, diagnostics) {
         const headerSyntaxSource = isBooleanFunction
             ? maskWordInRange(syntaxSource, { start: headerPattern.lastIndex, end: headerEnd }, 'não')
             : syntaxSource;
+        const firstHeaderWordStart = skipWhitespace(headerSyntaxSource, headerPattern.lastIndex, headerEnd);
+        const firstHeaderWord = readWord(headerSyntaxSource, firstHeaderWordStart, headerEnd);
+        const isCompatible = firstHeaderWord?.value.toLocaleLowerCase('pt-BR') ===
+            'compativelmente';
+        const routineNameStart = isCompatible
+            ? firstHeaderWord.end
+            : headerPattern.lastIndex;
         const returningMarker = findWord(headerSyntaxSource, headerPattern.lastIndex, headerEnd, 'retornando');
         const signatureEnd = Math.min(returningMarker?.start ?? headerEnd, qualifier?.start ?? headerEnd);
-        const computedField = parseComputedFieldHeader(headerSyntaxSource, headerPattern.lastIndex, headerEnd);
-        const firstParameterArticle = findAnyWord(headerSyntaxSource, headerPattern.lastIndex, signatureEnd, indefiniteArticles);
+        const computedField = parseComputedFieldHeader(headerSyntaxSource, routineNameStart, headerEnd);
+        const firstParameterArticle = findAnyWord(headerSyntaxSource, routineNameStart, signatureEnd, indefiniteArticles);
         const parameterArticle = firstParameterArticle;
         const predicateMarker = isBooleanFunction
-            ? findAnyWord(headerSyntaxSource, parameterArticle?.end ?? headerPattern.lastIndex, signatureEnd, routinePredicateWords)
+            ? findAnyWord(headerSyntaxSource, parameterArticle?.end ?? routineNameStart, signatureEnd, routinePredicateWords)
             : undefined;
         const predicateTailArticle = predicateMarker
             ? findAnyWord(headerSyntaxSource, predicateMarker.end, signatureEnd, indefiniteArticles)
@@ -2418,8 +2708,8 @@ function parseRoutineDeclarations(source, diagnostics) {
                 end: predicateTailArticle?.start ?? signatureEnd
             }
             : computedField
-                ? trimRange(source, headerPattern.lastIndex, computedField.returnMarker.start)
-                : trimRange(source, headerPattern.lastIndex, nameEnd);
+                ? trimRange(source, routineNameStart, computedField.returnMarker.start)
+                : trimRange(source, routineNameStart, nameEnd);
         if (nameRange.start === nameRange.end) {
             diagnostics.push({
                 message: 'Routine name is required.',
@@ -2429,7 +2719,8 @@ function parseRoutineDeclarations(source, diagnostics) {
             continue;
         }
         for (const reservedKeyword of [
-            'retorne', 'diga', 'preserve', 'empilhe', 'processe', 'itere', 'pare', 'reitere'
+            'retorne', 'diga', 'preserve', 'empilhe', 'processe', 'itere', 'pare', 'reitere',
+            'aloque', 'aponte', 'direcione', 'redirecione'
         ]) {
             const reservedWord = findWord(headerSyntaxSource, nameRange.start, nameRange.end, reservedKeyword);
             if (!reservedWord) {
@@ -2447,7 +2738,15 @@ function parseRoutineDeclarations(source, diagnostics) {
                                 ? 'Pare'
                                 : reservedKeyword === 'reitere'
                                     ? 'Reitere'
-                                    : reservedKeyword === 'diga' ? 'Diga' : 'Retorne';
+                                    : reservedKeyword === 'aloque'
+                                        ? 'Aloque'
+                                        : reservedKeyword === 'aponte'
+                                            ? 'Aponte'
+                                            : reservedKeyword === 'direcione'
+                                                ? 'Direcione'
+                                                : reservedKeyword === 'redirecione'
+                                                    ? 'Redirecione'
+                                                    : reservedKeyword === 'diga' ? 'Diga' : 'Retorne';
             diagnostics.push({
                 message: `"${displayName}" is a reserved statement keyword and cannot be used in a routine name.`,
                 range: reservedWord
@@ -2495,6 +2794,7 @@ function parseRoutineDeclarations(source, diagnostics) {
             returnParameter,
             annotation: match[1]?.toLocaleLowerCase('pt-BR'),
             isBooleanFunction,
+            isCompatible,
             isPrimary: source[headerEnd] === ':',
             range: { start: match.index, end: headerEnd + 1 }
         });
@@ -2540,8 +2840,11 @@ function parseRoutineDeclarations(source, diagnostics) {
             computedField: header.computedField,
             returnParameter: header.returnParameter,
             calls: [],
+            memoryAllocations: [],
             annotation: header.annotation,
             isBooleanFunction: header.isBooleanFunction,
+            isCompatible: header.isCompatible ||
+                alternateHeaders.some(alternate => alternate.isCompatible),
             range: {
                 start: alternateHeaders[0]?.range.start ?? header.range.start,
                 end: header.range.end
@@ -3189,6 +3492,13 @@ function findTypeReferenceAtOffset(parsedDocument, offset) {
         }
     }
     for (const routine of parsedDocument.routines) {
+        for (const allocation of routine.memoryAllocations) {
+            if (!allocation.variableAccess &&
+                offset >= allocation.type.range.start &&
+                offset <= allocation.type.range.end) {
+                return allocation.type;
+            }
+        }
         for (const localVariable of routine.localVariables) {
             if (offset >= localVariable.type.range.start &&
                 offset <= localVariable.type.range.end) {
@@ -3205,6 +3515,11 @@ function findTypeReferenceAtOffset(parsedDocument, offset) {
             }
         }
         for (const call of routine.calls) {
+            if (call.addressType &&
+                offset >= call.addressType.range.start &&
+                offset <= call.addressType.range.end) {
+                return call.addressType;
+            }
             const localVariableType = call.localVariable?.type;
             if (localVariableType &&
                 offset >= localVariableType.range.start &&
@@ -3341,8 +3656,13 @@ function getParsedReferences(parsed) {
             if (call.target) {
                 add('routine', call.target.name.name, call.name.range);
             }
+            addType(call.addressType);
             addVariableAccesses(call.variableAccesses, routine);
             addFieldAccesses(call.fieldAccesses);
+        }
+        for (const allocation of routine.memoryAllocations) {
+            addType(allocation.variableAccess ? undefined : allocation.type);
+            addVariableAccesses(allocation.variableAccess ? [allocation.variableAccess] : undefined, routine);
         }
         for (const process of routine.processes) {
             addVariableAccesses(process.variableAccesses, routine);
