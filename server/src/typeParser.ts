@@ -184,7 +184,7 @@ export interface RoutineCall {
   fieldAccesses?: RoutineFieldAccess[];
   variableAccesses?: RoutineVariableAccess[];
   computedFieldAccesses?: RoutineComputedFieldAccess[];
-  localVariable?: RoutineLocalVariable;
+  localVariables?: RoutineLocalVariable[];
   target?: RoutineDeclaration;
 }
 
@@ -964,9 +964,7 @@ function validateRoutineVariableNames(
       ...routine.parameters,
       ...(routine.returnParameter ? [routine.returnParameter] : []),
       ...routine.localVariables,
-      ...routine.calls.flatMap(call =>
-        call.localVariable ? [call.localVariable] : []
-      ),
+      ...routine.calls.flatMap(call => call.localVariables ?? []),
       ...routine.processes.flatMap(process =>
         process.returnVariable && !process.returnVariableIsReference
           ? [process.returnVariable]
@@ -1180,8 +1178,8 @@ function processRoutineStatement(
   );
   if (call) {
     caller.calls.push(call);
-    if (call.localVariable) {
-      caller.localVariables.push(call.localVariable);
+    if (call.localVariables) {
+      caller.localVariables.push(...call.localVariables);
     }
   } else {
     diagnoseUnresolvedRoutineCall(
@@ -2614,8 +2612,7 @@ function resolveRoutineCall(
   }[] = [];
   const parsedArgumentsByNameEnd = new Map<number, {
     argumentsList: SourceRange[];
-    localVariable: RoutineLocalVariable | undefined;
-    localVariableIndex: number;
+    localVariablesByArgument: Map<number, RoutineLocalVariable>;
   }>();
   for (const nameMatch of findRoutineNameMatches(source, statementRange, routines)) {
     const { routine, name: routineName, nameEnd } = nameMatch;
@@ -2649,8 +2646,7 @@ function resolveRoutineCall(
         symbols
       );
       let argumentsList: SourceRange[];
-      let resolvedLocalVariable: RoutineLocalVariable | undefined;
-      let localVariableIndex = -1;
+      const localVariablesByArgument = new Map<number, RoutineLocalVariable>();
       if (localVariable?.inputArgumentRange) {
         const precedingArgumentsRange = trimTrailingWord(
           source,
@@ -2664,8 +2660,7 @@ function resolveRoutineCall(
           localVariable.name.range,
           localVariable.inputArgumentRange
         ];
-        resolvedLocalVariable = localVariable;
-        localVariableIndex = argumentsList.length - 2;
+        localVariablesByArgument.set(argumentsList.length - 2, localVariable);
       } else {
         argumentsList = splitRoutineArguments(source, argumentRange);
         argumentsList = argumentsList.map((argument, index) => {
@@ -2677,19 +2672,17 @@ function resolveRoutineCall(
           if (!argumentLocalVariable) {
             return argument;
           }
-          resolvedLocalVariable = argumentLocalVariable;
-          localVariableIndex = index;
+          localVariablesByArgument.set(index, argumentLocalVariable);
           return argumentLocalVariable.name.range;
         });
       }
       parsedArguments = {
         argumentsList,
-        localVariable: resolvedLocalVariable,
-        localVariableIndex
+        localVariablesByArgument
       };
       parsedArgumentsByNameEnd.set(nameEnd, parsedArguments);
     }
-    const { argumentsList, localVariable, localVariableIndex } = parsedArguments;
+    const { argumentsList, localVariablesByArgument } = parsedArguments;
     if (argumentsList.length !== routine.parameters.length) {
       continue;
     }
@@ -2700,7 +2693,8 @@ function resolveRoutineCall(
     const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
     for (let index = 0; index < argumentsList.length; index++) {
       const parameter = routine.parameters[index];
-      const scalarArgumentType = localVariableIndex === index
+      const localVariable = localVariablesByArgument.get(index);
+      const scalarArgumentType = localVariable
         ? undefined
         : resolveScalarRoutineArgumentType(
           source,
@@ -2708,8 +2702,8 @@ function resolveRoutineCall(
           parameter.type,
           symbols
         );
-      const argumentType = localVariableIndex === index
-        ? localVariable?.type
+      const argumentType = localVariable
+        ? localVariable.type
         : scalarArgumentType ?? resolveRoutineArgumentType(
           source,
           argumentsList[index],
@@ -2750,7 +2744,7 @@ function resolveRoutineCall(
         fieldAccesses,
         variableAccesses,
         computedFieldAccesses,
-        localVariable,
+        localVariables: [...localVariablesByArgument.values()],
         target: routine
       },
       distance: distances.reduce((total, distance) => total + distance, 0),
@@ -5130,13 +5124,13 @@ export function findTypeReferenceAtOffset(
       ) {
         return call.addressType;
       }
-      const localVariableType = call.localVariable?.type;
-      if (
-        localVariableType &&
-        offset >= localVariableType.range.start &&
-        offset <= localVariableType.range.end
-      ) {
-        return localVariableType;
+      for (const localVariable of call.localVariables ?? []) {
+        if (
+          offset >= localVariable.type.range.start &&
+          offset <= localVariable.type.range.end
+        ) {
+          return localVariable.type;
+        }
       }
     }
     for (const process of routine.processes) {

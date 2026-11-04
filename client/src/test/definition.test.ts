@@ -2954,6 +2954,48 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
+  test('Declares multiple local variables from separate routine arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma word é uma estrutura com',
+      '  Um byte denominado byte inicial e',
+      '  Um byte denominado byte final.',
+      'Uma word de ordem inferior é uma word.',
+      'Uma word de ordem superior é uma word.',
+      'Um número é uma estrutura com',
+      '  Um byte denominado primeiro byte,',
+      '  Um byte denominado segundo byte,',
+      '  Um byte denominado terceiro byte,',
+      '  Um byte denominado quarto byte,',
+      '  Uma word de ordem inferior sob o primeiro byte,',
+      '  Uma word de ordem superior sob o terceiro byte.',
+      'Uma string é uma estrutura.',
+      'Uma cifra hexadecimal é uma string.',
+      'Rotina para que se converta um número para uma cifra hexadecimal:',
+      '  Subdivida o número em um word e uma segunda word.',
+      '  Converta a word para a cifra hexadecimal.',
+      '  Converta a segunda word para uma segunda cifra hexadecimal.',
+      '  Acrescente a segunda cifra hexadecimal para a cifra hexadecimal.',
+      'Rotina para que se subdivida um número em uma word e uma segunda word:',
+      '  Retorne.',
+      'Rotina para que se acrescente uma string para uma segunda string:',
+      '  Retorne.',
+      'Rotina para que se converta uma word para uma cifra hexadecimal:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
   test('Diagnoses local variables that reuse routine parameter names', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
