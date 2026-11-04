@@ -196,7 +196,10 @@ const localVariableNameMarkers = new Set([
 ]);
 const routinePredicateWords = new Set([
     'é', 'for', 'foi', 'foram', 'forem', 'seja', 'sejam', 'são', 'está',
-    'estão', 'estiver', 'estiverem', 'estamos'
+    'estão', 'estiver', 'estiverem', 'estamos', 'tem', 'tiver', 'há', 'houver',
+    'começar', 'começa', 'terminar', 'termina', 'pode', 'puder', 'puderem',
+    'contém', 'contiver', 'possuir', 'possui', 'cabe', 'couber', 'existe',
+    'existir', 'ultrapassou', 'limitando-o'
 ]);
 const routineWordReplacements = new Map([
     ['é', 'é'],
@@ -289,14 +292,16 @@ const routineNameDelimiters = new Set([
     'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
     'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
     'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante',
-    'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
+    'e', 'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
     'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão',
     'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob',
     'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada',
     'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',
     'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
     'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
-    'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas'
+    'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
+    'limitando-o', 'igual', 'while', 'ultrapassou',
+    ...routineContractions.keys(), ...routineWordReplacements.keys()
 ]);
 const reservedIdentifierWords = new Set([
     ...routineNameDelimiters,
@@ -562,7 +567,7 @@ function validateRoutineVariableNames(routines, diagnostics) {
             ...routine.parameters,
             ...(routine.returnParameter ? [routine.returnParameter] : []),
             ...routine.localVariables,
-            ...routine.calls.flatMap(call => call.localVariable ? [call.localVariable] : []),
+            ...routine.calls.flatMap(call => call.localVariables ?? []),
             ...routine.processes.flatMap(process => process.returnVariable && !process.returnVariableIsReference
                 ? [process.returnVariable]
                 : [])
@@ -674,8 +679,8 @@ function processRoutineStatement(source, statement, caller, routines, globalVari
     const call = resolveRoutineCall(source, statement, routines, caller, globalVariables, symbols);
     if (call) {
         caller.calls.push(call);
-        if (call.localVariable) {
-            caller.localVariables.push(call.localVariable);
+        if (call.localVariables) {
+            caller.localVariables.push(...call.localVariables);
         }
     }
     else {
@@ -810,6 +815,15 @@ function maskWordInRange(source, range, word) {
     let match;
     while ((match = words.exec(rangeText))) {
         if (match[0].toLocaleLowerCase('pt-BR') !== word) {
+            continue;
+        }
+        const previousCharacter = match.index > 0 ? rangeText[match.index - 1] : '';
+        const wordEnd = match.index + match[0].length;
+        const nextCharacter = wordEnd < rangeText.length ? rangeText[wordEnd] : '';
+        if (isWordCharacter(previousCharacter) ||
+            isIdentifierJoiner(previousCharacter) ||
+            isWordCharacter(nextCharacter) ||
+            isIdentifierJoiner(nextCharacter)) {
             continue;
         }
         for (let index = match.index; index < match.index + match[0].length; index++) {
@@ -1180,9 +1194,27 @@ function validateMemoryAllocationStatement(source, statement, routine, globalVar
     const targetName = normalizeTypeName(source.slice(targetRange.start, targetRange.end));
     const localVariable = findRoutineVariable(routine, targetName);
     const globalVariable = globalVariables.lookup(targetName);
+    const isIndefiniteArticle = indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'));
+    const declaredType = isIndefiniteArticle && !localVariable
+        ? symbols.lookup(source.slice(targetRange.start, targetRange.end))
+        : undefined;
     let type;
     let variableAccess;
-    if (localVariable) {
+    if (declaredType) {
+        type = createSyntheticTypeReference(declaredType.name, targetRange);
+        const allocatedVariable = {
+            name: createTypeReference(source, targetRange),
+            type,
+            range: statement
+        };
+        routine.localVariables.push(allocatedVariable);
+        variableAccess = {
+            reference: allocatedVariable.name,
+            type,
+            scope: routine.range.start
+        };
+    }
+    else if (localVariable) {
         type = localVariable.type;
         variableAccess = {
             reference: createTypeReference(source, targetRange),
@@ -1682,30 +1714,35 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
         if (!parsedArguments) {
             const argumentRange = trimRange(source, nameEnd, callQualifier?.start ?? statementRange.end);
             const localVariable = parseLocalVariableDeclaration(source, argumentRange, symbols);
-            const precedingArgumentsRange = localVariable
-                ? trimTrailingWord(source, trimRange(source, argumentRange.start, localVariable.range.start), 'para')
-                : argumentRange;
-            const argumentsList = localVariable
-                ? [
+            let argumentsList;
+            const localVariablesByArgument = new Map();
+            if (localVariable?.inputArgumentRange) {
+                const precedingArgumentsRange = trimTrailingWord(source, trimRange(source, argumentRange.start, localVariable.range.start), 'para');
+                argumentsList = [
                     ...splitRoutineArguments(source, precedingArgumentsRange).filter(argument => normalizeTypeName(source.slice(argument.start, argument.end)) !== 'para'),
-                    ...(localVariable.inputArgumentRange
-                        ? [localVariable.name.range]
-                        : []),
-                    localVariable.inputArgumentRange ?? localVariable.name.range
-                ]
-                : splitRoutineArguments(source, argumentRange);
+                    localVariable.name.range,
+                    localVariable.inputArgumentRange
+                ];
+                localVariablesByArgument.set(argumentsList.length - 2, localVariable);
+            }
+            else {
+                argumentsList = splitRoutineArguments(source, argumentRange);
+                argumentsList = argumentsList.map((argument, index) => {
+                    const argumentLocalVariable = parseLocalVariableDeclaration(source, argument, symbols);
+                    if (!argumentLocalVariable) {
+                        return argument;
+                    }
+                    localVariablesByArgument.set(index, argumentLocalVariable);
+                    return argumentLocalVariable.name.range;
+                });
+            }
             parsedArguments = {
                 argumentsList,
-                localVariable,
-                localVariableIndex: localVariable
-                    ? localVariable.inputArgumentRange
-                        ? argumentsList.length - 2
-                        : argumentsList.length - 1
-                    : -1
+                localVariablesByArgument
             };
             parsedArgumentsByNameEnd.set(nameEnd, parsedArguments);
         }
-        const { argumentsList, localVariable, localVariableIndex } = parsedArguments;
+        const { argumentsList, localVariablesByArgument } = parsedArguments;
         if (argumentsList.length !== routine.parameters.length) {
             continue;
         }
@@ -1715,11 +1752,12 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
         const computedFieldAccesses = [];
         for (let index = 0; index < argumentsList.length; index++) {
             const parameter = routine.parameters[index];
-            const scalarArgumentType = localVariableIndex === index
+            const localVariable = localVariablesByArgument.get(index);
+            const scalarArgumentType = localVariable
                 ? undefined
                 : resolveScalarRoutineArgumentType(source, argumentsList[index], parameter.type, symbols);
-            const argumentType = localVariableIndex === index
-                ? localVariable?.type
+            const argumentType = localVariable
+                ? localVariable.type
                 : scalarArgumentType ?? resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
             const distance = argumentType
                 ? getRoutineArgumentTypeDistance(argumentType, parameter.type.name, symbols)
@@ -1745,7 +1783,7 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
                 fieldAccesses,
                 variableAccesses,
                 computedFieldAccesses,
-                localVariable,
+                localVariables: [...localVariablesByArgument.values()],
                 target: routine
             },
             distance: distances.reduce((total, distance) => total + distance, 0),
@@ -2317,13 +2355,22 @@ function findRoutineVariable(routine, name) {
 }
 function isCompatibleType(actual, expected, symbols) {
     return nullLiteralWords.has(actual.normalizedName) ||
-        symbols.getBaseTypeDistance(actual.name, expected.name) !== undefined ||
+        getRoutineArgumentTypeDistance(actual, expected.name, symbols) !== undefined ||
         actual.normalizedName === expected.normalizedName;
 }
 function getRoutineArgumentTypeDistance(actual, expectedName, symbols) {
-    return nullLiteralWords.has(actual.normalizedName)
-        ? 0
-        : symbols.getBaseTypeDistance(actual.name, expectedName);
+    if (nullLiteralWords.has(actual.normalizedName)) {
+        return 0;
+    }
+    const exactDistance = symbols.getBaseTypeDistance(actual.name, expectedName);
+    if (exactDistance !== undefined) {
+        return exactDistance;
+    }
+    const expectedNormalizedName = normalizeTypeName(expectedName);
+    return symbols.entries
+        .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
+        .map(symbol => symbols.getBaseTypeDistance(actual.name, symbol.name))
+        .find((distance) => distance !== undefined);
 }
 function parseLocalVariableDeclaration(source, argumentsRange, symbols) {
     const castMatch = /\btal\s+(?:como|qual)\b/iu.exec(source.slice(argumentsRange.start, argumentsRange.end));
@@ -2937,7 +2984,7 @@ function findRoutineParameterSeparator(source, start, end) {
     let separator = commaIndex !== -1 && commaIndex < end
         ? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
         : undefined;
-    const words = /\p{L}+/gu;
+    const words = /[\p{L}\p{N}_]+(?:-[\p{L}\p{N}_]+)*/gu;
     words.lastIndex = start;
     let match;
     while ((match = words.exec(source)) && match.index < end) {
@@ -2973,7 +3020,7 @@ function findRoutineParameterSeparator(source, start, end) {
     return separator;
 }
 function findTrailingRoutineNameSuffix(source, start, end) {
-    const words = /\p{L}+/gu;
+    const words = /[\p{L}\p{N}_]+(?:-[\p{L}\p{N}_]+)*/gu;
     words.lastIndex = start;
     let match;
     while ((match = words.exec(source)) && match.index < end) {
@@ -2982,7 +3029,8 @@ function findTrailingRoutineNameSuffix(source, start, end) {
             continue;
         }
         const wordEnd = match.index + match[0].length;
-        if (!findAnyWord(source, wordEnd, end, indefiniteArticles)) {
+        const nextArticle = findAnyWord(source, wordEnd, end, indefiniteArticles);
+        if (!nextArticle) {
             return { start: match.index, end };
         }
     }
@@ -3520,11 +3568,11 @@ function findTypeReferenceAtOffset(parsedDocument, offset) {
                 offset <= call.addressType.range.end) {
                 return call.addressType;
             }
-            const localVariableType = call.localVariable?.type;
-            if (localVariableType &&
-                offset >= localVariableType.range.start &&
-                offset <= localVariableType.range.end) {
-                return localVariableType;
+            for (const localVariable of call.localVariables ?? []) {
+                if (offset >= localVariable.type.range.start &&
+                    offset <= localVariable.type.range.end) {
+                    return localVariable.type;
+                }
             }
         }
         for (const process of routine.processes) {
@@ -3951,7 +3999,9 @@ function findAnyWord(source, start, end, expectedWords) {
     while ((match = words.exec(source)) && match.index < end) {
         const wordEnd = match.index + match[0].length;
         if (!isWordCharacter(match.index > start ? source[match.index - 1] : '') &&
+            !isIdentifierJoiner(match.index > start ? source[match.index - 1] : '') &&
             !isWordCharacter(wordEnd < end ? source[wordEnd] : '') &&
+            !isIdentifierJoiner(wordEnd < end ? source[wordEnd] : '') &&
             expectedWords.has(match[0].toLocaleLowerCase('pt-BR'))) {
             return { start: match.index, end: wordEnd, value: match[0] };
         }
@@ -3960,9 +4010,19 @@ function findAnyWord(source, start, end, expectedWords) {
 }
 function findFieldSeparator(source, start, end) {
     const commaIndex = source.indexOf(',', start);
-    let separator = commaIndex !== -1 && commaIndex < end
-        ? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
-        : undefined;
+    let separator;
+    if (commaIndex !== -1 && commaIndex < end) {
+        let nextStart = skipWhitespace(source, commaIndex + 1, end);
+        const conjunction = readWord(source, nextStart, end);
+        if (conjunction?.value.toLocaleLowerCase('pt-BR') === 'e') {
+            const afterConjunction = skipWhitespace(source, conjunction.end, end);
+            const nextArticle = readWord(source, afterConjunction, end);
+            if (nextArticle && indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR'))) {
+                nextStart = afterConjunction;
+            }
+        }
+        separator = { start: commaIndex, nextStart };
+    }
     const words = /\p{L}+/gu;
     words.lastIndex = start;
     let match;
@@ -4051,7 +4111,9 @@ function findWord(source, start, end, expectedWord) {
         const previousCharacter = match.index > start ? source[match.index - 1] : '';
         const nextCharacter = wordEnd < end ? source[wordEnd] : '';
         if (!isWordCharacter(previousCharacter) &&
+            !isIdentifierJoiner(previousCharacter) &&
             !isWordCharacter(nextCharacter) &&
+            !isIdentifierJoiner(nextCharacter) &&
             match[0].toLocaleLowerCase('pt-BR') === expectedWord) {
             return { start: match.index, end: wordEnd };
         }

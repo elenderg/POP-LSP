@@ -232,7 +232,7 @@ connection.onDefinition(params => profileRequest('definition', async () => {
                     ...routine.parameters,
                     ...(routine.returnParameter ? [routine.returnParameter] : []),
                     ...routine.localVariables,
-                    ...routine.calls.flatMap(call => call.localVariable ? [call.localVariable] : []),
+                    ...routine.calls.flatMap(call => call.localVariables ?? []),
                     ...routine.processes.flatMap(process => process.returnVariable ? [process.returnVariable] : [])
                 ];
                 return variables.some(variable => offset >= variable.type.range.start &&

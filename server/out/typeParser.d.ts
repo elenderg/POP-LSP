@@ -149,7 +149,7 @@ export interface RoutineCall {
     fieldAccesses?: RoutineFieldAccess[];
     variableAccesses?: RoutineVariableAccess[];
     computedFieldAccesses?: RoutineComputedFieldAccess[];
-    localVariable?: RoutineLocalVariable;
+    localVariables?: RoutineLocalVariable[];
     target?: RoutineDeclaration;
 }
 export interface RoutineMemoryAllocation {

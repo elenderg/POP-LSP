@@ -494,7 +494,10 @@ const localVariableNameMarkers = new Set([
 ]);
 const routinePredicateWords = new Set([
   'é', 'for', 'foi', 'foram', 'forem', 'seja', 'sejam', 'são', 'está',
-  'estão', 'estiver', 'estiverem', 'estamos'
+  'estão', 'estiver', 'estiverem', 'estamos', 'tem', 'tiver', 'há', 'houver',
+  'começar', 'começa', 'terminar', 'termina', 'pode', 'puder', 'puderem',
+  'contém', 'contiver', 'possuir', 'possui', 'cabe', 'couber', 'existe',
+  'existir', 'ultrapassou', 'limitando-o'
 ]);
 const routineWordReplacements = new Map([
   ['é', 'é'],
@@ -587,15 +590,16 @@ const routineNameDelimiters = new Set([
   'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente', 
   'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
   'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante',
-  'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
+  'e', 'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
   'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão',
   'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob',
   'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada',
   'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',
   'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
   'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
-  'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
-  ...routineContractions.keys()
+  'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas', 
+  'limitando-o', 'igual', 'while', 'ultrapassou',
+  ...routineContractions.keys(), ...routineWordReplacements.keys()
 ]);
 const reservedIdentifierWords = new Set([
   ...routineNameDelimiters,
@@ -1389,6 +1393,17 @@ function maskWordInRange(
   let match: RegExpExecArray | null;
   while ((match = words.exec(rangeText))) {
     if (match[0].toLocaleLowerCase('pt-BR') !== word) {
+      continue;
+    }
+    const previousCharacter = match.index > 0 ? rangeText[match.index - 1] : '';
+    const wordEnd = match.index + match[0].length;
+    const nextCharacter = wordEnd < rangeText.length ? rangeText[wordEnd] : '';
+    if (
+      isWordCharacter(previousCharacter) ||
+      isIdentifierJoiner(previousCharacter) ||
+      isWordCharacter(nextCharacter) ||
+      isIdentifierJoiner(nextCharacter)
+    ) {
       continue;
     }
     for (let index = match.index; index < match.index + match[0].length; index++) {
@@ -4436,7 +4451,7 @@ function findRoutineParameterSeparator(
     let separator = commaIndex !== -1 && commaIndex < end
       ? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
       : undefined;
-    const words = /\p{L}+/gu;
+    const words = /[\p{L}\p{N}_]+(?:-[\p{L}\p{N}_]+)*/gu;
     words.lastIndex = start;
     let match: RegExpExecArray | null;
     while ((match = words.exec(source)) && match.index < end) {
@@ -4479,7 +4494,7 @@ function findTrailingRoutineNameSuffix(
   start: number,
   end: number
 ): SourceRange | undefined {
-  const words = /\p{L}+/gu;
+  const words = /[\p{L}\p{N}_]+(?:-[\p{L}\p{N}_]+)*/gu;
   words.lastIndex = start;
   let match: RegExpExecArray | null;
   while ((match = words.exec(source)) && match.index < end) {
@@ -5651,7 +5666,9 @@ function findAnyWord(
     const wordEnd = match.index + match[0].length;
     if (
       !isWordCharacter(match.index > start ? source[match.index - 1] : '') &&
+      !isIdentifierJoiner(match.index > start ? source[match.index - 1] : '') &&
       !isWordCharacter(wordEnd < end ? source[wordEnd] : '') &&
+      !isIdentifierJoiner(wordEnd < end ? source[wordEnd] : '') &&
       expectedWords.has(match[0].toLocaleLowerCase('pt-BR'))
     ) {
       return { start: match.index, end: wordEnd, value: match[0] };
@@ -5666,9 +5683,19 @@ function findFieldSeparator(
   end: number
 ): { start: number; nextStart: number } | undefined {
   const commaIndex = source.indexOf(',', start);
-  let separator = commaIndex !== -1 && commaIndex < end
-    ? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
-    : undefined;
+  let separator: { start: number; nextStart: number } | undefined;
+  if (commaIndex !== -1 && commaIndex < end) {
+    let nextStart = skipWhitespace(source, commaIndex + 1, end);
+    const conjunction = readWord(source, nextStart, end);
+    if (conjunction?.value.toLocaleLowerCase('pt-BR') === 'e') {
+      const afterConjunction = skipWhitespace(source, conjunction.end, end);
+      const nextArticle = readWord(source, afterConjunction, end);
+      if (nextArticle && indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR'))) {
+        nextStart = afterConjunction;
+      }
+    }
+    separator = { start: commaIndex, nextStart };
+  }
   const words = /\p{L}+/gu;
   words.lastIndex = start;
   let match: RegExpExecArray | null;
@@ -5786,7 +5813,9 @@ function findWord(
     const nextCharacter = wordEnd < end ? source[wordEnd] : '';
     if (
       !isWordCharacter(previousCharacter) &&
+      !isIdentifierJoiner(previousCharacter) &&
       !isWordCharacter(nextCharacter) &&
+      !isIdentifierJoiner(nextCharacter) &&
       match[0].toLocaleLowerCase('pt-BR') === expectedWord
     ) {
       return { start: match.index, end: wordEnd };
