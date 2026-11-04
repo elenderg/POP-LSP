@@ -594,7 +594,8 @@ const routineNameDelimiters = new Set([
   'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',
   'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
   'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
-  'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas'
+  'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
+  ...routineContractions.keys()
 ]);
 const reservedIdentifierWords = new Set([
   ...routineNameDelimiters,
@@ -1869,10 +1870,29 @@ function validateMemoryAllocationStatement(
   const targetName = normalizeTypeName(source.slice(targetRange.start, targetRange.end));
   const localVariable = findRoutineVariable(routine, targetName);
   const globalVariable = globalVariables.lookup(targetName);
+  const isIndefiniteArticle = indefiniteArticles.has(
+    article.value.toLocaleLowerCase('pt-BR')
+  );
+  const declaredType = isIndefiniteArticle && !localVariable
+    ? symbols.lookup(source.slice(targetRange.start, targetRange.end))
+    : undefined;
   let type: TypeReference | undefined;
   let variableAccess: RoutineVariableAccess | undefined;
 
-  if (localVariable) {
+  if (declaredType) {
+    type = createSyntheticTypeReference(declaredType.name, targetRange);
+    const allocatedVariable: RoutineLocalVariable = {
+      name: createTypeReference(source, targetRange),
+      type,
+      range: statement
+    };
+    routine.localVariables.push(allocatedVariable);
+    variableAccess = {
+      reference: allocatedVariable.name,
+      type,
+      scope: routine.range.start
+    };
+  } else if (localVariable) {
     type = localVariable.type;
     variableAccess = {
       reference: createTypeReference(source, targetRange),
@@ -2628,35 +2648,44 @@ function resolveRoutineCall(
         argumentRange,
         symbols
       );
-      const precedingArgumentsRange = localVariable
-        ? trimTrailingWord(
+      let argumentsList: SourceRange[];
+      let resolvedLocalVariable: RoutineLocalVariable | undefined;
+      let localVariableIndex = -1;
+      if (localVariable?.inputArgumentRange) {
+        const precedingArgumentsRange = trimTrailingWord(
           source,
           trimRange(source, argumentRange.start, localVariable.range.start),
           'para'
-        )
-        : argumentRange;
-      const argumentsList = localVariable
-        ? [
-          ...splitRoutineArguments(
-            source,
-            precedingArgumentsRange
-          ).filter(argument =>
+        );
+        argumentsList = [
+          ...splitRoutineArguments(source, precedingArgumentsRange).filter(argument =>
             normalizeTypeName(source.slice(argument.start, argument.end)) !== 'para'
           ),
-          ...(localVariable.inputArgumentRange
-            ? [localVariable.name.range]
-            : []),
-          localVariable.inputArgumentRange ?? localVariable.name.range
-        ]
-        : splitRoutineArguments(source, argumentRange);
+          localVariable.name.range,
+          localVariable.inputArgumentRange
+        ];
+        resolvedLocalVariable = localVariable;
+        localVariableIndex = argumentsList.length - 2;
+      } else {
+        argumentsList = splitRoutineArguments(source, argumentRange);
+        argumentsList = argumentsList.map((argument, index) => {
+          const argumentLocalVariable = parseLocalVariableDeclaration(
+            source,
+            argument,
+            symbols
+          );
+          if (!argumentLocalVariable) {
+            return argument;
+          }
+          resolvedLocalVariable = argumentLocalVariable;
+          localVariableIndex = index;
+          return argumentLocalVariable.name.range;
+        });
+      }
       parsedArguments = {
         argumentsList,
-        localVariable,
-        localVariableIndex: localVariable
-          ? localVariable.inputArgumentRange
-            ? argumentsList.length - 2
-            : argumentsList.length - 1
-          : -1
+        localVariable: resolvedLocalVariable,
+        localVariableIndex
       };
       parsedArgumentsByNameEnd.set(nameEnd, parsedArguments);
     }
@@ -3557,7 +3586,7 @@ function isCompatibleType(
   symbols: TypeSymbolTable
 ): boolean {
   return nullLiteralWords.has(actual.normalizedName) ||
-    symbols.getBaseTypeDistance(actual.name, expected.name) !== undefined ||
+    getRoutineArgumentTypeDistance(actual, expected.name, symbols) !== undefined ||
     actual.normalizedName === expected.normalizedName;
 }
 
@@ -3566,9 +3595,20 @@ function getRoutineArgumentTypeDistance(
   expectedName: string,
   symbols: TypeSymbolTable
 ): number | undefined {
-  return nullLiteralWords.has(actual.normalizedName)
-    ? 0
-    : symbols.getBaseTypeDistance(actual.name, expectedName);
+  if (nullLiteralWords.has(actual.normalizedName)) {
+    return 0;
+  }
+
+  const exactDistance = symbols.getBaseTypeDistance(actual.name, expectedName);
+  if (exactDistance !== undefined) {
+    return exactDistance;
+  }
+
+  const expectedNormalizedName = normalizeTypeName(expectedName);
+  return symbols.entries
+    .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
+    .map(symbol => symbols.getBaseTypeDistance(actual.name, symbol.name))
+    .find((distance): distance is number => distance !== undefined);
 }
 
 function parseLocalVariableDeclaration(
@@ -4455,7 +4495,8 @@ function findTrailingRoutineNameSuffix(
     }
 
     const wordEnd = match.index + match[0].length;
-    if (!findAnyWord(source, wordEnd, end, indefiniteArticles)) {
+    const nextArticle = findAnyWord(source, wordEnd, end, indefiniteArticles);
+    if (!nextArticle) {
       return { start: match.index, end };
     }
   }

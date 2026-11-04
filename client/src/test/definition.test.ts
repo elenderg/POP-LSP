@@ -2311,6 +2311,64 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
+  test('Declares an allocated local variable for later routine calls', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se adicione um nome para umas alternativas:',
+      '  Aloque memória para uma alternativa.',
+      '  Acrescente a alternativa para as alternativas.',
+      'Rotina para que se atribua uma string para uma segunda string:',
+      '  Retorne.',
+      'Rotina para que se acrescente uma lista em umas listas:',
+      '  Retorne.',
+      'As alternativas são umas alternativas.',
+      'Uma alternativa é uma lista.',
+      'Um ponteiro é uma estrutura com 4 bytes.',
+      'Uma lista é um ponteiro para uma lista estruturada.',
+      'Uma lista estruturada é uma estrutura com',
+      '  Uma lista denominada lista posterior e',
+      '  Uma lista denominada lista anterior.',
+      'Umas listas são uma estrutura com',
+      '  Uma lista denominada lista inicial e',
+      '  Uma lista denominada lista final.',
+      'Uma string é uma estrutura.',
+      'Um nome é um byte.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const callOffset = text.indexOf('a alternativa para') + 4;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(callOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 1);
+
+    const routineCallOffset = text.indexOf('Acrescente a alternativa') + 2;
+    const routineDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(routineCallOffset)
+    );
+    assert.ok(routineDefinition);
+    assert.equal(routineDefinition.length, 1);
+    assert.equal(routineDefinition[0].range.start.line, 5);
+  });
+
   test('Validates list types and variables passed to Aloque memória para', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -2858,6 +2916,40 @@ suite('Português Puro definitions', () => {
       assert.equal(definition.length, 1, testCase.call);
       assert.equal(definition[0].range.start.line, testCase.expectedLine, testCase.call);
     }
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Declares a local variable from one routine argument without consuming later arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se adicione uma string para uns conjuntos de texto:',
+      '  Crie um conjunto de texto usando a string.',
+      '  Acrescente o conjunto de texto para os conjuntos de texto.',
+      'Rotina para que se crie um conjunto de texto usando uma string:',
+      '  Retorne.',
+      'Rotina para que se acrescente uma lista para umas listas:',
+      '  Retorne.',
+      'Uma lista é uma estrutura.',
+      'Um conjunto de texto é uma lista com uma string.',
+      'Um caractere é um byte.',
+      'Um ponteiro é uma estrutura com 4 bytes.',
+      'Um endereço de byte é um ponteiro para um byte.',
+      'Um caractere inicial é um ponteiro para um byte.',
+      'Um caractere final é um ponteiro para um byte.',
+      'Uma string é uma estrutura com',
+      '  Um caractere inicial e',
+      '  Um caractere final.'
+    ].join('\n'));
+    await diagnosticsUpdated;
 
     assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
@@ -3835,6 +3927,37 @@ suite('Português Puro definitions', () => {
         'rotina byte byte'
       ]
     );
+  });
+
+  test('Treats an indefinite article after a contraction as a new parameter', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Rotina para que se inclua um byte no final de uma string:',
+      '  Retorne.',
+      'Um ponteiro é uma estrutura.',
+      'Um caractere inicial é um ponteiro para um byte.',
+      'Um caractere final é um ponteiro para um byte.',
+      'Uma string é uma estrutura com',
+      '  Um caractere inicial e',
+      '  Um caractere final.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+      'vscode.executeDocumentSymbolProvider',
+      docUri
+    );
+    const routine = symbols.find(symbol => symbol.name === 'inclua');
+    assert.equal(routine?.detail, 'rotina byte byte string string');
   });
 
   test('Resolves direct and nested structure field accesses as routine arguments', async () => {
