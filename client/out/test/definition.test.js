@@ -1654,8 +1654,9 @@ suite('Português Puro definitions', () => {
             });
         });
         await (0, helper_1.setTestContent)([
-            'Um quora é uma estrutura.',
-            'Um terminal é uma estrutura com um quora.',
+            'Uma lista é uma estrutura.',
+            'Um quora é uma lista.',
+            'Um terminal é uma estrutura com uns quoras.',
             'Rotina para que se adicione um quora para um terminal:',
             '  Acrescente o quora para o quora deste terminal.',
             '  Se o terminal não estiver totalmente preenchido, retorne.',

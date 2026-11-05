@@ -3815,7 +3815,10 @@ function findNestedStructureFields(
 
   const matches: NamedTypeField[] = [];
   for (const field of visibleFields) {
-    if (normalizeTypeName(field.name.name) === fieldName) {
+    if (
+      normalizeTypeName(field.name.name) === fieldName ||
+      isSingularListFieldAlias(field, fieldName, symbols)
+    ) {
       matches.push(field);
     }
     if (symbols.getBaseTypeDistance(field.type.name, 'estrutura') !== undefined) {
@@ -3828,6 +3831,20 @@ function findNestedStructureFields(
     }
   }
   return matches;
+}
+
+function isSingularListFieldAlias(
+  field: NamedTypeField,
+  fieldName: string,
+  symbols: TypeSymbolTable
+): boolean {
+  const fieldType = symbols.lookup(field.type.name);
+  return Boolean(
+    fieldType &&
+    symbols.getBaseTypeDistance(fieldType.name, 'lista') !== undefined &&
+    normalizeTypeName(fieldType.name) === fieldName &&
+    normalizeTypeName(field.name.name) === normalizeTypeName(fieldType.pluralName)
+  );
 }
 
 function resolveVariableType(
