@@ -582,7 +582,7 @@ const articlesAfterPrepositionA = new Set([
   'um', 'uma', 'uns', 'umas', 'o', 'a', 'os', 'as'
 ]);
 const builtInStatementStarts = new Set([
-  'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
+  'atribua','diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere', 
   'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
@@ -4703,10 +4703,8 @@ function parseRoutineDeclarations(
         alternateHeaders.push(header);
         continue;
       }
-
       for (const alternate of alternateHeaders) {
         if (hasEquivalentRoutineSignature(alternate, header)) {
-
           diagnostics.push({
             message: 'Alternate routine header is semantically equivalent to the primary header.',
             range: alternate.name.range

@@ -1144,7 +1144,7 @@ suite('Português Puro definitions', () => {
       'A magnitude é uma string igual a "magnitude".',
       'O endereçamento é uma string igual a "endereçamento".',
       'Rotina para que se faça algo com um caractere:',
-      '  Atribua endereçamento deste caractere para um pchar denominado endereço.',
+      '  Atribua o endereçamento deste caractere para um pchar denominado endereço.',
       '  Atribua "oi" para uma string.',
       '  Atribua a magnitude desta string para um número denominado tamanho.',
       'Rotina para que se use um número:',
@@ -2178,6 +2178,32 @@ suite('Português Puro definitions', () => {
     assert.equal(colonTerminatorHints.length, 1);
     assert.equal(colonTerminatorHints[0].severity, vscode.DiagnosticSeverity.Hint);
     assert.equal(colonTerminatorHints[0].range.start.line, 5);
+  });
+
+  test('Resolves nested field arguments after routine prepositions', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um quora é uma estrutura.',
+      'Um terminal é uma estrutura com um quora.',
+      'Rotina para que se adicione um quora para um terminal:',
+      '  Acrescente o quora para o quora deste terminal.',
+      '  Se o terminal não estiver totalmente preenchido, retorne.',
+      'Rotina para que se acrescente um quora para um segundo quora:',
+      '  Retorne.',
+      'Função para que se determine se um terminal está totalmente preenchido:',
+      '  Diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
   test('Hints when primary routine headers follow an alternate header without a body', async () => {

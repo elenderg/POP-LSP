@@ -283,7 +283,7 @@ const articlesAfterPrepositionA = new Set([
     'um', 'uma', 'uns', 'umas', 'o', 'a', 'os', 'as'
 ]);
 const builtInStatementStarts = new Set([
-    'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
+    'atribua', 'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
     'processe', 'itere', 'pare', 'reitere',
     'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
