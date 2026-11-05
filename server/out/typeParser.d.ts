@@ -122,6 +122,7 @@ export interface RoutineDeclaration {
     name: TypeReference;
     qualifier?: string;
     alternateNames: TypeReference[];
+    alternateParameters: RoutineParameter[][];
     parameters: RoutineParameter[];
     preservedParameters: PreservedRoutineParameter[];
     assignments: RoutineAssignment[];

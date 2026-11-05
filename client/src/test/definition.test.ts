@@ -3379,6 +3379,95 @@ suite('Português Puro definitions', () => {
     );
   });
 
+  test('Accepts routine literals for parameter base types and enforces their ranges', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma contagem é um número.',
+      'Uma fração é uma estrutura.',
+      'Uma proporção é uma fração.',
+      'Um texto hexadecimal é uma estrutura.',
+      'Um código hexadecimal é um texto hexadecimal.',
+      'Uma string é uma estrutura.',
+      'Uma frase é uma string.',
+      'O resultado é uma string igual a "exemplo".',
+      'Rotina para que se faça algo:',
+      '  Remova os caracteres finais desde o resultado usando 1.',
+      '  Receba 0.',
+      '  Receba 255.',
+      '  Use -2147483648.',
+      '  Use 2147483647.',
+      '  Divida -2/5.',
+      '  Divida -2+1/5.',
+      '  Leia $DeAdC0dE.',
+      '  Leia "Este é um exemplo de uma string literal".',
+      '  Receba 256.',
+      '  Use 2147483648.',
+      'Rotina para que se remova os caracteres finais desde uma string usando uma contagem:',
+      '  Retorne.',
+      'Rotina para que se receba um byte:',
+      '  Retorne.',
+      'Rotina para que se use um número:',
+      '  Retorne.',
+      'Rotina para que se divida uma proporção:',
+      '  Retorne.',
+      'Rotina para que se leia um código hexadecimal:',
+      '  Retorne.',
+      'Rotina para que se leia uma frase:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(
+      diagnostics.filter(diagnostic =>
+        diagnostic.message === 'No compatible routine found for "Receba 256".'
+      ).length,
+      1
+    );
+    assert.equal(
+      diagnostics.filter(diagnostic =>
+        diagnostic.message === 'No compatible routine found for "Use 2147483648".'
+      ).length,
+      1
+    );
+    assert.equal(diagnostics.length, 2, diagnostics.map(diagnostic => diagnostic.message).join('\n'));
+  });
+
+  test('Resolves numeric expressions as routine arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma string é uma estrutura.',
+      'Um número é uma estrutura.',
+      'Uma contagem é um número.',
+      'O resultado é uma string.',
+      'O comprimento é um número.',
+      'para que se faça algo:',
+      '  Remova os caracteres finais desde o resultado usando o comprimento menos 1.',
+      'para que se remova os caracteres finais desde uma string usando uma contagem:',
+      '  retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
   test('Resolves routine overloads through derived types from most to least specific', async () => {
     await activate(docUri);
     const updateContent = async (lines: string[]) => {
@@ -3466,6 +3555,32 @@ suite('Português Puro definitions', () => {
 
     const diagnostics = vscode.languages.getDiagnostics(docUri);
     assert.deepEqual(diagnostics, []);
+  });
+
+  test('Resolves equality conditions with contracted second parameters', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma string é uma estrutura.',
+      'Um subtexto é uma string.',
+      'O subtexto é um subtexto.',
+      'O segmento é um subtexto.',
+      'para que se faça algo:',
+      '  Se o segmento for igual ao subtexto,',
+      '    retorne.',
+      'para que se determine se uma string é igual a uma segunda string:',
+      '  diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
   test('Parses loop control instructions and keeps block variables in routine scope', async () => {
@@ -3619,6 +3734,54 @@ suite('Português Puro definitions', () => {
     assert.ok(typeDefinition);
     assert.equal(typeDefinition.length, 1);
     assert.equal(typeDefinition[0].range.start.line, 6);
+  });
+
+  test('Resolves boolean conditions with indefinite type arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um contador é um número.',
+      'para que se faça algo com um número:',
+      '  Se um contador estiver ultrapassando o número, retorne.',
+      'para que se determine se um contador está ultrapassando um número:',
+      '  diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+  });
+
+  test('Resolves boolean calls through alternate header parameter types', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um ponteiro é uma estrutura.',
+      'Um número é uma estrutura.',
+      'Uma figura geométrica é um ponteiro.',
+      'para que se faça algo com uma figura geométrica:',
+      '  Se a figura geométrica for inexistente, retorne.',
+      'para que se determine se um ponteiro é um segundo ponteiro;',
+      'para que se determine se um número é um segundo número:',
+      '  diga sim.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
   test('Resolves boolean predicates followed by a preposition and second parameter', async () => {
@@ -4187,6 +4350,34 @@ suite('Português Puro definitions', () => {
     assert.ok(nestedFieldDefinition);
     assert.equal(nestedFieldDefinition.length, 1);
     assert.equal(nestedFieldDefinition[0].range.start.line, 3);
+  });
+
+  test('Splits routine arguments after contractions with implicit definite articles', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma fração é uma estrutura com',
+      '  Um número denominado numerador e',
+      '  Um número denominado denominador.',
+      'A fração é uma fração.',
+      'O máximo divisor comum é um número.',
+      'Rotina para que se faça algo:',
+      '  Divida o numerador desta fração pelo máximo divisor comum.',
+      '  Divida o denominador desta fração pelo máximo divisor comum.',
+      'Rotina para que se divida um número por um segundo número:',
+      '  retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
   });
 
   test('Resolves hidden fields for linked-list types and derived lists', async () => {

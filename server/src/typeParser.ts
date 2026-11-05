@@ -156,6 +156,7 @@ export interface RoutineDeclaration {
   name: TypeReference;
   qualifier?: string;
   alternateNames: TypeReference[];
+  alternateParameters: RoutineParameter[][];
   parameters: RoutineParameter[];
   preservedParameters: PreservedRoutineParameter[];
   assignments: RoutineAssignment[];
@@ -581,9 +582,8 @@ const articlesAfterPrepositionA = new Set([
   'um', 'uma', 'uns', 'umas', 'o', 'a', 'os', 'as'
 ]);
 const builtInStatementStarts = new Set([
-  'atribua', 'escreva', 'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
-  'processe', 'itere', 'pare', 'reitere', 'adicione', 'incremente', 'feche', 'defina',
-  'ative', 'converta', 'dobre', 'multiplique', 'desloque', 'subtraia', 'faça',
+  'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
+  'processe', 'itere', 'pare', 'reitere', 
   'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
 const routineNameDelimiters = new Set([
@@ -663,6 +663,11 @@ function normalizeRoutineNameWords(name: string): string {
       expandedWords[index] = 'para';
     } else {
       expandedWords[index] = routineWordReplacements.get(word) ?? word;
+    }
+  }
+  for (let index = 1; index < expandedWords.length; index++) {
+    if (expandedWords[index - 1] === 'igual' && expandedWords[index] === 'para') {
+      expandedWords[index] = 'a';
     }
   }
   return expandedWords.join(' ');
@@ -1283,7 +1288,7 @@ function resolveBooleanCondition(
   const exact = routineNameIndex.byNormalizedName.get(conditionName)?.find(
     candidate =>
       candidate.routine.isBooleanFunction &&
-      candidate.routine.parameters.length === 0
+      candidate.parameters.length === 0
   );
   if (exact) {
     return {
@@ -1308,8 +1313,8 @@ function resolveBooleanCondition(
     routines,
     true
   )) {
-    const { routine, nameStart, nameEnd, order } = nameMatch;
-    if (!routine.isBooleanFunction || routine.parameters.length === 0) {
+    const { routine, nameStart, nameEnd, order, parameters } = nameMatch;
+    if (!routine.isBooleanFunction || parameters.length === 0) {
       continue;
     }
     if (
@@ -1321,7 +1326,7 @@ function resolveBooleanCondition(
     const prefix = trimRange(conditionSource, condition.start, nameStart);
     const suffix = trimRange(conditionSource, nameEnd, condition.end);
     const argumentsList = [prefix, suffix].filter(range => range.start < range.end);
-    if (argumentsList.length !== routine.parameters.length) {
+    if (argumentsList.length !== parameters.length) {
       continue;
     }
     const distances: number[] = [];
@@ -1329,6 +1334,17 @@ function resolveBooleanCondition(
     const variableAccesses: RoutineVariableAccess[] = [];
     const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
     for (let index = 0; index < argumentsList.length; index++) {
+      const expressionType = resolveNumericRoutineExpressionType(
+        conditionSource,
+        argumentsList[index],
+        caller,
+        globalVariables,
+        symbols,
+        fieldAccesses,
+        routines,
+        computedFieldAccesses,
+        variableAccesses
+      );
       const actualType = resolveRoutineArgumentType(
         conditionSource,
         argumentsList[index],
@@ -1339,20 +1355,41 @@ function resolveBooleanCondition(
         routines,
         computedFieldAccesses,
         variableAccesses,
-        index === argumentsList.length - 1 &&
-          nameMatch.implicitDefiniteArticle === true
+        (index === argumentsList.length - 1 &&
+          nameMatch.implicitDefiniteArticle === true) ||
+          hasContractedDefiniteArticleBefore(
+            source,
+            argumentsList[index].start,
+            condition.start
+          )
+      ) ?? resolveIndefiniteTypeArgument(
+        conditionSource,
+        argumentsList[index],
+        symbols
       );
       const distance = actualType
         ? getRoutineArgumentTypeDistance(
           actualType,
-          routine.parameters[index].type.name,
+          parameters[index].type.name,
+          symbols
+        ) ?? getLiteralRoutineArgumentTypeDistance(
+          source,
+          argumentsList[index],
+          parameters[index].type.name,
           symbols
         )
         : undefined;
-      if (distance === undefined) {
+      const compatibleDistance = distance ?? (expressionType
+        ? getRoutineExpressionTypeDistance(
+          expressionType,
+          parameters[index].type.name,
+          symbols
+        )
+        : undefined);
+      if (compatibleDistance === undefined) {
         break;
       }
-      distances.push(distance);
+      distances.push(compatibleDistance);
     }
     if (distances.length !== argumentsList.length) {
       continue;
@@ -2606,7 +2643,7 @@ function resolveRoutineCall(
   const routineNameIndex = getRoutineNameIndex(routines);
   const exactMatch = routineNameIndex.byNormalizedName.get(statement)?.find(
     candidate =>
-      candidate.routine.parameters.length === 0 &&
+      candidate.parameters.length === 0 &&
       candidate.name.qualifier === statementQualifier?.text
   );
   if (exactMatch) {
@@ -2630,8 +2667,8 @@ function resolveRoutineCall(
     localVariablesByArgument: Map<number, RoutineLocalVariable>;
   }>();
   for (const nameMatch of findRoutineNameMatches(source, statementRange, routines)) {
-    const { routine, name: routineName, nameEnd } = nameMatch;
-    if (routine.parameters.length === 0) {
+    const { routine, name: routineName, nameEnd, parameters } = nameMatch;
+    if (parameters.length === 0) {
       continue;
     }
     if (
@@ -2698,7 +2735,7 @@ function resolveRoutineCall(
       parsedArgumentsByNameEnd.set(nameEnd, parsedArguments);
     }
     const { argumentsList, localVariablesByArgument } = parsedArguments;
-    if (argumentsList.length !== routine.parameters.length) {
+    if (argumentsList.length !== parameters.length) {
       continue;
     }
 
@@ -2707,7 +2744,7 @@ function resolveRoutineCall(
     const variableAccesses: RoutineVariableAccess[] = [];
     const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
     for (let index = 0; index < argumentsList.length; index++) {
-      const parameter = routine.parameters[index];
+      const parameter = parameters[index];
       const localVariable = localVariablesByArgument.get(index);
       const scalarArgumentType = localVariable
         ? undefined
@@ -2728,6 +2765,24 @@ function resolveRoutineCall(
           fieldAccesses,
           routines,
           computedFieldAccesses,
+          variableAccesses,
+          hasContractedDefiniteArticleBefore(
+            source,
+            argumentsList[index].start,
+            nameEnd
+          )
+        );
+      const expressionType = localVariable
+        ? undefined
+        : resolveNumericRoutineExpressionType(
+          source,
+          argumentsList[index],
+          caller,
+          globalVariables,
+          symbols,
+          fieldAccesses,
+          routines,
+          computedFieldAccesses,
           variableAccesses
         );
       const distance = argumentType
@@ -2735,12 +2790,24 @@ function resolveRoutineCall(
           argumentType,
           parameter.type.name,
           symbols
+        ) ?? getLiteralRoutineArgumentTypeDistance(
+          source,
+          argumentsList[index],
+          parameter.type.name,
+          symbols
         )
         : undefined;
-      if (distance === undefined) {
+      const compatibleDistance = distance ?? (expressionType
+        ? getRoutineExpressionTypeDistance(
+          expressionType,
+          parameter.type.name,
+          symbols
+        )
+        : undefined);
+      if (compatibleDistance === undefined) {
         break;
       }
-      distances.push(distance);
+      distances.push(compatibleDistance);
     }
     if (distances.length !== argumentsList.length) {
       continue;
@@ -2798,8 +2865,8 @@ function diagnoseUnresolvedRoutineCall(
     return;
   }
 
-  for (const { routine: candidate, name, nameEnd } of nameMatches) {
-    if (!candidate.parameters.length) {
+  for (const { routine: candidate, name, nameEnd, parameters } of nameMatches) {
+    if (!parameters.length) {
       continue;
     }
     if (nameEnd >= statement.end || !/\s/u.test(source[nameEnd] ?? '')) {
@@ -2807,7 +2874,7 @@ function diagnoseUnresolvedRoutineCall(
     }
     const argumentsRange = trimRange(source, nameEnd, statement.end);
     const argumentsList = splitRoutineArguments(source, argumentsRange);
-    if (argumentsList.length !== candidate.parameters.length) {
+    if (argumentsList.length !== parameters.length) {
       continue;
     }
     for (let index = 0; index < argumentsList.length; index++) {
@@ -2829,7 +2896,7 @@ function diagnoseUnresolvedRoutineCall(
       const argumentType = findTypeSuffix(source, variableNameRange, symbols);
       if (
         argumentType &&
-        isCompatibleType(argumentType, candidate.parameters[index].type, symbols)
+        isCompatibleType(argumentType, parameters[index].type, symbols)
       ) {
         diagnostics.push({
           message: `Unknown variable "${source.slice(variableNameRange.start, variableNameRange.end)}" passed to routine "${name.name}".`,
@@ -2870,6 +2937,7 @@ function routineNames(routine: RoutineDeclaration): TypeReference[] {
 interface RoutineNameCandidate {
   routine: RoutineDeclaration;
   name: TypeReference;
+  parameters: RoutineParameter[];
   order: number;
 }
 
@@ -2897,10 +2965,17 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
   const byNormalizedName = new Map<string, RoutineNameCandidate[]>();
   let order = 0;
   for (const routine of routines) {
-    for (const name of routineNames(routine)) {
+    const variants = [
+      { name: routine.name, parameters: routine.parameters },
+      ...routine.alternateNames.map((name, index) => ({
+        name,
+        parameters: routine.alternateParameters[index] ?? routine.parameters
+      }))
+    ];
+    for (const { name, parameters } of variants) {
       const normalizedName = normalizeRoutineName(name.name);
       const candidates = byNormalizedName.get(normalizedName) ?? [];
-      candidates.push({ routine, name, order: order++ });
+      candidates.push({ routine, name, parameters, order: order++ });
       byNormalizedName.set(normalizedName, candidates);
     }
   }
@@ -2990,9 +3065,13 @@ function splitRoutineArguments(source: string, range: SourceRange): SourceRange[
   const argumentsList: SourceRange[] = [];
   let argumentStart = range.start;
   const words = /\p{L}+/gu;
+  const quotedRanges = findQuotedRanges(source, range);
   words.lastIndex = range.start;
   let match: RegExpExecArray | null;
   while ((match = words.exec(source)) && match.index < range.end) {
+    if (quotedRanges.some(quoted => match!.index >= quoted.start && match!.index < quoted.end)) {
+      continue;
+    }
     const wordEnd = match.index + match[0].length;
     const word = match[0].toLocaleLowerCase('pt-BR');
     const isArgumentSeparator = reservedIdentifierWords.has(word);
@@ -3011,10 +3090,22 @@ function splitRoutineArguments(source: string, range: SourceRange): SourceRange[
     }
     if (!conjunctions.has(word)) {
       const nextArticle = readWord(source, nextStart, range.end);
+      const nextArgumentStartsWithLiteral =
+        /^(?:[+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?|\$[a-f\d]+|")/iu
+          .test(source.slice(nextStart, range.end));
+      const contractionExpansion = routineContractions.get(word)?.split(' ');
+      const hasContractedDefiniteArticle = Boolean(
+        contractionExpansion &&
+        ['o', 'a', 'os', 'as'].includes(
+          contractionExpansion[contractionExpansion.length - 1]
+        )
+      );
       if (
-        !nextArticle ||
-        !definiteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR')) &&
-        !indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR'))
+        (!nextArticle ||
+          !definiteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR')) &&
+          !indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR')) &&
+          !hasContractedDefiniteArticle) &&
+        !nextArgumentStartsWithLiteral
       ) {
         continue;
       }
@@ -3024,6 +3115,22 @@ function splitRoutineArguments(source: string, range: SourceRange): SourceRange[
   }
   argumentsList.push(trimRange(source, argumentStart, range.end));
   return argumentsList.filter(argument => argument.start < argument.end);
+}
+
+function hasContractedDefiniteArticleBefore(
+  source: string,
+  argumentStart: number,
+  rangeStart: number
+): boolean {
+  const precedingText = source.slice(rangeStart, argumentStart).trimEnd();
+  const precedingWord = /([\p{L}]+)$/u.exec(precedingText)?.[1];
+  if (!precedingWord) {
+    return false;
+  }
+  const expansion = routineContractions.get(
+    precedingWord.toLocaleLowerCase('pt-BR')
+  )?.split(' ');
+  return Boolean(expansion && ['o', 'a', 'os', 'as'].includes(expansion[expansion.length - 1]));
 }
 
 function resolveRoutineArgumentType(
@@ -3124,6 +3231,25 @@ function resolveRoutineArgumentType(
     return variableType;
   }
   return undefined;
+}
+
+function resolveIndefiniteTypeArgument(
+  source: string,
+  argument: SourceRange,
+  symbols: TypeSymbolTable
+): TypeReference | undefined {
+  const article = readWord(source, argument.start, argument.end);
+  if (!article || !indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+    return undefined;
+  }
+  const typeRange = trimRange(source, article.end, argument.end);
+  if (typeRange.start === typeRange.end) {
+    return undefined;
+  }
+  const type = symbols.lookup(source.slice(typeRange.start, typeRange.end));
+  return type
+    ? createSyntheticTypeReference(type.name, typeRange)
+    : undefined;
 }
 
 function resolveScalarRoutineArgumentType(
@@ -3618,6 +3744,134 @@ function getRoutineArgumentTypeDistance(
     .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
     .map(symbol => symbols.getBaseTypeDistance(actual.name, symbol.name))
     .find((distance): distance is number => distance !== undefined);
+}
+
+function getLiteralRoutineArgumentTypeDistance(
+  source: string,
+  argument: SourceRange,
+  expectedName: string,
+  symbols: TypeSymbolTable
+): number | undefined {
+  const literal = parseGlobalVariableLiteral(source, argument);
+  if (!literal || literal.kind === 'null') {
+    return undefined;
+  }
+
+  const candidateTypes = literal.kind === 'integer'
+    ? [
+      ...(Number(literal.text) >= 0 && Number(literal.text) <= 255 ? ['byte'] : []),
+      'número'
+    ]
+    : literal.kind === 'fraction' || literal.kind === 'mixed'
+      ? ['fração']
+      : literal.kind === 'hexadecimal'
+        ? ['texto hexadecimal']
+        : ['string'];
+  const distances = candidateTypes
+    .map(typeName => symbols.getBaseTypeDistance(expectedName, typeName))
+    .filter((distance): distance is number => distance !== undefined);
+
+  return distances.length
+    ? -Math.min(...distances)
+    : undefined;
+}
+
+function resolveNumericRoutineExpressionType(
+  source: string,
+  argument: SourceRange,
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  fieldAccesses: RoutineFieldAccess[],
+  routines: RoutineDeclaration[],
+  computedFieldAccesses: RoutineComputedFieldAccess[],
+  variableAccesses: RoutineVariableAccess[]
+): TypeReference | undefined {
+  const expression = parseRoutineExpression(source, argument, []);
+  if (!expression || expression.kind === 'operand') {
+    return undefined;
+  }
+
+  const resolveType = (node: RoutineExpression): TypeReference | undefined => {
+    if (node.kind === 'unary') {
+      return resolveType(node.operand);
+    }
+    if (node.kind === 'operand') {
+      return resolveRoutineArgumentType(
+        source,
+        node.range,
+        caller,
+        globalVariables,
+        symbols,
+        fieldAccesses,
+        routines,
+        computedFieldAccesses,
+        variableAccesses
+      );
+    }
+    if (!['mais', 'menos', 'vezes', 'dividido por', '/'].includes(node.operator)) {
+      return undefined;
+    }
+
+    const leftType = resolveType(node.left);
+    const rightType = resolveType(node.right);
+    if (!leftType || !rightType) {
+      return undefined;
+    }
+
+    const numericTypes = ['fração', 'número', 'byte'];
+    const leftBase = numericTypes.find(typeName =>
+      symbols.getBaseTypeDistance(leftType.name, typeName) !== undefined
+    );
+    const rightBase = numericTypes.find(typeName =>
+      symbols.getBaseTypeDistance(rightType.name, typeName) !== undefined
+    );
+    if (!leftBase || !rightBase) {
+      return undefined;
+    }
+
+    const resultBase = node.operator === 'dividido por' || node.operator === '/' ||
+      leftBase === 'fração' || rightBase === 'fração'
+      ? 'fração'
+      : leftBase === 'número' || rightBase === 'número'
+        ? 'número'
+        : 'byte';
+    return createSyntheticTypeReference(resultBase, node.range);
+  };
+
+  return resolveType(expression);
+}
+
+function getRoutineExpressionTypeDistance(
+  expressionType: TypeReference,
+  expectedName: string,
+  symbols: TypeSymbolTable
+): number | undefined {
+  const directDistance = getRoutineArgumentTypeDistance(
+    expressionType,
+    expectedName,
+    symbols
+  );
+  if (directDistance !== undefined) {
+    return directDistance;
+  }
+
+  const expectedDistance = symbols.getBaseTypeDistance(
+    expectedName,
+    expressionType.name
+  );
+  if (expectedDistance !== undefined) {
+    return -expectedDistance;
+  }
+
+  const expectedNormalizedName = normalizeTypeName(expectedName);
+  const pluralDistances = symbols.entries
+    .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
+    .map(symbol => symbols.getBaseTypeDistance(symbol.name, expressionType.name))
+    .filter((distance): distance is number => distance !== undefined);
+  return pluralDistances.length
+    ? -Math.min(...pluralDistances)
+    : undefined;
 }
 
 function parseLocalVariableDeclaration(
@@ -4302,7 +4556,6 @@ function parseRoutineDeclarations(
           });
         }
       }
-
       declarations.push({
         name: header.name,
         qualifier: header.qualifier,
@@ -4310,6 +4563,7 @@ function parseRoutineDeclarations(
           ...alternate.name,
           qualifier: alternate.qualifier
         })),
+        alternateParameters: alternateHeaders.map(alternate => alternate.parameters),
         parameters: header.parameters,
         preservedParameters: [],
         assignments: [],
@@ -4521,6 +4775,7 @@ function resolveRoutineParameters(
     for (const routine of routines) {
       const parameters = [
         ...routine.parameters,
+        ...routine.alternateParameters.flat(),
         ...(routine.returnParameter ? [routine.returnParameter] : [])
       ];
       for (const parameter of parameters) {
