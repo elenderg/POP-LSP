@@ -3949,6 +3949,50 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(diagnostics, []);
   });
 
+  test('Allows concatenating convertible non-string values in string routine arguments', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Uma string é uma estrutura.',
+      'Uma fração é uma estrutura com',
+      '  Um número denominado numerador e',
+      '  Um número denominado denominador.',
+      'Um numeral misto é uma estrutura com',
+      '  Um número denominado número inteiro e',
+      '  Uma fração.',
+      'Rotina para que se faça algo com um numeral misto e uma string:',
+      '  Acrescente o numerador deste numeral misto seguido de "/" junto com o denominador deste numeral misto para a string.',
+      'Rotina para que se atribua um número para uma string:',
+      '  Retorne.',
+      'Rotina para que se acrescente uma string para uma segunda string:',
+      '  Retorne.',
+      'Rotina para que se atribua uma string para uma segunda string:',
+      '  Retorne.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const appendOffset = document.getText().indexOf('Acrescente') + 2;
+    const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(appendOffset)
+    );
+    assert.ok(definition);
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].range.start.line, 12);
+  });
+
   test('Ignores não in boolean conditions and rejects it in boolean headers', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
@@ -4350,6 +4394,64 @@ suite('Português Puro definitions', () => {
     assert.ok(nestedFieldDefinition);
     assert.equal(nestedFieldDefinition.length, 1);
     assert.equal(nestedFieldDefinition[0].range.start.line, 3);
+  });
+
+  test('Resolves abbreviated nested fields and diagnoses ambiguous field names', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Uma string é uma estrutura.',
+      'Um endereço é uma estrutura com',
+      '  Um logradouro.',
+      'Um logradouro é uma estrutura com',
+      '  Uma string denominada tipo e',
+      '  Uma string denominada nome.',
+      'Uma pessoa é uma estrutura com',
+      '  Uma string denominada nome,',
+      '  Um endereço.',
+      'A pessoa é uma pessoa.',
+      'Rotina para que se faça algo:',
+      '  Atribua "Rua" para o tipo desta pessoa.',
+      '  Atribua "João" para o nome desta pessoa.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    const diagnostics = vscode.languages.getDiagnostics(docUri);
+    assert.equal(
+      diagnostics.filter(diagnostic =>
+        diagnostic.message.startsWith('Ambiguous structure field access')
+      ).length,
+      1
+    );
+    assert.ok(
+      diagnostics.some(diagnostic =>
+        diagnostic.message === 'Ambiguous structure field access "nome".'
+      )
+    );
+    assert.ok(
+      diagnostics.every(diagnostic =>
+        !diagnostic.message.startsWith('Unknown structure field access')
+      )
+    );
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    const fieldOffset = text.indexOf('tipo desta pessoa') + 1;
+    const fieldDefinition = await vscode.commands.executeCommand<vscode.Location[]>(
+      'vscode.executeDefinitionProvider',
+      docUri,
+      document.positionAt(fieldOffset)
+    );
+    assert.ok(fieldDefinition);
+    assert.equal(fieldDefinition.length, 1);
+    assert.equal(fieldDefinition[0].range.start.line, 4);
   });
 
   test('Splits routine arguments after contractions with implicit definite articles', async () => {

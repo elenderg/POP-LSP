@@ -630,7 +630,7 @@ function processRoutineStatement(source, statement, caller, routines, globalVari
         const fieldAccesses = [];
         const variableAccesses = [];
         resolveExpressionFieldAccesses(source, assignment.expression, caller, routines, globalVariables, symbols, [], fieldAccesses, variableAccesses);
-        resolveRoutineArgumentType(source, assignment.target.range, caller, globalVariables, symbols, fieldAccesses, routines, [], variableAccesses);
+        resolveRoutineArgumentType(source, assignment.target.range, caller, globalVariables, symbols, fieldAccesses, routines, [], variableAccesses, false, diagnostics);
         assignment.fieldAccesses = fieldAccesses;
         assignment.variableAccesses = variableAccesses;
         caller.assignments.push(assignment);
@@ -680,7 +680,7 @@ function processRoutineStatement(source, statement, caller, routines, globalVari
         }
         return false;
     }
-    const call = resolveRoutineCall(source, statement, routines, caller, globalVariables, symbols);
+    const call = resolveRoutineCall(source, statement, routines, caller, globalVariables, symbols, diagnostics);
     if (call) {
         caller.calls.push(call);
         if (call.localVariables) {
@@ -688,6 +688,11 @@ function processRoutineStatement(source, statement, caller, routines, globalVari
         }
     }
     else {
+        if (diagnostics.some(diagnostic => diagnostic.message.startsWith('Ambiguous structure field access') &&
+            diagnostic.range.start >= statement.start &&
+            diagnostic.range.end <= statement.end)) {
+            return false;
+        }
         diagnoseUnresolvedRoutineCall(source, statement, routines, caller, globalVariables, symbols, diagnostics);
     }
     return false;
@@ -702,12 +707,17 @@ function parseConditionalBlock(source, statement, blockEnd, routines, caller, gl
         return undefined;
     }
     const conditionRange = trimRange(source, keyword.end, comma);
-    const condition = resolveBooleanCondition(source, conditionRange, routines, caller, globalVariables, symbols);
+    const condition = resolveBooleanCondition(source, conditionRange, routines, caller, globalVariables, symbols, diagnostics);
     if (!condition) {
-        diagnostics.push({
-            message: `No boolean function found for condition "${source.slice(conditionRange.start, conditionRange.end)}".`,
-            range: conditionRange
-        });
+        const hasAmbiguousFieldAccess = diagnostics.some(diagnostic => diagnostic.message.startsWith('Ambiguous structure field access') &&
+            diagnostic.range.start >= conditionRange.start &&
+            diagnostic.range.end <= conditionRange.end);
+        if (!hasAmbiguousFieldAccess) {
+            diagnostics.push({
+                message: `No boolean function found for condition "${source.slice(conditionRange.start, conditionRange.end)}".`,
+                range: conditionRange
+            });
+        }
     }
     else {
         caller.calls.push(condition.call);
@@ -741,7 +751,7 @@ function parseConditionalBlock(source, statement, blockEnd, routines, caller, gl
         nestedRange
     };
 }
-function resolveBooleanCondition(source, condition, routines, caller, globalVariables, symbols) {
+function resolveBooleanCondition(source, condition, routines, caller, globalVariables, symbols, diagnostics) {
     const conditionSource = maskWordInRange(source, condition, 'não');
     const conditionName = normalizeRoutineName(conditionSource.slice(condition.start, condition.end));
     const routineNameIndex = getRoutineNameIndex(routines);
@@ -778,10 +788,10 @@ function resolveBooleanCondition(source, condition, routines, caller, globalVari
         const variableAccesses = [];
         const computedFieldAccesses = [];
         for (let index = 0; index < argumentsList.length; index++) {
-            const expressionType = resolveNumericRoutineExpressionType(conditionSource, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+            const expressionType = resolveRoutineExpressionType(conditionSource, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics);
             const actualType = resolveRoutineArgumentType(conditionSource, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, (index === argumentsList.length - 1 &&
                 nameMatch.implicitDefiniteArticle === true) ||
-                hasContractedDefiniteArticleBefore(source, argumentsList[index].start, condition.start)) ?? resolveIndefiniteTypeArgument(conditionSource, argumentsList[index], symbols);
+                hasContractedDefiniteArticleBefore(source, argumentsList[index].start, condition.start), diagnostics) ?? resolveIndefiniteTypeArgument(conditionSource, argumentsList[index], symbols);
             const distance = actualType
                 ? getRoutineArgumentTypeDistance(actualType, parameters[index].type.name, symbols) ?? getLiteralRoutineArgumentTypeDistance(source, argumentsList[index], parameters[index].type.name, symbols)
                 : undefined;
@@ -1448,7 +1458,7 @@ function parseRoutineProcess(source, statement, caller, routines, globalVariable
             });
             return undefined;
         }
-        const argumentType = resolveRoutineArgumentType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+        const argumentType = resolveRoutineArgumentType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, false, diagnostics);
         if (!argumentType) {
             diagnostics.push({
                 message: `Unknown variable or field "${source.slice(argument.start, argument.end)}" passed to "Processe".`,
@@ -1677,7 +1687,10 @@ function resolveFieldAccessRange(source, range, caller, routines, globalVariable
     const computedFieldAccesses = [];
     const resolvedType = resolveRoutineArgumentType(source, range, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
     if (!resolvedType) {
-        if (hasStructureAccess) {
+        const hasAmbiguousFieldAccess = diagnostics.some(diagnostic => diagnostic.message.startsWith('Ambiguous structure field access') &&
+            diagnostic.range.start >= range.start &&
+            diagnostic.range.end <= range.end);
+        if (hasStructureAccess && !hasAmbiguousFieldAccess) {
             diagnostics.push({
                 message: `Unknown structure field access "${source.slice(range.start, range.end)}".`,
                 range
@@ -1687,7 +1700,7 @@ function resolveFieldAccessRange(source, range, caller, routines, globalVariable
     }
     caller.computedFieldAccesses.push(...computedFieldAccesses);
 }
-function resolveRoutineCall(source, statementRange, routines, caller, globalVariables, symbols) {
+function resolveRoutineCall(source, statementRange, routines, caller, globalVariables, symbols, diagnostics) {
     const statementQualifier = findTrailingParentheticalQualifier(source, statementRange.start, statementRange.end);
     const statementEnd = statementQualifier?.start ?? statementRange.end;
     const statement = normalizeRoutineName(source.slice(statementRange.start, statementEnd));
@@ -1767,10 +1780,10 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
                 : resolveScalarRoutineArgumentType(source, argumentsList[index], parameter.type, symbols);
             const argumentType = localVariable
                 ? localVariable.type
-                : scalarArgumentType ?? resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd));
+                : scalarArgumentType ?? resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd), diagnostics);
             const expressionType = localVariable
                 ? undefined
-                : resolveNumericRoutineExpressionType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+                : resolveRoutineExpressionType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics);
             const distance = argumentType
                 ? getRoutineArgumentTypeDistance(argumentType, parameter.type.name, symbols) ?? getLiteralRoutineArgumentTypeDistance(source, argumentsList[index], parameter.type.name, symbols)
                 : undefined;
@@ -1979,6 +1992,11 @@ function splitRoutineArguments(source, range) {
         }
         const wordEnd = match.index + match[0].length;
         const word = match[0].toLocaleLowerCase('pt-BR');
+        const previousWord = /([\p{L}]+)\s*$/u.exec(source.slice(range.start, match.index))?.[1].toLocaleLowerCase('pt-BR');
+        if (word === 'de' && previousWord === 'seguido' ||
+            word === 'com' && previousWord === 'junto') {
+            continue;
+        }
         const isArgumentSeparator = reservedIdentifierWords.has(word);
         if (!isArgumentSeparator ||
             isWordCharacter(match.index > range.start ? source[match.index - 1] : '') ||
@@ -2021,13 +2039,13 @@ function hasContractedDefiniteArticleBefore(source, argumentStart, rangeStart) {
     const expansion = routineContractions.get(precedingWord.toLocaleLowerCase('pt-BR'))?.split(' ');
     return Boolean(expansion && ['o', 'a', 'os', 'as'].includes(expansion[expansion.length - 1]));
 }
-function resolveRoutineArgumentType(source, argument, caller, globalVariables, symbols, fieldAccesses = [], routines = [], computedFieldAccesses = [], variableAccesses = [], implicitDefiniteArticle = false) {
+function resolveRoutineArgumentType(source, argument, caller, globalVariables, symbols, fieldAccesses = [], routines = [], computedFieldAccesses = [], variableAccesses = [], implicitDefiniteArticle = false, diagnostics) {
     const cast = parseTypeCast(source, argument, symbols);
     if (cast) {
-        const originalType = resolveRoutineArgumentType(source, cast.valueRange, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle);
+        const originalType = resolveRoutineArgumentType(source, cast.valueRange, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle, diagnostics);
         return originalType ? cast.type : undefined;
     }
-    const fieldAccessType = resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+    const fieldAccessType = resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics);
     if (fieldAccessType) {
         return fieldAccessType;
     }
@@ -2140,7 +2158,7 @@ function parseTypeCast(source, argument, symbols) {
         type: createTypeReference(source, typeNameRange)
     };
 }
-function resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses = []) {
+function resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses = [], diagnostics) {
     const segments = [];
     const accessMarkers = findStructureAccessMarkers(source, argument);
     if (accessMarkers.length === 0) {
@@ -2214,6 +2232,28 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
     }
     let currentType = rootType;
     const resolvedAccesses = [];
+    if (fieldRanges.length === 1) {
+        const fieldRange = fieldRanges[0];
+        const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
+        const matches = findNestedStructureFields(currentType.name, fieldName, symbols);
+        if (matches.length > 1) {
+            const message = `Ambiguous structure field access "${source.slice(fieldRange.start, fieldRange.end).trim()}".`;
+            if (!diagnostics?.some(diagnostic => diagnostic.message === message &&
+                diagnostic.range.start === fieldRange.start &&
+                diagnostic.range.end === fieldRange.end)) {
+                diagnostics?.push({ message, range: fieldRange });
+            }
+            return undefined;
+        }
+        if (matches.length === 1) {
+            const field = matches[0];
+            fieldAccesses.push({
+                reference: createTypeReference(source, fieldRange),
+                target: field
+            });
+            return field.type;
+        }
+    }
     for (const fieldRange of fieldRanges) {
         const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
         if (['endereçamento', 'magnitude', 'conteúdo'].includes(fieldName)) {
@@ -2388,6 +2428,44 @@ function findStructureField(typeName, fieldName, symbols) {
     }
     return undefined;
 }
+function findNestedStructureFields(typeName, fieldName, symbols, ancestors = new Set()) {
+    const symbol = symbols.lookup(typeName);
+    if (!symbol || ancestors.has(symbol.normalizedName)) {
+        return [];
+    }
+    const nestedAncestors = new Set(ancestors);
+    nestedAncestors.add(symbol.normalizedName);
+    const visibleFields = [];
+    const visibleNames = new Set();
+    const visited = new Set();
+    let currentSymbol = symbol;
+    while (currentSymbol && !visited.has(currentSymbol)) {
+        visited.add(currentSymbol);
+        for (const field of currentSymbol.fields ?? []) {
+            if (field.kind !== 'named') {
+                continue;
+            }
+            const normalizedName = normalizeTypeName(field.name.name);
+            if (!visibleNames.has(normalizedName)) {
+                visibleNames.add(normalizedName);
+                visibleFields.push(field);
+            }
+        }
+        currentSymbol = currentSymbol.baseType
+            ? symbols.lookup(currentSymbol.baseType.name)
+            : undefined;
+    }
+    const matches = [];
+    for (const field of visibleFields) {
+        if (normalizeTypeName(field.name.name) === fieldName) {
+            matches.push(field);
+        }
+        if (symbols.getBaseTypeDistance(field.type.name, 'estrutura') !== undefined) {
+            matches.push(...findNestedStructureFields(field.type.name, fieldName, symbols, nestedAncestors));
+        }
+    }
+    return matches;
+}
 function resolveVariableType(routine, globalVariables, name) {
     const localVariable = findRoutineVariable(routine, name);
     if (localVariable) {
@@ -2450,7 +2528,7 @@ function getLiteralRoutineArgumentTypeDistance(source, argument, expectedName, s
         ? -Math.min(...distances)
         : undefined;
 }
-function resolveNumericRoutineExpressionType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses) {
+function resolveRoutineExpressionType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics) {
     const expression = parseRoutineExpression(source, argument, []);
     if (!expression || expression.kind === 'operand') {
         return undefined;
@@ -2460,15 +2538,29 @@ function resolveNumericRoutineExpressionType(source, argument, caller, globalVar
             return resolveType(node.operand);
         }
         if (node.kind === 'operand') {
-            return resolveRoutineArgumentType(source, node.range, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+            return resolveRoutineArgumentType(source, node.range, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, false, diagnostics);
         }
-        if (!['mais', 'menos', 'vezes', 'dividido por', '/'].includes(node.operator)) {
+        if (![
+            'mais',
+            'menos',
+            'vezes',
+            'dividido por',
+            'junto com',
+            'seguido de',
+            '/'
+        ].includes(node.operator)) {
             return undefined;
         }
         const leftType = resolveType(node.left);
         const rightType = resolveType(node.right);
         if (!leftType || !rightType) {
             return undefined;
+        }
+        if (node.operator === 'junto com' || node.operator === 'seguido de') {
+            return isStringConvertibleType(leftType, routines, symbols) &&
+                isStringConvertibleType(rightType, routines, symbols)
+                ? createSyntheticTypeReference('string', node.range)
+                : undefined;
         }
         const numericTypes = ['fração', 'número', 'byte'];
         const leftBase = numericTypes.find(typeName => symbols.getBaseTypeDistance(leftType.name, typeName) !== undefined);
@@ -2485,6 +2577,15 @@ function resolveNumericRoutineExpressionType(source, argument, caller, globalVar
         return createSyntheticTypeReference(resultBase, node.range);
     };
     return resolveType(expression);
+}
+function isStringConvertibleType(actualType, routines, symbols) {
+    if (getRoutineArgumentTypeDistance(actualType, 'string', symbols) !== undefined) {
+        return true;
+    }
+    return routines.some(routine => normalizeRoutineName(routine.name.name) === 'atribua' &&
+        routine.parameters.length === 2 &&
+        symbols.getBaseTypeDistance(routine.parameters[1].type.name, 'string') !== undefined &&
+        getRoutineArgumentTypeDistance(actualType, routine.parameters[0].type.name, symbols) !== undefined);
 }
 function getRoutineExpressionTypeDistance(expressionType, expectedName, symbols) {
     const directDistance = getRoutineArgumentTypeDistance(expressionType, expectedName, symbols);
