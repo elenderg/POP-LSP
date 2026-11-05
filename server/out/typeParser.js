@@ -2059,7 +2059,7 @@ function resolveRoutineArgumentType(source, argument, caller, globalVariables, s
         const originalType = resolveRoutineArgumentType(source, cast.valueRange, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle, diagnostics);
         return originalType ? cast.type : undefined;
     }
-    const fieldAccessType = resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics);
+    const fieldAccessType = resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle, diagnostics);
     if (fieldAccessType) {
         return fieldAccessType;
     }
@@ -2172,7 +2172,7 @@ function parseTypeCast(source, argument, symbols) {
         type: createTypeReference(source, typeNameRange)
     };
 }
-function resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses = [], diagnostics) {
+function resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses = [], implicitDefiniteArticle = false, diagnostics) {
     const segments = [];
     const accessMarkers = findStructureAccessMarkers(source, argument);
     if (accessMarkers.length === 0) {
@@ -2197,11 +2197,11 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
         'magnitude',
         'conteúdo'
     ].includes(firstSegmentName);
-    if (!hasArticle && !firstIsTypeOperator) {
+    if (!hasArticle && !implicitDefiniteArticle && !firstIsTypeOperator) {
         return undefined;
     }
     const fieldRanges = [
-        trimRange(source, firstSegmentStart, segments[0].end),
+        trimRange(source, hasArticle ? firstArticle.end : segments[0].start, segments[0].end),
         ...segments.slice(1, -1)
     ].reverse();
     const rootRange = segments[segments.length - 1];

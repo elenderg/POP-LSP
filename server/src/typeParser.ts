@@ -3228,6 +3228,7 @@ function resolveRoutineArgumentType(
     routines,
     computedFieldAccesses,
     variableAccesses,
+    implicitDefiniteArticle,
     diagnostics
   );
   if (fieldAccessType) {
@@ -3404,6 +3405,7 @@ function resolveStructureFieldAccess(
   routines: RoutineDeclaration[],
   computedFieldAccesses: RoutineComputedFieldAccess[],
   variableAccesses: RoutineVariableAccess[] = [],
+  implicitDefiniteArticle = false,
   diagnostics?: ParserDiagnostic[]
 ): TypeReference | undefined {
   const segments: SourceRange[] = [];
@@ -3434,11 +3436,15 @@ function resolveStructureFieldAccess(
     'magnitude',
     'conteúdo'
   ].includes(firstSegmentName);
-  if (!hasArticle && !firstIsTypeOperator) {
+  if (!hasArticle && !implicitDefiniteArticle && !firstIsTypeOperator) {
     return undefined;
   }
   const fieldRanges = [
-    trimRange(source, firstSegmentStart, segments[0].end),
+    trimRange(
+      source,
+      hasArticle ? firstArticle!.end : segments[0].start,
+      segments[0].end
+    ),
     ...segments.slice(1, -1)
   ].reverse();
   const rootRange = segments[segments.length - 1];

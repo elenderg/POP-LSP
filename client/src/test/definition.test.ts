@@ -4396,6 +4396,53 @@ suite('Português Puro definitions', () => {
     assert.equal(nestedFieldDefinition[0].range.start.line, 3);
   });
 
+  test('Resolves field arguments after contractions with implicit definite articles', async () => {
+    await activate(docUri);
+    const diagnosticsUpdated = new Promise<void>(resolve => {
+      const listener = vscode.languages.onDidChangeDiagnostics(event => {
+        if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+          listener.dispose();
+          resolve();
+        }
+      });
+    });
+    await setTestContent([
+      'Um número é uma estrutura.',
+      'Um par de números é uma estrutura com',
+      '  Um número denominado número X e',
+      '  Um número denominado número Y.',
+      'Rotina para que se multiplique um par de números por um segundo par de números:',
+      '  Multiplique o número X deste par de números pelo número X deste segundo par de números.',
+      '  Multiplique o número Y deste par de números pelo número Y deste segundo par de números.',
+      'Rotina para que se multiplique um número por um segundo número:',
+      '  Decodifique $8B8508000000.',
+      '  Decodifique $8B00.',
+      '  Decodifique $8B9D0C000000.',
+      '  Decodifique $F72B.',
+      '  Decodifique $8B9D08000000.',
+      '  Decodifique $8903.'
+    ].join('\n'));
+    await diagnosticsUpdated;
+
+    assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+
+    const document = await vscode.workspace.openTextDocument(docUri);
+    const text = document.getText();
+    for (const fieldName of ['número X', 'número Y']) {
+      const fieldOffset = text.indexOf(
+        `${fieldName} deste segundo par de números`
+      );
+      const definition = await vscode.commands.executeCommand<vscode.Location[]>(
+        'vscode.executeDefinitionProvider',
+        docUri,
+        document.positionAt(fieldOffset + 2)
+      );
+      assert.ok(definition);
+      assert.equal(definition.length, 1);
+      assert.equal(definition[0].range.start.line, fieldName === 'número X' ? 2 : 3);
+    }
+  });
+
   test('Resolves abbreviated nested fields and diagnoses ambiguous field names', async () => {
     await activate(docUri);
     const diagnosticsUpdated = new Promise<void>(resolve => {
