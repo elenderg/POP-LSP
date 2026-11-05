@@ -287,6 +287,20 @@ const builtInStatementStarts = new Set([
     'processe', 'itere', 'pare', 'reitere',
     'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
+const reservedStatementKeywordDisplayNames = new Map([
+    ['retorne', 'Retorne'],
+    ['diga', 'Diga'],
+    ['preserve', 'Preserve'],
+    ['empilhe', 'Empilhe'],
+    ['processe', 'Processe'],
+    ['itere', 'Itere'],
+    ['pare', 'Pare'],
+    ['reitere', 'Reitere'],
+    ['aloque', 'Aloque'],
+    ['aponte', 'Aponte'],
+    ['direcione', 'Direcione'],
+    ['redirecione', 'Redirecione']
+]);
 const routineNameDelimiters = new Set([
     'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
     'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
@@ -2998,35 +3012,11 @@ function parseRoutineDeclarations(source, diagnostics) {
             headerPattern.lastIndex = headerEnd + 1;
             continue;
         }
-        for (const reservedKeyword of [
-            'retorne', 'diga', 'preserve', 'empilhe', 'processe', 'itere', 'pare', 'reitere',
-            'aloque', 'aponte', 'direcione', 'redirecione'
-        ]) {
+        for (const [reservedKeyword, displayName] of reservedStatementKeywordDisplayNames) {
             const reservedWord = findWord(headerSyntaxSource, nameRange.start, nameRange.end, reservedKeyword);
             if (!reservedWord) {
                 continue;
             }
-            const displayName = reservedKeyword === 'preserve'
-                ? 'Preserve'
-                : reservedKeyword === 'empilhe'
-                    ? 'Empilhe'
-                    : reservedKeyword === 'processe'
-                        ? 'Processe'
-                        : reservedKeyword === 'itere'
-                            ? 'Itere'
-                            : reservedKeyword === 'pare'
-                                ? 'Pare'
-                                : reservedKeyword === 'reitere'
-                                    ? 'Reitere'
-                                    : reservedKeyword === 'aloque'
-                                        ? 'Aloque'
-                                        : reservedKeyword === 'aponte'
-                                            ? 'Aponte'
-                                            : reservedKeyword === 'direcione'
-                                                ? 'Direcione'
-                                                : reservedKeyword === 'redirecione'
-                                                    ? 'Redirecione'
-                                                    : reservedKeyword === 'diga' ? 'Diga' : 'Retorne';
             diagnostics.push({
                 message: `"${displayName}" is a reserved statement keyword and cannot be used in a routine name.`,
                 range: reservedWord
