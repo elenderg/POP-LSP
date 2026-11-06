@@ -6,4 +6,5 @@ client/server
 .regras
 .chat
 .relatorio
-*.tsbuildinfo
+server/tsconfig.tsbuildinfo
+client/tsconfig.tsbuildinfo
