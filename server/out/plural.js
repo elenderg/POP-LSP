@@ -143,6 +143,9 @@ function pluralizeL(word) {
     if (word === 'mal') {
         return 'males';
     }
+    if (word === 'pixel') {
+        return 'pixels';
+    }
     if (word.endsWith('al')) {
         return word.slice(0, -1) + 'is';
     }

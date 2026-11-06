@@ -71,6 +71,7 @@ export interface RoutineExpressionOperand {
     kind: 'operand';
     text: string;
     range: SourceRange;
+    implicitDefiniteArticle?: boolean;
 }
 export interface RoutineExpressionBinary {
     kind: 'binary';
@@ -129,6 +130,7 @@ export interface RoutineDeclaration {
     outputs: RoutineOutput[];
     localVariables: RoutineLocalVariable[];
     memoryAllocations: RoutineMemoryAllocation[];
+    memoryDeallocations: RoutineMemoryDeallocation[];
     conditionals: RoutineConditionalBlock[];
     processes: RoutineProcess[];
     loopInstructions: RoutineLoopInstruction[];
@@ -156,6 +158,12 @@ export interface RoutineCall {
 export interface RoutineMemoryAllocation {
     type: TypeReference;
     variableAccess?: RoutineVariableAccess;
+    range: SourceRange;
+}
+export interface RoutineMemoryDeallocation {
+    type: TypeReference;
+    variableAccess?: RoutineVariableAccess;
+    fieldAccesses?: RoutineFieldAccess[];
     range: SourceRange;
 }
 export interface RoutineProcess {
@@ -187,7 +195,7 @@ export interface RoutineComputedFieldAccess {
 }
 export interface RoutineFieldAccess {
     reference: TypeReference;
-    target: NamedTypeField;
+    target: TypeField;
 }
 export declare class RoutineSymbolTable {
     private readonly routines;
@@ -265,7 +273,7 @@ export interface ParsedReference {
 export declare function normalizeTypeName(name: string): string;
 export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void): ParsedDocument;
 export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDocument, offset: number): RoutineDeclaration | undefined;
-export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): NamedTypeField | undefined;
+export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): TypeField | undefined;
 export declare function findTypeDefinitionReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function findTypeReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function getParsedReferences(parsed: ParsedDocument): ParsedReference[];

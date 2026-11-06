@@ -296,7 +296,7 @@ connection.onDefinition(params => profileRequest('definition', async () => {
         }
     }
     const field = (0, typeParser_1.findRoutineFieldAtOffset)(parsedDocument, offset);
-    if (field) {
+    if (field?.name) {
         return node_1.Location.create(document.uri, {
             start: document.positionAt(field.name.range.start),
             end: document.positionAt(field.name.range.end)

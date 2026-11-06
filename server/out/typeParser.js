@@ -314,6 +314,7 @@ const routineNameDelimiters = new Set([
     'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
     'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
     'limitando-o', 'igual', 'while', 'ultrapassou',
+    ...definiteArticles,
     ...routineContractions.keys(), ...routineWordReplacements.keys()
 ]);
 const reservedIdentifierWords = new Set([
@@ -707,6 +708,9 @@ function processRoutineStatement(source, statement, caller, routines, globalVari
             diagnostic.range.end <= statement.end)) {
             return false;
         }
+        if (validateMemoryDeallocationStatement(source, statement, caller, routines, globalVariables, symbols)) {
+            return false;
+        }
         diagnoseUnresolvedRoutineCall(source, statement, routines, caller, globalVariables, symbols, diagnostics);
     }
     return false;
@@ -722,7 +726,10 @@ function parseConditionalBlock(source, statement, blockEnd, routines, caller, gl
     }
     const conditionRange = trimRange(source, keyword.end, comma);
     const condition = resolveBooleanCondition(source, conditionRange, routines, caller, globalVariables, symbols, diagnostics);
-    if (!condition) {
+    if (condition && 'diagnostic' in condition) {
+        diagnostics.push(condition.diagnostic);
+    }
+    else if (!condition) {
         const hasAmbiguousFieldAccess = diagnostics.some(diagnostic => diagnostic.message.startsWith('Ambiguous structure field access') &&
             diagnostic.range.start >= conditionRange.start &&
             diagnostic.range.end <= conditionRange.end);
@@ -736,6 +743,9 @@ function parseConditionalBlock(source, statement, blockEnd, routines, caller, gl
     else {
         caller.calls.push(condition.call);
     }
+    const resolvedCondition = condition && 'call' in condition
+        ? condition
+        : undefined;
     const bodyRange = trimRange(source, comma + 1, blockEnd);
     const statements = [];
     let nestedRange;
@@ -757,8 +767,8 @@ function parseConditionalBlock(source, statement, blockEnd, routines, caller, gl
     return {
         block: {
             condition: createTypeReference(source, conditionRange),
-            conditionArguments: condition?.call.arguments ?? [],
-            target: condition?.call.target,
+            conditionArguments: resolvedCondition?.call.arguments ?? [],
+            target: resolvedCondition?.call.target,
             statements,
             range: { start: statement.start, end: blockEnd + 1 }
         },
@@ -782,6 +792,7 @@ function resolveBooleanCondition(source, condition, routines, caller, globalVari
         };
     }
     const matches = [];
+    const outOfRangeIntegerMatches = [];
     for (const nameMatch of findRoutineNameMatches(conditionSource, condition, routines, true)) {
         const { routine, nameStart, nameEnd, order, parameters } = nameMatch;
         if (!routine.isBooleanFunction || parameters.length === 0) {
@@ -798,6 +809,7 @@ function resolveBooleanCondition(source, condition, routines, caller, globalVari
             continue;
         }
         const distances = [];
+        let outOfRangeIntegerRange;
         const fieldAccesses = [];
         const variableAccesses = [];
         const computedFieldAccesses = [];
@@ -813,11 +825,26 @@ function resolveBooleanCondition(source, condition, routines, caller, globalVari
                 ? getRoutineExpressionTypeDistance(expressionType, parameters[index].type.name, symbols)
                 : undefined);
             if (compatibleDistance === undefined) {
+                const outOfRangeInteger = getOutOfRangeIntegerLiteralRange(conditionSource, argumentsList[index]);
+                if (outOfRangeInteger &&
+                    symbols.getBaseTypeDistance(parameters[index].type.name, 'número') !== undefined) {
+                    outOfRangeIntegerRange ??= outOfRangeInteger;
+                    distances.push(0);
+                    continue;
+                }
                 break;
             }
             distances.push(compatibleDistance);
         }
         if (distances.length !== argumentsList.length) {
+            continue;
+        }
+        if (outOfRangeIntegerRange) {
+            outOfRangeIntegerMatches.push({
+                range: outOfRangeIntegerRange,
+                order,
+                nameStart
+            });
             continue;
         }
         matches.push({
@@ -834,9 +861,22 @@ function resolveBooleanCondition(source, condition, routines, caller, globalVari
             nameStart
         });
     }
-    return matches.sort((first, second) => first.distance - second.distance ||
+    const match = matches.sort((first, second) => first.distance - second.distance ||
         first.order - second.order ||
         first.nameStart - second.nameStart)[0];
+    if (match) {
+        return match;
+    }
+    const outOfRangeInteger = outOfRangeIntegerMatches.sort((first, second) => first.order - second.order ||
+        first.nameStart - second.nameStart)[0]?.range;
+    if (outOfRangeInteger) {
+        return {
+            diagnostic: {
+                message: `Integer literal "${source.slice(outOfRangeInteger.start, outOfRangeInteger.end)}" is outside the supported signed 32-bit range.`,
+                range: outOfRangeInteger
+            }
+        };
+    }
 }
 function maskWordInRange(source, range, word) {
     const rangeText = source.slice(range.start, range.end);
@@ -937,12 +977,21 @@ function parseRoutineExpression(source, range, diagnostics) {
         }
         if (word === 'dividido') {
             const nextWord = readWord(source, wordEnd, range.end);
-            if (!nextWord || nextWord.value.toLocaleLowerCase('pt-BR') !== 'por') {
+            const nextWordValue = nextWord?.value.toLocaleLowerCase('pt-BR');
+            const contraction = nextWordValue
+                ? routineContractions.get(nextWordValue)
+                : undefined;
+            const implicitDefiniteArticle = Boolean(contraction?.startsWith('por ') &&
+                definiteArticles.has(contraction.slice('por '.length)));
+            if (!nextWord ||
+                nextWordValue !== 'por' &&
+                    !implicitDefiniteArticle) {
                 continue;
             }
             operators.push({
                 operator: 'dividido por',
-                range: { start: match.index, end: nextWord.end }
+                range: { start: match.index, end: nextWord.end },
+                implicitDefiniteArticle
             });
             words.lastIndex = nextWord.end;
         }
@@ -1005,6 +1054,15 @@ function parseRoutineExpression(source, range, diagnostics) {
     operands.push(finalOperand);
     let expression = operands[0];
     for (let index = 0; index < operators.length; index++) {
+        if (operators[index].implicitDefiniteArticle) {
+            const rightOperand = operands[index + 1];
+            if (rightOperand.kind === 'operand') {
+                rightOperand.implicitDefiniteArticle = true;
+            }
+            else if (rightOperand.kind === 'unary' && rightOperand.operand.kind === 'operand') {
+                rightOperand.operand.implicitDefiniteArticle = true;
+            }
+        }
         expression = {
             kind: 'binary',
             operator: operators[index].operator,
@@ -1286,6 +1344,36 @@ function validateMemoryAllocationStatement(source, statement, routine, globalVar
         variableAccess,
         range: statement
     });
+    return true;
+}
+function validateMemoryDeallocationStatement(source, statement, routine, routines, globalVariables, symbols) {
+    const keyword = readWord(source, statement.start, statement.end);
+    if (keyword?.value.toLocaleLowerCase('pt-BR') !== 'destrua') {
+        return false;
+    }
+    const targetRange = trimRange(source, keyword.end, statement.end);
+    const article = readWord(source, targetRange.start, targetRange.end);
+    if (!article) {
+        return false;
+    }
+    const articleWord = article.value.toLocaleLowerCase('pt-BR');
+    if (!definiteArticles.has(articleWord)) {
+        return false;
+    }
+    const fieldAccesses = [];
+    const computedFieldAccesses = [];
+    const variableAccesses = [];
+    const type = resolveRoutineArgumentType(source, targetRange, routine, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+    if (!type || symbols.getBaseTypeDistance(type.name, 'lista') === undefined) {
+        return false;
+    }
+    routine.memoryDeallocations.push({
+        type,
+        variableAccess: variableAccesses[0],
+        fieldAccesses,
+        range: statement
+    });
+    routine.computedFieldAccesses.push(...computedFieldAccesses);
     return true;
 }
 function validateRoutineAddressStatement(source, statement, caller, routines, symbols, diagnostics) {
@@ -1662,7 +1750,7 @@ function parseProcessReturnVariable(source, start, end, caller, globalVariables,
     }
     const nameRange = marker
         ? trimRange(source, marker.end, end)
-        : type.range;
+        : typeRange;
     if (nameRange.start === nameRange.end) {
         diagnostics.push({
             message: 'A variable name is required after "denominado" in a "Processe" return clause.',
@@ -1689,9 +1777,9 @@ function resolveExpressionFieldAccesses(source, expression, caller, routines, gl
         resolveExpressionFieldAccesses(source, expression.operand, caller, routines, globalVariables, symbols, diagnostics, fieldAccesses, variableAccesses);
         return;
     }
-    resolveFieldAccessRange(source, expression.range, caller, routines, globalVariables, symbols, diagnostics, fieldAccesses, variableAccesses);
+    resolveFieldAccessRange(source, expression.range, caller, routines, globalVariables, symbols, diagnostics, fieldAccesses, variableAccesses, expression.implicitDefiniteArticle);
 }
-function resolveFieldAccessRange(source, range, caller, routines, globalVariables, symbols, diagnostics, fieldAccesses = [], variableAccesses = []) {
+function resolveFieldAccessRange(source, range, caller, routines, globalVariables, symbols, diagnostics, fieldAccesses = [], variableAccesses = [], implicitDefiniteArticle = false) {
     const hasStructureAccess = findStructureAccessMarkers(source, range).length > 0;
     const expression = parseRoutineExpression(source, range, []);
     if (expression && expression.kind !== 'operand') {
@@ -1699,7 +1787,7 @@ function resolveFieldAccessRange(source, range, caller, routines, globalVariable
         return;
     }
     const computedFieldAccesses = [];
-    const resolvedType = resolveRoutineArgumentType(source, range, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+    const resolvedType = resolveRoutineArgumentType(source, range, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle);
     if (!resolvedType) {
         const hasAmbiguousFieldAccess = diagnostics.some(diagnostic => diagnostic.message.startsWith('Ambiguous structure field access') &&
             diagnostic.range.start >= range.start &&
@@ -1734,7 +1822,7 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
     const matchingCalls = [];
     const parsedArgumentsByNameEnd = new Map();
     for (const nameMatch of findRoutineNameMatches(source, statementRange, routines)) {
-        const { routine, name: routineName, nameEnd, parameters } = nameMatch;
+        const { routine, name: routineName, nameEnd, parameters, implicitDefiniteArticle } = nameMatch;
         if (parameters.length === 0) {
             continue;
         }
@@ -1778,7 +1866,12 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
             };
             parsedArgumentsByNameEnd.set(nameEnd, parsedArguments);
         }
-        const { argumentsList, localVariablesByArgument } = parsedArguments;
+        let { argumentsList } = parsedArguments;
+        const { localVariablesByArgument } = parsedArguments;
+        if (argumentsList.length < parameters.length &&
+            localVariablesByArgument.size === 0) {
+            argumentsList = splitScalarRoutineArguments(source, argumentsList, parameters, caller, globalVariables, symbols, routines);
+        }
         if (argumentsList.length !== parameters.length) {
             continue;
         }
@@ -1794,7 +1887,7 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
                 : resolveScalarRoutineArgumentType(source, argumentsList[index], parameter.type, symbols);
             const argumentType = localVariable
                 ? localVariable.type
-                : scalarArgumentType ?? resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd), diagnostics);
+                : scalarArgumentType ?? resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd) || implicitDefiniteArticle, diagnostics);
             const expressionType = localVariable
                 ? undefined
                 : resolveRoutineExpressionType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics);
@@ -1833,6 +1926,69 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
         });
     }
     return matchingCalls.sort((first, second) => second.nameLength - first.nameLength || first.distance - second.distance)[0]?.call;
+}
+function splitScalarRoutineArguments(source, argumentsList, parameters, caller, globalVariables, symbols, routines) {
+    const result = [...argumentsList];
+    for (let index = 0; index < result.length && result.length < parameters.length; index++) {
+        const argument = result[index];
+        for (let literalStart = argument.start + 1; literalStart < argument.end; literalStart++) {
+            if (!/\s/u.test(source[literalStart - 1])) {
+                continue;
+            }
+            const literalRange = findScalarRoutineLiteral(source, literalStart, argument.end, parameters[index + 1]?.type, symbols);
+            if (!literalRange) {
+                continue;
+            }
+            const prefixRange = trimRange(source, argument.start, literalStart);
+            const prefixType = resolveRoutineArgumentType(source, prefixRange, caller, globalVariables, symbols, [], routines, [], []);
+            if (!prefixType ||
+                getRoutineArgumentTypeDistance(prefixType, parameters[index].type.name, symbols) === undefined) {
+                continue;
+            }
+            result.splice(index, 1, prefixRange, literalRange);
+            break;
+        }
+    }
+    return result;
+}
+function findScalarRoutineLiteral(source, start, end, expectedType, symbols) {
+    if (!expectedType) {
+        return undefined;
+    }
+    const numberPrefix = /^([+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?)(\s+)/u.exec(source.slice(start, end));
+    if (!numberPrefix) {
+        return undefined;
+    }
+    const numberRange = {
+        start,
+        end: start + numberPrefix[1].length
+    };
+    if (!parseGlobalVariableLiteral(source, numberRange)) {
+        return undefined;
+    }
+    const typeStart = start + numberPrefix[0].length;
+    const scalarTypeNames = symbols.entries
+        .filter(symbol => symbol.isScalar)
+        .flatMap(symbol => [symbol.name, symbol.pluralName])
+        .sort((first, second) => second.length - first.length);
+    for (const typeName of scalarTypeNames) {
+        const escapedTypeName = typeName
+            .replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+            .replace(/\s+/gu, '\\s+');
+        const typePattern = new RegExp(`^${escapedTypeName}(?=$|\\s)`, 'iu');
+        const typeMatch = typePattern.exec(source.slice(typeStart, end));
+        if (!typeMatch) {
+            continue;
+        }
+        const literalRange = {
+            start,
+            end: typeStart + typeMatch[0].length
+        };
+        if (resolveScalarRoutineArgumentType(source, literalRange, expectedType, symbols)) {
+            return literalRange;
+        }
+    }
+    return undefined;
 }
 function diagnoseUnresolvedRoutineCall(source, statement, routines, caller, globalVariables, symbols, diagnostics) {
     const firstWord = readWord(source, statement.start, statement.end);
@@ -1950,26 +2106,24 @@ function findRoutineNameMatches(source, range, routines, searchAnyStart = false)
             const sourceName = source.slice(nameStart, nameEnd);
             const normalizedName = normalizeRoutineName(sourceName);
             const possibleNames = [{ name: normalizedName, implicitDefiniteArticle: false }];
-            if (searchAnyStart) {
-                const sourceWords = [...sourceName.matchAll(/\p{L}+/gu)];
-                const finalWord = sourceWords[sourceWords.length - 1];
-                const expansion = finalWord
-                    ? routineContractions.get(finalWord[0].toLocaleLowerCase('pt-BR'))
-                    : undefined;
-                const expandedWords = expansion?.split(' ');
-                if (finalWord &&
-                    expandedWords &&
-                    definiteArticles.has(expandedWords[expandedWords.length - 1])) {
-                    const prefix = sourceName.slice(0, finalWord.index);
-                    const nameWithoutArticle = [
-                        prefix,
-                        ...expandedWords.slice(0, -1)
-                    ].join(' ');
-                    possibleNames.push({
-                        name: normalizeRoutineName(nameWithoutArticle),
-                        implicitDefiniteArticle: true
-                    });
-                }
+            const sourceWords = [...sourceName.matchAll(/\p{L}+/gu)];
+            const finalWord = sourceWords[sourceWords.length - 1];
+            const expansion = finalWord
+                ? routineContractions.get(finalWord[0].toLocaleLowerCase('pt-BR'))
+                : undefined;
+            const expandedWords = expansion?.split(' ');
+            if (finalWord &&
+                expandedWords &&
+                definiteArticles.has(expandedWords[expandedWords.length - 1])) {
+                const prefix = sourceName.slice(0, finalWord.index);
+                const nameWithoutArticle = [
+                    prefix,
+                    ...expandedWords.slice(0, -1)
+                ].join(' ');
+                possibleNames.push({
+                    name: normalizeRoutineName(nameWithoutArticle),
+                    implicitDefiniteArticle: true
+                });
             }
             for (const possibleName of possibleNames) {
                 for (const candidate of byNormalizedName.get(possibleName.name) ?? []) {
@@ -2297,7 +2451,7 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
                     reference: createTypeReference(source, fieldRange),
                     target: member
                 });
-                currentType = member.type;
+                currentType = member.kind === 'named' ? member.type : member.elementType;
             }
             const operatorType = resolveTypeOperator(operator[1], currentType, symbols);
             if (operatorType) {
@@ -2327,7 +2481,7 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
             reference: createTypeReference(source, fieldRange),
             target: field
         });
-        currentType = field.type;
+        currentType = field.kind === 'named' ? field.type : field.elementType;
     }
     fieldAccesses.push(...resolvedAccesses);
     return currentType;
@@ -2433,9 +2587,9 @@ function findStructureField(typeName, fieldName, symbols) {
     const visited = new Set();
     while (symbol && !visited.has(symbol)) {
         visited.add(symbol);
-        const field = symbol.fields?.find(candidate => candidate.kind === 'named' &&
+        const field = symbol.fields?.find(candidate => candidate.name &&
             normalizeTypeName(candidate.name.name) === fieldName);
-        if (field?.kind === 'named') {
+        if (field) {
             return field;
         }
         symbol = symbol.baseType ? symbols.lookup(symbol.baseType.name) : undefined;
@@ -2522,6 +2676,15 @@ function getRoutineArgumentTypeDistance(actual, expectedName, symbols) {
     if (exactDistance !== undefined) {
         return exactDistance;
     }
+    const expectedSymbol = symbols.lookup(expectedName);
+    const reverseDistance = expectedSymbol?.isScalar &&
+        expectedSymbol.scale === '1/1' &&
+        isNumberTypeName(actual.name)
+        ? symbols.getBaseTypeDistance(expectedName, actual.name)
+        : undefined;
+    if (reverseDistance !== undefined) {
+        return -reverseDistance;
+    }
     const expectedNormalizedName = normalizeTypeName(expectedName);
     return symbols.entries
         .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
@@ -2560,7 +2723,7 @@ function resolveRoutineExpressionType(source, argument, caller, globalVariables,
             return resolveType(node.operand);
         }
         if (node.kind === 'operand') {
-            return resolveRoutineArgumentType(source, node.range, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, false, diagnostics);
+            return resolveRoutineArgumentType(source, node.range, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, node.implicitDefiniteArticle ?? false, diagnostics);
         }
         if (![
             'mais',
@@ -2741,6 +2904,13 @@ function findRoutineFieldAtOffset(parsedDocument, offset) {
                 return access.target;
             }
         }
+        for (const deallocation of routine.memoryDeallocations) {
+            const access = deallocation.fieldAccesses?.find(candidate => offset >= candidate.reference.range.start &&
+                offset <= candidate.reference.range.end);
+            if (access) {
+                return access.target;
+            }
+        }
     }
     return undefined;
 }
@@ -2756,7 +2926,7 @@ function findTypeDefinitionReferenceAtOffset(parsedDocument, offset) {
     }
     const field = findRoutineFieldAtOffset(parsedDocument, offset);
     if (field) {
-        return field.type;
+        return field.kind === 'named' ? field.type : field.elementType;
     }
     for (const routine of parsedDocument.routines) {
         const allocationAccess = routine.memoryAllocations
@@ -2764,8 +2934,14 @@ function findTypeDefinitionReferenceAtOffset(parsedDocument, offset) {
             .find(access => access &&
             offset >= access.reference.range.start &&
             offset <= access.reference.range.end);
-        if (allocationAccess) {
-            return allocationAccess.type;
+        const deallocationAccess = routine.memoryDeallocations
+            .map(deallocation => deallocation.variableAccess)
+            .find(access => access &&
+            offset >= access.reference.range.start &&
+            offset <= access.reference.range.end);
+        const memoryAccess = allocationAccess ?? deallocationAccess;
+        if (memoryAccess) {
+            return memoryAccess.type;
         }
         const localVariable = routine.localVariables.find(variable => offset >= variable.name.range.start &&
             offset <= variable.name.range.end);
@@ -3090,15 +3266,15 @@ function parseRoutineDeclarations(source, diagnostics) {
         if (!header.isPrimary) {
             alternateHeaders.push(header);
             continue;
-        }
+        } /*
         for (const alternate of alternateHeaders) {
-            if (hasEquivalentRoutineSignature(alternate, header)) {
-                diagnostics.push({
-                    message: 'Alternate routine header is semantically equivalent to the primary header.',
-                    range: alternate.name.range
-                });
-            }
-        }
+          if (hasEquivalentRoutineSignature(alternate, header)) {
+            diagnostics.push({
+              message: 'Alternate routine header is semantically equivalent to the primary header.',
+              range: alternate.name.range
+            });
+          }
+        }*/
         declarations.push({
             name: header.name,
             qualifier: header.qualifier,
@@ -3120,6 +3296,7 @@ function parseRoutineDeclarations(source, diagnostics) {
             returnParameter: header.returnParameter,
             calls: [],
             memoryAllocations: [],
+            memoryDeallocations: [],
             annotation: header.annotation,
             isBooleanFunction: header.isBooleanFunction,
             isCompatible: header.isCompatible ||
@@ -3581,6 +3758,16 @@ function parseGlobalVariableLiteral(source, range) {
     }
     return undefined;
 }
+function getOutOfRangeIntegerLiteralRange(source, range) {
+    const text = source.slice(range.start, range.end);
+    if (!/^[+-]?\d+$/u.test(text)) {
+        return undefined;
+    }
+    const value = BigInt(text);
+    return value < -2147483648n || value > 2147483647n
+        ? range
+        : undefined;
+}
 function isSigned32BitInteger(value) {
     const number = Number(value);
     return Number.isSafeInteger(number) && number >= -2147483648 && number <= 2147483647;
@@ -3780,6 +3967,13 @@ function findTypeReferenceAtOffset(parsedDocument, offset) {
                 return allocation.type;
             }
         }
+        for (const deallocation of routine.memoryDeallocations) {
+            if (!deallocation.variableAccess &&
+                offset >= deallocation.type.range.start &&
+                offset <= deallocation.type.range.end) {
+                return deallocation.type;
+            }
+        }
         for (const localVariable of routine.localVariables) {
             if (offset >= localVariable.type.range.start &&
                 offset <= localVariable.type.range.end) {
@@ -3874,9 +4068,12 @@ function getParsedReferences(parsed) {
     };
     const addFieldAccesses = (accesses, ownerTypeName) => {
         for (const access of accesses ?? []) {
-            add('field', access.target.name.name, access.reference.range, {
-                container: normalizeTypeName(ownerTypeName ?? findFieldOwner(access.target, parsed) ?? '')
-            });
+            const name = access.target.name;
+            if (name) {
+                add('field', name.name, access.reference.range, {
+                    container: normalizeTypeName(ownerTypeName ?? findFieldOwner(access.target, parsed) ?? '')
+                });
+            }
         }
     };
     for (const declaration of parsed.declarations) {
@@ -3944,6 +4141,11 @@ function getParsedReferences(parsed) {
         for (const allocation of routine.memoryAllocations) {
             addType(allocation.variableAccess ? undefined : allocation.type);
             addVariableAccesses(allocation.variableAccess ? [allocation.variableAccess] : undefined, routine);
+        }
+        for (const deallocation of routine.memoryDeallocations) {
+            addType(deallocation.variableAccess ? undefined : deallocation.type);
+            addVariableAccesses(deallocation.variableAccess ? [deallocation.variableAccess] : undefined, routine);
+            addFieldAccesses(deallocation.fieldAccesses);
         }
         for (const process of routine.processes) {
             addVariableAccesses(process.variableAccesses, routine);
