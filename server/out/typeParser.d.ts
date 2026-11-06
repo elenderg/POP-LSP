@@ -111,6 +111,7 @@ export interface RoutineLocalVariable {
     type: TypeReference;
     range: SourceRange;
     inputArgumentRange?: SourceRange;
+    implicit?: boolean;
 }
 export interface RoutineConditionalBlock {
     condition: TypeReference;

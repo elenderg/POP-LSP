@@ -1863,6 +1863,34 @@ suite('Português Puro definitions', () => {
         assert.equal(routineDefinition.length, 1);
         assert.equal(routineDefinition[0].range.start.line, 4);
     });
+    test('Declares plural-type routine arguments as implicit local variables', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Uma lista é uma estrutura.',
+            'Uma coisa é uma lista.',
+            'para que se exemplifique:',
+            '  Faça algo com umas coisas.',
+            '  Destrua as coisas.',
+            'para que se faça algo com umas coisas: retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const text = document.getText();
+        const variableOffset = text.indexOf('Destrua as coisas') + 'Destrua as '.length + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(variableOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 3);
+    });
     test('Declares an allocated local variable for later routine calls', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -2850,6 +2878,134 @@ suite('Português Puro definitions', () => {
         assert.equal(articleDiagnostics.filter(diagnostic => diagnostic.message ===
             `No compatible routine found for "${articleCall.trim().replace(/\.$/u, '')}".`).length, 1);
     });
+    test('Resolves local and type arguments followed by contracted definite-article arguments', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        const lines = [
+            'Um twip é um número.',
+            'Um número é uma estrutura.',
+            'Uma caixa é uma estrutura.',
+            'para que se falhe:',
+            '  Faça uma caixa denominada nova caixa uns twips por uns outros twips.',
+            '  Faça a nova caixa uns twips por uns outros twips.',
+            '  Faça uma outra caixa uns twips por uns outros twips.',
+            '  Faça a outra caixa 136 twips por 136 twips.',
+            'para que se faça uma caixa uns twips por uns outros twips: retorne.'
+        ];
+        await (0, helper_1.setTestContent)(lines.join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Faça uma caixa') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 8);
+        const newBoxOffset = document.getText().indexOf('Faça a nova caixa') + 'Faça a '.length + 1;
+        const newBoxDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(newBoxOffset));
+        assert.ok(newBoxDefinition);
+        assert.equal(newBoxDefinition.length, 1);
+        assert.equal(newBoxDefinition[0].range.start.line, 4);
+        const otherBoxOffset = document.getText().indexOf('Faça a outra caixa') + 'Faça a '.length + 1;
+        const otherBoxDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(otherBoxOffset));
+        assert.ok(otherBoxDefinition);
+        assert.equal(otherBoxDefinition.length, 1);
+        assert.equal(otherBoxDefinition[0].range.start.line, 6);
+    });
+    test('Resolves a type cast followed by a contracted preposition phrase', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Uma folha é uma estrutura.',
+            'Uma página é uma estrutura.',
+            'para que se inicie uma folha:',
+            '  Inicie a folha tal como uma página no modo retrato.',
+            'para que se inicie uma página no modo retrato: retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Inicie a folha') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 4);
+        const typeOffset = document.getText().indexOf('página', document.getText().indexOf('tal como')) + 1;
+        const typeDefinition = await vscode.commands.executeCommand('vscode.executeTypeDefinitionProvider', docUri, document.positionAt(typeOffset));
+        assert.ok(typeDefinition);
+        assert.equal(typeDefinition.length, 1);
+        assert.equal(typeDefinition[0].range.start.line, 1);
+    });
+    test('Resolves routine arguments separated by a multiword parameter phrase', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se inicie uma folha e um título de índice remissivo:',
+            '  Inicie a folha no modo retrato usando o título de índice remissivo.',
+            'para que se inicie uma folha no modo retrato usando um título de índice remissivo:',
+            '  retorne.',
+            'Uma folha é uma estrutura.',
+            'Um título de índice remissivo é uma string.',
+            'Uma string é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Inicie a folha') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 2);
+    });
+    test('Resolves contracted routine arguments with slash-containing global names', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se faça algo com um número e um múltiplo imediato:',
+            '  Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel.',
+            'Para que se arredonde um número usando um múltiplo imediato de um segundo número: retorne.',
+            'Um múltiplo imediato é um número.',
+            'A quantidade de twips/pixel é uns twips.',
+            'Um twip é um número.',
+            'Um número é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Arredonde') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 2);
+    });
     test('Accepts routine literals for parameter base types and enforces their ranges', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -3105,6 +3261,34 @@ suite('Português Puro definitions', () => {
         assert.ok(definition);
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 5);
+    });
+    test('Resolves boolean conditions with contracted context arguments', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se inicie uma caixa de texto:',
+            '  Limpe uma linha de texto.',
+            '  Se a linha de texto na caixa de texto não estiver selecionada, retorne.',
+            'Função para que se determine se uma linha de texto em uma caixa de texto está selecionada: diga sim.',
+            'para que se limpe uma linha de texto: retorne.',
+            'Uma linha de texto é uma estrutura.',
+            'Uma caixa de texto é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const predicateOffset = document.getText().indexOf('estiver') + 2;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(predicateOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 3);
     });
     test('Resolves estar predicates and derived types in conditional expressions', async () => {
         await (0, helper_1.activate)(docUri);
