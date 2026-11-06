@@ -1872,6 +1872,10 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
             localVariablesByArgument.size === 0) {
             argumentsList = splitScalarRoutineArguments(source, argumentsList, parameters, caller, globalVariables, symbols, routines);
         }
+        if (argumentsList.length === parameters.length &&
+            !hasCompatibleRoutineArgumentSeparators(source, argumentsList, parameters, routine)) {
+            continue;
+        }
         if (argumentsList.length !== parameters.length) {
             continue;
         }
@@ -1879,6 +1883,7 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
         const fieldAccesses = [];
         const variableAccesses = [];
         const computedFieldAccesses = [];
+        const typeReferences = [];
         for (let index = 0; index < argumentsList.length; index++) {
             const parameter = parameters[index];
             const localVariable = localVariablesByArgument.get(index);
@@ -1888,6 +1893,9 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
             const argumentType = localVariable
                 ? localVariable.type
                 : scalarArgumentType ?? resolveRoutineArgumentType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd) || implicitDefiniteArticle, diagnostics);
+            if (scalarArgumentType) {
+                typeReferences.push(scalarArgumentType);
+            }
             const expressionType = localVariable
                 ? undefined
                 : resolveRoutineExpressionType(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics);
@@ -1915,6 +1923,7 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
                     ? { start: callQualifier.start, end: statementRange.end }
                     : undefined,
                 arguments: argumentsList.map(range => createTypeReference(source, range)),
+                typeReferences,
                 fieldAccesses,
                 variableAccesses,
                 computedFieldAccesses,
@@ -1925,7 +1934,91 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
             nameLength: nameEnd - statementRange.start
         });
     }
-    return matchingCalls.sort((first, second) => second.nameLength - first.nameLength || first.distance - second.distance)[0]?.call;
+    const resolvedCall = matchingCalls.sort((first, second) => second.nameLength - first.nameLength || first.distance - second.distance)[0]?.call;
+    if (!resolvedCall) {
+        recordUnresolvedRoutineCallReferences(source, statementRange, routines, caller, globalVariables, symbols);
+    }
+    return resolvedCall;
+}
+function hasCompatibleRoutineArgumentSeparators(source, argumentsList, parameters, routine) {
+    const expectedSeparators = getRoutineParameterSeparators(source, parameters, routine);
+    if (!expectedSeparators) {
+        return true;
+    }
+    for (let index = 0; index < argumentsList.length - 1; index++) {
+        if (!isScalarRoutineLiteral(source, argumentsList[index + 1])) {
+            continue;
+        }
+        const gap = source.slice(argumentsList[index].end, argumentsList[index + 1].start);
+        const actualSeparators = [...gap.matchAll(/[\p{L}]+/gu)]
+            .map(match => match[0].toLocaleLowerCase('pt-BR'))
+            .filter(word => (routineNameDelimiters.has(word) || conjunctions.has(word)) &&
+            !indefiniteArticles.has(word) &&
+            !definiteArticles.has(word) &&
+            !localVariableNameMarkers.has(word));
+        if (actualSeparators.length !== expectedSeparators[index].length ||
+            actualSeparators.some((word, separatorIndex) => word !== expectedSeparators[index][separatorIndex])) {
+            return false;
+        }
+        if ([...gap.matchAll(/[\p{L}]+/gu)].some(match => indefiniteArticles.has(match[0].toLocaleLowerCase('pt-BR')))) {
+            return false;
+        }
+    }
+    return true;
+}
+function getRoutineParameterSeparators(source, parameters, routine) {
+    if (routine.range.end > source.length ||
+        routine.name.range.end > source.length ||
+        normalizeRoutineName(source.slice(routine.name.range.start, routine.name.range.end)) !==
+            normalizeRoutineName(routine.name.name)) {
+        return undefined;
+    }
+    return parameters.slice(0, -1).map((parameter, index) => {
+        const nextParameter = parameters[index + 1];
+        const gap = source.slice(parameter.type.range.end, nextParameter.type.range.start);
+        return [...gap.matchAll(/[\p{L}]+/gu)]
+            .map(match => match[0].toLocaleLowerCase('pt-BR'))
+            .filter(word => (routineNameDelimiters.has(word) || conjunctions.has(word)) &&
+            !indefiniteArticles.has(word) &&
+            !definiteArticles.has(word) &&
+            !localVariableNameMarkers.has(word));
+    });
+}
+function isScalarRoutineLiteral(source, range) {
+    return /^\s*[+-]?\d/u.test(source.slice(range.start, range.end));
+}
+function recordUnresolvedRoutineCallReferences(source, statement, routines, caller, globalVariables, symbols) {
+    const nameMatch = findRoutineNameMatches(source, statement, routines)
+        .filter(match => match.parameters.length > 0)
+        .sort((first, second) => second.nameEnd - first.nameEnd || first.order - second.order)[0];
+    if (!nameMatch) {
+        return;
+    }
+    const argumentRange = trimRange(source, nameMatch.nameEnd, statement.end);
+    let argumentsList = splitRoutineArguments(source, argumentRange);
+    if (argumentsList.length < nameMatch.parameters.length) {
+        argumentsList = splitScalarRoutineArguments(source, argumentsList, nameMatch.parameters, caller, globalVariables, symbols, routines);
+    }
+    const variableAccesses = [];
+    const typeReferences = [];
+    for (let index = 0; index < argumentsList.length; index++) {
+        const range = argumentsList[index];
+        const scalarType = resolveScalarRoutineArgumentType(source, range, nameMatch.parameters[index]?.type ?? nameMatch.parameters[0].type, symbols);
+        if (scalarType) {
+            typeReferences.push(scalarType);
+            continue;
+        }
+        resolveRoutineArgumentType(source, range, caller, globalVariables, symbols, [], routines, [], variableAccesses);
+    }
+    caller.calls.push({
+        name: createTypeReference(source, {
+            start: statement.start,
+            end: nameMatch.nameEnd
+        }),
+        arguments: argumentsList.map(range => createTypeReference(source, range)),
+        variableAccesses,
+        typeReferences
+    });
 }
 function splitScalarRoutineArguments(source, argumentsList, parameters, caller, globalVariables, symbols, routines) {
     const result = [...argumentsList];
@@ -3266,15 +3359,15 @@ function parseRoutineDeclarations(source, diagnostics) {
         if (!header.isPrimary) {
             alternateHeaders.push(header);
             continue;
-        } /*
+        }
         for (const alternate of alternateHeaders) {
-          if (hasEquivalentRoutineSignature(alternate, header)) {
-            diagnostics.push({
-              message: 'Alternate routine header is semantically equivalent to the primary header.',
-              range: alternate.name.range
-            });
-          }
-        }*/
+            if (hasEquivalentRoutineSignature(alternate, header)) {
+                diagnostics.push({
+                    message: 'Alternate routine header is semantically equivalent to the primary header.',
+                    range: alternate.name.range
+                });
+            }
+        }
         declarations.push({
             name: header.name,
             qualifier: header.qualifier,
@@ -3990,6 +4083,11 @@ function findTypeReferenceAtOffset(parsedDocument, offset) {
             }
         }
         for (const call of routine.calls) {
+            const callTypeReference = call.typeReferences?.find(reference => offset >= reference.range.start &&
+                offset <= reference.range.end);
+            if (callTypeReference) {
+                return callTypeReference;
+            }
             if (call.addressType &&
                 offset >= call.addressType.range.start &&
                 offset <= call.addressType.range.end) {
@@ -4135,6 +4233,7 @@ function getParsedReferences(parsed) {
                 add('routine', call.target.name.name, call.name.range);
             }
             addType(call.addressType);
+            call.typeReferences?.forEach(reference => addType(reference));
             addVariableAccesses(call.variableAccesses, routine);
             addFieldAccesses(call.fieldAccesses);
         }

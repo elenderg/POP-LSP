@@ -148,6 +148,7 @@ export interface RoutineCall {
     name: TypeReference;
     qualifierRange?: SourceRange;
     arguments: TypeReference[];
+    typeReferences?: TypeReference[];
     addressType?: TypeReference;
     fieldAccesses?: RoutineFieldAccess[];
     variableAccesses?: RoutineVariableAccess[];

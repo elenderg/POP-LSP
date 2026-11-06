@@ -2785,26 +2785,70 @@ suite('Português Puro definitions', () => {
     });
     test('Splits scalar literal arguments after a structure argument', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
+        const updateContent = async (lines) => {
+            const diagnosticsUpdated = new Promise(resolve => {
+                const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                    if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                        listener.dispose();
+                        resolve();
+                    }
+                });
             });
-        });
-        await (0, helper_1.setTestContent)([
-            'Um número é uma estrutura.',
-            'Um twip é um número.',
+            await (0, helper_1.setTestContent)(lines.join('\n'));
+            await diagnosticsUpdated;
+            return vscode.languages.getDiagnostics(docUri);
+        };
+        const lines = [
             'Um pixel são 15 twips.',
-            'Uma caixa é uma estrutura.',
+            'Um twip é um número.',
+            'Um número é uma estrutura.',
             'Uma folha é uma caixa.',
+            'Uma caixa é uma estrutura.',
             'para que se faça algo com uma folha:',
             '  Faça a folha 1056 pixels por 816 pixels.',
             'para que se faça uma caixa uns twips por uns outros twips: retorne.'
-        ].join('\n'));
-        await diagnosticsUpdated;
-        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        ];
+        assert.deepEqual(await updateContent(lines), []);
+        let document = await vscode.workspace.openTextDocument(docUri);
+        let text = document.getText();
+        let callOffset = text.indexOf('Faça a folha') + 1;
+        let definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 7);
+        const scalarTypeOffset = text.indexOf('pixels', text.indexOf('Faça a folha')) + 1;
+        definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(scalarTypeOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 0);
+        const invalidCall = '  Faça a folha 1056 pixels por com 816 pixels.';
+        const invalidDiagnostics = await updateContent(lines.map(line => line.includes('Faça a folha') ? invalidCall : line));
+        assert.equal(invalidDiagnostics.filter(diagnostic => diagnostic.message ===
+            `No compatible routine found for "${invalidCall.trim().replace(/\.$/u, '')}".`).length, 1);
+        document = await vscode.workspace.openTextDocument(docUri);
+        text = document.getText();
+        const variableOffset = text.indexOf('folha', text.indexOf(invalidCall)) + 1;
+        definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(variableOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 5);
+        const invalidScalarTypeOffset = text.indexOf('pixels', text.indexOf(invalidCall)) + 1;
+        definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(invalidScalarTypeOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 0);
+        const articleCall = '  Faça a folha com uns 1056 pixels por uns 816 pixels.';
+        const articleDiagnostics = await updateContent(lines.map(line => {
+            if (line.includes('Faça a folha')) {
+                return articleCall;
+            }
+            if (line.includes('faça uma caixa uns twips')) {
+                return 'para que se faça uma caixa com uns twips por uns outros twips: retorne.';
+            }
+            return line;
+        }));
+        assert.equal(articleDiagnostics.filter(diagnostic => diagnostic.message ===
+            `No compatible routine found for "${articleCall.trim().replace(/\.$/u, '')}".`).length, 1);
     });
     test('Accepts routine literals for parameter base types and enforces their ranges', async () => {
         await (0, helper_1.activate)(docUri);

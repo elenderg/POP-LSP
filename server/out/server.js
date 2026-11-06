@@ -295,6 +295,18 @@ connection.onDefinition(params => profileRequest('definition', async () => {
             }
         }
     }
+    if (parsedReference?.kind === 'type') {
+        const symbol = parsedDocument.symbols.lookup(parsedReference.name);
+        const owner = symbol?.declaration && candidates.find(candidate => candidate.parsed.declarations.some(declaration => declaration.name.normalizedName === symbol.declaration.name.normalizedName &&
+            declaration.name.range.start === symbol.declaration.name.range.start &&
+            declaration.name.range.end === symbol.declaration.name.range.end));
+        if (symbol?.declaration && owner) {
+            return node_1.Location.create(owner.document.uri, {
+                start: owner.document.positionAt(symbol.declaration.name.range.start),
+                end: owner.document.positionAt(symbol.declaration.name.range.end)
+            });
+        }
+    }
     const field = (0, typeParser_1.findRoutineFieldAtOffset)(parsedDocument, offset);
     if (field?.name) {
         return node_1.Location.create(document.uri, {
