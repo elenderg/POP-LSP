@@ -139,28 +139,31 @@ class TypeSymbolTable {
         if (symbol.kind === 'primitive') {
             return symbol.isScalar;
         }
-        if (symbol.scalarFactor === undefined || !symbol.declaration) {
+        if (!symbol.declaration) {
             return false;
         }
         if (resolving.has(symbol)) {
             return false;
         }
+        const baseType = this.lookup(symbol.declaration.baseType.name);
+        if (!baseType) {
+            return false;
+        }
         if (isNumberTypeName(symbol.declaration.baseType.name) &&
-            this.lookup(symbol.declaration.baseType.name)) {
-            const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor);
+            symbol.scalarFactor !== undefined) {
+            const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor ?? '1/1');
             symbol.scale = formatFraction(factorNumerator, factorDenominator);
             symbol.isScalar = true;
             symbol.kind = 'scalar';
             return true;
         }
         resolving.add(symbol);
-        const baseType = this.lookup(symbol.declaration.baseType.name);
-        if (!baseType || !this.resolveScale(baseType, resolving)) {
+        if (!this.resolveScale(baseType, resolving)) {
             resolving.delete(symbol);
             return false;
         }
         const [baseNumerator, baseDenominator] = parseFraction(baseType.scale);
-        const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor);
+        const [factorNumerator, factorDenominator] = parseFraction(symbol.scalarFactor ?? '1/1');
         symbol.scale = formatFraction(baseNumerator * factorNumerator, baseDenominator * factorDenominator);
         symbol.isScalar = true;
         symbol.kind = 'scalar';
@@ -1834,7 +1837,11 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
     const matchingCalls = [];
     const parsedArgumentsByNameEnd = new Map();
     for (const nameMatch of findRoutineNameMatches(source, statementRange, routines)) {
-        const { routine, name: routineName, nameEnd, parameters, implicitDefiniteArticle } = nameMatch;
+        const { routine, name: routineName, nameEnd, implicitDefiniteArticle } = nameMatch;
+        const returnMarker = findWordOutsideStrings(source, nameEnd, statementRange.end, 'retornando');
+        const parameters = returnMarker && routine.returnParameter
+            ? [...nameMatch.parameters, routine.returnParameter]
+            : nameMatch.parameters;
         if (parameters.length === 0) {
             continue;
         }
@@ -1846,9 +1853,11 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
         if (routineName.qualifier !== callQualifier?.text) {
             continue;
         }
-        let parsedArguments = parsedArgumentsByNameEnd.get(nameEnd);
+        const argumentEnd = trimRoutineTrailingNameSuffix(source, nameEnd, callQualifier?.start ?? statementRange.end, routine, nameMatch.parameters);
+        const parsedArgumentsKey = `${nameEnd}:${argumentEnd}`;
+        let parsedArguments = parsedArgumentsByNameEnd.get(parsedArgumentsKey);
         if (!parsedArguments) {
-            const argumentRange = trimRange(source, nameEnd, callQualifier?.start ?? statementRange.end);
+            const argumentRange = trimRange(source, nameEnd, argumentEnd);
             const localVariable = parseLocalVariableDeclaration(source, argumentRange, symbols);
             let argumentsList;
             const localVariablesByArgument = new Map();
@@ -1868,13 +1877,12 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
                 argumentsList,
                 localVariablesByArgument
             };
-            parsedArgumentsByNameEnd.set(nameEnd, parsedArguments);
+            parsedArgumentsByNameEnd.set(parsedArgumentsKey, parsedArguments);
         }
         let { argumentsList } = parsedArguments;
         const localVariablesByArgument = new Map(parsedArguments.localVariablesByArgument);
-        if (argumentsList.length > parameters.length) {
-            argumentsList = splitRoutineArgumentsUsingParameterSeparators(source, trimRange(source, nameEnd, callQualifier?.start ?? statementRange.end), parameters, routine) ?? argumentsList;
-        }
+        const parameterSeparatedArguments = splitRoutineArgumentsUsingParameterSeparators(source, trimRange(source, nameEnd, argumentEnd), parameters, routine);
+        argumentsList = parameterSeparatedArguments ?? argumentsList;
         if (argumentsList.length < parameters.length &&
             localVariablesByArgument.size === 0) {
             argumentsList = splitScalarRoutineArguments(source, argumentsList, parameters, caller, globalVariables, symbols, routines);
@@ -1977,20 +1985,40 @@ function hasCompatibleRoutineArgumentSeparators(source, argumentsList, parameter
         }
         const gap = source.slice(argumentsList[index].end, argumentsList[index + 1].start);
         const actualSeparators = [...gap.matchAll(/[\p{L}]+/gu)]
-            .map(match => match[0].toLocaleLowerCase('pt-BR'))
-            .filter(word => (routineNameDelimiters.has(word) || conjunctions.has(word)) &&
-            !indefiniteArticles.has(word) &&
-            !definiteArticles.has(word) &&
-            !localVariableNameMarkers.has(word));
+            .map(match => normalizeRoutineSeparatorWord(match[0]));
         if (actualSeparators.length !== expectedSeparators[index].length ||
-            actualSeparators.some((word, separatorIndex) => word !== expectedSeparators[index][separatorIndex])) {
-            return false;
-        }
-        if ([...gap.matchAll(/[\p{L}]+/gu)].some(match => indefiniteArticles.has(match[0].toLocaleLowerCase('pt-BR')))) {
+            actualSeparators.some((word, separatorIndex) => word !== normalizeRoutineSeparatorWord(expectedSeparators[index][separatorIndex]))) {
             return false;
         }
     }
     return true;
+}
+function trimRoutineTrailingNameSuffix(source, start, end, routine, parameters) {
+    if (parameters !== routine.parameters || parameters.length === 0) {
+        return end;
+    }
+    const headerEnd = routine.bodyRange.start - 1;
+    const lastParameter = parameters[parameters.length - 1];
+    if (headerEnd < lastParameter.type.range.end ||
+        headerEnd > source.length) {
+        return end;
+    }
+    const returnMarker = findWord(source, lastParameter.type.range.end, headerEnd, 'retornando');
+    const suffix = findTrailingRoutineNameSuffix(source, lastParameter.type.range.end, returnMarker?.start ?? headerEnd);
+    if (!suffix) {
+        return end;
+    }
+    const expectedSuffix = normalizeRoutineName(source.slice(suffix.start, suffix.end));
+    const callEnd = trimRange(source, start, end).end;
+    const words = [...source.slice(start, callEnd).matchAll(/\S+/gu)];
+    for (const word of words) {
+        const suffixStart = start + (word.index ?? 0);
+        if (normalizeRoutineName(source.slice(suffixStart, callEnd)) ===
+            expectedSuffix) {
+            return suffixStart;
+        }
+    }
+    return end;
 }
 function getRoutineParameterSeparators(source, parameters, routine) {
     if (routine.range.end > source.length ||
@@ -2003,6 +2031,17 @@ function getRoutineParameterSeparators(source, parameters, routine) {
         const nextParameter = parameters[index + 1];
         const gap = source.slice(parameter.type.range.end, nextParameter.type.range.start);
         const words = [...gap.matchAll(/[\p{L}]+/gu)];
+        let nextParameterArticleIndex = -1;
+        for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
+            if (indefiniteArticles.has(words[wordIndex][0].toLocaleLowerCase('pt-BR'))) {
+                nextParameterArticleIndex = wordIndex;
+            }
+        }
+        if (nextParameterArticleIndex !== -1) {
+            return words
+                .slice(0, nextParameterArticleIndex)
+                .map(match => match[0].toLocaleLowerCase('pt-BR'));
+        }
         return words
             .map((match, wordIndex) => {
             const word = match[0].toLocaleLowerCase('pt-BR');
@@ -2595,8 +2634,10 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
         ? trimRange(source, rootArticle.end, rootRange.end)
         : rootRange;
     const rootName = normalizeTypeName(source.slice(rootNameRange.start, rootNameRange.end));
-    const globalVariable = globalVariables.lookup(rootName);
     const rootLocalVariable = findRoutineVariable(caller, rootName);
+    const globalVariable = rootLocalVariable
+        ? undefined
+        : globalVariables.lookup(rootName);
     if (rootLocalVariable) {
         variableAccesses.push({
             reference: createTypeReference(source, rootNameRange),
@@ -2631,6 +2672,16 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
     if (fieldRanges.length === 1) {
         const fieldRange = fieldRanges[0];
         const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
+        const globalField = findGlobalVariableField(globalVariable, fieldName, symbols);
+        if (globalField) {
+            fieldAccesses.push({
+                reference: createTypeReference(source, fieldRange),
+                target: globalField
+            });
+            return globalField.kind === 'named'
+                ? globalField.type
+                : globalField.elementType;
+        }
         const matches = findNestedStructureFields(currentType.name, fieldName, symbols);
         if (matches.length > 1) {
             const message = `Ambiguous structure field access "${source.slice(fieldRange.start, fieldRange.end).trim()}".`;
@@ -2650,7 +2701,8 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
             return field.type;
         }
     }
-    for (const fieldRange of fieldRanges) {
+    for (let index = 0; index < fieldRanges.length; index++) {
+        const fieldRange = fieldRanges[index];
         const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
         if (['endereçamento', 'magnitude', 'conteúdo'].includes(fieldName)) {
             const operatorType = resolveTypeOperator(fieldName, currentType, symbols);
@@ -2687,7 +2739,23 @@ function resolveStructureFieldAccess(source, argument, caller, globalVariables, 
             }
             continue;
         }
-        const field = findStructureField(currentType.name, fieldName, symbols);
+        let field = index === 0
+            ? findGlobalVariableField(globalVariable, fieldName, symbols) ??
+                findStructureField(currentType.name, fieldName, symbols)
+            : findStructureField(currentType.name, fieldName, symbols);
+        if (!field) {
+            const nestedFields = findNestedStructureFields(currentType.name, fieldName, symbols);
+            if (nestedFields.length > 1) {
+                const message = `Ambiguous structure field access "${source.slice(fieldRange.start, fieldRange.end).trim()}".`;
+                if (!diagnostics?.some(diagnostic => diagnostic.message === message &&
+                    diagnostic.range.start === fieldRange.start &&
+                    diagnostic.range.end === fieldRange.end)) {
+                    diagnostics?.push({ message, range: fieldRange });
+                }
+                return undefined;
+            }
+            field = nestedFields[0];
+        }
         if (!field) {
             const computedField = findComputedFieldRoutine(currentType.name, fieldName, routines, symbols);
             if (!computedField?.computedField?.valueType) {
@@ -2756,10 +2824,18 @@ function resolveTypeOperator(operator, type, symbols) {
             : undefined;
     }
     if (operator === 'conteúdo') {
-        const pointer = symbols.lookup(type.name);
-        return pointer?.pointedType
-            ? createSyntheticTypeReference(pointer.pointedType.name, type.range)
-            : undefined;
+        let pointer = symbols.lookup(type.name);
+        const visited = new Set();
+        while (pointer && !visited.has(pointer)) {
+            if (pointer.pointedType) {
+                return createSyntheticTypeReference(pointer.pointedType.name, type.range);
+            }
+            visited.add(pointer);
+            pointer = pointer.baseType
+                ? symbols.lookup(pointer.baseType.name)
+                : undefined;
+        }
+        return undefined;
     }
     return undefined;
 }
@@ -2824,6 +2900,11 @@ function findStructureField(typeName, fieldName, symbols) {
     }
     return undefined;
 }
+function findGlobalVariableField(variable, fieldName, symbols) {
+    return variable?.declaration.fields?.find(field => field.name &&
+        (normalizeTypeName(field.name.name) === fieldName ||
+            field.kind === 'named' && isSingularListFieldAlias(field, fieldName, symbols)));
+}
 function findNestedStructureFields(typeName, fieldName, symbols, ancestors = new Set()) {
     const symbol = symbols.lookup(typeName);
     if (!symbol || ancestors.has(symbol.normalizedName)) {
@@ -2857,7 +2938,8 @@ function findNestedStructureFields(typeName, fieldName, symbols, ancestors = new
             isSingularListFieldAlias(field, fieldName, symbols)) {
             matches.push(field);
         }
-        if (symbols.getBaseTypeDistance(field.type.name, 'estrutura') !== undefined) {
+        if (symbols.getBaseTypeDistance(field.type.name, 'estrutura') !== undefined ||
+            symbols.getBaseTypeDistance(field.type.name, 'lista') !== undefined) {
             matches.push(...findNestedStructureFields(field.type.name, fieldName, symbols, nestedAncestors));
         }
     }
@@ -2889,7 +2971,11 @@ function findRoutineVariable(routine, name) {
     const localVariable = [...routine.localVariables]
         .reverse()
         .find(variable => variable.name.normalizedName === name);
-    return localVariable ?? routine.parameters.find(parameter => parameter.name.normalizedName === name);
+    return localVariable ??
+        routine.parameters.find(parameter => parameter.name.normalizedName === name) ??
+        (routine.returnParameter?.name.normalizedName === name
+            ? routine.returnParameter
+            : undefined);
 }
 function isCompatibleType(actual, expected, symbols) {
     return nullLiteralWords.has(actual.normalizedName) ||

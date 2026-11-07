@@ -767,6 +767,51 @@ suite('Português Puro definitions', () => {
         await diagnosticsUpdated;
         assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
     });
+    test('Resolves computed and nested fields through a list element', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um ponteiro é uma estrutura.',
+            'Uma lista é um ponteiro para uma lista estruturada.',
+            'Uma lista estruturada é uma estrutura com',
+            '  Uma lista denominada lista posterior e',
+            '  Uma lista denominada lista anterior.',
+            'Um número é uma estrutura.',
+            'Um twip é um número.',
+            'Uma coordenada é um twip.',
+            'Uma caixa é uma estrutura com',
+            '  Uma coordenada denominada coordenada X e',
+            '  Uma coordenada denominada coordenada Y.',
+            'Uma localização é uma estrutura com',
+            '  Uma coordenada denominada coordenada X e',
+            '  Uma coordenada denominada coordenada Y.',
+            'Um polígono é uma lista com uns vértices.',
+            'Um vértice é uma lista com',
+            '  Uma caixa denominada caixa,',
+            '  Uma coordenada denominada coordenada X,',
+            '  Uma coordenada denominada coordenada Y,',
+            '  Uma localização sob a coordenada X.',
+            'para que se atribua o centro duma caixa para uma localização: retorne.',
+            'para que se centralize um polígono em uma caixa:',
+            '  Atribua a coordenada Y deste centro desta caixa deste polígono para um número.',
+            'para que se atribua um número para um segundo número: retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const fieldOffset = document.getText().indexOf('caixa deste polígono') + 2;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(fieldOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 16);
+    });
     test('Reports invalid computed-field owners and unresolved computed fields', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -840,6 +885,36 @@ suite('Português Puro definitions', () => {
         ].join('\n'));
         await diagnosticsUpdated;
         assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+    });
+    test('Resolves conteúdo through derived pointer aliases in boolean conditions', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um ponteiro é uma estrutura.',
+            'Um endereço de byte é um ponteiro para um byte.',
+            'Um endereço do caractere é um endereço de byte.',
+            'Um número é uma estrutura.',
+            'O caractere NULL é um byte igual a 0.',
+            'para que se faça algo com um endereço do caractere:',
+            '  Se o conteúdo deste endereço do caractere for o caractere null, retorne.',
+            'Função para que se determine se um byte é um segundo byte:',
+            '  Diga sim.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const predicateOffset = document.getText().indexOf('for o caractere') + 2;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(predicateOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 7);
     });
     test('Resolves endereçamento of a contiguous byte-array field', async () => {
         await (0, helper_1.activate)(docUri);
@@ -1387,6 +1462,37 @@ suite('Português Puro definitions', () => {
             assert.equal(definition.length, 1);
             assert.equal(definition[0].range.start.line, 0);
         }
+    });
+    test('Matches routine calls with an explicit return destination', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Uma string é uma estrutura.',
+            'Um número é uma estrutura.',
+            'Uma quantidade de caracteres é um número.',
+            'Uma segunda quantidade de caracteres é um número.',
+            'Um texto hexadecimal é uma estrutura.',
+            'Uma tabela de tradução é um texto hexadecimal.',
+            'Rotina para que se compare uma string com uma segunda string usando uma quantidade de caracteres e uma segunda quantidade de caracteres retornando um número:',
+            '  Compare a string com a segunda string usando a quantidade de caracteres e a segunda quantidade de caracteres e a tabela de caracteres minúsculos ascii retornando o número.',
+            'Rotina para que se compare uma string com uma segunda string usando uma quantidade de caracteres e uma segunda quantidade de caracteres e uma tabela de tradução retornando um número: retorne.',
+            'A tabela de caracteres minúsculos ascii é uma tabela de tradução igual a $0.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Compare a string') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 8);
     });
     test('Ends routine bodies at following top-level declarations and routine headers', async () => {
         await (0, helper_1.activate)(docUri);
@@ -2679,6 +2785,35 @@ suite('Português Puro definitions', () => {
         await diagnosticsUpdated;
         assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
     });
+    test('Passes numeric values to derived scalar routine parameters', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se faça algo com um número e uma caixa:',
+            '  Mova a caixa usando o número e 0.',
+            'para que se mova uma caixa usando uns x-twips e uns y-twips: retorne.',
+            'Uns x-twips são uns twips.',
+            'Uns y-twips são uns twips.',
+            'Um twip é um número.',
+            'Um número é uma estrutura.',
+            'Uma caixa é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Mova a caixa') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 2);
+    });
     test('Local variables shadow global variables with the same name', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -3290,6 +3425,38 @@ suite('Português Puro definitions', () => {
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 3);
     });
+    test('Resolves fields declared on a global variable in routine arguments', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'A tela é uma estrutura com uma caixa.',
+            'Uma imagem é uma estrutura.',
+            'Uma caixa é uma estrutura.',
+            'para que se faça algo com uma imagem:',
+            '  Centralize a imagem na caixa desta tela (horizontalmente).',
+            'para que se centralize uma imagem em uma caixa (horizontalmente): retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Centralize a imagem') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 5);
+        const fieldOffset = document.getText().indexOf('caixa desta tela') + 2;
+        const fieldDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(fieldOffset));
+        assert.ok(fieldDefinition);
+        assert.equal(fieldDefinition.length, 1);
+        assert.equal(fieldDefinition[0].range.start.line, 0);
+    });
     test('Resolves estar predicates and derived types in conditional expressions', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -3755,6 +3922,102 @@ suite('Português Puro definitions', () => {
             assert.equal(definition.length, 1);
             assert.equal(definition[0].range.start.line, expectedLine);
         }
+    });
+    test('Resolves scalar arguments after a routine direction phrase', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Uma fração é uma estrutura.',
+            'Uma string é uma estrutura.',
+            'A direita é uma fração igual a 1/4.',
+            'A esquerda é uma string igual a "esquerda".',
+            'para que se execute o programa: retorne.',
+            'para que se desloque um byte:',
+            '  Desloque o byte para a direita 5 bits.',
+            'para que se desloque um byte para a direita uns bits: retorne.',
+            'Um bit é uma unidade.',
+            'Uma unidade é um número.',
+            'Um número é uma estrutura.',
+            'para que se exercite um byte:',
+            '  Execute o programa.',
+            '  Desloque o byte para a direita 5 bits.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const text = document.getText();
+        const exactNameCallOffset = text.lastIndexOf('Execute o programa') + 3;
+        const exactNameDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(exactNameCallOffset));
+        assert.ok(exactNameDefinition);
+        assert.equal(exactNameDefinition.length, 1);
+        assert.equal(exactNameDefinition[0].range.start.line, 4);
+        const callOffset = text.lastIndexOf('Desloque o byte') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 7);
+    });
+    test('Resolves scalar arguments before a trailing routine direction phrase', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se desloque um byte:',
+            '  Desloque o byte 5 bits para a direita.',
+            'para que se desloque um byte uns bits para a direita: retorne.',
+            'Um bit é uma unidade.',
+            'Uma unidade é um número.',
+            'Um número é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Desloque o byte') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 2);
+    });
+    test('Splits routine arguments at contracted prepositions before a parameter', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Uma string é uma estrutura.',
+            'Um número é uma estrutura.',
+            'Um byte# é um número.',
+            'para que se faça algo com uma string:',
+            '  Atribua 1 para um byte#.',
+            '  Insira "," para a string antes desse byte#.',
+            'para que se insira uma string para uma segunda string antes de um byte#: retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Insira') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 6);
     });
     test('Parses routine parameter lists around trailing and interleaved direction phrases', async () => {
         await (0, helper_1.activate)(docUri);
