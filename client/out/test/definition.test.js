@@ -916,6 +916,42 @@ suite('Português Puro definitions', () => {
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 7);
     });
+    test('Matches pointer fields and derived scalar arguments in routine calls', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se atribua um byte para uma string:',
+            '  Atribua 1 para uma quantidade de caracteres.',
+            '  Reaponte o caractere inicial desta string usando a quantidade de caracteres.',
+            '',
+            'para que se reaponte um ponteiro usando uma quantidade de bytes: retorne.',
+            '',
+            'Uma string é uma estrutura com um caractere inicial e um caractere final.',
+            'Um caractere inicial é um ponteiro para um byte.',
+            'Um caractere final é um ponteiro para um byte.',
+            'Uma quantidade de caracteres é uns twips.',
+            'Um twip é um número.',
+            'Uma quantidade de bytes é uma contagem.',
+            'Uma contagem é um número.',
+            'Um número é uma estrutura.',
+            'Um ponteiro é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Reaponte') + 1;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 4);
+    });
     test('Resolves endereçamento of a contiguous byte-array field', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -3590,6 +3626,31 @@ suite('Português Puro definitions', () => {
         assert.equal(diagnostics[0].message, 'Integer literal "2147483648" is outside the supported signed 32-bit range.');
         const document = await vscode.workspace.openTextDocument(docUri);
         assert.equal(document.getText().slice(document.offsetAt(diagnostics[0].range.start), document.offsetAt(diagnostics[0].range.end)), '2147483648');
+    });
+    test('Resolves integer literals against byte parameters in boolean conditions', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se faça algo com um byte:',
+            '  Se o byte estiver entre 48 e 57,',
+            '    Retorne.',
+            'para que se determine se um byte está entre um segundo byte e um terceiro byte: diga sim.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const conditionOffset = document.getText().indexOf('estiver entre');
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(conditionOffset + 2));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 3);
     });
     test('Resolves boolean calls through alternate header parameter types', async () => {
         await (0, helper_1.activate)(docUri);

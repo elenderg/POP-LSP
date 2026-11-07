@@ -316,7 +316,7 @@ const routineNameDelimiters = new Set([
     'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
     'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
     'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
-    'limitando-o', 'igual', 'while', 'ultrapassou',
+    'limitando-o', 'igual', 'while', 'ultrapassou', 'usando',
     ...definiteArticles,
     ...routineContractions.keys(), ...routineWordReplacements.keys()
 ]);
@@ -816,6 +816,15 @@ function resolveBooleanCondition(source, condition, routines, caller, globalVari
         const prefix = trimRange(conditionSource, condition.start, nameStart);
         const suffix = trimRange(conditionSource, nameEnd, condition.end);
         let argumentsList = [prefix, suffix].filter(range => range.start < range.end);
+        if (argumentsList.length < parameters.length &&
+            prefix.start < prefix.end &&
+            suffix.start < suffix.end &&
+            parameters.length > 1) {
+            const trailingArguments = splitRoutineArgumentsUsingParameterSeparators(conditionSource, suffix, parameters.slice(1), routine);
+            if (trailingArguments?.length === parameters.length - 1) {
+                argumentsList = [prefix, ...trailingArguments];
+            }
+        }
         if (argumentsList.length < parameters.length &&
             suffix.start === suffix.end) {
             argumentsList = splitRoutineArgumentsUsingParameterSeparators(conditionSource, prefix, parameters, routine) ?? argumentsList;
@@ -2999,6 +3008,12 @@ function getRoutineArgumentTypeDistance(actual, expectedName, symbols) {
     if (reverseDistance !== undefined) {
         return -reverseDistance;
     }
+    const actualSymbol = symbols.lookup(actual.name);
+    if (actualSymbol?.isScalar &&
+        expectedSymbol?.isScalar &&
+        actualSymbol.scale === expectedSymbol.scale) {
+        return 0;
+    }
     const expectedNormalizedName = normalizeTypeName(expectedName);
     return symbols.entries
         .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
@@ -3492,10 +3507,10 @@ function parseRoutineDeclarations(source, diagnostics) {
         const predicateParameters = predicateMarker && parameterArticle
             ? [
                 ...parseRoutineParameters(headerSyntaxSource, parameterArticle.start, predicateMarker.start, diagnostics),
-                predicateTailArticle
-                    ? parseRoutineParameter(headerSyntaxSource, predicateTailArticle.start, signatureEnd)
-                    : undefined
-            ].filter((parameter) => parameter !== undefined)
+                ...(predicateTailArticle
+                    ? parseRoutineParameters(headerSyntaxSource, predicateTailArticle.start, signatureEnd, diagnostics)
+                    : [])
+            ]
             : undefined;
         const parameterStart = parameterArticle?.start;
         const nameEnd = Math.min(parameterArticle?.start ?? headerEnd, returningMarker?.start ?? headerEnd, qualifier?.start ?? headerEnd);
