@@ -597,8 +597,8 @@ const routineContractions = new Map([
   ['pelos', 'por os'],
   ['pelas', 'por as']
 ]);
-const articlesAfterPrepositionA = new Set([
-  'um', 'uma', 'uns', 'umas', 'o', 'a', 'os', 'as'
+const articles = new Set([
+  ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
   'atribua','diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
@@ -623,7 +623,7 @@ const routineNameDelimiters = new Set([
   'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente', 
   'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
   'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante',
-  'e', 'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
+  , 'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
   'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão',
   'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob',
   'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada',
@@ -632,7 +632,7 @@ const routineNameDelimiters = new Set([
   'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
   'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas', 
   'limitando-o', 'igual', 'while', 'ultrapassou', 'usando',
-  ...definiteArticles,
+  ...definiteArticles, ...conjunctions,
   ...routineContractions.keys(), ...routineWordReplacements.keys()
 ]);
 const reservedIdentifierWords = new Set([
@@ -693,7 +693,7 @@ function normalizeRoutineNameWords(name: string): string {
   );
   for (let index = 0; index < expandedWords.length; index++) {
     const word = expandedWords[index];
-    if (word === 'a' && articlesAfterPrepositionA.has(expandedWords[index + 1] ?? '')) {
+    if (word === 'a' && articles.has(expandedWords[index + 1] ?? '')) {
       expandedWords[index] = 'para';
     } else {
       expandedWords[index] = routineWordReplacements.get(word) ?? word;
@@ -991,7 +991,7 @@ function resolveRoutineCalls(
       !hasDecodeInstruction
     ) {
       diagnostics.push({
-        message: 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.',
+        message: 'Boolean functions should contain a valid "Diga sim" or "Diga não" statement.',
         range: routine.name.range
       });
     }
@@ -1195,6 +1195,7 @@ function processRoutineStatement(
     statement,
     caller,
     routines,
+    globalVariables,
     symbols,
     diagnostics
   )) {
@@ -1358,7 +1359,12 @@ function resolveBooleanCondition(
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[]
 ): { call: RoutineCall; distance: number } | { diagnostic: ParserDiagnostic } | undefined {
-  const conditionSource = maskWordInRange(source, condition, 'não');
+  const conditionSource = replaceWordInRange(
+    maskWordInRange(source, condition, 'não'),
+    condition,
+    'nada',
+    'algo'
+  );
   const conditionName = normalizeRoutineName(
     conditionSource.slice(condition.start, condition.end)
   );
@@ -1397,7 +1403,7 @@ function resolveBooleanCondition(
     true
   )) {
     const { routine, nameStart, nameEnd, order, parameters } = nameMatch;
-    if (!routine.isBooleanFunction || parameters.length === 0) {
+    if (!routine.isBooleanFunction) {
       continue;
     }
     if (
@@ -1408,6 +1414,24 @@ function resolveBooleanCondition(
     }
     const prefix = trimRange(conditionSource, condition.start, nameStart);
     const suffix = trimRange(conditionSource, nameEnd, condition.end);
+    if (parameters.length === 0) {
+      if (
+        normalizeTypeName(conditionSource.slice(prefix.start, prefix.end)) === 'algo' &&
+        suffix.start === suffix.end
+      ) {
+        matches.push({
+          call: {
+            name: createTypeReference(source, { start: nameStart, end: nameEnd }),
+            arguments: [],
+            target: routine
+          },
+          distance: 0,
+          order,
+          nameStart
+        });
+      }
+      continue;
+    }
     let argumentsList = [prefix, suffix].filter(range => range.start < range.end);
     if (
       argumentsList.length < parameters.length &&
@@ -1594,6 +1618,41 @@ function maskWordInRange(
     }
     for (let index = match.index; index < match.index + match[0].length; index++) {
       characters[index] = ' ';
+    }
+  }
+  return source.slice(0, range.start) + characters.join('') + source.slice(range.end);
+}
+
+function replaceWordInRange(
+  source: string,
+  range: SourceRange,
+  word: string,
+  replacement: string
+): string {
+  if (word.length !== replacement.length) {
+    throw new Error('Word replacements must preserve source offsets.');
+  }
+  const rangeText = source.slice(range.start, range.end);
+  const characters = rangeText.split('');
+  const words = /\p{L}+/gu;
+  let match: RegExpExecArray | null;
+  while ((match = words.exec(rangeText))) {
+    if (match[0].toLocaleLowerCase('pt-BR') !== word) {
+      continue;
+    }
+    const previousCharacter = match.index > 0 ? rangeText[match.index - 1] : '';
+    const wordEnd = match.index + match[0].length;
+    const nextCharacter = wordEnd < rangeText.length ? rangeText[wordEnd] : '';
+    if (
+      isWordCharacter(previousCharacter) ||
+      isIdentifierJoiner(previousCharacter) ||
+      isWordCharacter(nextCharacter) ||
+      isIdentifierJoiner(nextCharacter)
+    ) {
+      continue;
+    }
+    for (let index = 0; index < replacement.length; index++) {
+      characters[match.index + index] = replacement[index];
     }
   }
   return source.slice(0, range.start) + characters.join('') + source.slice(range.end);
@@ -2143,9 +2202,9 @@ function validateMemoryAllocationStatement(
     return true;
   }
 
-  if (symbols.getBaseTypeDistance(type.name, 'lista') === undefined) {
+  if (symbols.getBaseTypeDistance(type.name, 'ponteiro') === undefined) {
     diagnostics.push({
-      message: '"Aloque memória para" only accepts variables and types based on "lista".',
+      message: '"Aloque memória para" only accepts variables and types based on "ponteiro".',
       range: targetRange
     });
     return true;
@@ -2216,6 +2275,7 @@ function validateRoutineAddressStatement(
   statement: SourceRange,
   caller: RoutineDeclaration,
   routines: RoutineDeclaration[],
+  globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[]
 ): boolean {
@@ -2228,10 +2288,10 @@ function validateRoutineAddressStatement(
   const typeArticle = readWord(source, keyword.end, statement.end);
   if (
     !typeArticle ||
-    !indefiniteArticles.has(typeArticle.value.toLocaleLowerCase('pt-BR'))
+    !articles.has(typeArticle.value.toLocaleLowerCase('pt-BR'))
   ) {
     diagnostics.push({
-      message: `"${keyword.value}" requires an indefinite article and a pointer type before "para a rotina".`,
+      message: `"${keyword.value}" requires an article and a pointer type before "para a rotina".`,
       range: { start: keyword.start, end: statement.end }
     });
     return true;
@@ -2240,6 +2300,9 @@ function validateRoutineAddressStatement(
   let markerStart = -1;
   let markerEnd = -1;
   let type: TypeReference | undefined;
+  const fieldAccesses: RoutineFieldAccess[] = [];
+  const variableAccesses: RoutineVariableAccess[] = [];
+  const computedFieldAccesses: RoutineComputedFieldAccess[] = [];
   let searchStart = typeArticle.end;
   while (searchStart < statement.end) {
     const preposition = findWord(source, searchStart, statement.end, 'para');
@@ -2255,11 +2318,25 @@ function validateRoutineAddressStatement(
       routineWord?.value.toLocaleLowerCase('pt-BR') === 'rotina'
     ) {
       const candidateRange = trimRange(source, typeArticle.end, preposition.start);
-      const candidateType = symbols.lookup(source.slice(candidateRange.start, candidateRange.end));
+      const candidateType = symbols.lookup(source.slice(candidateRange.start, candidateRange.end))
+        ? createTypeReference(source, candidateRange)
+        : resolveRoutineArgumentType(
+          source,
+          trimRange(source, typeArticle.start, preposition.start),
+          caller,
+          globalVariables,
+          symbols,
+          fieldAccesses,
+          routines,
+          computedFieldAccesses,
+          variableAccesses,
+          false,
+          diagnostics
+        );
       if (candidateType) {
         markerStart = preposition.start;
         markerEnd = routineWord.end;
-        type = createTypeReference(source, candidateRange);
+        type = candidateType;
         break;
       }
     }
@@ -2281,36 +2358,32 @@ function validateRoutineAddressStatement(
     });
   }
 
-  const routineNameRange = trimRange(source, markerEnd, statement.end);
-  const qualifier = findTrailingParentheticalQualifier(
+  const routineRange = trimRange(source, markerEnd, statement.end);
+  const call = resolveRoutineCall(
     source,
-    routineNameRange.start,
-    routineNameRange.end
+    routineRange,
+    routines,
+    caller,
+    globalVariables,
+    symbols,
+    diagnostics
   );
-  const routineRange = trimRange(
-    source,
-    routineNameRange.start,
-    qualifier?.start ?? routineNameRange.end
-  );
-  const normalizedRoutineName = normalizeRoutineName(
-    source.slice(routineRange.start, routineRange.end)
-  );
-  const candidates = routines.filter(candidate =>
-    candidate.qualifier === qualifier?.text &&
-    routineNames(candidate).some(name =>
-      normalizeRoutineName(name.name) === normalizedRoutineName
-    )
-  );
-  if (candidates.length === 0) {
-    diagnostics.push({
-      message: `No routine found for address reference "${source.slice(routineRange.start, routineRange.end)}".`,
-      range: routineRange
-    });
+  if (!call?.target) {
+    if (findRoutineNameMatches(source, routineRange, routines).length === 0) {
+      diagnostics.push({
+        message: `No routine found for address reference "${source.slice(routineRange.start, routineRange.end)}".`,
+        range: routineRange
+      });
+    } else {
+      diagnostics.push({
+        message: `No compatible routine found for "${source.slice(routineRange.start, routineRange.end)}".`,
+        range: routineRange
+      });
+    }
     return true;
   }
 
-  const target = candidates.find(candidate => candidate.isCompatible);
-  if (!target) {
+  if (!call.target.isCompatible) {
     diagnostics.push({
       message: `Routine "${source.slice(routineRange.start, routineRange.end)}" must be declared with "compativelmente" to provide its address.`,
       range: routineRange
@@ -2318,15 +2391,21 @@ function validateRoutineAddressStatement(
     return true;
   }
 
-  caller.calls.push({
-    name: createTypeReference(source, routineRange),
-    qualifierRange: qualifier
-      ? { start: qualifier.start, end: routineNameRange.end }
-      : undefined,
-    arguments: [],
+  const addressCall: RoutineCall = {
+    ...call,
     addressType: type,
-    target
-  });
+    fieldAccesses: [...fieldAccesses, ...(call.fieldAccesses ?? [])],
+    variableAccesses: [...variableAccesses, ...(call.variableAccesses ?? [])],
+    computedFieldAccesses: [
+      ...computedFieldAccesses,
+      ...(call.computedFieldAccesses ?? [])
+    ]
+  };
+  caller.calls.push(addressCall);
+  if (addressCall.localVariables) {
+    caller.localVariables.push(...addressCall.localVariables);
+  }
+  caller.computedFieldAccesses.push(...computedFieldAccesses);
   return true;
 }
 
@@ -2610,7 +2689,7 @@ function parseProcessAddressOutput(
 
   const nameRange = markers
     ? trimRange(source, markers.end, argument.end)
-    : type.range;
+    : typeRange;
   if (nameRange.start === nameRange.end) {
     diagnostics.push({
       message: 'A variable name is required after the type in a "Processe" address argument.',
@@ -2623,7 +2702,8 @@ function parseProcessAddressOutput(
     variable: {
       name: createTypeReference(source, nameRange),
       type,
-      range: argument
+      range: argument,
+      implicit: !markers
     },
     argumentType: resolveTypeOperator('endereçamento', type, symbols) ??
       createSyntheticTypeReference('ponteiro', type.range)
@@ -2898,6 +2978,7 @@ function resolveRoutineCall(
     call: RoutineCall;
     distance: number;
     nameLength: number;
+    separatorDistance: number;
   }[] = [];
   const parsedArgumentsByNameEnd = new Map<string, {
     argumentsList: SourceRange[];
@@ -2943,6 +3024,12 @@ function resolveRoutineCall(
       routine,
       nameMatch.parameters
     );
+    if (hasArticleBeforeScalarLiteral(source, {
+      start: nameEnd,
+      end: argumentEnd
+    })) {
+      continue;
+    }
     const parsedArgumentsKey = `${nameEnd}:${argumentEnd}`;
     let parsedArguments = parsedArgumentsByNameEnd.get(parsedArgumentsKey);
     if (!parsedArguments) {
@@ -3028,20 +3115,24 @@ function resolveRoutineCall(
         return argumentLocalVariable.name.range;
       });
     }
+    if (argumentsList.length !== parameters.length) {
+      continue;
+    }
+    const separatorMatch = getRoutineArgumentSeparatorMatch(
+      source,
+      argumentsList,
+      parameters,
+      routine
+    );
     if (
-      argumentsList.length === parameters.length &&
-      !hasCompatibleRoutineArgumentSeparators(
-        source,
-        argumentsList,
-        parameters,
-        routine
+      separatorMatch?.mismatch &&
+      argumentsList.slice(1).some(argument =>
+        isScalarRoutineLiteral(source, argument)
       )
     ) {
       continue;
     }
-    if (argumentsList.length !== parameters.length) {
-      continue;
-    }
+    const separatorDistance = separatorMatch?.distance ?? 0;
 
     const distances: number[] = [];
     const fieldAccesses: RoutineFieldAccess[] = [];
@@ -3147,11 +3238,14 @@ function resolveRoutineCall(
         target: routine
       },
       distance: distances.reduce((total, distance) => total + distance, 0),
-      nameLength: nameEnd - statementRange.start
+      nameLength: nameEnd - statementRange.start,
+      separatorDistance
     });
   }
   const resolvedCall = matchingCalls.sort((first, second) =>
-    second.nameLength - first.nameLength || first.distance - second.distance
+    second.nameLength - first.nameLength ||
+    first.distance - second.distance ||
+    first.separatorDistance - second.separatorDistance
   )[0]?.call;
   if (!resolvedCall) {
     recordUnresolvedRoutineCallReferences(
@@ -3166,39 +3260,53 @@ function resolveRoutineCall(
   return resolvedCall;
 }
 
-function hasCompatibleRoutineArgumentSeparators(
+function getRoutineArgumentSeparatorMatch(
   source: string,
   argumentsList: SourceRange[],
   parameters: RoutineParameter[],
   routine: RoutineDeclaration
-): boolean {
+): { distance: number; mismatch: boolean } | undefined {
   const expectedSeparators = getRoutineParameterSeparators(
     source,
     parameters,
     routine
   );
   if (!expectedSeparators) {
-    return true;
+    return { distance: 0, mismatch: false };
   }
 
+  let distance = 0;
+  let mismatch = false;
   for (let index = 0; index < argumentsList.length - 1; index++) {
-    if (!isScalarRoutineLiteral(source, argumentsList[index + 1])) {
-      continue;
-    }
-
     const gap = source.slice(argumentsList[index].end, argumentsList[index + 1].start);
-    const actualSeparators = [...gap.matchAll(/[\p{L}]+/gu)]
-      .map(match => normalizeRoutineSeparatorWord(match[0]));
-    if (
-      actualSeparators.length !== expectedSeparators[index].length ||
-      actualSeparators.some((word, separatorIndex) =>
-        word !== normalizeRoutineSeparatorWord(expectedSeparators[index][separatorIndex])
-      )
+    const gapWords = [...gap.matchAll(/[\p{L}]+/gu)]
+      .map(match => match[0].toLocaleLowerCase('pt-BR'));
+    const actualSeparators = getRoutineParameterSeparatorWords(gapWords);
+    const expected = expectedSeparators[index] ?? [];
+    if (actualSeparators.length !== expected.length) {
+      mismatch = true;
+    }
+    distance += Math.abs(actualSeparators.length - expected.length) * 4;
+    for (
+      let separatorIndex = 0;
+      separatorIndex < Math.min(actualSeparators.length, expected.length);
+      separatorIndex++
     ) {
-      return false;
+      if (
+        normalizeRoutineSeparatorWord(actualSeparators[separatorIndex]) !==
+        normalizeRoutineSeparatorWord(expected[separatorIndex])
+      ) {
+        mismatch = true;
+        distance += 4;
+      } else if (
+        actualSeparators[separatorIndex].toLocaleLowerCase('pt-BR') !==
+        expected[separatorIndex].toLocaleLowerCase('pt-BR')
+      ) {
+        distance++;
+      }
     }
   }
-  return true;
+  return { distance, mismatch };
 }
 
 function trimRoutineTrailingNameSuffix(
@@ -3264,39 +3372,63 @@ function getRoutineParameterSeparators(
     return undefined;
   }
 
+  return getHeaderRoutineParameterSeparators(source, parameters);
+}
+
+function getHeaderRoutineParameterSeparators(
+  source: string,
+  parameters: RoutineParameter[]
+): string[][] {
   return parameters.slice(0, -1).map((parameter, index) => {
     const nextParameter = parameters[index + 1];
     const gap = source.slice(parameter.type.range.end, nextParameter.type.range.start);
-    const words = [...gap.matchAll(/[\p{L}]+/gu)];
+    const words = [...gap.matchAll(/[\p{L}]+/gu)]
+      .map(match => match[0].toLocaleLowerCase('pt-BR'));
     let nextParameterArticleIndex = -1;
     for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
-      if (indefiniteArticles.has(words[wordIndex][0].toLocaleLowerCase('pt-BR'))) {
+      if (indefiniteArticles.has(words[wordIndex])) {
         nextParameterArticleIndex = wordIndex;
       }
     }
     if (nextParameterArticleIndex !== -1) {
-      return words
-        .slice(0, nextParameterArticleIndex)
-        .map(match => match[0].toLocaleLowerCase('pt-BR'));
+      const separators = words.slice(0, nextParameterArticleIndex);
+      return getRoutineParameterSeparatorWords(separators);
     }
 
-    return words
-      .map((match, wordIndex) => {
-        const word = match[0].toLocaleLowerCase('pt-BR');
-        const nextWord = words[wordIndex + 1]?.[0].toLocaleLowerCase('pt-BR');
-        const isDeNameEnder = word === 'de' &&
-          nextWord !== undefined &&
-          (indefiniteArticles.has(nextWord) || definiteArticles.has(nextWord));
-        return { word, isDeNameEnder };
-      })
-      .filter(({ word, isDeNameEnder }) =>
-        (routineNameDelimiters.has(word) || conjunctions.has(word) || isDeNameEnder) &&
-        !indefiniteArticles.has(word) &&
-        !definiteArticles.has(word) &&
-        !localVariableNameMarkers.has(word)
-      )
-      .map(({ word }) => word);
+    return getRoutineParameterSeparatorWords(words);
   });
+}
+
+function getRoutineParameterSeparatorWords(words: string[]): string[] {
+  const markerIndex = words.findIndex(word => localVariableNameMarkers.has(word));
+  let wordsWithoutName = words;
+  if (markerIndex !== -1) {
+    const wordsAfterNameMarker = words.slice(markerIndex + 1);
+    const firstSeparatorIndex = wordsAfterNameMarker.findIndex(word =>
+      routineNameDelimiters.has(word) || conjunctions.has(word)
+    );
+    wordsWithoutName = firstSeparatorIndex === -1
+      ? []
+      : wordsAfterNameMarker.slice(firstSeparatorIndex);
+  }
+  return wordsWithoutName.filter(word => !articles.has(word));
+}
+
+function isScalarRoutineLiteral(source: string, range: SourceRange): boolean {
+  return /^\s*[+-]?\d/u.test(source.slice(range.start, range.end));
+}
+
+function hasArticleBeforeScalarLiteral(
+  source: string,
+  range: SourceRange
+): boolean {
+  const words = [...source.slice(range.start, range.end).matchAll(
+    /[\p{L}]+|[+-]?\d+/gu
+  )];
+  return words.some((word, index) =>
+    indefiniteArticles.has(word[0].toLocaleLowerCase('pt-BR')) &&
+    /^\s*[+-]?\d/u.test(words[index + 1]?.[0] ?? '')
+  );
 }
 
 function splitRoutineArgumentsUsingParameterSeparators(
@@ -3364,16 +3496,10 @@ function splitRoutineArgumentsUsingParameterSeparators(
     : undefined;
 }
 
-function isScalarRoutineLiteral(
-  source: string,
-  range: SourceRange
-): boolean {
-  return /^\s*[+-]?\d/u.test(source.slice(range.start, range.end));
-}
-
 function normalizeRoutineSeparatorWord(word: string): string {
   const normalized = word.toLocaleLowerCase('pt-BR');
-  return routineContractions.get(normalized)?.split(' ')[0] ?? normalized;
+  const expanded = routineContractions.get(normalized)?.split(' ')[0] ?? normalized;
+  return routineWordReplacements.get(expanded) ?? expanded;
 }
 
 function recordUnresolvedRoutineCallReferences(
@@ -3485,6 +3611,15 @@ function splitScalarRoutineArguments(
         indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR')) ||
         definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))
       );
+      if (
+        startsWithArticle &&
+        hasArticleBeforeScalarLiteral(source, {
+          start: literalStart,
+          end: argument.end
+        })
+      ) {
+        continue;
+      }
       const typedArgumentRange = scalarLiteralRange ??
         (startsWithArticle
           ? trimRange(source, literalStart, argument.end)
@@ -4093,9 +4228,10 @@ function resolveScalarRoutineArgumentType(
   const actualType = symbols.lookup(source.slice(typeRange.start, typeRange.end));
   if (
     !actualType ||
-    actualType.pluralName !== normalizeTypeName(
-      source.slice(typeRange.start, typeRange.end)
-    )
+    ![
+      actualType.normalizedName,
+      normalizeTypeName(actualType.pluralName)
+    ].includes(normalizeTypeName(source.slice(typeRange.start, typeRange.end)))
   ) {
     return undefined;
   }
@@ -5608,7 +5744,7 @@ function parseRoutineDeclarations(
         continue;
       }
       for (const alternate of alternateHeaders) {
-        if (hasEquivalentRoutineSignature(alternate, header)) {
+        if (hasEquivalentRoutineSignature(source, alternate, header)) {
           diagnostics.push({
             message: 'Alternate routine header is semantically equivalent to the primary header.',
             range: alternate.name.range
@@ -5678,6 +5814,7 @@ function parseRoutineDeclarations(
   }
 
 function hasEquivalentRoutineSignature(
+  source: string,
   alternate: ParsedRoutineHeader,
   primary: ParsedRoutineHeader
 ): boolean {
@@ -5686,6 +5823,24 @@ function hasEquivalentRoutineSignature(
     alternate.parameters.length === primary.parameters.length &&
     alternate.parameters.every((parameter, index) =>
       parameter.type.normalizedName === primary.parameters[index].type.normalizedName
+    ) &&
+    areEquivalentRoutineParameterSeparators(
+      getHeaderRoutineParameterSeparators(source, alternate.parameters),
+      getHeaderRoutineParameterSeparators(source, primary.parameters)
+    );
+}
+
+function areEquivalentRoutineParameterSeparators(
+  first: string[][],
+  second: string[][]
+): boolean {
+  return first.length === second.length &&
+    first.every((separators, index) =>
+      separators.length === second[index].length &&
+      separators.every((word, wordIndex) =>
+        normalizeRoutineSeparatorWord(word) ===
+        normalizeRoutineSeparatorWord(second[index][wordIndex])
+      )
     );
 }
 
@@ -5810,6 +5965,10 @@ function findRoutineParameterSeparator(
       const nextParameter = findAnyWord(source, wordEnd, end, indefiniteArticles);
       if (nextParameter) {
         separator = { start: match.index, nextStart: nextParameter.start };
+        break;
+      }
+      if (word === 'ou') {
+        separator = { start: match.index, nextStart: end };
         break;
       }
     }

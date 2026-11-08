@@ -1815,6 +1815,57 @@ suite('Português Puro definitions', () => {
         assert.equal(colonTerminatorHints[0].severity, vscode.DiagnosticSeverity.Hint);
         assert.equal(colonTerminatorHints[0].range.start.line, 5);
     });
+    test('Keeps argument prepositions significant in alternate routine headers', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um número é uma estrutura.',
+            'para que se escolha aleatoriamente um número desde um segundo número para um terceiro número;',
+            'para que se escolha aleatoriamente um número entre um segundo número e um terceiro número: retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.equal(vscode.languages.getDiagnostics(docUri).filter(diagnostic => diagnostic.message.includes('semantically equivalent')).length, 0);
+    });
+    test('Resolves routine calls using their argument prepositions', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Uma bola é uma estrutura.',
+            'Uma mesa é uma estrutura.',
+            'A bola é uma bola.',
+            'A mesa é uma mesa.',
+            'Rotina para que se faça algo com uma bola e uma mesa:',
+            '  Coloque a bola sobre a mesa.',
+            'para que se coloque uma bola uma mesa:',
+            '  Retorne.',
+            'para que se coloque uma bola sob uma mesa:',
+            '  Retorne.',
+            'para que se coloque uma bola sobre uma mesa:',
+            '  Retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const callOffset = document.getText().indexOf('Coloque a bola sobre a mesa') + 2;
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 10);
+    });
     test('Resolves nested field arguments after routine prepositions', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -1936,7 +1987,9 @@ suite('Português Puro definitions', () => {
             });
         });
         await (0, helper_1.setTestContent)([
-            'Uma lista é uma estrutura.',
+            'Um ponteiro é uma estrutura.',
+            'Uma lista é um ponteiro para uma lista estruturada.',
+            'Uma lista estruturada é uma estrutura.',
             'Um versículo é uma lista.',
             'Uma imagem é uma lista.',
             'A imagem é uma imagem.',
@@ -2033,6 +2086,45 @@ suite('Português Puro definitions', () => {
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 3);
     });
+    test('Allows repeated implicit output type names in Processe address arguments', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um código da cor é uma estrutura.',
+            'Uma cor é uma estrutura.',
+            'Um word é uma estrutura.',
+            'Rotina para que se converta um código da cor para uma cor:',
+            '  Processe "shlwapi.dll" "ColorRGBToHLS" com',
+            '    O código da cor e [clrRGB]',
+            '    O endereçamento duma word [*pwHue]',
+            '    e O endereçamento duma segunda word [*pwLuminance]',
+            '    e O endereçamento dum terceiro word. [*pwSaturation]',
+            '  Use a segunda word.',
+            '  Use o terceiro word.',
+            'para que se use um word: retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const variablesToCheck = [
+            ['segunda word', 7],
+            ['terceiro word', 8]
+        ];
+        for (const [name, declarationLine] of variablesToCheck) {
+            const referenceOffset = document.getText().lastIndexOf(name) + 2;
+            const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(referenceOffset));
+            assert.ok(definition);
+            assert.equal(definition.length, 1);
+            assert.equal(definition[0].range.start.line, declarationLine);
+        }
+    });
     test('Declares an allocated local variable for later routine calls', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -2090,7 +2182,9 @@ suite('Português Puro definitions', () => {
             });
         });
         await (0, helper_1.setTestContent)([
-            'Uma lista é uma estrutura.',
+            'Um ponteiro é uma estrutura.',
+            'Uma lista é um ponteiro para uma lista estruturada.',
+            'Uma lista estruturada é uma estrutura.',
             'Um número é uma estrutura.',
             'A contagem é um número.',
             'para que se faça alocações:',
@@ -2099,7 +2193,7 @@ suite('Português Puro definitions', () => {
         ].join('\n'));
         await diagnosticsUpdated;
         const diagnostics = vscode.languages.getDiagnostics(docUri);
-        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === '"Aloque memória para" only accepts variables and types based on "lista".').length, 1);
+        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === '"Aloque memória para" only accepts variables and types based on "ponteiro".').length, 1);
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'Unknown variable or type "variável desconhecida" after "Aloque memória para".').length, 1);
     });
     test('Resolves routine addresses through Direcione, Aponte, and Redirecione', async () => {
@@ -2132,6 +2226,41 @@ suite('Português Puro definitions', () => {
         assert.ok(definition);
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 6);
+    });
+    test('Resolves routine addresses stored in structure fields with arguments', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um ponteiro é uma estrutura.',
+            'Uma WNDCLASS é uma estrutura com',
+            '  Um ponteiro denominado lpfnWndProc.',
+            'A classe da janela é uma WNDCLASS.',
+            'Uma janela do programa é um número.',
+            'Um wParam é um número.',
+            'Um lParam é um número.',
+            'Um número é uma estrutura.',
+            'Rotina para que se inicialize a janela do programa:',
+            '  Redirecione o lpfnWndProc desta classe da janela para a rotina gerencie as mensagens do Windows usando uma janela do programa e um número denominado mensagem e um wParam e um lParam.',
+            'para que se compativelmente gerencie as mensagens do Windows usando uma janela do programa e um número denominado mensagem e um wParam e um lParam:',
+            '  Retorne.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const text = document.getText();
+        const statementOffset = text.indexOf('Redirecione');
+        const fieldOffset = text.indexOf('lpfnWndProc', statementOffset);
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(fieldOffset));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 2);
     });
     test('Requires routine addresses to use pointer types and compatible routines', async () => {
         await (0, helper_1.activate)(docUri);
@@ -2982,6 +3111,39 @@ suite('Português Puro definitions', () => {
         ]);
         assert.equal(singularParameterDiagnostics.filter(diagnostic => diagnostic.message === 'No compatible routine found for "Pinte 5 quadrados".').length, 1);
     });
+    test('Accepts singular scalar type names after integer and fraction literals', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'para que se faça algo:',
+            '  Pinte 1 quadrado.',
+            '  Pinte 1 quadrados.',
+            '  Pinte 2 quadrados.',
+            '  Pinte 1/2 quadrado.',
+            '  Pinte 1/2 quadrados.',
+            '  Pinte 2+1/2 quadrados.',
+            '  Pinte 1 quadrado na diagonal.',
+            '  Pinte 2 quadrados na diagonal.',
+            '  Pinte 1/2 quadrado na diagonal.',
+            '  Pinte 2+1/2 quadrados na diagonal.',
+            'para que se pinte uns quadrados: retorne.',
+            'para que se pinte uns quadrados na diagonal: retorne.',
+            'para que se pinte uns twips: retorne.',
+            'Um quadrado são 1440 unidades numéricas.',
+            'Uma unidade numérica é um número.',
+            'Um twip é um número.',
+            'Um número é uma estrutura.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+    });
     test('Splits scalar literal arguments after a structure argument', async () => {
         await (0, helper_1.activate)(docUri);
         const updateContent = async (lines) => {
@@ -3707,6 +3869,26 @@ suite('Português Puro definitions', () => {
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 3);
     });
+    test('Ends boolean routine parameter names at ou', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Um número é uma estrutura.',
+            'para que se determine se um número é um segundo número ou menos;',
+            'para que se determine se um número é um segundo número ou menor;',
+            'para que se determine se um número é menor ou igual a um segundo número: diga sim.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.deepEqual(diagnostics.filter(diagnostic => diagnostic.message.startsWith('Unknown routine parameter type ')), []);
+    });
     test('Resolves boolean conditions using locals introduced by calls inside loops', async () => {
         await (0, helper_1.activate)(docUri);
         const diagnosticsUpdated = new Promise(resolve => {
@@ -3886,6 +4068,31 @@ suite('Português Puro definitions', () => {
         assert.ok(definition);
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 3);
+    });
+    test('Resolves nada as algo in boolean conditions', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = new Promise(resolve => {
+            const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+        await (0, helper_1.setTestContent)([
+            'Rotina para que se faça algo:',
+            '  Se nada estiver selecionado, retorne.',
+            'Função para que se determine se algo está selecionado:',
+            '  Diga sim.'
+        ].join('\n'));
+        await diagnosticsUpdated;
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const conditionOffset = document.getText().indexOf('selecionado');
+        const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(conditionOffset + 2));
+        assert.ok(definition);
+        assert.equal(definition.length, 1);
+        assert.equal(definition[0].range.start.line, 2);
     });
     test('Normalizes routine prepositions and contractions when resolving calls', async () => {
         await (0, helper_1.activate)(docUri);
