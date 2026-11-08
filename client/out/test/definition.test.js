@@ -10,16 +10,10 @@ const promises_1 = require("node:fs/promises");
 const helper_1 = require("./helper");
 suite('Português Puro definitions', () => {
     const docUri = (0, helper_1.getDocUri)('definitions/definition.pop');
+    // Symbols, navigation, and workspace references.
     test('Provides document symbols for an open source document', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)('Um tipo é um byte.');
         await diagnosticsUpdated;
         const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', docUri);
@@ -35,14 +29,7 @@ suite('Português Puro definitions', () => {
             'para que se conte um caractere:',
             '  Retorne.'
         ].join('\n'), 'latin1');
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         try {
             await (0, helper_1.setTestContent)([
                 'Uma letra é um caractere.',
@@ -86,21 +73,13 @@ suite('Português Puro definitions', () => {
         const routine = 'para que se faça algo com um caractere: Foo.';
         await (0, promises_1.writeFile)(unindentedPath, `Um caractere é um byte. ${routine}`, 'latin1');
         await (0, promises_1.writeFile)(indentedPath, `Um caractere é um byte.       ${routine}`, 'latin1');
-        const waitForDiagnostics = (uri) => new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(changedUri => changedUri.toString() === uri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
         try {
-            const unindentedDiagnosticsUpdated = waitForDiagnostics(unindentedUri);
+            const unindentedDiagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(unindentedUri);
             const unindentedDocument = await vscode.workspace.openTextDocument(unindentedUri);
             await vscode.window.showTextDocument(unindentedDocument);
             await unindentedDiagnosticsUpdated;
             const unindentedDiagnostics = vscode.languages.getDiagnostics(unindentedUri);
-            const indentedDiagnosticsUpdated = waitForDiagnostics(indentedUri);
+            const indentedDiagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(indentedUri);
             const indentedDocument = await vscode.workspace.openTextDocument(indentedUri);
             await vscode.window.showTextDocument(indentedDocument);
             await indentedDiagnosticsUpdated;
@@ -139,14 +118,7 @@ suite('Português Puro definitions', () => {
     });
     test('Shows documentation for primitive byte and structure types on hover', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um caractere é um byte.',
             'Uma pessoa é uma estrutura.'
@@ -172,14 +144,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves definitions of global variables in assignment targets', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'A variável global é um byte.',
             'rotina para que se faça algo:',
@@ -196,14 +161,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves local variable declarations and references in Go to Definition', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um contador é um byte.',
             'rotina para que se exemplifique:',
@@ -243,14 +201,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves type definitions for global variables and structure fields', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         const source = [
             'Uma string é uma estrutura.',
             'Um número é uma estrutura.',
@@ -302,14 +253,7 @@ suite('Português Puro definitions', () => {
     });
     test('Provides hierarchical document symbols for declarations and fields', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma pessoa é uma estrutura com',
             '  Um número denominado idade.',
@@ -348,14 +292,7 @@ suite('Português Puro definitions', () => {
     });
     test('Finds type, routine, and global-variable references across the workspace', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         const source = [
             'Um carro é uma estrutura.',
             'Um esportivo é um carro.',
@@ -397,14 +334,7 @@ suite('Português Puro definitions', () => {
     });
     test('Renames types, routines, and global variables across the workspace', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um veiculo é uma estrutura.',
             'Um esportivo é um veiculo.',
@@ -444,6 +374,7 @@ suite('Português Puro definitions', () => {
             await (0, promises_1.unlink)(externalPath);
         }
     });
+    // Types, fields, and global variables.
     test('Resolves a user-defined type whose name includes a primitive type word', async () => {
         await (0, helper_1.activate)(docUri);
         const source = [
@@ -515,14 +446,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reuses parsed catalogs across requests and refreshes them after edits and renames', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma letra é um byte.',
             'Um símbolo é uma letra.'
@@ -542,14 +466,7 @@ suite('Português Puro definitions', () => {
         }
         const rename = await vscode.commands.executeCommand('vscode.executeDocumentRenameProvider', docUri, document.positionAt(text.indexOf('letra') + 1), 'caractere');
         assert.equal(rename?.get(docUri).length, 2);
-        const renamedDiagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const renamedDiagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         assert.ok(await vscode.workspace.applyEdit(rename));
         await renamedDiagnosticsUpdated;
         const renamedText = document.getText();
@@ -569,14 +486,7 @@ suite('Português Puro definitions', () => {
             return `tipo${suffix}`;
         };
         for (const size of [20, 1000, 6000]) {
-            const diagnosticsUpdated = new Promise(resolve => {
-                const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                    if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                        listener.dispose();
-                        resolve();
-                    }
-                });
-            });
+            const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
             const source = Array.from({ length: size }, (_, index) => index === 0
                 ? `Um ${typeName(index)} é uma estrutura.`
                 : `Um ${typeName(index)} é uma estrutura com um ${typeName(index - 1)} denominado campo.`).join('\n');
@@ -632,14 +542,7 @@ suite('Português Puro definitions', () => {
     });
     test('Accepts unsigned fractional scalar factors', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma polegada é um número.',
@@ -744,14 +647,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves computed structure fields through their assigning function', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma posição é uma estrutura.',
             'Uma localização é uma estrutura com Uma posição denominada posição X, Uma posição denominada posição Y.',
@@ -769,14 +665,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves computed and nested fields through a list element', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Uma lista é um ponteiro para uma lista estruturada.',
@@ -814,14 +703,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports invalid computed-field owners and unresolved computed fields', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma posição é uma estrutura.',
             'Um retângulo é uma estrutura.',
@@ -842,14 +724,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves endereçamento, magnitude, and conteúdo as type operators', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um caractere é um byte.',
             'Um ponteiro é uma estrutura.',
@@ -888,14 +763,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves conteúdo through derived pointer aliases in boolean conditions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Um endereço de byte é um ponteiro para um byte.',
@@ -918,14 +786,7 @@ suite('Português Puro definitions', () => {
     });
     test('Matches pointer fields and derived scalar arguments in routine calls', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se atribua um byte para uma string:',
             '  Atribua 1 para uma quantidade de caracteres.',
@@ -954,14 +815,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves endereçamento of a contiguous byte-array field', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um caractere é um byte.',
             'Um ponteiro é uma estrutura.',
@@ -1020,14 +874,7 @@ suite('Português Puro definitions', () => {
     });
     test('Accepts byte arrays and reports arrays of other element types', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura com',
             '  4 bytes,',
@@ -1049,14 +896,7 @@ suite('Português Puro definitions', () => {
     });
     test('Keeps named byte fields separate from neighboring byte arrays', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma estrutura de exemplo é uma estrutura com',
             '  3 bytes,',
@@ -1092,14 +932,7 @@ suite('Português Puro definitions', () => {
         const byteDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(byteAliasOffset));
         assert.ok(byteDefinition);
         assert.equal(byteDefinition.length, 1);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma repetida é uma estrutura com',
             '  Um byte,',
@@ -1180,14 +1013,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports unknown base types without ignoring accent differences', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um dígito binário é um byte.',
             'Uma caractere é um digito binario.'
@@ -1206,14 +1032,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses global variables into a separate catalog from types', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma cor é uma estrutura.',
             'Uma aba é uma estrutura.',
@@ -1234,14 +1053,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports global variables with unknown types', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)('A cor atual é uma cor inexistente.');
         await diagnosticsUpdated;
         const diagnostics = vscode.languages.getDiagnostics(docUri);
@@ -1250,14 +1062,7 @@ suite('Português Puro definitions', () => {
     });
     test('Recognizes initialized global variables with supported literal forms', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma fração é uma estrutura.',
             'Uma string é uma estrutura.',
@@ -1280,14 +1085,7 @@ suite('Português Puro definitions', () => {
     });
     test('Recognizes null literals in initializers, assignments, process arguments, and conditions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'O ponteiro nulo é um ponteiro igual a nulo.',
@@ -1306,14 +1104,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports invalid initialized global variable literals', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma fração é uma estrutura.',
             'Uma string é uma estrutura.',
@@ -1328,14 +1119,7 @@ suite('Português Puro definitions', () => {
     });
     test('Infers global variable types from abbreviated initializers', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'O maior número é 2147483647.',
@@ -1356,14 +1140,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses fields in global structure variables using the type field rules', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um endereço é uma estrutura.',
             'Um sinalizador é uma estrutura.',
@@ -1396,14 +1173,7 @@ suite('Português Puro definitions', () => {
     });
     test('Ignores line and block comments while preserving source navigation ranges', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura. \\ comentário com ponto.',
             'Uma string é uma estrutura.',
@@ -1429,14 +1199,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports non-printable characters in comments except line-comment terminators', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         const source = [
             'Um número é uma estrutura [TAB\tCR\rLF\n]. \\ comentário de linha\r\n',
             'A medida é um número.'
@@ -1464,16 +1227,10 @@ suite('Português Puro definitions', () => {
         assert.equal(definition.length, 1);
         assert.equal(definition[0].range.start.line, 0);
     });
+    // Routine signatures and name resolution.
     test('Parses routine aliases, named and inferred parameters, and return types', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Rotina para que se calcule o IMC do usuário usando um número denominado peso e um segundo número retornando um número denominado IMC:',
@@ -1501,14 +1258,7 @@ suite('Português Puro definitions', () => {
     });
     test('Matches routine calls with an explicit return destination', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um número é uma estrutura.',
@@ -1532,14 +1282,7 @@ suite('Português Puro definitions', () => {
     });
     test('Ends routine bodies at following top-level declarations and routine headers', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um byte é uma estrutura.',
             'para que se Foo:',
@@ -1561,14 +1304,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports unknown types used in routine parameters and return values', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)('para que se processe usando um tipo inexistente denominado entrada retornando uma saída inexistente:\n  alguma instrução.');
         await diagnosticsUpdated;
         const diagnostics = vscode.languages.getDiagnostics(docUri);
@@ -1576,14 +1312,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports reserved words in type and global variable identifiers', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um tipo usando reservado é uma estrutura.',
             'A variável retornando reservado é um tipo usando reservado.'
@@ -1595,14 +1324,7 @@ suite('Português Puro definitions', () => {
     });
     test('Allows reserved words joined by hyphens, slashes, or apostrophes', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'O caractere EM é um byte igual a 25.',
             'A letra E maiúscula é um byte igual a 69.',
@@ -1618,14 +1340,7 @@ suite('Português Puro definitions', () => {
     });
     test('Restricts punctuation in type and global variable identifiers', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um tipo: inválido é uma estrutura.',
             'Um tipo é uma estrutura.',
@@ -1642,14 +1357,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves routine calls with arguments and prioritizes exact no-parameter names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Rotina para que se Foo:',
@@ -1680,14 +1388,7 @@ suite('Português Puro definitions', () => {
     });
     test('Uses tal como and tal qual to type routine arguments without changing variables', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma cifra binária é um byte.',
             'Uma cifra hexadecimal é um byte.',
@@ -1723,14 +1424,7 @@ suite('Português Puro definitions', () => {
     });
     test('Uses parenthetical header qualifiers to distinguish routines', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma caixa é uma estrutura.',
             'A janela é uma caixa.',
@@ -1770,14 +1464,7 @@ suite('Português Puro definitions', () => {
     });
     test('Emits a hint when a routine body contains no statements', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)('Rotina para que se vazia:\n  [apenas comentário]');
         await diagnosticsUpdated;
         const diagnostics = vscode.languages.getDiagnostics(docUri);
@@ -1787,14 +1474,7 @@ suite('Português Puro definitions', () => {
     });
     test('Diagnoses equivalent alternate headers and hints on colon-terminated aliases', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Rotina para que se foo um número denominado quantidade;',
@@ -1817,14 +1497,7 @@ suite('Português Puro definitions', () => {
     });
     test('Keeps argument prepositions significant in alternate routine headers', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'para que se escolha aleatoriamente um número desde um segundo número para um terceiro número;',
@@ -1835,14 +1508,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves routine calls using their argument prepositions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma bola é uma estrutura.',
             'Uma mesa é uma estrutura.',
@@ -1868,14 +1534,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves nested field arguments after routine prepositions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma lista é uma estrutura.',
             'Um quora é uma lista.',
@@ -1893,14 +1552,7 @@ suite('Português Puro definitions', () => {
     });
     test('Hints when primary routine headers follow an alternate header without a body', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se baz;',
             'Rotina para que se bar:',
@@ -1913,16 +1565,10 @@ suite('Português Puro definitions', () => {
         assert.equal(consecutiveHeaderHints[0].severity, vscode.DiagnosticSeverity.Hint);
         assert.equal(consecutiveHeaderHints[0].range.start.line, 1);
     });
+    // Process instructions and memory management.
     test('Requires hexadecimal literals after the Decodifique instruction', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se execute:',
             '  Decodifique $8B8508000000.',
@@ -1942,14 +1588,7 @@ suite('Português Puro definitions', () => {
     });
     test('Empilhe accepts numeric literals and numeric variables only', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um word é um byte.',
             'Um word duplo é um word.',
@@ -1978,14 +1617,7 @@ suite('Português Puro definitions', () => {
     });
     test('Recognizes Aloque memória para on list variables and types', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Uma lista é um ponteiro para uma lista estruturada.',
@@ -2002,14 +1634,7 @@ suite('Português Puro definitions', () => {
     });
     test('Uses Destrua as a built-in for list variables without overriding user routines', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma lista é uma estrutura.',
             'Um catálogo é uma lista.',
@@ -2034,14 +1659,7 @@ suite('Português Puro definitions', () => {
     });
     test('Prefers a user-defined Destrua routine over list deallocation', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma lista é uma estrutura.',
             'Um catálogo é uma lista.',
@@ -2060,14 +1678,7 @@ suite('Português Puro definitions', () => {
     });
     test('Declares plural-type routine arguments as implicit local variables', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma lista é uma estrutura.',
             'Uma coisa é uma lista.',
@@ -2088,14 +1699,7 @@ suite('Português Puro definitions', () => {
     });
     test('Allows repeated implicit output type names in Processe address arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um código da cor é uma estrutura.',
             'Uma cor é uma estrutura.',
@@ -2127,14 +1731,7 @@ suite('Português Puro definitions', () => {
     });
     test('Declares an allocated local variable for later routine calls', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se adicione um nome para umas alternativas:',
             '  Aloque memória para uma alternativa.',
@@ -2173,14 +1770,7 @@ suite('Português Puro definitions', () => {
     });
     test('Validates list types and variables passed to Aloque memória para', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Uma lista é um ponteiro para uma lista estruturada.',
@@ -2198,14 +1788,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves routine addresses through Direcione, Aponte, and Redirecione', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Um ponteiro de rotina é um ponteiro.',
@@ -2229,14 +1812,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves routine addresses stored in structure fields with arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Uma WNDCLASS é uma estrutura com',
@@ -2264,14 +1840,7 @@ suite('Português Puro definitions', () => {
     });
     test('Requires routine addresses to use pointer types and compatible routines', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Um número é uma estrutura.',
@@ -2291,14 +1860,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses internal and external Processe instructions with arguments and returns', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um bipe é um byte.',
@@ -2337,14 +1899,7 @@ suite('Português Puro definitions', () => {
     });
     test('Accepts endereçamento of a newly declared type as a Processe argument', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um status de erro é uma estrutura.',
@@ -2366,14 +1921,7 @@ suite('Português Puro definitions', () => {
     });
     test('Stores a Processe return value in an existing routine parameter', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'O total global é um número igual a 0.',
@@ -2401,14 +1949,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reserves Processe in routine names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se processe:',
             '  Retorne.'
@@ -2417,16 +1958,10 @@ suite('Português Puro definitions', () => {
         const diagnostics = vscode.languages.getDiagnostics(docUri);
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message === '"Processe" is a reserved statement keyword and cannot be used in a routine name.').length, 1);
     });
+    // Returns, local variables, and expressions.
     test('Allows bare Retorne statements and rejects values and routine names using the keyword', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se exemplo:',
             '  Retorne.',
@@ -2447,14 +1982,7 @@ suite('Português Puro definitions', () => {
     });
     test('Requires boolean functions to return sim or não with Diga', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Função para que se determine se válido:',
             '  Se uma condição for verdadeira, diga sim.',
@@ -2472,14 +2000,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses boolean headers with additional predicate verbs', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um endereço de byte é um ponteiro para um byte.',
@@ -2512,14 +2033,7 @@ suite('Português Puro definitions', () => {
     });
     test('Allows boolean functions with Decodifique instructions to manage their own return', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Função para que se determine se codificado:',
             '  Decodifique $C7C001000000.',
@@ -2535,14 +2049,7 @@ suite('Português Puro definitions', () => {
     });
     test('Rejects Diga in ordinary routines and routine names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se diga sim:',
             '  Diga sim.',
@@ -2556,14 +2063,7 @@ suite('Português Puro definitions', () => {
     });
     test('Preserves routine parameters by creating an original-name binding', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Rotina para que se subdivida um número denominado valor e um número denominado quantidade:',
@@ -2582,14 +2082,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reserves Preserve in routine names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se preserve um número:',
             '  Escreva "teste" para StdOut.'
@@ -2600,14 +2093,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses arithmetic assignment operators from left to right', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Rotina para que se faça algo com um número e um segundo número:',
@@ -2618,14 +2104,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses unary numeric signs and fraction division in assignments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma fração é uma estrutura.',
@@ -2641,14 +2120,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses both string concatenation operators in output expressions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se faça algo:',
             '  Escreva "Olá, " junto com o nome junto com o sobrenome seguido de "!" para StdOut.',
@@ -2659,14 +2131,7 @@ suite('Português Puro definitions', () => {
     });
     test('Declares local variables through routine-call arguments and resolves their types', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Rotina para que se foo:',
@@ -2705,14 +2170,7 @@ suite('Português Puro definitions', () => {
     });
     test('Declares a local variable from one routine argument without consuming later arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se adicione uma string para uns conjuntos de texto:',
             '  Crie um conjunto de texto usando a string.',
@@ -2737,14 +2195,7 @@ suite('Português Puro definitions', () => {
     });
     test('Declares multiple local variables from separate routine arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma word é uma estrutura com',
             '  Um byte denominado byte inicial e',
@@ -2777,14 +2228,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves routine parameter types for rounded-box phrases', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um twip é um número.',
@@ -2848,14 +2292,7 @@ suite('Português Puro definitions', () => {
     });
     test('Diagnoses local variables that reuse routine parameter names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se foo um byte:',
             '  Adicione 1 para o byte.',
@@ -2870,14 +2307,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves type definitions within local-variable routine arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um caractere é um byte.',
             'Rotina para que se foo:',
@@ -2902,14 +2332,7 @@ suite('Português Puro definitions', () => {
     });
     test('Does not resolve routine calls when an existing argument has an incompatible type', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma string é uma estrutura.',
@@ -2927,14 +2350,7 @@ suite('Português Puro definitions', () => {
     });
     test('Passes unit-scale numeric locals to scalar routine parameters', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma string é uma estrutura.',
@@ -2952,14 +2368,7 @@ suite('Português Puro definitions', () => {
     });
     test('Passes numeric values to derived scalar routine parameters', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se faça algo com um número e uma caixa:',
             '  Mova a caixa usando o número e 0.',
@@ -2981,14 +2390,7 @@ suite('Português Puro definitions', () => {
     });
     test('Local variables shadow global variables with the same name', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma string é uma estrutura.',
@@ -3014,14 +2416,7 @@ suite('Português Puro definitions', () => {
     test('Diagnoses missing routines and unresolved variables passed to routine parameters', async () => {
         await (0, helper_1.activate)(docUri);
         const updateContent = async (lines) => {
-            const diagnosticsUpdated = new Promise(resolve => {
-                const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                    if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                        listener.dispose();
-                        resolve();
-                    }
-                });
-            });
+            const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
             await (0, helper_1.setTestContent)(lines.join('\n'));
             await diagnosticsUpdated;
             return vscode.languages.getDiagnostics(docUri);
@@ -3076,14 +2471,7 @@ suite('Português Puro definitions', () => {
     test('Accepts scalar literals when routine parameters use plural type names', async () => {
         await (0, helper_1.activate)(docUri);
         const updateContent = async (lines) => {
-            const diagnosticsUpdated = new Promise(resolve => {
-                const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                    if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                        listener.dispose();
-                        resolve();
-                    }
-                });
-            });
+            const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
             await (0, helper_1.setTestContent)(lines.join('\n'));
             await diagnosticsUpdated;
             return vscode.languages.getDiagnostics(docUri);
@@ -3113,14 +2501,7 @@ suite('Português Puro definitions', () => {
     });
     test('Accepts singular scalar type names after integer and fraction literals', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se faça algo:',
             '  Pinte 1 quadrado.',
@@ -3147,14 +2528,7 @@ suite('Português Puro definitions', () => {
     test('Splits scalar literal arguments after a structure argument', async () => {
         await (0, helper_1.activate)(docUri);
         const updateContent = async (lines) => {
-            const diagnosticsUpdated = new Promise(resolve => {
-                const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                    if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                        listener.dispose();
-                        resolve();
-                    }
-                });
-            });
+            const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
             await (0, helper_1.setTestContent)(lines.join('\n'));
             await diagnosticsUpdated;
             return vscode.languages.getDiagnostics(docUri);
@@ -3213,14 +2587,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves local and type arguments followed by contracted definite-article arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         const lines = [
             'Um twip é um número.',
             'Um número é uma estrutura.',
@@ -3254,14 +2621,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves a type cast followed by a contracted preposition phrase', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma folha é uma estrutura.',
             'Uma página é uma estrutura.',
@@ -3285,14 +2645,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves routine arguments separated by a multiword parameter phrase', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se inicie uma folha e um título de índice remissivo:',
             '  Inicie a folha no modo retrato usando o título de índice remissivo.',
@@ -3313,14 +2666,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves contracted routine arguments with slash-containing global names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se faça algo com um número e um múltiplo imediato:',
             '  Arredonde o número usando o múltiplo imediato dessa quantidade de twips/pixel.',
@@ -3341,14 +2687,7 @@ suite('Português Puro definitions', () => {
     });
     test('Accepts routine literals for parameter base types and enforces their ranges', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma contagem é um número.',
@@ -3392,14 +2731,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves numeric expressions as routine arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um número é uma estrutura.',
@@ -3417,14 +2749,7 @@ suite('Português Puro definitions', () => {
     test('Resolves routine overloads through derived types from most to least specific', async () => {
         await (0, helper_1.activate)(docUri);
         const updateContent = async (lines) => {
-            const diagnosticsUpdated = new Promise(resolve => {
-                const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                    if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                        listener.dispose();
-                        resolve();
-                    }
-                });
-            });
+            const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
             await (0, helper_1.setTestContent)(lines.join('\n'));
             await diagnosticsUpdated;
         };
@@ -3464,16 +2789,10 @@ suite('Português Puro definitions', () => {
         assert.equal(fallbackDefinition[0].range.start.line, 5);
         assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
     });
+    // Conditions, control flow, and argument variants.
     test('Parses conditional blocks and resolves their boolean conditions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se foo:',
             '  Se válido,',
@@ -3490,14 +2809,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves equality conditions with contracted second parameters', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um subtexto é uma string.',
@@ -3514,14 +2826,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses loop control instructions and keeps block variables in routine scope', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Rotina para que se faça algo:',
@@ -3546,14 +2851,7 @@ suite('Português Puro definitions', () => {
     });
     test('Rejects arguments on loop control instructions and reserves their names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se itere algo:',
             '  Itere 1.',
@@ -3569,14 +2867,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves conditional boolean functions with typed arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma contagem é um número.',
@@ -3597,14 +2888,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves boolean conditions with contracted context arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se inicie uma caixa de texto:',
             '  Limpe uma linha de texto.',
@@ -3625,14 +2909,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves fields declared on a global variable in routine arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'A tela é uma estrutura com uma caixa.',
             'Uma imagem é uma estrutura.',
@@ -3657,14 +2934,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves estar predicates and derived types in conditional expressions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Um caractere inicial é um ponteiro para um byte.',
@@ -3696,14 +2966,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves boolean conditions with indefinite type arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um contador é um número.',
@@ -3717,14 +2980,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves computed-field access after divided pela in an expression', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um twip é um número.',
@@ -3740,14 +2996,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves boolean conditions using a named Processe return variable', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'para que se faça algo:',
@@ -3767,14 +3016,7 @@ suite('Português Puro definitions', () => {
     });
     test('Reports out-of-range integer literals in boolean conditions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'para que se faça algo um número:',
@@ -3791,14 +3033,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves integer literals against byte parameters in boolean conditions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se faça algo com um byte:',
             '  Se o byte estiver entre 48 e 57,',
@@ -3816,14 +3051,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves boolean calls through alternate header parameter types', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Um número é uma estrutura.',
@@ -3839,14 +3067,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves boolean predicates followed by a preposition and second parameter', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Rotina para que se teste um subtexto e uma string:',
@@ -3871,14 +3092,7 @@ suite('Português Puro definitions', () => {
     });
     test('Ends boolean routine parameter names at ou', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'para que se determine se um número é um segundo número ou menos;',
@@ -3891,14 +3105,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves boolean conditions using locals introduced by calls inside loops', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se cite uma string:',
             '  Lance um subtexto sobre a string.',
@@ -3947,14 +3154,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves appended structure fields and derived string arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'As aspas duplas são um byte igual a 34.',
             'Um ponteiro é uma estrutura.',
@@ -4002,14 +3202,7 @@ suite('Português Puro definitions', () => {
     });
     test('Allows concatenating convertible non-string values in string routine arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma string é uma estrutura.',
@@ -4039,14 +3232,7 @@ suite('Português Puro definitions', () => {
     });
     test('Ignores não in boolean conditions and rejects it in boolean headers', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Rotina para que se foo usando um número:',
@@ -4071,14 +3257,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves nada as algo in boolean conditions', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se faça algo:',
             '  Se nada estiver selecionado, retorne.',
@@ -4096,14 +3275,7 @@ suite('Português Puro definitions', () => {
     });
     test('Normalizes routine prepositions and contractions when resolving calls', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se foo:',
             '  Bar ao número.',
@@ -4121,14 +3293,7 @@ suite('Português Puro definitions', () => {
     });
     test('Matches contracted routine prepositions to uncontracted header names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um trecho é uma string.',
@@ -4147,14 +3312,7 @@ suite('Português Puro definitions', () => {
     });
     test('Keeps routine parameter prepositions distinct while matching their synonyms', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um contador é um número.',
@@ -4193,14 +3351,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves scalar arguments after a routine direction phrase', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma fração é uma estrutura.',
             'Uma string é uma estrutura.',
@@ -4234,14 +3385,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves scalar arguments before a trailing routine direction phrase', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'para que se desloque um byte:',
             '  Desloque o byte 5 bits para a direita.',
@@ -4261,14 +3405,7 @@ suite('Português Puro definitions', () => {
     });
     test('Splits routine arguments at contracted prepositions before a parameter', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um número é uma estrutura.',
@@ -4289,14 +3426,7 @@ suite('Português Puro definitions', () => {
     });
     test('Parses routine parameter lists around trailing and interleaved direction phrases', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma word é uma estrutura com',
             '  Um byte denominado byte inicial e',
@@ -4336,14 +3466,7 @@ suite('Português Puro definitions', () => {
     });
     test('Uses each indefinite article to start a routine parameter', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um bipe é um byte.',
             'Um número é uma estrutura.',
@@ -4357,14 +3480,7 @@ suite('Português Puro definitions', () => {
     });
     test('Ends a routine parameter type at any routine-name delimiter', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura com 4 bytes.',
             'Uma word é uma estrutura com',
@@ -4407,14 +3523,7 @@ suite('Português Puro definitions', () => {
     });
     test('Keeps trailing routine-name phrases out of the final parameter type', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se arredonde um número para cima usando a potência de dois:',
             '  Decodifique $8B8D08000000.',
@@ -4444,14 +3553,7 @@ suite('Português Puro definitions', () => {
     });
     test('Treats definite articles as trailing routine-header separators', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um trecho é uma string.',
@@ -4467,14 +3569,7 @@ suite('Português Puro definitions', () => {
     });
     test('Treats an indefinite article after a contraction as a new parameter', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se inclua um byte no final de uma string:',
             '  Retorne.',
@@ -4493,14 +3588,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves direct and nested structure field accesses as routine arguments', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um número é uma estrutura.',
@@ -4535,14 +3623,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves field arguments after contractions with implicit definite articles', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Um par de números é uma estrutura com',
@@ -4573,14 +3654,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves abbreviated nested fields and diagnoses ambiguous field names', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Uma string é uma estrutura.',
             'Um endereço é uma estrutura com',
@@ -4611,14 +3685,7 @@ suite('Português Puro definitions', () => {
     });
     test('Splits routine arguments after contractions with implicit definite articles', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um número é uma estrutura.',
             'Uma fração é uma estrutura com',
@@ -4637,14 +3704,7 @@ suite('Português Puro definitions', () => {
     });
     test('Resolves hidden fields for linked-list types and derived lists', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um ponteiro é uma estrutura.',
             'Uma lista é um ponteiro para uma lista estruturada.',
@@ -4692,14 +3752,7 @@ suite('Português Puro definitions', () => {
     });
     test('Diagnoses missing boolean conditions and nested conditional blocks', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = new Promise(resolve => {
-            const listener = vscode.languages.onDidChangeDiagnostics(event => {
-                if (event.uris.some(uri => uri.toString() === docUri.toString())) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Rotina para que se foo:',
             '  Se inexistente,',
