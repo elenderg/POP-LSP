@@ -316,8 +316,22 @@ export interface TypeSymbol {
 export class TypeSymbolTable {
   private readonly symbols = new Map<string, TypeSymbol>();
   private readonly names = new Map<string, TypeSymbol>();
+  private readonly inheritanceEntryTimes = new Map<TypeSymbol, number>();
+  private readonly inheritanceExitTimes = new Map<TypeSymbol, number>();
+  private readonly inheritanceDepths = new Map<TypeSymbol, number>();
+  private readonly scaleResolutionStates = new Map<
+    TypeSymbol,
+    'resolving' | 'resolved' | 'failed'
+  >();
 
-  constructor(declarations: TypeDeclaration[] = []) {
+  constructor(
+    declarations: TypeDeclaration[] = [],
+    onDependencyProfile?: (
+      durationMs: number,
+      startTimeMs: number,
+      endTimeMs: number
+    ) => void
+  ) {
     this.addPrimitive('byte', false);
     this.addPrimitive('estrutura', false);
 
@@ -348,8 +362,19 @@ export class TypeSymbolTable {
       this.addName(symbol.pluralName, symbol);
     }
 
+    this.buildInheritanceIndex();
+
+    const dependencyStartedAt = onDependencyProfile ? performance.now() : 0;
     for (const symbol of this.symbols.values()) {
-      this.resolveScale(symbol, new Set());
+      this.resolveScale(symbol);
+    }
+    if (onDependencyProfile) {
+      const dependencyFinishedAt = performance.now();
+      onDependencyProfile(
+        dependencyFinishedAt - dependencyStartedAt,
+        dependencyStartedAt,
+        dependencyFinishedAt
+      );
     }
   }
 
@@ -361,6 +386,30 @@ export class TypeSymbolTable {
     const expected = this.lookup(expectedName);
     let actual = this.lookup(actualName);
     if (!expected || !actual) {
+      return undefined;
+    }
+
+    const actualEntry = this.inheritanceEntryTimes.get(actual);
+    if (actualEntry !== undefined) {
+      const expectedEntry = this.inheritanceEntryTimes.get(expected);
+      if (expectedEntry === undefined) {
+        return undefined;
+      }
+
+      const actualExit = this.inheritanceExitTimes.get(actual);
+      const expectedExit = this.inheritanceExitTimes.get(expected);
+      const actualDepth = this.inheritanceDepths.get(actual);
+      const expectedDepth = this.inheritanceDepths.get(expected);
+      if (
+        expectedEntry <= actualEntry &&
+        actualExit !== undefined &&
+        expectedExit !== undefined &&
+        actualExit <= expectedExit &&
+        actualDepth !== undefined &&
+        expectedDepth !== undefined
+      ) {
+        return actualDepth - expectedDepth;
+      }
       return undefined;
     }
 
@@ -402,52 +451,143 @@ export class TypeSymbolTable {
     }
   }
 
-  private resolveScale(symbol: TypeSymbol, resolving: Set<TypeSymbol>): boolean {
+  private buildInheritanceIndex(): void {
+    const children = new Map<TypeSymbol, TypeSymbol[]>();
+    const roots: TypeSymbol[] = [];
+
+    for (const symbol of this.symbols.values()) {
+      const parent = symbol.declaration
+        ? this.lookup(symbol.declaration.baseType.name)
+        : undefined;
+      if (!parent) {
+        roots.push(symbol);
+        continue;
+      }
+
+      const parentChildren = children.get(parent);
+      if (parentChildren) {
+        parentChildren.push(symbol);
+      } else {
+        children.set(parent, [symbol]);
+      }
+    }
+
+    let timestamp = 0;
+    for (const root of roots) {
+      if (this.inheritanceEntryTimes.has(root)) {
+        continue;
+      }
+      this.inheritanceEntryTimes.set(root, ++timestamp);
+      this.inheritanceDepths.set(root, 0);
+      const stack = [{ symbol: root, nextChild: 0 }];
+
+      while (stack.length > 0) {
+        const frame = stack[stack.length - 1];
+        const descendants = children.get(frame.symbol);
+        if (descendants && frame.nextChild < descendants.length) {
+          const child = descendants[frame.nextChild++];
+          if (this.inheritanceEntryTimes.has(child)) {
+            continue;
+          }
+          this.inheritanceEntryTimes.set(child, ++timestamp);
+          this.inheritanceDepths.set(
+            child,
+            this.inheritanceDepths.get(frame.symbol)! + 1
+          );
+          stack.push({ symbol: child, nextChild: 0 });
+        } else {
+          this.inheritanceExitTimes.set(frame.symbol, ++timestamp);
+          stack.pop();
+        }
+      }
+    }
+  }
+
+  private resolveScale(symbol: TypeSymbol): boolean {
     if (symbol.kind === 'primitive') {
       return symbol.isScalar;
     }
-    if (!symbol.declaration) {
-      return false;
-    }
-    if (resolving.has(symbol)) {
-      return false;
-    }
-
-    const baseType = this.lookup(symbol.declaration.baseType.name);
-    if (!baseType) {
-      return false;
-    }
-
-    if (
-      isNumberTypeName(symbol.declaration.baseType.name) &&
-      symbol.scalarFactor !== undefined
-    ) {
-      const [factorNumerator, factorDenominator] = parseFraction(
-        symbol.scalarFactor ?? '1/1'
-      );
-      symbol.scale = formatFraction(factorNumerator, factorDenominator);
-      symbol.isScalar = true;
-      symbol.kind = 'scalar';
+    const state = this.scaleResolutionStates.get(symbol);
+    if (state === 'resolved') {
       return true;
     }
-
-    resolving.add(symbol);
-    if (!this.resolveScale(baseType, resolving)) {
-      resolving.delete(symbol);
+    if (state === 'failed' || state === 'resolving') {
       return false;
     }
 
-    const [baseNumerator, baseDenominator] = parseFraction(baseType.scale);
-    const [factorNumerator, factorDenominator] = parseFraction(
-      symbol.scalarFactor ?? '1/1'
-    );
-    symbol.scale = formatFraction(
-      baseNumerator * factorNumerator,
-      baseDenominator * factorDenominator
-    );
-    symbol.isScalar = true;
-    symbol.kind = 'scalar';
-    resolving.delete(symbol);
+    const path: TypeSymbol[] = [];
+    const baseTypes: TypeSymbol[] = [];
+    let current = symbol;
+    let baseIsScalar = false;
+
+    while (true) {
+      if (current.kind === 'primitive') {
+        baseIsScalar = current.isScalar;
+        break;
+      }
+
+      const currentState = this.scaleResolutionStates.get(current);
+      if (currentState === 'resolved') {
+        baseIsScalar = true;
+        break;
+      }
+      if (currentState === 'failed' || currentState === 'resolving') {
+        break;
+      }
+
+      const declaration = current.declaration;
+      if (!declaration) {
+        this.scaleResolutionStates.set(current, 'failed');
+        break;
+      }
+
+      const baseType = this.lookup(declaration.baseType.name);
+      if (!baseType) {
+        this.scaleResolutionStates.set(current, 'failed');
+        break;
+      }
+
+      if (
+        isNumberTypeName(declaration.baseType.name) &&
+        current.scalarFactor !== undefined
+      ) {
+        const [factorNumerator, factorDenominator] = parseFraction(current.scalarFactor);
+        current.scale = formatFraction(factorNumerator, factorDenominator);
+        current.isScalar = true;
+        current.kind = 'scalar';
+        this.scaleResolutionStates.set(current, 'resolved');
+        baseIsScalar = true;
+        break;
+      }
+
+      this.scaleResolutionStates.set(current, 'resolving');
+      path.push(current);
+      baseTypes.push(baseType);
+      current = baseType;
+    }
+
+    if (!baseIsScalar) {
+      for (const unresolved of path) {
+        this.scaleResolutionStates.set(unresolved, 'failed');
+      }
+      return false;
+    }
+
+    for (let index = path.length - 1; index >= 0; index--) {
+      const resolved = path[index];
+      const baseType = baseTypes[index];
+      const [baseNumerator, baseDenominator] = parseFraction(baseType.scale);
+      const [factorNumerator, factorDenominator] = parseFraction(
+        resolved.scalarFactor ?? '1/1'
+      );
+      resolved.scale = formatFraction(
+        baseNumerator * factorNumerator,
+        baseDenominator * factorDenominator
+      );
+      resolved.isScalar = true;
+      resolved.kind = 'scalar';
+      this.scaleResolutionStates.set(resolved, 'resolved');
+    }
     return true;
   }
 }
@@ -474,12 +614,53 @@ export interface ParserSymbolCatalog {
 }
 
 export interface ParsePerformanceMetrics {
+  phases: Array<{
+    name: string;
+    startTimeMs: number;
+    endTimeMs: number;
+    durationMs: number;
+  }>;
+  heapUsedBeforeBytes: number;
+  heapUsedAfterBytes: number;
+  rssBeforeBytes: number;
+  rssAfterBytes: number;
+  lexicalMs: number;
   syntaxMs: number;
   symbolCatalogMs: number;
+  dependencyResolutionMs: number;
   typeResolutionMs: number;
-  referenceResolutionMs: number;
-  semanticResolutionMs: number;
+  globalVariableResolutionMs: number;
+  routineResolutionMs: number;
+  routineParameterResolutionMs: number;
+  computedFieldResolutionMs: number;
+  routineCallResolutionMs: number;
+  routineVariableValidationMs: number;
+  routineStatementsVisited: number;
+  routineNameMatchSearches: number;
+  routineNameSpanChecks: number;
+  routineNameCandidateChecks: number;
   totalMs: number;
+  sourceCodeUnits: number;
+  tokenCount: number;
+  declarations: number;
+  globalVariables: number;
+  routines: number;
+  symbols: number;
+}
+
+interface RoutineResolutionProfileCounters {
+  statementsVisited: number;
+  nameMatchSearches: number;
+  nameSpanChecks: number;
+  nameCandidateChecks: number;
+}
+
+let activeRoutineResolutionProfileCounters: RoutineResolutionProfileCounters | undefined;
+
+export interface ParsedReferencesMetrics {
+  durationMs: number;
+  references: number;
+  cacheHit: boolean;
 }
 
 export interface ParsedReference {
@@ -597,6 +778,7 @@ const routineContractions = new Map([
   ['pelos', 'por os'],
   ['pelas', 'por as']
 ]);
+const routineNameWordPattern = /\p{L}+/gu;
 const articles = new Set([
   ...definiteArticles, ...indefiniteArticles
 ]);
@@ -644,6 +826,8 @@ const reservedIdentifierWords = new Set([
 
 const normalizedTypeNameCache = new Map<string, string>();
 const normalizedTypeNameCacheLimit = 4096;
+const normalizedRoutineNameCache = new Map<string, string>();
+const normalizedRoutineNameCacheLimit = 8192;
 
 export function normalizeTypeName(name: string): string {
   const cached = normalizedTypeNameCache.get(name);
@@ -662,6 +846,13 @@ export function normalizeTypeName(name: string): string {
 }
 
 function normalizeRoutineName(name: string): string {
+  const cached = normalizedRoutineNameCache.get(name);
+  if (cached !== undefined) {
+    normalizedRoutineNameCache.delete(name);
+    normalizedRoutineNameCache.set(name, cached);
+    return cached;
+  }
+
   let normalized = '';
   let segmentStart = 0;
   let depth = 0;
@@ -683,7 +874,17 @@ function normalizeRoutineName(name: string): string {
   normalized += depth === 0
     ? normalizeRoutineNameWords(name.slice(segmentStart))
     : normalizeRoutineNameWords(name.slice(segmentStart));
-  return normalized.trim().replace(/\s+/gu, ' ');
+  normalized = normalized.trim().replace(/\s+/gu, ' ');
+  if (name.length <= 256) {
+    if (normalizedRoutineNameCache.size >= normalizedRoutineNameCacheLimit) {
+      const oldest = normalizedRoutineNameCache.keys().next().value;
+      if (oldest !== undefined) {
+        normalizedRoutineNameCache.delete(oldest);
+      }
+    }
+    normalizedRoutineNameCache.set(name, normalized);
+  }
+  return normalized;
 }
 
 function normalizeRoutineNameWords(name: string): string {
@@ -705,6 +906,42 @@ function normalizeRoutineNameWords(name: string): string {
     }
   }
   return expandedWords.join(' ');
+}
+
+function appendNormalizedRoutineWord(
+  normalizedWords: string[],
+  sourceWord: string
+): void {
+  const normalizedWord = normalizeTypeName(sourceWord);
+  const expandedWords = (
+    routineContractions.get(normalizedWord) ?? normalizedWord
+  ).split(' ');
+  for (const expandedWord of expandedWords) {
+    const previousIndex = normalizedWords.length - 1;
+    if (
+      previousIndex >= 0 &&
+      normalizedWords[previousIndex] === 'a' &&
+      articles.has(expandedWord)
+    ) {
+      normalizedWords[previousIndex] = 'para';
+      if (
+        previousIndex > 0 &&
+        normalizedWords[previousIndex - 1] === 'igual'
+      ) {
+        normalizedWords[previousIndex] = 'a';
+      }
+    }
+
+    let word = routineWordReplacements.get(expandedWord) ?? expandedWord;
+    if (
+      previousIndex >= 0 &&
+      normalizedWords[previousIndex] === 'igual' &&
+      word === 'para'
+    ) {
+      word = 'a';
+    }
+    normalizedWords.push(word);
+  }
 }
 
 function routineNameKey(name: TypeReference): string {
@@ -729,8 +966,21 @@ export function parseTypeDeclarations(
   onProfile?: (metrics: ParsePerformanceMetrics) => void
 ): ParsedDocument {
   const startedAt = onProfile ? performance.now() : 0;
+  const memoryBefore = onProfile ? process.memoryUsage() : undefined;
+  const routineProfileCounters = onProfile
+    ? {
+      statementsVisited: 0,
+      nameMatchSearches: 0,
+      nameSpanChecks: 0,
+      nameCandidateChecks: 0
+    }
+    : undefined;
+  activeRoutineResolutionProfileCounters = routineProfileCounters;
   const diagnostics: ParserDiagnostic[] = [];
+  const lexicalStartedAt = onProfile ? performance.now() : 0;
   const parserSource = maskComments(source, diagnostics);
+  const lexicalFinishedAt = onProfile ? performance.now() : 0;
+  const syntaxStartedAt = lexicalFinishedAt;
   const declarations: TypeDeclaration[] = [];
   const globalVariables: GlobalVariableDeclaration[] = [];
   const routines = parseRoutineDeclarations(parserSource, diagnostics);
@@ -762,10 +1012,20 @@ export function parseTypeDeclarations(
     periodIndex = findDeclarationPeriod(parserSource, segmentStart);
   }
   const syntaxFinishedAt = onProfile ? performance.now() : 0;
+  let dependencyResolutionMs = 0;
+  let dependencyResolutionStartedAt = 0;
+  let dependencyResolutionFinishedAt = 0;
+  const catalogStartedAt = syntaxFinishedAt;
   const symbols = new TypeSymbolTable([
     ...declarations,
     ...(workspaceSymbols?.declarations ?? [])
-  ]);
+  ], onProfile
+    ? (durationMs, startTimeMs, endTimeMs) => {
+      dependencyResolutionMs += durationMs;
+      dependencyResolutionStartedAt = startTimeMs;
+      dependencyResolutionFinishedAt = endTimeMs;
+    }
+    : undefined);
   const globalVariableSymbols = new GlobalVariableSymbolTable([
     ...globalVariables,
     ...(workspaceSymbols?.globalVariables ?? [])
@@ -777,18 +1037,38 @@ export function parseTypeDeclarations(
     [...declarations, ...globalVariables].map(declaration => declaration.range)
   );
   const catalogFinishedAt = onProfile ? performance.now() : 0;
+  const catalogBuildMs = catalogFinishedAt - catalogStartedAt;
+  const typeResolutionStartedAt = catalogFinishedAt;
   validateBaseTypes(declarations, symbols, diagnostics);
+  resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
+  const typeResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const globalVariableResolutionStartedAt = typeResolutionFinishedAt;
   validateGlobalVariableTypes(globalVariables, symbols, diagnostics);
+  const globalVariableResolutionFinishedAt = onProfile ? performance.now() : 0;
   validateReservedNames(parserSource, declarations, globalVariables, diagnostics);
   validateIdentifierPunctuation(
     parserSource,
     [...declarations, ...globalVariables].map(declaration => declaration.name),
     diagnostics
   );
-  resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
+  const routineResolutionStartedAt = onProfile ? performance.now() : 0;
+  const routineParameterResolutionStartedAt = routineResolutionStartedAt;
   resolveRoutineParameters(parserSource, routines, symbols, diagnostics);
+  const routineParameterResolutionFinishedAt = onProfile
+    ? performance.now()
+    : 0;
+  const routineParameterResolutionMs = onProfile
+    ? routineParameterResolutionFinishedAt - routineParameterResolutionStartedAt
+    : 0;
+  const computedFieldResolutionStartedAt = onProfile ? performance.now() : 0;
   resolveComputedFields(routines, symbols, diagnostics);
-  const typeResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const computedFieldResolutionFinishedAt = onProfile
+    ? performance.now()
+    : 0;
+  const computedFieldResolutionMs = onProfile
+    ? computedFieldResolutionFinishedAt - computedFieldResolutionStartedAt
+    : 0;
+  const routineCallResolutionStartedAt = onProfile ? performance.now() : 0;
   resolveRoutineCalls(
     parserSource,
     routines,
@@ -797,19 +1077,156 @@ export function parseTypeDeclarations(
     diagnostics,
     [...routines, ...(workspaceSymbols?.routines ?? [])]
   );
-  const referenceResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const routineCallResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const routineCallResolutionMs = onProfile
+    ? routineCallResolutionFinishedAt - routineCallResolutionStartedAt
+    : 0;
+  const routineVariableValidationStartedAt = onProfile
+    ? performance.now()
+    : 0;
   validateRoutineVariableNames(routines, diagnostics);
+  const routineVariableValidationFinishedAt = onProfile
+    ? performance.now()
+    : 0;
+  const routineVariableValidationMs = onProfile
+    ? routineVariableValidationFinishedAt - routineVariableValidationStartedAt
+    : 0;
   if (onProfile) {
+    const routineResolutionFinishedAt = performance.now();
+    const tokenCountingStartedAt = performance.now();
+    const tokenPattern = /[\p{L}\p{N}_]+|[^\s]/gu;
+    let tokenCount = 0;
+    while (tokenPattern.exec(parserSource)) {
+      tokenCount++;
+    }
     const finishedAt = performance.now();
+    const memoryAfter = process.memoryUsage();
     onProfile({
-      syntaxMs: syntaxFinishedAt - startedAt,
-      symbolCatalogMs: catalogFinishedAt - syntaxFinishedAt,
-      typeResolutionMs: typeResolutionFinishedAt - catalogFinishedAt,
-      referenceResolutionMs: referenceResolutionFinishedAt - typeResolutionFinishedAt,
-      semanticResolutionMs: finishedAt - catalogFinishedAt,
-      totalMs: finishedAt - startedAt
+      phases: [
+        {
+          name: 'comment-masking',
+          startTimeMs: lexicalStartedAt,
+          endTimeMs: lexicalFinishedAt,
+          durationMs: lexicalFinishedAt - lexicalStartedAt
+        },
+        {
+          name: 'syntax-parsing',
+          startTimeMs: syntaxStartedAt,
+          endTimeMs: syntaxFinishedAt,
+          durationMs: syntaxFinishedAt - syntaxStartedAt
+        },
+        {
+          name: 'symbol-catalog',
+          startTimeMs: catalogStartedAt,
+          endTimeMs: catalogFinishedAt,
+          durationMs: catalogFinishedAt - catalogStartedAt
+        },
+        ...(dependencyResolutionFinishedAt > dependencyResolutionStartedAt
+          ? [{
+            name: 'type-dependency-resolution',
+            startTimeMs: dependencyResolutionStartedAt,
+            endTimeMs: dependencyResolutionFinishedAt,
+            durationMs: dependencyResolutionMs
+          }]
+          : []),
+        {
+          name: 'type-resolution',
+          startTimeMs: typeResolutionStartedAt,
+          endTimeMs: typeResolutionFinishedAt,
+          durationMs: typeResolutionFinishedAt - typeResolutionStartedAt
+        },
+        {
+          name: 'global-variable-resolution',
+          startTimeMs: globalVariableResolutionStartedAt,
+          endTimeMs: globalVariableResolutionFinishedAt,
+          durationMs:
+            globalVariableResolutionFinishedAt -
+            globalVariableResolutionStartedAt
+        },
+        {
+          name: 'declaration-validation',
+          startTimeMs: globalVariableResolutionFinishedAt,
+          endTimeMs: routineResolutionStartedAt,
+          durationMs: routineResolutionStartedAt -
+            globalVariableResolutionFinishedAt
+        },
+        {
+          name: 'routine-parameter-resolution',
+          startTimeMs: routineParameterResolutionStartedAt,
+          endTimeMs: routineParameterResolutionFinishedAt,
+          durationMs: routineParameterResolutionMs
+        },
+        {
+          name: 'computed-field-resolution',
+          startTimeMs: computedFieldResolutionStartedAt,
+          endTimeMs: computedFieldResolutionFinishedAt,
+          durationMs: computedFieldResolutionMs
+        },
+        {
+          name: 'routine-call-resolution',
+          startTimeMs: routineCallResolutionStartedAt,
+          endTimeMs: routineCallResolutionFinishedAt,
+          durationMs: routineCallResolutionMs
+        },
+        {
+          name: 'routine-variable-validation',
+          startTimeMs: routineVariableValidationStartedAt,
+          endTimeMs: routineVariableValidationFinishedAt,
+          durationMs: routineVariableValidationMs
+        },
+        {
+          name: 'routine-resolution',
+          startTimeMs: routineResolutionStartedAt,
+          endTimeMs: routineResolutionFinishedAt,
+          durationMs: routineResolutionFinishedAt - routineResolutionStartedAt
+        },
+        {
+          name: 'profile-token-count',
+          startTimeMs: tokenCountingStartedAt,
+          endTimeMs: finishedAt,
+          durationMs: finishedAt - tokenCountingStartedAt
+        },
+        {
+          name: 'parse-total',
+          startTimeMs: startedAt,
+          endTimeMs: finishedAt,
+          durationMs: finishedAt - startedAt
+        }
+      ],
+      heapUsedBeforeBytes: memoryBefore?.heapUsed ?? 0,
+      heapUsedAfterBytes: memoryAfter.heapUsed,
+      rssBeforeBytes: memoryBefore?.rss ?? 0,
+      rssAfterBytes: memoryAfter.rss,
+      lexicalMs: lexicalFinishedAt - lexicalStartedAt,
+      syntaxMs: syntaxFinishedAt - syntaxStartedAt,
+      symbolCatalogMs: Math.max(0, catalogBuildMs - dependencyResolutionMs),
+      dependencyResolutionMs,
+      typeResolutionMs: typeResolutionFinishedAt - typeResolutionStartedAt,
+      globalVariableResolutionMs:
+        globalVariableResolutionFinishedAt - globalVariableResolutionStartedAt,
+      routineResolutionMs:
+        routineResolutionFinishedAt - routineResolutionStartedAt,
+      routineParameterResolutionMs,
+      computedFieldResolutionMs,
+      routineCallResolutionMs,
+      routineVariableValidationMs,
+      routineStatementsVisited: routineProfileCounters?.statementsVisited ?? 0,
+      routineNameMatchSearches: routineProfileCounters?.nameMatchSearches ?? 0,
+      routineNameSpanChecks: routineProfileCounters?.nameSpanChecks ?? 0,
+      routineNameCandidateChecks:
+        routineProfileCounters?.nameCandidateChecks ?? 0,
+      totalMs: finishedAt - startedAt,
+      sourceCodeUnits: source.length,
+      tokenCount,
+      declarations: declarations.length,
+      globalVariables: globalVariables.length,
+      routines: routines.length,
+      symbols: symbols.entries.length +
+        globalVariableSymbols.entries.length +
+        routineSymbols.entries.length
     });
   }
+  activeRoutineResolutionProfileCounters = undefined;
 
   return {
     declarations,
@@ -854,15 +1271,25 @@ function findDeclarationStart(source: string, start: number, end: number): numbe
         return lineStart;
       }
     }
-    const nextLineFeed = source.indexOf('\n', lineStart);
-    const nextCarriageReturn = source.indexOf('\r', lineStart);
-    const nextLineBreak = [nextLineFeed, nextCarriageReturn]
-      .filter(index => index !== -1)
-      .reduce((nearest, index) => Math.min(nearest, index), Number.POSITIVE_INFINITY);
-    if (!Number.isFinite(nextLineBreak) || nextLineBreak >= end) {
+    while (
+      lineStart < end &&
+      source[lineStart] !== '\n' &&
+      source[lineStart] !== '\r'
+    ) {
+      lineStart++;
+    }
+    if (lineStart >= end) {
       break;
     }
-    lineStart = nextLineBreak + 1;
+    if (
+      source[lineStart] === '\r' &&
+      lineStart + 1 < end &&
+      source[lineStart + 1] === '\n'
+    ) {
+      lineStart += 2;
+    } else {
+      lineStart++;
+    }
   }
   return undefined;
 }
@@ -927,6 +1354,9 @@ function resolveRoutineCalls(
     while (periodIndex !== -1 && periodIndex < routine.bodyRange.end) {
       const statementRange = trimRange(source, statementStart, periodIndex);
       if (statementRange.start < statementRange.end) {
+        if (activeRoutineResolutionProfileCounters) {
+          activeRoutineResolutionProfileCounters.statementsVisited++;
+        }
         const conditional = parseConditionalBlock(
           source,
           statementRange,
@@ -3855,6 +4285,7 @@ interface RoutineNameMatch extends RoutineNameCandidate {
 
 interface RoutineNameLookupIndex {
   byNormalizedName: Map<string, RoutineNameCandidate[]>;
+  maximumNameWords: number;
 }
 
 const routineNameLookupIndexes = new WeakMap<
@@ -3870,6 +4301,7 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
 
   const byNormalizedName = new Map<string, RoutineNameCandidate[]>();
   let order = 0;
+  let maximumNameWords = 0;
   for (const routine of routines) {
     const variants = [
       { name: routine.name, parameters: routine.parameters },
@@ -3880,13 +4312,17 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
     ];
     for (const { name, parameters } of variants) {
       const normalizedName = normalizeRoutineName(name.name);
+      maximumNameWords = Math.max(
+        maximumNameWords,
+        normalizedName.split(/\s+/u).filter(Boolean).length
+      );
       const candidates = byNormalizedName.get(normalizedName) ?? [];
       candidates.push({ routine, name, parameters, order: order++ });
       byNormalizedName.set(normalizedName, candidates);
     }
   }
 
-  const index = { byNormalizedName };
+  const index = { byNormalizedName, maximumNameWords };
   routineNameLookupIndexes.set(routines, index);
   return index;
 }
@@ -3897,8 +4333,39 @@ function findRoutineNameMatches(
   routines: RoutineDeclaration[],
   searchAnyStart = false
 ): RoutineNameMatch[] {
-  const { byNormalizedName } = getRoutineNameIndex(routines);
+  const profileCounters = activeRoutineResolutionProfileCounters;
+  if (profileCounters) {
+    profileCounters.nameMatchSearches++;
+  }
+  const { byNormalizedName, maximumNameWords } = getRoutineNameIndex(routines);
   const matches: RoutineNameMatch[] = [];
+  if (maximumNameWords === 0) {
+    return matches;
+  }
+
+  const addCandidates = (
+    candidates: RoutineNameCandidate[] | undefined,
+    nameStart: number,
+    nameEnd: number,
+    implicitDefiniteArticle: boolean,
+    matchedCandidates: Set<RoutineNameCandidate>
+  ): void => {
+    if (profileCounters && candidates) {
+      profileCounters.nameCandidateChecks += candidates.length;
+    }
+    for (const candidate of candidates ?? []) {
+      if (matchedCandidates.has(candidate)) {
+        continue;
+      }
+      matchedCandidates.add(candidate);
+      matches.push({
+        ...candidate,
+        nameStart,
+        nameEnd,
+        implicitDefiniteArticle
+      });
+    }
+  };
   for (let nameStart = range.start; nameStart < range.end; nameStart++) {
     if (
       nameStart > range.start &&
@@ -3911,48 +4378,73 @@ function findRoutineNameMatches(
     }
 
     const matchedCandidates = new Set<RoutineNameCandidate>();
-    for (let nameEnd = nameStart + 1; nameEnd <= range.end; nameEnd++) {
-      if (nameEnd < range.end && !/\s/u.test(source[nameEnd])) {
-        continue;
+    let wordCount = 0;
+    let wordStart = nameStart;
+    const normalizedWords: string[] = [];
+    let hasParentheses = false;
+    while (wordStart < range.end) {
+      while (wordStart < range.end && /\s/u.test(source[wordStart])) {
+        wordStart++;
       }
-      const sourceName = source.slice(nameStart, nameEnd);
-      const normalizedName = normalizeRoutineName(sourceName);
-      const possibleNames = [{ name: normalizedName, implicitDefiniteArticle: false }];
-      const sourceWords = [...sourceName.matchAll(/\p{L}+/gu)];
-      const finalWord = sourceWords[sourceWords.length - 1];
-      const expansion = finalWord
-        ? routineContractions.get(finalWord[0].toLocaleLowerCase('pt-BR'))
+      if (wordStart >= range.end) {
+        break;
+      }
+      let nameEnd = wordStart;
+      while (nameEnd < range.end && !/\s/u.test(source[nameEnd])) {
+        nameEnd++;
+      }
+      if (profileCounters) {
+        profileCounters.nameSpanChecks++;
+      }
+      wordCount++;
+      if (wordCount > maximumNameWords) {
+        break;
+      }
+
+      const sourceWord = source.slice(wordStart, nameEnd);
+      hasParentheses ||= sourceWord.includes('(') || sourceWord.includes(')');
+      if (!hasParentheses) {
+        appendNormalizedRoutineWord(normalizedWords, sourceWord);
+      }
+      const normalizedName = hasParentheses
+        ? normalizeRoutineName(source.slice(nameStart, nameEnd))
+        : normalizedWords.join(' ');
+      addCandidates(
+        byNormalizedName.get(normalizedName),
+        nameStart,
+        nameEnd,
+        false,
+        matchedCandidates
+      );
+
+      let finalWordMatch: RegExpExecArray | undefined;
+      routineNameWordPattern.lastIndex = 0;
+      let wordMatch: RegExpExecArray | null;
+      while ((wordMatch = routineNameWordPattern.exec(sourceWord))) {
+        finalWordMatch = wordMatch;
+      }
+      const expansion = finalWordMatch
+        ? routineContractions.get(finalWordMatch[0].toLocaleLowerCase('pt-BR'))
         : undefined;
       const expandedWords = expansion?.split(' ');
       if (
-        finalWord &&
+        finalWordMatch &&
         expandedWords &&
         definiteArticles.has(expandedWords[expandedWords.length - 1])
       ) {
-        const prefix = sourceName.slice(0, finalWord.index);
         const nameWithoutArticle = [
-          prefix,
+          source.slice(nameStart, wordStart + finalWordMatch.index),
           ...expandedWords.slice(0, -1)
         ].join(' ');
-        possibleNames.push({
-          name: normalizeRoutineName(nameWithoutArticle),
-          implicitDefiniteArticle: true
-        });
+        addCandidates(
+          byNormalizedName.get(normalizeRoutineName(nameWithoutArticle)),
+          nameStart,
+          nameEnd,
+          true,
+          matchedCandidates
+        );
       }
-      for (const possibleName of possibleNames) {
-        for (const candidate of byNormalizedName.get(possibleName.name) ?? []) {
-          if (matchedCandidates.has(candidate)) {
-            continue;
-          }
-          matchedCandidates.add(candidate);
-          matches.push({
-            ...candidate,
-            nameStart,
-            nameEnd,
-            implicitDefiniteArticle: possibleName.implicitDefiniteArticle
-          });
-        }
-      }
+      wordStart = nameEnd;
     }
 
     if (!searchAnyStart) {
@@ -6686,9 +7178,20 @@ const parsedReferenceIndexCache = new WeakMap<
   { entries: { reference: ParsedReference; order: number }[]; prefixMaxEnd: number[] }
 >();
 
-export function getParsedReferences(parsed: ParsedDocument): ParsedReference[] {
+export function getParsedReferences(
+  parsed: ParsedDocument,
+  onProfile?: (metrics: ParsedReferencesMetrics) => void
+): ParsedReference[] {
+  const startedAt = onProfile ? performance.now() : 0;
   const cachedReferences = parsedReferencesCache.get(parsed);
   if (cachedReferences) {
+    if (onProfile) {
+      onProfile({
+        durationMs: performance.now() - startedAt,
+        references: cachedReferences.length,
+        cacheHit: true
+      });
+    }
     return cachedReferences;
   }
 
@@ -6849,14 +7352,22 @@ export function getParsedReferences(parsed: ParsedDocument): ParsedReference[] {
   }
 
   parsedReferencesCache.set(parsed, references);
+  if (onProfile) {
+    onProfile({
+      durationMs: performance.now() - startedAt,
+      references: references.length,
+      cacheHit: false
+    });
+  }
   return references;
 }
 
 export function findParsedReferenceAtOffset(
   parsed: ParsedDocument,
-  offset: number
+  offset: number,
+  onProfile?: (metrics: ParsedReferencesMetrics) => void
 ): ParsedReference | undefined {
-  const references = getParsedReferences(parsed);
+  const references = getParsedReferences(parsed, onProfile);
   let index = parsedReferenceIndexCache.get(parsed);
   if (!index) {
     const entries = references.map((reference, order) => ({ reference, order }));

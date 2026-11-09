@@ -234,12 +234,17 @@ export interface TypeSymbol {
 export declare class TypeSymbolTable {
     private readonly symbols;
     private readonly names;
-    constructor(declarations?: TypeDeclaration[]);
+    private readonly inheritanceEntryTimes;
+    private readonly inheritanceExitTimes;
+    private readonly inheritanceDepths;
+    private readonly scaleResolutionStates;
+    constructor(declarations?: TypeDeclaration[], onDependencyProfile?: (durationMs: number, startTimeMs: number, endTimeMs: number) => void);
     lookup(name: string): TypeSymbol | undefined;
     getBaseTypeDistance(actualName: string, expectedName: string): number | undefined;
     get entries(): TypeSymbol[];
     private addPrimitive;
     private addName;
+    private buildInheritanceIndex;
     private resolveScale;
 }
 export interface ParsedDocument {
@@ -257,12 +262,43 @@ export interface ParserSymbolCatalog {
     routines: RoutineDeclaration[];
 }
 export interface ParsePerformanceMetrics {
+    phases: Array<{
+        name: string;
+        startTimeMs: number;
+        endTimeMs: number;
+        durationMs: number;
+    }>;
+    heapUsedBeforeBytes: number;
+    heapUsedAfterBytes: number;
+    rssBeforeBytes: number;
+    rssAfterBytes: number;
+    lexicalMs: number;
     syntaxMs: number;
     symbolCatalogMs: number;
+    dependencyResolutionMs: number;
     typeResolutionMs: number;
-    referenceResolutionMs: number;
-    semanticResolutionMs: number;
+    globalVariableResolutionMs: number;
+    routineResolutionMs: number;
+    routineParameterResolutionMs: number;
+    computedFieldResolutionMs: number;
+    routineCallResolutionMs: number;
+    routineVariableValidationMs: number;
+    routineStatementsVisited: number;
+    routineNameMatchSearches: number;
+    routineNameSpanChecks: number;
+    routineNameCandidateChecks: number;
     totalMs: number;
+    sourceCodeUnits: number;
+    tokenCount: number;
+    declarations: number;
+    globalVariables: number;
+    routines: number;
+    symbols: number;
+}
+export interface ParsedReferencesMetrics {
+    durationMs: number;
+    references: number;
+    cacheHit: boolean;
 }
 export interface ParsedReference {
     kind: 'type' | 'routine' | 'variable' | 'field';
@@ -278,5 +314,5 @@ export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDoc
 export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): TypeField | undefined;
 export declare function findTypeDefinitionReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function findTypeReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
-export declare function getParsedReferences(parsed: ParsedDocument): ParsedReference[];
-export declare function findParsedReferenceAtOffset(parsed: ParsedDocument, offset: number): ParsedReference | undefined;
+export declare function getParsedReferences(parsed: ParsedDocument, onProfile?: (metrics: ParsedReferencesMetrics) => void): ParsedReference[];
+export declare function findParsedReferenceAtOffset(parsed: ParsedDocument, offset: number, onProfile?: (metrics: ParsedReferencesMetrics) => void): ParsedReference | undefined;

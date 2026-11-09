@@ -16,6 +16,16 @@ const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
 const documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
 const parsedDocuments = new Map();
 const profileEnabled = process.env.POP_LSP_PROFILE === '1';
+const configuredSlowProfileThreshold = Number(process.env.POP_LSP_PROFILE_SLOW_MS);
+const slowProfileThresholdMs = Number.isFinite(configuredSlowProfileThreshold) &&
+    configuredSlowProfileThreshold > 0
+    ? configuredSlowProfileThreshold
+    : 5000;
+const eventLoopDelay = profileEnabled
+    ? (0, node_perf_hooks_1.monitorEventLoopDelay)({ resolution: 20 })
+    : undefined;
+let nextProfileRequestId = 0;
+let pendingProfileRequests = 0;
 const sourceAnalysisCache = new Map();
 let nextSourceRevision = 0;
 let workspaceDocumentIndex;
@@ -23,26 +33,137 @@ let workspaceRefreshPromise;
 let workspaceRevision = 0;
 let workspaceDirectorySnapshots = new Map();
 const documentSymbolsCache = new WeakMap();
+let documentSymbolsUpdatePromise;
+let documentSymbolsUpdatePending = false;
+let workspaceInvalidationPending = false;
+function logReferenceMetrics(metrics) {
+    logProfile({
+        event: 'reference-catalog',
+        durationMs: metrics.durationMs,
+        references: metrics.references,
+        cacheHit: metrics.cacheHit
+    });
+}
+function getDocumentReferences(parsed) {
+    return (0, typeParser_1.getParsedReferences)(parsed, profileEnabled ? logReferenceMetrics : undefined);
+}
+function findDocumentReference(parsed, offset) {
+    return (0, typeParser_1.findParsedReferenceAtOffset)(parsed, offset, profileEnabled ? logReferenceMetrics : undefined);
+}
 function logProfile(metrics) {
     if (profileEnabled) {
         connection.console.log(`[POP-LSP profile] ${JSON.stringify(metrics)}`);
     }
 }
-function profileRequest(name, handler) {
+if (profileEnabled && eventLoopDelay) {
+    eventLoopDelay.enable();
+    let previousCpuUsage = process.cpuUsage();
+    const healthInterval = setInterval(() => {
+        const currentCpuUsage = process.cpuUsage();
+        const cpuUsage = {
+            userMs: (currentCpuUsage.user - previousCpuUsage.user) / 1000,
+            systemMs: (currentCpuUsage.system - previousCpuUsage.system) / 1000
+        };
+        previousCpuUsage = currentCpuUsage;
+        const memory = process.memoryUsage();
+        logProfile({
+            event: 'process-health',
+            timestampMs: node_perf_hooks_1.performance.now(),
+            pendingRequests: pendingProfileRequests,
+            cpuUserMs: cpuUsage.userMs,
+            cpuSystemMs: cpuUsage.systemMs,
+            rssBytes: memory.rss,
+            heapUsedBytes: memory.heapUsed,
+            heapTotalBytes: memory.heapTotal,
+            eventLoopMeanMs: eventLoopDelay.mean / 1e6,
+            eventLoopMaxMs: eventLoopDelay.max / 1e6,
+            eventLoopP99Ms: eventLoopDelay.percentile(99) / 1e6
+        });
+        eventLoopDelay.reset();
+    }, 5000);
+    healthInterval.unref();
+    const gcObserver = new node_perf_hooks_1.PerformanceObserver(list => {
+        for (const entry of list.getEntries()) {
+            logProfile({
+                event: 'garbage-collection',
+                timestampMs: entry.startTime,
+                durationMs: entry.duration,
+                kind: entry.name
+            });
+        }
+    });
+    gcObserver.observe({ entryTypes: ['gc'] });
+}
+function profileRequest(name, handler, documentUri) {
     if (!profileEnabled) {
-        return handler();
+        return handler(0);
     }
     const startedAt = node_perf_hooks_1.performance.now();
+    const requestId = ++nextProfileRequestId;
+    pendingProfileRequests++;
+    logProfile({
+        event: 'lsp-request-start',
+        requestId,
+        name,
+        documentUri: documentUri ?? '',
+        timestampMs: startedAt,
+        pendingRequests: pendingProfileRequests
+    });
+    let requestCompleted = false;
+    const watchdog = setTimeout(() => {
+        if (requestCompleted) {
+            return;
+        }
+        const memory = process.memoryUsage();
+        logProfile({
+            event: 'request-watchdog',
+            requestId,
+            stage: name,
+            documentUri: documentUri ?? '',
+            startTimeMs: startedAt,
+            endTimeMs: node_perf_hooks_1.performance.now(),
+            elapsedMs: node_perf_hooks_1.performance.now() - startedAt,
+            pendingRequests: pendingProfileRequests,
+            rssBytes: memory.rss,
+            heapUsedBytes: memory.heapUsed
+        });
+    }, slowProfileThresholdMs);
+    watchdog.unref();
     const logCompletion = (success) => {
+        requestCompleted = true;
+        clearTimeout(watchdog);
+        pendingProfileRequests--;
+        const endTimeMs = node_perf_hooks_1.performance.now();
+        const durationMs = endTimeMs - startedAt;
         logProfile({
             event: 'lsp-request',
+            requestId,
             name,
-            durationMs: node_perf_hooks_1.performance.now() - startedAt,
-            success
+            documentUri: documentUri ?? '',
+            startTimeMs: startedAt,
+            endTimeMs,
+            durationMs,
+            success,
+            pendingRequests: pendingProfileRequests
         });
+        if (durationMs >= slowProfileThresholdMs) {
+            const memory = process.memoryUsage();
+            logProfile({
+                event: 'slow-operation',
+                requestId,
+                stage: name,
+                documentUri: documentUri ?? '',
+                startTimeMs: startedAt,
+                endTimeMs,
+                elapsedMs: durationMs,
+                pendingRequests: pendingProfileRequests,
+                rssBytes: memory.rss,
+                heapUsedBytes: memory.heapUsed
+            });
+        }
     };
     try {
-        const result = handler();
+        const result = handler(requestId);
         if (result instanceof Promise) {
             return result.then(value => {
                 logCompletion(true);
@@ -59,6 +180,22 @@ function profileRequest(name, handler) {
         logCompletion(false);
         throw error;
     }
+}
+function logDocumentSymbolStage(requestId, documentUri, stage, startTimeMs, metrics = {}) {
+    if (!profileEnabled || requestId === 0) {
+        return;
+    }
+    const endTimeMs = node_perf_hooks_1.performance.now();
+    logProfile({
+        event: 'document-symbol-stage',
+        requestId,
+        documentUri,
+        stage,
+        startTimeMs,
+        endTimeMs,
+        durationMs: endTimeMs - startTimeMs,
+        ...metrics
+    });
 }
 connection.onInitialize(() => ({
     capabilities: {
@@ -79,7 +216,11 @@ connection.onDocumentFormatting(params => profileRequest('formatting', () => {
         return [];
     }
     const original = document.getText();
-    const formatted = (0, documentFormatter_1.formatDocument)(original);
+    const analysis = sourceAnalysisCache.get(document.uri);
+    const cachedParse = analysis?.source === original
+        ? analysis.parsed
+        : undefined;
+    const formatted = (0, documentFormatter_1.formatDocument)(original, cachedParse);
     if (formatted === original) {
         return [];
     }
@@ -140,11 +281,64 @@ connection.onHover(params => profileRequest('hover', () => {
         }
     };
 }));
-async function updateDocumentSymbols() {
-    invalidateWorkspaceDocuments();
-    const startedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
-    const workspaceDocuments = await getWorkspaceDocuments();
+function hasOpenDocumentSourceChanges() {
     for (const document of documents.all()) {
+        const source = document.getText();
+        const analysis = sourceAnalysisCache.get(document.uri);
+        if (analysis) {
+            if (analysis.source !== source) {
+                return true;
+            }
+            continue;
+        }
+        const indexedDocument = workspaceDocumentIndex?.get(document.uri)?.document;
+        if (!indexedDocument || indexedDocument.getText() !== source) {
+            return true;
+        }
+    }
+    return false;
+}
+function updateDocumentSymbols(forceWorkspaceRefresh = false) {
+    documentSymbolsUpdatePending = true;
+    workspaceInvalidationPending ||= forceWorkspaceRefresh;
+    if (documentSymbolsUpdatePromise) {
+        return documentSymbolsUpdatePromise;
+    }
+    const updatePromise = (async () => {
+        while (documentSymbolsUpdatePending) {
+            documentSymbolsUpdatePending = false;
+            const forceRefresh = workspaceInvalidationPending;
+            workspaceInvalidationPending = false;
+            if (forceRefresh || hasOpenDocumentSourceChanges()) {
+                invalidateWorkspaceDocuments();
+            }
+            await publishOpenDocumentDiagnostics();
+        }
+    })();
+    documentSymbolsUpdatePromise = updatePromise;
+    void updatePromise.then(() => finishDocumentSymbolsUpdate(updatePromise), () => finishDocumentSymbolsUpdate(updatePromise));
+    return updatePromise;
+}
+function finishDocumentSymbolsUpdate(updatePromise) {
+    if (documentSymbolsUpdatePromise !== updatePromise) {
+        return;
+    }
+    documentSymbolsUpdatePromise = undefined;
+    if (documentSymbolsUpdatePending) {
+        void updateDocumentSymbols();
+    }
+}
+async function publishOpenDocumentDiagnostics() {
+    const startedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
+    const openDocuments = documents.all();
+    logProfile({
+        event: 'document-update-start',
+        timestampMs: startedAt,
+        openDocuments: openDocuments.length,
+        pendingRequests: pendingProfileRequests
+    });
+    const workspaceDocuments = await getWorkspaceDocuments();
+    for (const document of openDocuments) {
         const parsedDocument = workspaceDocuments.get(document.uri)?.parsed;
         if (!parsedDocument) {
             continue;
@@ -155,8 +349,10 @@ async function updateDocumentSymbols() {
     if (profileEnabled) {
         logProfile({
             event: 'document-update',
+            startTimeMs: startedAt,
+            endTimeMs: node_perf_hooks_1.performance.now(),
             durationMs: node_perf_hooks_1.performance.now() - startedAt,
-            openDocuments: documents.all().length,
+            openDocuments: openDocuments.length,
             indexedDocuments: workspaceDocuments.size
         });
     }
@@ -179,34 +375,74 @@ function publishDiagnostics(document, parsedDocument) {
     }));
     connection.sendDiagnostics({ uri: document.uri, diagnostics });
 }
-documents.onDidOpen(() => {
+documents.onDidOpen(({ document }) => {
+    if (profileEnabled) {
+        const source = document.getText();
+        logProfile({
+            event: 'document-lifecycle',
+            action: 'open',
+            documentUri: document.uri,
+            sourceCodeUnits: source.length,
+            sourceBytes: Buffer.byteLength(source, 'utf8')
+        });
+    }
     void updateDocumentSymbols();
 });
-documents.onDidChangeContent(() => {
+documents.onDidChangeContent(({ document }) => {
+    if (profileEnabled) {
+        const source = document.getText();
+        logProfile({
+            event: 'document-lifecycle',
+            action: 'change',
+            documentUri: document.uri,
+            sourceCodeUnits: source.length,
+            sourceBytes: Buffer.byteLength(source, 'utf8')
+        });
+    }
     void updateDocumentSymbols();
 });
-documents.onDidSave(() => {
+documents.onDidSave(({ document }) => {
+    if (profileEnabled) {
+        const source = document.getText();
+        logProfile({
+            event: 'document-lifecycle',
+            action: 'save',
+            documentUri: document.uri,
+            sourceCodeUnits: source.length,
+            sourceBytes: Buffer.byteLength(source, 'utf8')
+        });
+    }
     void updateDocumentSymbols();
 });
 documents.onDidClose(({ document }) => {
+    if (profileEnabled) {
+        const source = document.getText();
+        logProfile({
+            event: 'document-lifecycle',
+            action: 'close',
+            documentUri: document.uri,
+            sourceCodeUnits: source.length,
+            sourceBytes: Buffer.byteLength(source, 'utf8')
+        });
+    }
     parsedDocuments.delete(document.uri);
     connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-    void updateDocumentSymbols();
+    void updateDocumentSymbols(true);
 });
 connection.onDidChangeWatchedFiles(() => {
-    void updateDocumentSymbols();
+    void updateDocumentSymbols(true);
 });
 connection.onInitialized(async () => {
-    invalidateWorkspaceDocuments();
-    const workspaceDocuments = await getWorkspaceDocuments();
-    for (const document of documents.all()) {
-        const parsedDocument = workspaceDocuments.get(document.uri)?.parsed;
-        if (!parsedDocument) {
-            continue;
-        }
-        parsedDocuments.set(document.uri, parsedDocument);
-        publishDiagnostics(document, parsedDocument);
-    }
+    const initializationStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
+    await updateDocumentSymbols(true);
+    logProfile({
+        event: 'workspace-initialization',
+        startTimeMs: initializationStartedAt,
+        endTimeMs: node_perf_hooks_1.performance.now(),
+        durationMs: node_perf_hooks_1.performance.now() - initializationStartedAt,
+        openDocuments: documents.all().length,
+        indexedDocuments: workspaceDocumentIndex?.size ?? 0
+    });
 });
 connection.onDefinition(params => profileRequest('definition', async () => {
     const document = documents.get(params.textDocument.uri);
@@ -222,7 +458,7 @@ connection.onDefinition(params => profileRequest('definition', async () => {
     const documentDirectory = (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri));
     const candidates = [...workspaceDocuments.values()].filter(candidate => (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(candidate.document.uri)) === documentDirectory);
     const offset = document.offsetAt(params.position);
-    const parsedReference = (0, typeParser_1.findParsedReferenceAtOffset)(parsedDocument, offset);
+    const parsedReference = findDocumentReference(parsedDocument, offset);
     if (parsedReference?.kind === 'variable') {
         const isTypePosition = parsedReference.scope !== undefined &&
             parsedDocument.routines
@@ -239,7 +475,7 @@ connection.onDefinition(params => profileRequest('definition', async () => {
                     offset < variable.type.range.end);
             });
         if (parsedReference.scope !== undefined && !isTypePosition) {
-            const declaration = (0, typeParser_1.getParsedReferences)(parsedDocument).find(reference => reference.kind === 'variable' &&
+            const declaration = getDocumentReferences(parsedDocument).find(reference => reference.kind === 'variable' &&
                 reference.name === parsedReference.name &&
                 reference.scope === parsedReference.scope &&
                 reference.declaration);
@@ -284,7 +520,7 @@ connection.onDefinition(params => profileRequest('definition', async () => {
             }
         }
         for (const candidate of candidates) {
-            const declaration = (0, typeParser_1.getParsedReferences)(candidate.parsed).find(reference => reference.kind === 'routine' &&
+            const declaration = getDocumentReferences(candidate.parsed).find(reference => reference.kind === 'routine' &&
                 reference.name === parsedReference.name &&
                 reference.declaration);
             if (declaration) {
@@ -371,12 +607,16 @@ connection.onTypeDefinition(params => profileRequest('type-definition', async ()
     }
     return undefined;
 }));
-connection.onDocumentSymbol(params => profileRequest('document-symbol', async () => {
+connection.onDocumentSymbol(params => profileRequest('document-symbol', async (requestId) => {
+    const documentLookupStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const document = documents.get(params.textDocument.uri);
+    logDocumentSymbolStage(requestId, params.textDocument.uri, 'document-lookup', documentLookupStartedAt, { documentFound: Boolean(document) });
     if (!document) {
         if (profileEnabled) {
             logProfile({
                 event: 'document-symbol-result',
+                requestId,
+                documentUri: params.textDocument.uri,
                 documentFound: false,
                 parsedDocumentFound: false,
                 symbols: 0
@@ -384,26 +624,45 @@ connection.onDocumentSymbol(params => profileRequest('document-symbol', async ()
         }
         return undefined;
     }
+    const documentSource = profileEnabled ? document.getText() : undefined;
+    const parsedLookupStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     let parsedDocument = parsedDocuments.get(document.uri);
+    const parsedCacheHit = Boolean(parsedDocument);
     if (!parsedDocument) {
-        parsedDocument = (await getWorkspaceDocuments()).get(document.uri)?.parsed;
+        parsedDocument = (await getWorkspaceDocuments(requestId, document.uri)).get(document.uri)?.parsed;
         if (parsedDocument) {
             parsedDocuments.set(document.uri, parsedDocument);
         }
     }
+    logDocumentSymbolStage(requestId, document.uri, 'parsed-analysis-and-context-catalog', parsedLookupStartedAt, {
+        parsedCacheHit,
+        parsedDocumentFound: Boolean(parsedDocument),
+        sourceCodeUnits: documentSource?.length ?? 0,
+        sourceBytes: documentSource === undefined
+            ? 0
+            : Buffer.byteLength(documentSource, 'utf8'),
+        declarations: parsedDocument?.declarations.length ?? 0,
+        globalVariables: parsedDocument?.globalVariables.length ?? 0,
+        routines: parsedDocument?.routines.length ?? 0,
+        symbols: parsedDocument?.symbols.entries.length ?? 0
+    });
+    const symbolConstructionStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const symbols = parsedDocument
-        ? createDocumentSymbols(parsedDocument, document)
+        ? createDocumentSymbols(parsedDocument, document, requestId)
         : undefined;
     if (profileEnabled) {
         logProfile({
             event: 'document-symbol-result',
+            requestId,
+            documentUri: document.uri,
             documentFound: true,
             parsedDocumentFound: Boolean(parsedDocument),
             symbols: symbols?.length ?? 0
         });
     }
+    logDocumentSymbolStage(requestId, document.uri, 'handler-return', symbolConstructionStartedAt, { symbols: symbols?.length ?? 0 });
     return symbols;
-}));
+}, params.textDocument.uri));
 connection.onWorkspaceSymbol(params => profileRequest('workspace-symbol', async () => {
     const workspaceDocuments = await getWorkspaceDocuments();
     const query = (0, typeParser_1.normalizeTypeName)(params.query);
@@ -434,7 +693,7 @@ connection.onReferences(params => profileRequest('references', async () => {
     if (!document || !parsedDocument) {
         return undefined;
     }
-    const target = (0, typeParser_1.findParsedReferenceAtOffset)(parsedDocument, document.offsetAt(params.position));
+    const target = findDocumentReference(parsedDocument, document.offsetAt(params.position));
     if (!target) {
         return undefined;
     }
@@ -448,7 +707,7 @@ connection.onReferences(params => profileRequest('references', async () => {
         if (target.scope !== undefined && uri !== document.uri) {
             continue;
         }
-        for (const reference of (0, typeParser_1.getParsedReferences)(candidate.parsed)) {
+        for (const reference of getDocumentReferences(candidate.parsed)) {
             if (reference.kind !== target.kind ||
                 reference.name !== target.name ||
                 reference.container !== target.container ||
@@ -477,7 +736,7 @@ connection.onPrepareRename(params => profileRequest('prepare-rename', () => {
     if (!document || !parsed) {
         return undefined;
     }
-    const reference = (0, typeParser_1.findParsedReferenceAtOffset)(parsed, document.offsetAt(params.position));
+    const reference = findDocumentReference(parsed, document.offsetAt(params.position));
     if (!reference) {
         return undefined;
     }
@@ -498,7 +757,7 @@ connection.onRenameRequest(params => profileRequest('rename', async () => {
     if (!document || !parsed || !newName) {
         return undefined;
     }
-    const target = (0, typeParser_1.findParsedReferenceAtOffset)(parsed, document.offsetAt(params.position));
+    const target = findDocumentReference(parsed, document.offsetAt(params.position));
     if (!target) {
         return undefined;
     }
@@ -512,7 +771,7 @@ connection.onRenameRequest(params => profileRequest('rename', async () => {
         if (target.scope !== undefined && uri !== document.uri) {
             continue;
         }
-        for (const reference of (0, typeParser_1.getParsedReferences)(candidate.parsed)) {
+        for (const reference of getDocumentReferences(candidate.parsed)) {
             if (reference.kind !== target.kind ||
                 reference.name !== target.name ||
                 reference.container !== target.container ||
@@ -533,8 +792,11 @@ connection.onRenameRequest(params => profileRequest('rename', async () => {
     }
     return Object.keys(changes).length > 0 ? { changes } : undefined;
 }));
-function createDocumentSymbols(parsed, document) {
+function createDocumentSymbols(parsed, document, requestId = 0) {
+    const documentUri = document.uri;
+    const cacheLookupStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const cachedSymbols = documentSymbolsCache.get(parsed);
+    logDocumentSymbolStage(requestId, documentUri, 'symbol-cache-lookup', cacheLookupStartedAt, { cacheHit: Boolean(cachedSymbols) });
     if (cachedSymbols) {
         return cachedSymbols;
     }
@@ -543,6 +805,7 @@ function createDocumentSymbols(parsed, document) {
         end: document.positionAt(range.end)
     });
     const fieldSymbol = (field) => {
+        fieldSymbols++;
         if (field.kind === 'byte-array') {
             const name = field.name?.name ?? `${field.count} bytes`;
             const range = toRange(field.name?.range ?? field.range);
@@ -554,22 +817,40 @@ function createDocumentSymbols(parsed, document) {
         }), toRange(field.name.range));
     };
     const fieldChildren = (fields) => (fields ?? []).map(fieldSymbol);
+    const typeConstructionStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
+    let inheritanceDistanceQueries = 0;
+    let fieldSymbols = 0;
     const typeSymbols = parsed.declarations.map(declaration => {
         const detail = declaration.pointedType
             ? `${declaration.baseType.name} para ${declaration.pointedType.name}`
             : declaration.baseType.name;
+        inheritanceDistanceQueries++;
         const kind = parsed.symbols.getBaseTypeDistance(declaration.name.name, 'estrutura') !== undefined
             ? node_1.SymbolKind.Struct
             : node_1.SymbolKind.Class;
         return node_1.DocumentSymbol.create(declaration.name.name, detail, kind, toRange(declaration.range), toRange(declaration.name.range), fieldChildren(declaration.fields));
     });
+    const typeConstructionMs = profileEnabled
+        ? node_perf_hooks_1.performance.now() - typeConstructionStartedAt
+        : 0;
+    const globalVariableConstructionStartedAt = profileEnabled
+        ? node_perf_hooks_1.performance.now()
+        : 0;
     const variableSymbols = parsed.globalVariables.map((declaration) => {
         const detail = declaration.type?.name ??
             declaration.inferredTypeName ??
             declaration.initializer?.kind;
         return node_1.DocumentSymbol.create(declaration.name.name, detail, node_1.SymbolKind.Variable, toRange(declaration.range), toRange(declaration.name.range), fieldChildren(declaration.fields));
     });
+    const globalVariableConstructionMs = profileEnabled
+        ? node_perf_hooks_1.performance.now() - globalVariableConstructionStartedAt
+        : 0;
+    const routineConstructionStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
+    let routineParameters = 0;
+    let routineLocals = 0;
     const routineSymbols = parsed.routines.map((routine) => {
+        routineParameters += routine.parameters.length;
+        routineLocals += routine.localVariables.length;
         const children = [
             ...routine.parameters.map(parameter => node_1.DocumentSymbol.create(parameter.name.name, parameter.type.name, node_1.SymbolKind.Variable, toRange(parameter.name.range), toRange(parameter.name.range))),
             ...routine.localVariables.map(variable => node_1.DocumentSymbol.create(variable.name.name, variable.type.name, node_1.SymbolKind.Variable, toRange(variable.range), toRange(variable.name.range)))
@@ -587,13 +868,36 @@ function createDocumentSymbols(parsed, document) {
         ].filter(Boolean).join(' ');
         return node_1.DocumentSymbol.create(name, detail || undefined, node_1.SymbolKind.Function, range, toRange(routine.name.range), children);
     });
+    const routineConstructionMs = profileEnabled
+        ? node_perf_hooks_1.performance.now() - routineConstructionStartedAt
+        : 0;
+    const sortStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const symbols = [...typeSymbols, ...variableSymbols, ...routineSymbols]
         .sort((first, second) => first.range.start.line - second.range.start.line ||
         first.range.start.character - second.range.start.character);
+    const sortMs = profileEnabled ? node_perf_hooks_1.performance.now() - sortStartedAt : 0;
+    if (profileEnabled) {
+        logDocumentSymbolStage(requestId, documentUri, 'construct-sort-and-cache-symbols', cacheLookupStartedAt, {
+            cacheHit: false,
+            declarations: parsed.declarations.length,
+            globalVariables: parsed.globalVariables.length,
+            routines: parsed.routines.length,
+            fields: fieldSymbols,
+            routineParameters,
+            routineLocals,
+            symbols: symbols.length,
+            inheritanceDistanceQueries,
+            typeConstructionMs,
+            globalVariableConstructionMs,
+            routineConstructionMs,
+            sortMs
+        });
+    }
     documentSymbolsCache.set(parsed, symbols);
     return symbols;
 }
-async function getWorkspaceDocuments() {
+async function getWorkspaceDocuments(requestId = 0, requestDocumentUri = '') {
+    const validationStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const cachedIndex = workspaceDocumentIndex;
     if (cachedIndex) {
         const snapshot = workspaceDirectorySnapshots;
@@ -604,28 +908,31 @@ async function getWorkspaceDocuments() {
                 current.ctimeMs !== stamp.changeTime;
         })).then(changes => changes.some(Boolean));
         if (!changedDirectory && workspaceDocumentIndex === cachedIndex) {
-            if (profileEnabled) {
-                logProfile({
-                    event: 'workspace-cache-hit',
-                    indexedDocuments: cachedIndex.size
-                });
-            }
+            logDocumentSymbolStage(requestId, requestDocumentUri, 'workspace-cache-validation', validationStartedAt, {
+                cacheHit: true,
+                directoriesChecked: directories.length,
+                indexedDocuments: cachedIndex.size
+            });
             return cachedIndex;
         }
         if (workspaceDocumentIndex === cachedIndex) {
             invalidateWorkspaceDocuments();
         }
     }
-    return refreshWorkspaceDocuments();
+    else {
+        logDocumentSymbolStage(requestId, requestDocumentUri, 'workspace-cache-validation', validationStartedAt, { cacheHit: false, directoriesChecked: 0, indexedDocuments: 0 });
+    }
+    return refreshWorkspaceDocuments(requestId, requestDocumentUri);
 }
-async function refreshWorkspaceDocuments() {
+async function refreshWorkspaceDocuments(requestId = 0, requestDocumentUri = '') {
     if (workspaceDocumentIndex) {
         return workspaceDocumentIndex;
     }
     if (workspaceRefreshPromise) {
+        logDocumentSymbolStage(requestId, requestDocumentUri, 'workspace-refresh-shared-promise', profileEnabled ? node_perf_hooks_1.performance.now() : 0, { sharedPromise: true });
         return workspaceRefreshPromise;
     }
-    const refreshPromise = buildWorkspaceDocumentIndex();
+    const refreshPromise = buildWorkspaceDocumentIndex(requestId, requestDocumentUri);
     workspaceRefreshPromise = refreshPromise;
     try {
         return await refreshPromise;
@@ -636,12 +943,13 @@ async function refreshWorkspaceDocuments() {
         }
     }
 }
-async function buildWorkspaceDocumentIndex() {
+async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '') {
     while (true) {
         const revision = workspaceRevision;
         const startedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
         const discoveryStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
         const sourceDocuments = new Map();
+        const sourceByteLengths = new Map();
         const directories = new Set();
         for (const document of documents.all()) {
             const directory = (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri));
@@ -667,9 +975,12 @@ async function buildWorkspaceDocumentIndex() {
                 const filePath = (0, node_path_1.join)(directory, entry.name);
                 const uri = (0, node_url_1.pathToFileURL)(filePath).toString();
                 if (sourceDocuments.has(uri)) {
+                    sourceByteLengths.set(uri, (await (0, promises_1.stat)(filePath)).size);
                     continue;
                 }
-                const content = new TextDecoder('windows-1252').decode(await (0, promises_1.readFile)(filePath));
+                const contentBytes = await (0, promises_1.readFile)(filePath);
+                sourceByteLengths.set(uri, contentBytes.byteLength);
+                const content = new TextDecoder('windows-1252').decode(contentBytes);
                 sourceDocuments.set(uri, {
                     document: vscode_languageserver_textdocument_1.TextDocument.create(uri, 'portugues-puro', 0, content),
                     directory
@@ -680,13 +991,76 @@ async function buildWorkspaceDocumentIndex() {
             ? node_perf_hooks_1.performance.now() - discoveryStartedAt
             : 0;
         const parseTotals = {
+            lexicalMs: 0,
             syntaxMs: 0,
             symbolCatalogMs: 0,
+            dependencyResolutionMs: 0,
             typeResolutionMs: 0,
-            referenceResolutionMs: 0,
-            semanticResolutionMs: 0,
+            globalVariableResolutionMs: 0,
+            routineResolutionMs: 0,
+            tokenCount: 0,
             totalMs: 0
         };
+        const collectParseMetrics = profileEnabled
+            ? (metrics) => {
+                parseTotals.lexicalMs += metrics.lexicalMs;
+                parseTotals.syntaxMs += metrics.syntaxMs;
+                parseTotals.symbolCatalogMs += metrics.symbolCatalogMs;
+                parseTotals.dependencyResolutionMs += metrics.dependencyResolutionMs;
+                parseTotals.typeResolutionMs += metrics.typeResolutionMs;
+                parseTotals.globalVariableResolutionMs += metrics.globalVariableResolutionMs;
+                parseTotals.routineResolutionMs += metrics.routineResolutionMs;
+                parseTotals.tokenCount += metrics.tokenCount;
+                parseTotals.totalMs += metrics.totalMs;
+            }
+            : undefined;
+        const collectDocumentParseMetrics = (uri, source, pass) => profileEnabled
+            ? (metrics) => {
+                collectParseMetrics?.(metrics);
+                const { phases, ...parseMetrics } = metrics;
+                logProfile({
+                    event: 'document-parse',
+                    requestId,
+                    requestDocumentUri,
+                    documentUri: uri,
+                    pass,
+                    ...parseMetrics,
+                    sourceCodeUnits: source.length,
+                    sourceBytes: sourceByteLengths.get(uri) ??
+                        Buffer.byteLength(source, 'utf8')
+                });
+                for (const phase of phases) {
+                    logProfile({
+                        event: 'parse-phase',
+                        requestId,
+                        requestDocumentUri,
+                        documentUri: uri,
+                        pass,
+                        ...phase
+                    });
+                    if (phase.durationMs >= slowProfileThresholdMs) {
+                        logProfile({
+                            event: 'slow-operation',
+                            requestId,
+                            stage: phase.name,
+                            documentUri: uri,
+                            pass,
+                            startTimeMs: phase.startTimeMs,
+                            endTimeMs: phase.endTimeMs,
+                            elapsedMs: phase.durationMs,
+                            statementsVisited: metrics.routineStatementsVisited,
+                            nameMatchSearches: metrics.routineNameMatchSearches,
+                            nameSpanChecks: metrics.routineNameSpanChecks,
+                            nameCandidateChecks: metrics.routineNameCandidateChecks,
+                            heapUsedBeforeBytes: metrics.heapUsedBeforeBytes,
+                            heapUsedAfterBytes: metrics.heapUsedAfterBytes,
+                            rssBeforeBytes: metrics.rssBeforeBytes,
+                            rssAfterBytes: metrics.rssAfterBytes
+                        });
+                    }
+                }
+            }
+            : undefined;
         let sourceCacheHits = 0;
         let sourceChanges = 0;
         const groups = new Map();
@@ -719,6 +1093,7 @@ async function buildWorkspaceDocumentIndex() {
         }
         const result = new Map();
         let baseParseCount = 0;
+        let baseParseCacheHits = 0;
         let contextualParseCount = 0;
         let contextualCacheHits = 0;
         let catalogAssemblyMs = 0;
@@ -740,20 +1115,18 @@ async function buildWorkspaceDocumentIndex() {
                 }
                 continue;
             }
-            baseParseCount += group.length;
-            const baseParses = group.map(entry => ({
-                entry,
-                parsed: (0, typeParser_1.parseTypeDeclarations)(entry.source, undefined, profileEnabled
-                    ? metrics => {
-                        parseTotals.syntaxMs += metrics.syntaxMs;
-                        parseTotals.symbolCatalogMs += metrics.symbolCatalogMs;
-                        parseTotals.typeResolutionMs += metrics.typeResolutionMs;
-                        parseTotals.referenceResolutionMs += metrics.referenceResolutionMs;
-                        parseTotals.semanticResolutionMs += metrics.semanticResolutionMs;
-                        parseTotals.totalMs += metrics.totalMs;
-                    }
-                    : undefined)
-            }));
+            const baseParses = group.map(entry => {
+                let parsed = entry.analysis.baseParsed;
+                if (parsed) {
+                    baseParseCacheHits++;
+                }
+                else {
+                    parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, undefined, collectDocumentParseMetrics(entry.uri, entry.source, 'base'));
+                    entry.analysis.baseParsed = parsed;
+                    baseParseCount++;
+                }
+                return { entry, parsed };
+            });
             // Local declarations are prepended by the parser, so their precedence is unchanged.
             const catalogStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
             const catalog = {
@@ -766,16 +1139,7 @@ async function buildWorkspaceDocumentIndex() {
             }
             for (const { entry } of baseParses) {
                 contextualParseCount++;
-                const parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, catalog, profileEnabled
-                    ? metrics => {
-                        parseTotals.syntaxMs += metrics.syntaxMs;
-                        parseTotals.symbolCatalogMs += metrics.symbolCatalogMs;
-                        parseTotals.typeResolutionMs += metrics.typeResolutionMs;
-                        parseTotals.referenceResolutionMs += metrics.referenceResolutionMs;
-                        parseTotals.semanticResolutionMs += metrics.semanticResolutionMs;
-                        parseTotals.totalMs += metrics.totalMs;
-                    }
-                    : undefined);
+                const parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, catalog, collectDocumentParseMetrics(entry.uri, entry.source, 'contextual'));
                 entry.analysis.parsed = parsed;
                 entry.analysis.catalogKey = catalogKey;
                 result.set(entry.uri, { document: entry.document, parsed });
@@ -784,15 +1148,21 @@ async function buildWorkspaceDocumentIndex() {
         if (profileEnabled) {
             logProfile({
                 event: 'workspace-refresh',
+                requestId,
+                requestDocumentUri,
                 accepted: revision === workspaceRevision,
+                startTimeMs: startedAt,
+                endTimeMs: node_perf_hooks_1.performance.now(),
                 refreshMs: node_perf_hooks_1.performance.now() - startedAt,
                 sourceDiscoveryMs,
                 catalogAssemblyMs,
                 documents: result.size,
                 sourceCodeUnits: [...sourceDocuments.values()].reduce((total, entry) => total + entry.document.getText().length, 0),
+                sourceBytes: [...sourceByteLengths.values()].reduce((total, length) => total + length, 0),
                 sourceChanges,
                 sourceCacheHits,
                 baseParseCount,
+                baseParseCacheHits,
                 contextualParseCount,
                 contextualCacheHits,
                 declarations: [...result.values()].reduce((total, entry) => total + entry.parsed.declarations.length, 0),

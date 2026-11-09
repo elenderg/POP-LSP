@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
+import { tmpdir } from 'node:os';
 import { workspace, ExtensionContext } from 'vscode';
 
 import {
@@ -20,14 +21,22 @@ export function activate(context: ExtensionContext) {
 	const serverModule = context.asAbsolutePath(
 		path.join('server', 'out', 'server.js')
 	);
+	const cpuProfileOptions = process.env.POP_LSP_CPU_PROFILE === '1'
+		? { execArgv: ['--cpu-prof', `--cpu-prof-dir=${tmpdir()}`] }
+		: undefined;
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
 	const serverOptions: ServerOptions = {
-		run: { module: serverModule, transport: TransportKind.ipc },
+		run: {
+			module: serverModule,
+			transport: TransportKind.ipc,
+			...(cpuProfileOptions ? { options: cpuProfileOptions } : {})
+		},
 		debug: {
 			module: serverModule,
 			transport: TransportKind.ipc,
+			...(cpuProfileOptions ? { options: cpuProfileOptions } : {})
 		}
 	};
 

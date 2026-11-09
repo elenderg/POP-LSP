@@ -8,6 +8,14 @@ const vscode = require("vscode");
 const assert = require("assert");
 const promises_1 = require("node:fs/promises");
 const helper_1 = require("./helper");
+function typeName(value) {
+    let suffix = '';
+    do {
+        suffix = String.fromCharCode(97 + value % 26) + suffix;
+        value = Math.floor(value / 26) - 1;
+    } while (value >= 0);
+    return `tipo${suffix}`;
+}
 suite('Português Puro definitions', () => {
     const docUri = (0, helper_1.getDocUri)('definitions/definition.pop');
     // Symbols, navigation, and workspace references.
@@ -477,14 +485,6 @@ suite('Português Puro definitions', () => {
     });
     test('Builds type catalogs for small, medium, and large documents', async () => {
         await (0, helper_1.activate)(docUri);
-        const typeName = (value) => {
-            let suffix = '';
-            do {
-                suffix = String.fromCharCode(97 + value % 26) + suffix;
-                value = Math.floor(value / 26) - 1;
-            } while (value >= 0);
-            return `tipo${suffix}`;
-        };
         for (const size of [20, 1000, 6000]) {
             const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
             const source = Array.from({ length: size }, (_, index) => index === 0
@@ -497,6 +497,19 @@ suite('Português Puro definitions', () => {
             assert.equal(symbols?.[size - 1].children?.length, size > 1 ? 1 : 0);
             assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
         }
+    });
+    test('Resolves long chains of derived types', async () => {
+        await (0, helper_1.activate)(docUri);
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
+        const size = 6000;
+        const source = Array.from({ length: size }, (_, index) => index === 0
+            ? `Um ${typeName(index)} é uma estrutura.`
+            : `Um ${typeName(index)} é um ${typeName(index - 1)}.`).join('\n');
+        await (0, helper_1.setTestContent)(source);
+        await diagnosticsUpdated;
+        const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', docUri);
+        assert.equal(symbols?.length, size);
+        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
     });
     test('Resolves a reference when the cursor is immediately after its final character', async () => {
         await (0, helper_1.activate)(docUri);

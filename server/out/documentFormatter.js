@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.formatDocument = formatDocument;
 const typeParser_1 = require("./typeParser");
 const wrappedExpressionOperators = new Set(['mais', 'menos', 'vezes', 'junto com']);
-function formatDocument(source) {
-    const parsed = (0, typeParser_1.parseTypeDeclarations)(source);
+function formatDocument(source, parsedDocument) {
+    const parsed = parsedDocument ?? (0, typeParser_1.parseTypeDeclarations)(source);
     const masked = maskProtectedText(source);
     const eol = source.includes('\r\n') ? '\r\n' : '\n';
     const edits = [];

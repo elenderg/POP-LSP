@@ -1,5 +1,6 @@
 import {
   GlobalVariableDeclaration,
+  ParsedDocument,
   RoutineExpression,
   RoutineDeclaration,
   SourceRange,
@@ -31,8 +32,11 @@ interface StatementSyntax {
 
 const wrappedExpressionOperators = new Set(['mais', 'menos', 'vezes', 'junto com']);
 
-export function formatDocument(source: string): string {
-  const parsed = parseTypeDeclarations(source);
+export function formatDocument(
+  source: string,
+  parsedDocument?: ParsedDocument
+): string {
+  const parsed = parsedDocument ?? parseTypeDeclarations(source);
   const masked = maskProtectedText(source);
   const eol = source.includes('\r\n') ? '\r\n' : '\n';
   const edits: Edit[] = [];
