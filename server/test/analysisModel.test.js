@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { TextDocument } = require('vscode-languageserver-textdocument');
 const {
+  DeclarationDependencyGraph,
   getDocumentAnalysis,
   getWorkspaceDuplicateDeclarations,
   WorkspaceAnalysisIndex
@@ -238,6 +239,99 @@ test('records region boundaries and reuses unchanged routine checkpoints', () =>
     [...getDocumentAnalysis(fullSeparatorParsed, separatorEdit.length).nodes.values()]
       .map(node => [node.kind, node.range, node.symbolId])
   );
+});
+
+test('marks only lexically and syntactically complete regions as reusable', () => {
+  const source = [
+    'Uma pessoa é uma estrutura.',
+    'O valor é uma pessoa.',
+    'Rotina para que se consulte:',
+    '  Retorne.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  assert.equal(parsed.regions.length, 3);
+  for (const region of parsed.regions) {
+    assert.equal(region.complete, true);
+    assert.match(region.fingerprint, new RegExp(`^${region.kind}:`));
+  }
+
+  const changedSource = source.replace(
+    'Uma pessoa é uma estrutura.',
+    'Uma pessoa é um byte.'
+  );
+  const changed = parseTypeDeclarations(changedSource);
+  assert.notEqual(
+    parsed.regions[0].fingerprint,
+    changed.regions[0].fingerprint
+  );
+  assert.deepEqual(
+    parsed.regions.map(region => region.fingerprint),
+    parseTypeDeclarations(source).regions.map(region => region.fingerprint)
+  );
+
+  const unclosedComment = parseTypeDeclarations(
+    `${source}\n[ comentário aberto`
+  );
+  assert.ok(unclosedComment.regions.every(region => !region.complete));
+
+  const incompleteRoutine = parseTypeDeclarations([
+    'Rotina para que se consulte:',
+    '  Retorne'
+  ].join('\n'));
+  assert.equal(incompleteRoutine.regions[0].complete, false);
+});
+
+test('reuses unchanged declaration syntax and rebases all source ranges', () => {
+  const source = [
+    'Um caractere é um byte.',
+    'Uma pessoa é uma estrutura com um byte denominado idade.',
+    'O usuário é uma pessoa.'
+  ].join('\n');
+  const previous = parseTypeDeclarations(source);
+  const shiftedSource = `\n${source}`;
+  const metrics = {};
+  const shifted = parseTypeDeclarations(
+    shiftedSource,
+    undefined,
+    value => Object.assign(metrics, value),
+    {
+      reusableDeclarationRegions: { source, parsed: previous }
+    }
+  );
+  const fullShifted = parseTypeDeclarations(shiftedSource);
+
+  assert.equal(metrics.reusedDeclarationCount, 3);
+  assert.deepEqual(shifted.declarations, fullShifted.declarations);
+  assert.deepEqual(shifted.globalVariables, fullShifted.globalVariables);
+  assert.deepEqual(shifted.diagnostics, fullShifted.diagnostics);
+  assert.deepEqual(shifted.regions, fullShifted.regions);
+  assert.deepEqual(
+    getParsedReferences(shifted),
+    getParsedReferences(fullShifted)
+  );
+
+  const changedSource = shiftedSource.replace(
+    'denominado idade',
+    'denominado anos'
+  );
+  const changedMetrics = {};
+  const changed = parseTypeDeclarations(
+    changedSource,
+    undefined,
+    value => Object.assign(changedMetrics, value),
+    {
+      reusableDeclarationRegions: {
+        source: shiftedSource,
+        parsed: shifted
+      }
+    }
+  );
+  const fullChanged = parseTypeDeclarations(changedSource);
+  assert.equal(changedMetrics.reusedDeclarationCount, 2);
+  assert.deepEqual(changed.declarations, fullChanged.declarations);
+  assert.deepEqual(changed.globalVariables, fullChanged.globalVariables);
+  assert.deepEqual(changed.diagnostics, fullChanged.diagnostics);
+  assert.deepEqual(changed.regions, fullChanged.regions);
 });
 
 test('projects parser declaration and routine records into typed syntax nodes', () => {
@@ -637,6 +731,56 @@ test('indexes cross-document type, variable, routine, and field dependencies', (
   assert.ok(fieldImpact.has(consumer.uri));
   assert.ok(variableImpact.has(consumer.uri));
   assert.ok(routineImpact.has(consumer.uri));
+
+  const graph = new DeclarationDependencyGraph(documents);
+  const declarationRegions = graph.getRegions(declarations.uri);
+  const consumerRegions = graph.getRegions(consumer.uri);
+  const carTypeRegion = declarationRegions.find(region =>
+    region.region.kind === 'type' &&
+    region.region.name === 'carro'
+  );
+  const consumerTypeRegion = consumerRegions.find(region =>
+    region.region.kind === 'type' &&
+    region.region.name === 'esportivo'
+  );
+  const consumerRoutineRegion = consumerRegions.find(region =>
+    region.region.kind === 'routine'
+  );
+  assert.ok(carTypeRegion);
+  assert.ok(consumerTypeRegion);
+  assert.ok(consumerRoutineRegion);
+  assert.ok(graph.edges.some(edge =>
+    edge.from.id === consumerTypeRegion.id &&
+    edge.to.id === carTypeRegion.id &&
+    edge.reference.kind === 'type'
+  ));
+  const affectedRegions = graph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    [{ kind: 'field', normalizedName: 'cor', normalizedContainer: 'garagem' }]
+  );
+  assert.ok(affectedRegions.has(consumerRoutineRegion.id));
+});
+
+test('keeps routine-local dependency edges within their document', () => {
+  const source = [
+    'Um byte é um byte.',
+    'para que se calcule usando um byte denominado valor:',
+    '  Atribua o valor mais 2 para o valor.'
+  ].join('\n');
+  const { documents } = createWorkspace([
+    { name: 'first.pop', text: source },
+    { name: 'second.pop', text: source }
+  ]);
+  const graph = new DeclarationDependencyGraph(documents);
+  const localVariableEdges = graph.edges.filter(edge =>
+    edge.reference.kind === 'variable' &&
+    edge.reference.name === 'valor'
+  );
+
+  assert.ok(localVariableEdges.length > 0);
+  for (const edge of localVariableEdges) {
+    assert.equal(edge.from.uri, edge.to.uri);
+  }
 });
 
 test('computes conservative impact for added and removed declarations', () => {
@@ -660,6 +804,18 @@ test('computes conservative impact for added and removed declarations', () => {
     [{ kind: 'type', normalizedName: 'conta ausente' }]
   );
   assert.ok(addedTypeImpact.has(unresolved.uri));
+
+  const graph = new DeclarationDependencyGraph(documents);
+  const unresolvedRegion = graph.getRegions(unresolved.uri).find(region =>
+    region.region.kind === 'type'
+  );
+  const addedTypeRegions = graph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    [{ kind: 'type', normalizedName: 'conta ausente' }]
+  );
+  assert.ok(graph.unresolvedReferenceCount > 0);
+  assert.ok(unresolvedRegion);
+  assert.ok(addedTypeRegions.has(unresolvedRegion.id));
 });
 
 test('propagates rename impact through resolved and unresolved dependencies', () => {

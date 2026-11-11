@@ -255,13 +255,18 @@ if it appears in a boolean function header.
 The workspace catalog and parsed references are reused while source text is
 unchanged, regardless of LSP document-version changes. A source change or
 watched `.pop` file update rebuilds context-sensitive results for documents in
-the same directory. True
-declaration-level incremental parsing is not currently safe: parsing and
-resolution scan full source text and routine calls, fields, and types can
-depend on declarations elsewhere in the document or directory. A future
-incremental parser should first expose stable declaration boundaries and an
-explicit dependency graph so edits can invalidate dependent symbols without
-leaving stale diagnostics or navigation results.
+the same directory. Declaration-level incremental parsing is not yet enabled.
+The parser now records fingerprinted declaration/routine regions and
+conservatively marks incomplete or diagnosed regions as non-reusable.
+Unchanged, complete type and global-variable declarations can reuse their
+syntax records after source offsets are rebased. An initial region dependency
+graph records resolved and unresolved references and can calculate candidate
+impact sets. These are foundations only: type, variable, routine, and
+reference resolution still run for the full document, and the graph is not yet
+used to skip semantic work. Edits can affect routines, fields, and
+declarations elsewhere in the document or directory, so affected-region
+invalidation and differential equivalence checks must be integrated before
+incremental semantic resolution is safe.
 
 Routine-call resolution indexes normalized names per parse instead of
 comparing every call against every routine. Name matching normalizes each

@@ -41,6 +41,7 @@ import {
   parseTypeDeclarations
 } from './typeParser';
 import {
+  DeclarationDependencyGraph,
   getWorkspaceDuplicateDeclarations,
   DocumentAnalysisMetrics,
   getDocumentAnalysis,
@@ -103,6 +104,10 @@ const documentSymbolsCache = new WeakMap<ParsedDocument, DocumentSymbol[]>();
 const workspaceAnalysisIndexes = new WeakMap<
   Map<string, { document: TextDocument; parsed: ParsedDocument }>,
   WorkspaceAnalysisIndex
+>();
+const workspaceDeclarationDependencyGraphs = new WeakMap<
+  Map<string, { document: TextDocument; parsed: ParsedDocument }>,
+  DeclarationDependencyGraph
 >();
 const workspaceCompletionItems = new WeakMap<
   Map<string, { document: TextDocument; parsed: ParsedDocument }>,
@@ -186,6 +191,30 @@ function getWorkspaceAnalysisIndex(
     cacheHit: false
   });
   return index;
+}
+
+function getWorkspaceDeclarationDependencyGraph(
+  workspaceDocuments: Map<
+    string,
+    { document: TextDocument; parsed: ParsedDocument }
+  >
+): DeclarationDependencyGraph {
+  const cachedGraph = workspaceDeclarationDependencyGraphs.get(
+    workspaceDocuments
+  );
+  if (cachedGraph) {
+    return cachedGraph;
+  }
+  const graph = new DeclarationDependencyGraph(
+    [...workspaceDocuments.values()].map(({ document, parsed }) => ({
+      uri: document.uri,
+      directory: dirname(fileURLToPath(document.uri)),
+      parsed,
+      analysis: getDocumentAnalysis(parsed, document.getText().length)
+    }))
+  );
+  workspaceDeclarationDependencyGraphs.set(workspaceDocuments, graph);
+  return graph;
 }
 
 interface DeclarationSurfaceEntry {
@@ -535,7 +564,27 @@ function getSelectiveContextReuseUris(
   }
 
   const previousIndex = getWorkspaceAnalysisIndex(previous);
+  const regionGraph = getWorkspaceDeclarationDependencyGraph(previous);
   const affected = new Set<string>();
+  const regionAffected = new Set<string>();
+  const changedRegionIds = [...changedUris].flatMap(uri =>
+    regionGraph.getRegions(uri).map(region => region.id)
+  );
+  const affectedRegionIds = regionGraph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    declarationChanges,
+    changedRegionIds
+  );
+  for (const region of regionGraph.nodes) {
+    if (affectedRegionIds.has(region.id)) {
+      regionAffected.add(region.uri);
+    }
+  }
+  for (const uri of changedUris) {
+    if (currentByUri.has(uri)) {
+      regionAffected.add(uri);
+    }
+  }
   for (const uri of changedUris) {
     if (declarationChanges.length === 0) {
       affected.add(uri);
@@ -549,6 +598,27 @@ function getSelectiveContextReuseUris(
       )) {
       affected.add(affectedUri);
     }
+  }
+  const missingRegionCoverage = [...affected].filter(uri =>
+    currentByUri.has(uri) && !regionAffected.has(uri)
+  );
+  if (missingRegionCoverage.length > 0) {
+    logSelection({
+      reuse: false,
+      reason: 'region-graph-missed-document-dependency',
+      previousDocuments: oldEntries.size,
+      currentDocuments: current.length,
+      changedDocuments: changedUris.size,
+      declarationChanges: declarationChanges.length,
+      affectedDocuments: affected.size,
+      affectedRegions: affectedRegionIds.size,
+      regionAffectedDocuments: regionAffected.size,
+      missingRegionCoverage: missingRegionCoverage.length
+    });
+    return undefined;
+  }
+  for (const uri of regionAffected) {
+    affected.add(uri);
   }
   const reusableUris = new Set(
     current
@@ -566,6 +636,8 @@ function getSelectiveContextReuseUris(
     changedDocuments: changedUris.size,
     declarationChanges: declarationChanges.length,
     affectedDocuments: affected.size,
+    affectedRegions: affectedRegionIds.size,
+    regionAffectedDocuments: regionAffected.size,
     reusableDocuments: reusableUris.size
   });
   return reusableUris;
@@ -2114,6 +2186,7 @@ async function buildWorkspaceDocumentIndex(
       typeResolutionMs: 0,
       globalVariableResolutionMs: 0,
       routineResolutionMs: 0,
+      reusedDeclarationCount: 0,
       tokenCount: 0,
       totalMs: 0
     };
@@ -2126,6 +2199,7 @@ async function buildWorkspaceDocumentIndex(
         parseTotals.typeResolutionMs += metrics.typeResolutionMs;
         parseTotals.globalVariableResolutionMs += metrics.globalVariableResolutionMs;
         parseTotals.routineResolutionMs += metrics.routineResolutionMs;
+        parseTotals.reusedDeclarationCount += metrics.reusedDeclarationCount;
         parseTotals.tokenCount += metrics.tokenCount;
         parseTotals.totalMs += metrics.totalMs;
       }
@@ -2252,10 +2326,23 @@ async function buildWorkspaceDocumentIndex(
         if (parsed) {
           baseParseCacheHits++;
         } else {
+          const previousIndex = previousWorkspaceDocumentIndex;
+          const previousDocument = previousIndex?.get(entry.uri);
+          const previousSource = previousIndex
+            ? workspaceDocumentSources.get(previousIndex)?.get(entry.uri)
+            : undefined;
           parsed = parseTypeDeclarations(
             entry.source,
             undefined,
-            collectDocumentParseMetrics(entry.uri, entry.source, 'base')
+            collectDocumentParseMetrics(entry.uri, entry.source, 'base'),
+            previousDocument && previousSource !== undefined
+              ? {
+                reusableDeclarationRegions: {
+                  source: previousSource,
+                  parsed: previousDocument.parsed
+                }
+              }
+              : undefined
           );
           entry.analysis.baseParsed = parsed;
           baseParseCount++;

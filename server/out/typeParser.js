@@ -602,12 +602,15 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
     const diagnostics = [];
     const lexicalStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
     const commentRanges = [];
-    const parserSource = maskComments(source, diagnostics, commentRanges);
+    const maskedSource = maskComments(source, diagnostics, commentRanges);
+    const parserSource = maskedSource.source;
     const lexicalFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
     const syntaxStartedAt = lexicalFinishedAt;
     const declarations = [];
     const globalVariables = [];
     const routines = parseRoutineDeclarations(parserSource, diagnostics);
+    const reusableDeclarations = createReusableDeclarationIndex(options.reusableDeclarationRegions);
+    let reusedDeclarationCount = 0;
     let segmentStart = 0;
     let periodIndex = findDeclarationPeriod(parserSource, segmentStart);
     while (periodIndex !== -1) {
@@ -616,15 +619,31 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
             ? undefined
             : readWord(parserSource, declarationStart, periodIndex);
         if (article && definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
-            const variable = parseGlobalVariableDeclaration(parserSource, declarationStart, periodIndex, diagnostics);
+            const currentRange = {
+                start: declarationStart,
+                end: periodIndex + 1
+            };
+            const reusable = takeReusableDeclaration(reusableDeclarations.globalVariables, 'global-variable', source, currentRange);
+            const variable = reusable
+                ? rebaseParsedRegion(reusable.declaration, currentRange.start - reusable.region.range.start)
+                : parseGlobalVariableDeclaration(parserSource, declarationStart, periodIndex, diagnostics);
             if (variable) {
                 globalVariables.push(variable);
+                reusedDeclarationCount += Number(Boolean(reusable));
             }
         }
         else if (article) {
-            const declaration = parseDeclaration(parserSource, declarationStart, periodIndex, diagnostics);
+            const currentRange = {
+                start: declarationStart,
+                end: periodIndex + 1
+            };
+            const reusable = takeReusableDeclaration(reusableDeclarations.types, 'type', source, currentRange);
+            const declaration = reusable
+                ? rebaseParsedRegion(reusable.declaration, currentRange.start - reusable.region.range.start)
+                : parseDeclaration(parserSource, declarationStart, periodIndex, diagnostics);
             if (declaration) {
                 declarations.push(declaration);
+                reusedDeclarationCount += Number(Boolean(reusable));
             }
         }
         segmentStart = periodIndex + 1;
@@ -829,6 +848,7 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
             declarations: declarations.length,
             globalVariables: globalVariables.length,
             routines: routines.length,
+            reusedDeclarationCount,
             reusedRoutineCount: reusedRoutines.size,
             symbols: symbols.entries.length +
                 globalVariableSymbols.entries.length +
@@ -840,7 +860,7 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
         declarations,
         globalVariables,
         routines,
-        regions: createParserRegions(declarations, globalVariables, routines),
+        regions: createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, maskedSource.complete),
         commentRanges,
         symbols,
         globalVariableSymbols,
@@ -1019,7 +1039,7 @@ function reuseRoutineRegions(source, routines, previous) {
     }
     return reused;
 }
-function createParserRegions(declarations, globalVariables, routines) {
+function createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, lexicallyComplete) {
     const regions = [
         ...declarations.map(declaration => ({
             kind: 'type',
@@ -1045,8 +1065,137 @@ function createParserRegions(declarations, globalVariables, routines) {
             bodyRange: { ...routine.bodyRange }
         }))
     ];
-    return regions.sort((first, second) => first.range.start - second.range.start ||
+    regions.sort((first, second) => first.range.start - second.range.start ||
         first.range.end - second.range.end);
+    const sortedDiagnostics = [...diagnostics].sort((first, second) => first.range.start - second.range.start ||
+        first.range.end - second.range.end);
+    let diagnosticIndex = 0;
+    return regions.map(region => {
+        while (diagnosticIndex < sortedDiagnostics.length &&
+            sortedDiagnostics[diagnosticIndex].range.end <= region.range.start) {
+            diagnosticIndex++;
+        }
+        const hasDiagnostic = diagnosticIndex < sortedDiagnostics.length &&
+            sortedDiagnostics[diagnosticIndex].range.start < region.range.end;
+        const text = source.slice(region.range.start, region.range.end);
+        const hasCompleteTerminatedBody = region.kind !== 'routine' ||
+            hasCompleteRoutineBody(parserSource, region.bodyRange);
+        return {
+            ...region,
+            fingerprint: fingerprintRegion(region.kind, region.name, text),
+            complete: lexicallyComplete &&
+                !hasDiagnostic &&
+                hasCompleteTerminatedBody
+        };
+    });
+}
+function createReusableDeclarationIndex(previous) {
+    const types = new Map();
+    const globalVariables = new Map();
+    if (!previous) {
+        return { types, globalVariables };
+    }
+    const declarationsByRange = new Map();
+    for (const declaration of previous.parsed.declarations) {
+        declarationsByRange.set(`${declaration.range.start}:${declaration.range.end}`, declaration);
+    }
+    const variablesByRange = new Map();
+    for (const declaration of previous.parsed.globalVariables) {
+        variablesByRange.set(`${declaration.range.start}:${declaration.range.end}`, declaration);
+    }
+    for (const region of previous.parsed.regions) {
+        if (!region.complete || region.kind === 'routine') {
+            continue;
+        }
+        const key = fingerprintRegion(region.kind, '', previous.source.slice(region.range.start, region.range.end));
+        if (region.kind === 'type') {
+            const declaration = declarationsByRange.get(`${region.range.start}:${region.range.end}`);
+            if (declaration) {
+                const candidates = types.get(key) ?? [];
+                candidates.push({ region, declaration, source: previous.source });
+                types.set(key, candidates);
+            }
+        }
+        else {
+            const declaration = variablesByRange.get(`${region.range.start}:${region.range.end}`);
+            if (declaration) {
+                const candidates = globalVariables.get(key) ?? [];
+                candidates.push({ region, declaration, source: previous.source });
+                globalVariables.set(key, candidates);
+            }
+        }
+    }
+    return { types, globalVariables };
+}
+function takeReusableDeclaration(candidatesByFingerprint, kind, source, range) {
+    const text = source.slice(range.start, range.end);
+    const key = fingerprintRegion(kind, '', text);
+    const candidates = candidatesByFingerprint.get(key);
+    while (candidates?.length) {
+        const candidate = candidates.shift();
+        if (candidate.region.kind === kind &&
+            candidate.region.complete &&
+            candidate.region.fingerprint.length > 0 &&
+            candidate.source.slice(candidate.region.range.start, candidate.region.range.end) === text) {
+            return candidate;
+        }
+    }
+    return undefined;
+}
+function rebaseParsedRegion(value, delta) {
+    const clone = (current, visited) => {
+        if (current === null || typeof current !== 'object') {
+            return current;
+        }
+        const existing = visited.get(current);
+        if (existing) {
+            return existing;
+        }
+        if (Array.isArray(current)) {
+            const result = [];
+            visited.set(current, result);
+            for (const item of current) {
+                result.push(clone(item, visited));
+            }
+            return result;
+        }
+        const sourceObject = current;
+        const result = {};
+        visited.set(current, result);
+        for (const [property, child] of Object.entries(sourceObject)) {
+            if ((property === 'start' || property === 'end') &&
+                typeof child === 'number' &&
+                typeof sourceObject.start === 'number' &&
+                typeof sourceObject.end === 'number') {
+                result[property] = child + delta;
+            }
+            else {
+                result[property] = clone(child, visited);
+            }
+        }
+        return result;
+    };
+    return clone(value, new Map());
+}
+function fingerprintRegion(kind, name, source) {
+    let hash = 2166136261;
+    for (let index = 0; index < source.length; index++) {
+        hash ^= source.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return `${kind}:${name}:${source.length}:${(hash >>> 0).toString(16)}`;
+}
+function hasCompleteRoutineBody(source, bodyRange) {
+    let segmentStart = bodyRange.start;
+    let periodIndex = findDeclarationPeriod(source, segmentStart);
+    if (periodIndex === -1 || periodIndex >= bodyRange.end) {
+        return false;
+    }
+    while (periodIndex !== -1 && periodIndex < bodyRange.end) {
+        segmentStart = periodIndex + 1;
+        periodIndex = findDeclarationPeriod(source, segmentStart);
+    }
+    return trimRange(source, segmentStart, bodyRange.end).start === bodyRange.end;
 }
 function resolveRoutineCalls(source, routines, globalVariables, symbols, diagnostics, routineCandidates = routines) {
     const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
@@ -4734,19 +4883,28 @@ function resolveComputedFields(routines, symbols, diagnostics) {
     }
 }
 function maskComments(source, diagnostics, commentRanges) {
-    const characters = new Uint16Array(source.length);
-    for (let index = 0; index < source.length; index++) {
-        characters[index] = source.charCodeAt(index);
-    }
+    let characters;
+    const ensureCharacters = () => {
+        if (!characters) {
+            characters = new Uint16Array(source.length);
+            for (let index = 0; index < source.length; index++) {
+                characters[index] = source.charCodeAt(index);
+            }
+        }
+        return characters;
+    };
     let inString = false;
     let inBlockComment = false;
     let blockCommentStart = -1;
-    for (let index = 0; index < characters.length; index++) {
+    let parenthesisDepth = 0;
+    let balancedParentheses = true;
+    for (let index = 0; index < source.length; index++) {
         const character = source[index];
         const nextCharacter = source[index + 1];
         if (inBlockComment) {
+            const maskedCharacters = ensureCharacters();
             if (character === ']') {
-                characters[index] = 32;
+                maskedCharacters[index] = 32;
                 inBlockComment = false;
                 commentRanges.push({ start: blockCommentStart, end: index + 1 });
                 blockCommentStart = -1;
@@ -4757,11 +4915,11 @@ function maskComments(source, diagnostics, commentRanges) {
                     range: { start: index, end: index + 1 }
                 });
                 if (character !== '\n' && character !== '\r') {
-                    characters[index] = 32;
+                    maskedCharacters[index] = 32;
                 }
             }
             else {
-                characters[index] = 32;
+                maskedCharacters[index] = 32;
             }
             continue;
         }
@@ -4780,15 +4938,16 @@ function maskComments(source, diagnostics, commentRanges) {
             continue;
         }
         if (character === '[') {
-            characters[index] = 32;
+            ensureCharacters()[index] = 32;
             inBlockComment = true;
             blockCommentStart = index;
             continue;
         }
         if (character === '\\') {
-            characters[index] = 32;
+            const maskedCharacters = ensureCharacters();
+            maskedCharacters[index] = 32;
             const commentStart = index;
-            for (; index < characters.length; index++) {
+            for (; index < source.length; index++) {
                 const commentCharacter = source[index];
                 if (commentCharacter === '\n' || commentCharacter === '\r') {
                     break;
@@ -4799,26 +4958,50 @@ function maskComments(source, diagnostics, commentRanges) {
                         range: { start: index, end: index + 1 }
                     });
                 }
-                characters[index] = 32;
+                maskedCharacters[index] = 32;
             }
             commentRanges.push({
                 start: commentStart,
-                end: index < characters.length ? index : characters.length
+                end: index < source.length ? index : source.length
             });
+            continue;
+        }
+        if (character === '(') {
+            parenthesisDepth++;
+        }
+        else if (character === ')') {
+            if (parenthesisDepth === 0) {
+                balancedParentheses = false;
+            }
+            else {
+                parenthesisDepth--;
+            }
         }
     }
     if (blockCommentStart !== -1) {
         commentRanges.push({
             start: blockCommentStart,
-            end: characters.length
+            end: source.length
         });
+    }
+    const maskedCharacters = characters;
+    if (!maskedCharacters) {
+        return {
+            source,
+            complete: !inString && !inBlockComment &&
+                parenthesisDepth === 0 && balancedParentheses
+        };
     }
     const chunks = [];
     const chunkSize = 8192;
-    for (let start = 0; start < characters.length; start += chunkSize) {
-        chunks.push(String.fromCharCode(...characters.subarray(start, Math.min(start + chunkSize, characters.length))));
+    for (let start = 0; start < maskedCharacters.length; start += chunkSize) {
+        chunks.push(String.fromCharCode(...maskedCharacters.subarray(start, Math.min(start + chunkSize, maskedCharacters.length))));
     }
-    return chunks.join('');
+    return {
+        source: chunks.join(''),
+        complete: !inString && !inBlockComment &&
+            parenthesisDepth === 0 && balancedParentheses
+    };
 }
 function parseGlobalVariableDeclaration(source, segmentStart, periodIndex, diagnostics) {
     let contentStart = segmentStart;

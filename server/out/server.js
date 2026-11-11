@@ -39,6 +39,7 @@ let workspaceRevision = 0;
 let workspaceDirectorySnapshots = new Map();
 const documentSymbolsCache = new WeakMap();
 const workspaceAnalysisIndexes = new WeakMap();
+const workspaceDeclarationDependencyGraphs = new WeakMap();
 const workspaceCompletionItems = new WeakMap();
 let documentSymbolsUpdatePromise;
 let documentSymbolsUpdatePending = false;
@@ -91,6 +92,20 @@ function getWorkspaceAnalysisIndex(workspaceDocuments, requestId = 0, requestDoc
         cacheHit: false
     });
     return index;
+}
+function getWorkspaceDeclarationDependencyGraph(workspaceDocuments) {
+    const cachedGraph = workspaceDeclarationDependencyGraphs.get(workspaceDocuments);
+    if (cachedGraph) {
+        return cachedGraph;
+    }
+    const graph = new analysisModel_1.DeclarationDependencyGraph([...workspaceDocuments.values()].map(({ document, parsed }) => ({
+        uri: document.uri,
+        directory: (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri)),
+        parsed,
+        analysis: (0, analysisModel_1.getDocumentAnalysis)(parsed, document.getText().length)
+    })));
+    workspaceDeclarationDependencyGraphs.set(workspaceDocuments, graph);
+    return graph;
 }
 function normalizeDeclarationText(source, range, commentRanges) {
     const comments = commentRanges.filter(comment => comment.start < range.end && comment.end > range.start);
@@ -336,7 +351,16 @@ function getSelectiveContextReuseUris(directory, current, previous, previousSour
         return undefined;
     }
     const previousIndex = getWorkspaceAnalysisIndex(previous);
+    const regionGraph = getWorkspaceDeclarationDependencyGraph(previous);
     const affected = new Set();
+    const regionAffected = new Set();
+    const changedRegionIds = [...changedUris].flatMap(uri => regionGraph.getRegions(uri).map(region => region.id));
+    const affectedRegionIds = regionGraph.getAffectedRegionsForDeclarationChanges(directory, declarationChanges, changedRegionIds);
+    for (const region of regionGraph.nodes) {
+        if (affectedRegionIds.has(region.id)) {
+            regionAffected.add(region.uri);
+        }
+    }
     for (const uri of changedUris) {
         if (declarationChanges.length === 0) {
             affected.add(uri);
@@ -345,6 +369,25 @@ function getSelectiveContextReuseUris(directory, current, previous, previousSour
         for (const affectedUri of previousIndex.getAffectedDocumentsForDeclarationChanges(uri, directory, declarationChanges)) {
             affected.add(affectedUri);
         }
+    }
+    const missingRegionCoverage = [...affected].filter(uri => currentByUri.has(uri) && !regionAffected.has(uri));
+    if (missingRegionCoverage.length > 0) {
+        logSelection({
+            reuse: false,
+            reason: 'region-graph-missed-document-dependency',
+            previousDocuments: oldEntries.size,
+            currentDocuments: current.length,
+            changedDocuments: changedUris.size,
+            declarationChanges: declarationChanges.length,
+            affectedDocuments: affected.size,
+            affectedRegions: affectedRegionIds.size,
+            regionAffectedDocuments: regionAffected.size,
+            missingRegionCoverage: missingRegionCoverage.length
+        });
+        return undefined;
+    }
+    for (const uri of regionAffected) {
+        affected.add(uri);
     }
     const reusableUris = new Set(current
         .filter(entry => !affected.has(entry.uri) &&
@@ -358,6 +401,8 @@ function getSelectiveContextReuseUris(directory, current, previous, previousSour
         changedDocuments: changedUris.size,
         declarationChanges: declarationChanges.length,
         affectedDocuments: affected.size,
+        affectedRegions: affectedRegionIds.size,
+        regionAffectedDocuments: regionAffected.size,
         reusableDocuments: reusableUris.size
     });
     return reusableUris;
@@ -1510,6 +1555,7 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
             typeResolutionMs: 0,
             globalVariableResolutionMs: 0,
             routineResolutionMs: 0,
+            reusedDeclarationCount: 0,
             tokenCount: 0,
             totalMs: 0
         };
@@ -1522,6 +1568,7 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                 parseTotals.typeResolutionMs += metrics.typeResolutionMs;
                 parseTotals.globalVariableResolutionMs += metrics.globalVariableResolutionMs;
                 parseTotals.routineResolutionMs += metrics.routineResolutionMs;
+                parseTotals.reusedDeclarationCount += metrics.reusedDeclarationCount;
                 parseTotals.tokenCount += metrics.tokenCount;
                 parseTotals.totalMs += metrics.totalMs;
             }
@@ -1634,7 +1681,19 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                     baseParseCacheHits++;
                 }
                 else {
-                    parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, undefined, collectDocumentParseMetrics(entry.uri, entry.source, 'base'));
+                    const previousIndex = previousWorkspaceDocumentIndex;
+                    const previousDocument = previousIndex?.get(entry.uri);
+                    const previousSource = previousIndex
+                        ? workspaceDocumentSources.get(previousIndex)?.get(entry.uri)
+                        : undefined;
+                    parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, undefined, collectDocumentParseMetrics(entry.uri, entry.source, 'base'), previousDocument && previousSource !== undefined
+                        ? {
+                            reusableDeclarationRegions: {
+                                source: previousSource,
+                                parsed: previousDocument.parsed
+                            }
+                        }
+                        : undefined);
                     entry.analysis.baseParsed = parsed;
                     baseParseCount++;
                 }

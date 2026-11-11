@@ -25,6 +25,7 @@ import {
   RoutineReturnStatement,
   RoutineSimpleInstruction,
   RoutineVariableAccess,
+  ParserRegion,
   SourceRange,
   TypeDeclaration,
   TypeField,
@@ -231,6 +232,226 @@ export interface WorkspaceDuplicateDeclaration {
   kind: 'type' | 'variable' | 'routine' | 'field';
   name: string;
   range: SourceRange;
+}
+
+export interface DeclarationRegionNode {
+  id: string;
+  uri: string;
+  directory: string;
+  region: ParserRegion;
+}
+
+export interface DeclarationDependencyEdge {
+  from: DeclarationRegionNode;
+  to: DeclarationRegionNode;
+  reference: ParsedReference;
+}
+
+export class DeclarationDependencyGraph {
+  readonly nodes: readonly DeclarationRegionNode[];
+  readonly edges: readonly DeclarationDependencyEdge[];
+  readonly unresolvedReferenceCount: number;
+  private readonly regionsByUri = new Map<string, DeclarationRegionNode[]>();
+  private readonly potentialDependentsByDirectoryAndName = new Map<
+    string,
+    Map<string, Set<string>>
+  >();
+  private readonly dependentsByRegion = new Map<string, Set<string>>();
+
+  constructor(documents: Iterable<{
+    uri: string;
+    directory: string;
+    parsed: ParsedDocument;
+    analysis?: DocumentAnalysis;
+  }>) {
+    const workspaceDocuments = [...documents];
+    const nodes: DeclarationRegionNode[] = [];
+    const declarationsBySymbol = new Map<string, DeclarationRegionNode[]>();
+    const declarationsByReference = new Map<string, DeclarationRegionNode[]>();
+    const pendingReferences: {
+      node: DeclarationRegionNode;
+      reference: ParsedReference;
+    }[] = [];
+
+    for (const { uri, directory, parsed, analysis } of workspaceDocuments) {
+      const occurrenceByFingerprint = new Map<string, number>();
+      const documentNodes = parsed.regions.map(region => {
+        const occurrence = occurrenceByFingerprint.get(region.fingerprint) ?? 0;
+        occurrenceByFingerprint.set(region.fingerprint, occurrence + 1);
+        const node = {
+          id: `${uri}\u0000${region.fingerprint}\u0000${occurrence}`,
+          uri,
+          directory,
+          region
+        };
+        nodes.push(node);
+        return node;
+      });
+      this.regionsByUri.set(uri, documentNodes);
+
+      const references = (analysis ?? getDocumentAnalysis(parsed)).references;
+      for (const reference of references) {
+        const owner = findDeclarationRegion(documentNodes, reference.range);
+        if (!owner) {
+          continue;
+        }
+        if (reference.declaration) {
+          const key = declarationRegionReferenceKey(uri, reference);
+          addDeclarationRegion(
+            declarationsByReference,
+            key,
+            owner
+          );
+          if (reference.symbolId) {
+            addDeclarationRegion(
+              declarationsBySymbol,
+              key,
+              owner
+            );
+          }
+        } else {
+          pendingReferences.push({ node: owner, reference });
+        }
+      }
+    }
+
+    const edges: DeclarationDependencyEdge[] = [];
+    let unresolvedReferenceCount = 0;
+    for (const { node, reference } of pendingReferences) {
+      const targets = reference.symbolId
+        ? declarationsBySymbol.get(
+          declarationRegionReferenceKey(node.uri, reference)
+        ) ?? []
+        : declarationsByReference.get(
+          declarationRegionReferenceKey(node.uri, reference)
+        ) ?? [];
+      if (targets.length === 0) {
+        unresolvedReferenceCount++;
+      }
+      for (const target of targets) {
+        edges.push({ from: node, to: target, reference });
+        const dependents = this.dependentsByRegion.get(target.id) ?? new Set();
+        dependents.add(node.id);
+        this.dependentsByRegion.set(target.id, dependents);
+      }
+      const nameKey = workspaceNameKey(
+        reference.kind,
+        reference.name,
+        reference.container
+      );
+      let byName = this.potentialDependentsByDirectoryAndName.get(
+        node.directory
+      );
+      if (!byName) {
+        byName = new Map();
+        this.potentialDependentsByDirectoryAndName.set(
+          node.directory,
+          byName
+        );
+      }
+      const dependents = byName.get(nameKey) ?? new Set();
+      dependents.add(node.id);
+      byName.set(nameKey, dependents);
+      if (reference.container !== undefined) {
+        const unqualifiedKey = workspaceNameKey(
+          reference.kind,
+          reference.name
+        );
+        const unqualifiedDependents = byName.get(unqualifiedKey) ?? new Set();
+        unqualifiedDependents.add(node.id);
+        byName.set(unqualifiedKey, unqualifiedDependents);
+      }
+    }
+
+    this.nodes = nodes;
+    this.edges = edges;
+    this.unresolvedReferenceCount = unresolvedReferenceCount;
+  }
+
+  getRegions(uri: string): readonly DeclarationRegionNode[] {
+    return this.regionsByUri.get(uri) ?? [];
+  }
+
+  getAffectedRegionsForDeclarationChanges(
+    directory: string,
+    changes: readonly WorkspaceDeclarationChange[],
+    changedRegionIds: Iterable<string> = []
+  ): ReadonlySet<string> {
+    const affected = new Set(changedRegionIds);
+    const pending = [...affected];
+    for (const change of changes) {
+      const byName = this.potentialDependentsByDirectoryAndName.get(directory);
+      const keys = [
+        workspaceNameKey(
+          change.kind,
+          change.normalizedName,
+          change.normalizedContainer
+        )
+      ];
+      if (change.normalizedContainer !== undefined) {
+        keys.push(workspaceNameKey(change.kind, change.normalizedName));
+      }
+      for (const key of keys) {
+        for (const dependent of byName?.get(key) ?? []) {
+          if (!affected.has(dependent)) {
+            affected.add(dependent);
+            pending.push(dependent);
+          }
+        }
+      }
+    }
+
+    while (pending.length > 0) {
+      const current = pending.pop()!;
+      for (const dependent of this.dependentsByRegion.get(current) ?? []) {
+        if (!affected.has(dependent)) {
+          affected.add(dependent);
+          pending.push(dependent);
+        }
+      }
+    }
+    return affected;
+  }
+}
+
+function addDeclarationRegion(
+  declarations: Map<string, DeclarationRegionNode[]>,
+  key: string,
+  region: DeclarationRegionNode
+): void {
+  const regions = declarations.get(key) ?? [];
+  if (!regions.includes(region)) {
+    regions.push(region);
+    declarations.set(key, regions);
+  }
+}
+
+function declarationRegionReferenceKey(
+  uri: string,
+  reference: ParsedReference
+): string {
+  const key = referenceKey(reference);
+  return reference.scope === undefined ? key : `${uri}\u0000${key}`;
+}
+
+function findDeclarationRegion(
+  regions: readonly DeclarationRegionNode[],
+  range: SourceRange
+): DeclarationRegionNode | undefined {
+  let low = 0;
+  let high = regions.length - 1;
+  while (low <= high) {
+    const middle = (low + high) >>> 1;
+    const region = regions[middle].region.range;
+    if (range.start < region.start) {
+      high = middle - 1;
+    } else if (range.start >= region.end) {
+      low = middle + 1;
+    } else {
+      return range.end <= region.end ? regions[middle] : undefined;
+    }
+  }
+  return undefined;
 }
 
 export function getWorkspaceDuplicateDeclarations(

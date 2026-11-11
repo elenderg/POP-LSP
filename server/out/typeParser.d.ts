@@ -306,6 +306,8 @@ export interface ParserRegion {
     range: SourceRange;
     headerRange?: SourceRange;
     bodyRange?: SourceRange;
+    fingerprint: string;
+    complete: boolean;
 }
 export interface ParserSymbolCatalog {
     declarations: TypeDeclaration[];
@@ -314,6 +316,10 @@ export interface ParserSymbolCatalog {
 }
 export interface ParseOptions {
     resolveRoutineCalls?: boolean;
+    reusableDeclarationRegions?: {
+        source: string;
+        parsed: ParsedDocument;
+    };
     reusableRoutineRegions?: {
         source: string;
         routines: readonly RoutineDeclaration[];
@@ -355,6 +361,7 @@ export interface ParsePerformanceMetrics {
     declarations: number;
     globalVariables: number;
     routines: number;
+    reusedDeclarationCount: number;
     reusedRoutineCount: number;
     symbols: number;
 }

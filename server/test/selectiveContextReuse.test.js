@@ -362,6 +362,8 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
     name: 'routine-checkpoint-test'
   };
   const initialSource = [
+    'Uma pessoa é uma estrutura.',
+    'O usuário é uma pessoa.',
     'Rotina para que se primeira:',
     '  Retorne.',
     'Rotina para que se segunda:',
@@ -436,6 +438,16 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       startIndex
     );
     assert.equal(contextualParse.reusedRoutineCount, 1);
+    const baseParse = await waitForEvent(
+      client.events,
+      event => event.event === 'document-parse' &&
+        event.pass === 'base' &&
+        event.documentUri === routineUri &&
+        event.sourceCodeUnits === changedSource.length,
+      'the edited document base parse',
+      startIndex
+    );
+    assert.equal(baseParse.reusedDeclarationCount, 2);
     const refresh = await waitForEvent(
       client.events,
       event => event.event === 'workspace-refresh' &&
@@ -449,7 +461,7 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       textDocument: { uri: routineUri }
     });
     assert.equal(symbols.error, undefined);
-    assert.equal(symbols.result.length, 2);
+    assert.equal(symbols.result.length, 4);
 
     const changedHeaderSource = changedSource.replace(
       'Rotina para que se segunda:',

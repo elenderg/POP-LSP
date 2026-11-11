@@ -1,4 +1,4 @@
-import { GlobalVariableDeclaration, GlobalVariableLiteral, ParsedDocument, ParsedReference, ParserDiagnostic, RoutineAssignment, RoutineCall, RoutineConditionalBlock, RoutineComputedFieldAccess, RoutineDeclaration, RoutineExpression, RoutineFieldAccess, RoutineLocalVariable, RoutineListSpecialFieldAccess, RoutineLoopInstruction, RoutineLoopBlock, RoutineMemoryAllocation, RoutineMemoryDeallocation, RoutineOutput, RoutineParameter, RoutineProcess, PreservedRoutineParameter, RoutineReturnStatement, RoutineSimpleInstruction, RoutineVariableAccess, SourceRange, TypeDeclaration, TypeField } from './typeParser';
+import { GlobalVariableDeclaration, GlobalVariableLiteral, ParsedDocument, ParsedReference, ParserDiagnostic, RoutineAssignment, RoutineCall, RoutineConditionalBlock, RoutineComputedFieldAccess, RoutineDeclaration, RoutineExpression, RoutineFieldAccess, RoutineLocalVariable, RoutineListSpecialFieldAccess, RoutineLoopInstruction, RoutineLoopBlock, RoutineMemoryAllocation, RoutineMemoryDeallocation, RoutineOutput, RoutineParameter, RoutineProcess, PreservedRoutineParameter, RoutineReturnStatement, RoutineSimpleInstruction, RoutineVariableAccess, ParserRegion, SourceRange, TypeDeclaration, TypeField } from './typeParser';
 export type SyntaxNodeKind = 'document' | 'type-declaration' | 'list-declaration' | 'global-variable-declaration' | 'global-initializer' | 'field-declaration' | 'base-type-reference' | 'pointer-target' | 'scalar-factor' | 'routine-declaration' | 'alternate-routine-header' | 'routine-name' | 'alternate-parameter' | 'parameter-declaration' | 'local-variable-declaration' | 'computed-field-declaration' | 'routine-call' | 'field-access' | 'list-field-access' | 'variable-access' | 'computed-field-access' | 'argument' | 'assignment' | 'statement' | 'output' | 'memory-allocation' | 'memory-deallocation' | 'conditional' | 'routine-body' | 'conditional-body' | 'loop-block' | 'loop-body' | 'process' | 'loop-instruction' | 'decode-instruction' | 'push-instruction' | 'return-statement' | 'preserve-statement' | 'parser-diagnostic' | 'condition-expression' | 'expression-operand' | 'expression-operand-part' | 'binary-expression' | 'unary-expression' | 'type-reference' | 'reference';
 export interface SyntaxNode {
     id: number;
@@ -122,6 +122,33 @@ export interface WorkspaceDuplicateDeclaration {
     kind: 'type' | 'variable' | 'routine' | 'field';
     name: string;
     range: SourceRange;
+}
+export interface DeclarationRegionNode {
+    id: string;
+    uri: string;
+    directory: string;
+    region: ParserRegion;
+}
+export interface DeclarationDependencyEdge {
+    from: DeclarationRegionNode;
+    to: DeclarationRegionNode;
+    reference: ParsedReference;
+}
+export declare class DeclarationDependencyGraph {
+    readonly nodes: readonly DeclarationRegionNode[];
+    readonly edges: readonly DeclarationDependencyEdge[];
+    readonly unresolvedReferenceCount: number;
+    private readonly regionsByUri;
+    private readonly potentialDependentsByDirectoryAndName;
+    private readonly dependentsByRegion;
+    constructor(documents: Iterable<{
+        uri: string;
+        directory: string;
+        parsed: ParsedDocument;
+        analysis?: DocumentAnalysis;
+    }>);
+    getRegions(uri: string): readonly DeclarationRegionNode[];
+    getAffectedRegionsForDeclarationChanges(directory: string, changes: readonly WorkspaceDeclarationChange[], changedRegionIds?: Iterable<string>): ReadonlySet<string>;
 }
 export declare function getWorkspaceDuplicateDeclarations(documents: Iterable<{
     uri: string;

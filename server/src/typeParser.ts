@@ -684,6 +684,8 @@ export interface ParserRegion {
   range: SourceRange;
   headerRange?: SourceRange;
   bodyRange?: SourceRange;
+  fingerprint: string;
+  complete: boolean;
 }
 
 export interface ParserSymbolCatalog {
@@ -694,6 +696,10 @@ export interface ParserSymbolCatalog {
 
 export interface ParseOptions {
   resolveRoutineCalls?: boolean;
+  reusableDeclarationRegions?: {
+    source: string;
+    parsed: ParsedDocument;
+  };
   reusableRoutineRegions?: {
     source: string;
     routines: readonly RoutineDeclaration[];
@@ -736,6 +742,7 @@ export interface ParsePerformanceMetrics {
   declarations: number;
   globalVariables: number;
   routines: number;
+  reusedDeclarationCount: number;
   reusedRoutineCount: number;
   symbols: number;
 }
@@ -1089,12 +1096,17 @@ export function parseTypeDeclarations(
   const diagnostics: ParserDiagnostic[] = [];
   const lexicalStartedAt = onProfile ? performance.now() : 0;
   const commentRanges: SourceRange[] = [];
-  const parserSource = maskComments(source, diagnostics, commentRanges);
+  const maskedSource = maskComments(source, diagnostics, commentRanges);
+  const parserSource = maskedSource.source;
   const lexicalFinishedAt = onProfile ? performance.now() : 0;
   const syntaxStartedAt = lexicalFinishedAt;
   const declarations: TypeDeclaration[] = [];
   const globalVariables: GlobalVariableDeclaration[] = [];
   const routines = parseRoutineDeclarations(parserSource, diagnostics);
+  const reusableDeclarations = createReusableDeclarationIndex(
+    options.reusableDeclarationRegions
+  );
+  let reusedDeclarationCount = 0;
   let segmentStart = 0;
   let periodIndex = findDeclarationPeriod(parserSource, segmentStart);
 
@@ -1104,19 +1116,56 @@ export function parseTypeDeclarations(
       ? undefined
       : readWord(parserSource, declarationStart, periodIndex);
     if (article && definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
-      const variable = parseGlobalVariableDeclaration(
-        parserSource,
-        declarationStart!,
-        periodIndex,
-        diagnostics
+      const currentRange = {
+        start: declarationStart!,
+        end: periodIndex + 1
+      };
+      const reusable = takeReusableDeclaration<GlobalVariableDeclaration>(
+        reusableDeclarations.globalVariables,
+        'global-variable',
+        source,
+        currentRange
       );
+      const variable = reusable
+        ? rebaseParsedRegion(
+          reusable.declaration,
+          currentRange.start - reusable.region.range.start
+        )
+        : parseGlobalVariableDeclaration(
+          parserSource,
+          declarationStart!,
+          periodIndex,
+          diagnostics
+        );
       if (variable) {
         globalVariables.push(variable);
+        reusedDeclarationCount += Number(Boolean(reusable));
       }
     } else if (article) {
-      const declaration = parseDeclaration(parserSource, declarationStart!, periodIndex, diagnostics);
+      const currentRange = {
+        start: declarationStart!,
+        end: periodIndex + 1
+      };
+      const reusable = takeReusableDeclaration<TypeDeclaration>(
+        reusableDeclarations.types,
+        'type',
+        source,
+        currentRange
+      );
+      const declaration = reusable
+        ? rebaseParsedRegion(
+          reusable.declaration,
+          currentRange.start - reusable.region.range.start
+        )
+        : parseDeclaration(
+          parserSource,
+          declarationStart!,
+          periodIndex,
+          diagnostics
+        );
       if (declaration) {
         declarations.push(declaration);
+        reusedDeclarationCount += Number(Boolean(reusable));
       }
     }
     segmentStart = periodIndex + 1;
@@ -1355,6 +1404,7 @@ export function parseTypeDeclarations(
       declarations: declarations.length,
       globalVariables: globalVariables.length,
       routines: routines.length,
+      reusedDeclarationCount,
       reusedRoutineCount: reusedRoutines.size,
       symbols: symbols.entries.length +
         globalVariableSymbols.entries.length +
@@ -1367,7 +1417,15 @@ export function parseTypeDeclarations(
     declarations,
     globalVariables,
     routines,
-    regions: createParserRegions(declarations, globalVariables, routines),
+    regions: createParserRegions(
+      source,
+      parserSource,
+      declarations,
+      globalVariables,
+      routines,
+      diagnostics,
+      maskedSource.complete
+    ),
     commentRanges,
     symbols,
     globalVariableSymbols,
@@ -1598,11 +1656,15 @@ function reuseRoutineRegions(
 }
 
 function createParserRegions(
+  source: string,
+  parserSource: string,
   declarations: readonly TypeDeclaration[],
   globalVariables: readonly GlobalVariableDeclaration[],
-  routines: readonly RoutineDeclaration[]
+  routines: readonly RoutineDeclaration[],
+  diagnostics: readonly ParserDiagnostic[],
+  lexicallyComplete: boolean
 ): ParserRegion[] {
-  const regions: ParserRegion[] = [
+  const regions: Omit<ParserRegion, 'fingerprint' | 'complete'>[] = [
     ...declarations.map(declaration => ({
       kind: 'type' as const,
       name: declaration.name.normalizedName,
@@ -1627,10 +1689,194 @@ function createParserRegions(
       bodyRange: { ...routine.bodyRange }
     }))
   ];
-  return regions.sort((first, second) =>
+  regions.sort((first, second) =>
     first.range.start - second.range.start ||
     first.range.end - second.range.end
   );
+  const sortedDiagnostics = [...diagnostics].sort((first, second) =>
+    first.range.start - second.range.start ||
+    first.range.end - second.range.end
+  );
+  let diagnosticIndex = 0;
+  return regions.map(region => {
+    while (
+      diagnosticIndex < sortedDiagnostics.length &&
+      sortedDiagnostics[diagnosticIndex].range.end <= region.range.start
+    ) {
+      diagnosticIndex++;
+    }
+    const hasDiagnostic = diagnosticIndex < sortedDiagnostics.length &&
+      sortedDiagnostics[diagnosticIndex].range.start < region.range.end;
+    const text = source.slice(region.range.start, region.range.end);
+    const hasCompleteTerminatedBody = region.kind !== 'routine' ||
+      hasCompleteRoutineBody(parserSource, region.bodyRange!);
+    return {
+      ...region,
+      fingerprint: fingerprintRegion(region.kind, region.name, text),
+      complete: lexicallyComplete &&
+        !hasDiagnostic &&
+        hasCompleteTerminatedBody
+    };
+  });
+}
+
+interface ReusableDeclaration<T> {
+  region: ParserRegion;
+  declaration: T;
+  source: string;
+}
+
+function createReusableDeclarationIndex(
+  previous: ParseOptions['reusableDeclarationRegions']
+): {
+  types: Map<string, ReusableDeclaration<TypeDeclaration>[]>;
+  globalVariables: Map<
+    string,
+    ReusableDeclaration<GlobalVariableDeclaration>[]
+  >;
+} {
+  const types = new Map<string, ReusableDeclaration<TypeDeclaration>[]>();
+  const globalVariables = new Map<
+    string,
+    ReusableDeclaration<GlobalVariableDeclaration>[]
+  >();
+  if (!previous) {
+    return { types, globalVariables };
+  }
+
+  const declarationsByRange = new Map<string, TypeDeclaration>();
+  for (const declaration of previous.parsed.declarations) {
+    declarationsByRange.set(
+      `${declaration.range.start}:${declaration.range.end}`,
+      declaration
+    );
+  }
+  const variablesByRange = new Map<string, GlobalVariableDeclaration>();
+  for (const declaration of previous.parsed.globalVariables) {
+    variablesByRange.set(
+      `${declaration.range.start}:${declaration.range.end}`,
+      declaration
+    );
+  }
+
+  for (const region of previous.parsed.regions) {
+    if (!region.complete || region.kind === 'routine') {
+      continue;
+    }
+    const key = fingerprintRegion(
+      region.kind,
+      '',
+      previous.source.slice(region.range.start, region.range.end)
+    );
+    if (region.kind === 'type') {
+      const declaration = declarationsByRange.get(
+        `${region.range.start}:${region.range.end}`
+      );
+      if (declaration) {
+        const candidates = types.get(key) ?? [];
+        candidates.push({ region, declaration, source: previous.source });
+        types.set(key, candidates);
+      }
+    } else {
+      const declaration = variablesByRange.get(
+        `${region.range.start}:${region.range.end}`
+      );
+      if (declaration) {
+        const candidates = globalVariables.get(key) ?? [];
+        candidates.push({ region, declaration, source: previous.source });
+        globalVariables.set(key, candidates);
+      }
+    }
+  }
+  return { types, globalVariables };
+}
+
+function takeReusableDeclaration<T>(
+  candidatesByFingerprint: Map<string, ReusableDeclaration<T>[]>,
+  kind: ParserRegion['kind'],
+  source: string,
+  range: SourceRange
+): ReusableDeclaration<T> | undefined {
+  const text = source.slice(range.start, range.end);
+  const key = fingerprintRegion(kind, '', text);
+  const candidates = candidatesByFingerprint.get(key);
+  while (candidates?.length) {
+    const candidate = candidates.shift()!;
+    if (
+      candidate.region.kind === kind &&
+      candidate.region.complete &&
+      candidate.region.fingerprint.length > 0 &&
+      candidate.source.slice(
+        candidate.region.range.start,
+        candidate.region.range.end
+      ) === text
+    ) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+function rebaseParsedRegion<T>(value: T, delta: number): T {
+  const clone = (current: unknown, visited: Map<object, unknown>): unknown => {
+    if (current === null || typeof current !== 'object') {
+      return current;
+    }
+    const existing = visited.get(current);
+    if (existing) {
+      return existing;
+    }
+    if (Array.isArray(current)) {
+      const result: unknown[] = [];
+      visited.set(current, result);
+      for (const item of current) {
+        result.push(clone(item, visited));
+      }
+      return result;
+    }
+    const sourceObject = current as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+    visited.set(current, result);
+    for (const [property, child] of Object.entries(sourceObject)) {
+      if (
+        (property === 'start' || property === 'end') &&
+        typeof child === 'number' &&
+        typeof sourceObject.start === 'number' &&
+        typeof sourceObject.end === 'number'
+      ) {
+        result[property] = child + delta;
+      } else {
+        result[property] = clone(child, visited);
+      }
+    }
+    return result;
+  };
+  return clone(value, new Map()) as T;
+}
+
+function fingerprintRegion(kind: string, name: string, source: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < source.length; index++) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${kind}:${name}:${source.length}:${(hash >>> 0).toString(16)}`;
+}
+
+function hasCompleteRoutineBody(
+  source: string,
+  bodyRange: SourceRange
+): boolean {
+  let segmentStart = bodyRange.start;
+  let periodIndex = findDeclarationPeriod(source, segmentStart);
+  if (periodIndex === -1 || periodIndex >= bodyRange.end) {
+    return false;
+  }
+  while (periodIndex !== -1 && periodIndex < bodyRange.end) {
+    segmentStart = periodIndex + 1;
+    periodIndex = findDeclarationPeriod(source, segmentStart);
+  }
+  return trimRange(source, segmentStart, bodyRange.end).start === bodyRange.end;
 }
 
 function resolveRoutineCalls(
@@ -7159,7 +7405,7 @@ function maskComments(
   source: string,
   diagnostics: ParserDiagnostic[],
   commentRanges: SourceRange[]
-): string {
+): { source: string; complete: boolean } {
   let characters: Uint16Array | undefined;
   const ensureCharacters = (): Uint16Array => {
     if (!characters) {
@@ -7173,6 +7419,8 @@ function maskComments(
   let inString = false;
   let inBlockComment = false;
   let blockCommentStart = -1;
+  let parenthesisDepth = 0;
+  let balancedParentheses = true;
 
   for (let index = 0; index < source.length; index++) {
     const character = source[index];
@@ -7243,6 +7491,17 @@ function maskComments(
         start: commentStart,
         end: index < source.length ? index : source.length
       });
+      continue;
+    }
+
+    if (character === '(') {
+      parenthesisDepth++;
+    } else if (character === ')') {
+      if (parenthesisDepth === 0) {
+        balancedParentheses = false;
+      } else {
+        parenthesisDepth--;
+      }
     }
   }
 
@@ -7255,7 +7514,11 @@ function maskComments(
 
   const maskedCharacters = characters;
   if (!maskedCharacters) {
-    return source;
+    return {
+      source,
+      complete: !inString && !inBlockComment &&
+        parenthesisDepth === 0 && balancedParentheses
+    };
   }
 
   const chunks: string[] = [];
@@ -7266,7 +7529,11 @@ function maskComments(
       Math.min(start + chunkSize, maskedCharacters.length)
     )));
   }
-  return chunks.join('');
+  return {
+    source: chunks.join(''),
+    complete: !inString && !inBlockComment &&
+      parenthesisDepth === 0 && balancedParentheses
+  };
 }
 
 function parseGlobalVariableDeclaration(
