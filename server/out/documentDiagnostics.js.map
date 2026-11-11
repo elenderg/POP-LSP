@@ -1,0 +1,1 @@
+{"version":3,"file":"documentDiagnostics.js","sourceRoot":"","sources":["../src/documentDiagnostics.ts"],"names":[],"mappings":";;AAAA,8DAQC;AARD,SAAgB,yBAAyB,CACvC,eAAuB,EACvB,cAAkC,EAClC,cAAkC;IAElC,OAAO,cAAc,KAAK,SAAS;QACjC,eAAe,KAAK,cAAc;QAClC,cAAc,KAAK,cAAc,CAAC;AACtC,CAAC"}
