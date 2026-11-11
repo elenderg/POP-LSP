@@ -567,9 +567,11 @@ function getSelectiveContextReuseUris(
   const regionGraph = getWorkspaceDeclarationDependencyGraph(previous);
   const affected = new Set<string>();
   const regionAffected = new Set<string>();
-  const changedRegionIds = [...changedUris].flatMap(uri =>
-    regionGraph.getRegions(uri).map(region => region.id)
-  );
+  const changedRegionIds = declarationChanges.length > 0
+    ? [...changedUris].flatMap(uri =>
+      regionGraph.getRegions(uri).map(region => region.id)
+    )
+    : [];
   const affectedRegionIds = regionGraph.getAffectedRegionsForDeclarationChanges(
     directory,
     declarationChanges,

@@ -261,12 +261,15 @@ conservatively marks incomplete or diagnosed regions as non-reusable.
 Unchanged, complete type and global-variable declarations can reuse their
 syntax records after source offsets are rebased. An initial region dependency
 graph records resolved and unresolved references and can calculate candidate
-impact sets. These are foundations only: type, variable, routine, and
-reference resolution still run for the full document, and the graph is not yet
-used to skip semantic work. Edits can affect routines, fields, and
-declarations elsewhere in the document or directory, so affected-region
-invalidation and differential equivalence checks must be integrated before
-incremental semantic resolution is safe.
+impact sets. During selective workspace reuse, the region graph is now
+cross-checked against the existing document dependency index. The server
+widens invalidation with the graph's affected regions, and falls back to a
+full directory refresh if the graph misses any affected document identified
+by the document index. This validates dependency coverage without yet skipping
+semantic work: type, variable, routine, and reference resolution still run
+for every document that is not reused as a whole. Declaration-level semantic
+resolution remains disabled until region-level differential equivalence is
+established.
 
 Routine-call resolution indexes normalized names per parse instead of
 comparing every call against every routine. Name matching normalizes each

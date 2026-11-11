@@ -100,6 +100,7 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-context-'));
   const alphaPath = path.join(workspace, 'alpha.pop');
   const betaPath = path.join(workspace, 'beta.pop');
+  const gammaPath = path.join(workspace, 'gamma.pop');
   const alphaUri = pathToFileURL(alphaPath).toString();
   const betaUri = pathToFileURL(betaPath).toString();
   const workspaceFolder = {
@@ -107,9 +108,11 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
     name: 'selective-context-test'
   };
   const initialAlpha = 'Uma alfa é um tipo ausente.';
-  const initialBeta = 'Um beta é um byte.';
+  const initialBeta = 'Um beta é uma alfa.';
+  const initialGamma = 'Uma gama é um byte.';
   writeWindows1252(alphaPath, initialAlpha);
   writeWindows1252(betaPath, initialBeta);
+  writeWindows1252(gammaPath, initialGamma);
 
   const child = spawn(
     process.execPath,
@@ -141,9 +144,9 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
     await waitForEvent(
       client.events,
       event => event.event === 'workspace-refresh' &&
-        event.documents === 2 &&
-        event.sourceChanges === 2,
-      'the initial two-document workspace analysis'
+        event.documents === 3 &&
+        event.sourceChanges === 3,
+      'the initial three-document workspace analysis'
     );
 
     client.send({
@@ -176,7 +179,7 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
       method: 'textDocument/didChange',
       params: {
         textDocument: { uri: alphaUri, version: 2 },
-        contentChanges: [{ text: 'Um alfa atualizado é um byte.' }]
+        contentChanges: [{ text: 'Uma alfa é um byte.' }]
       }
     });
     const fallbackSelection = await waitForEvent(
@@ -192,7 +195,7 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
       'the directory-wide fallback parse',
       fallbackIndex + 1
     );
-    assert.equal(fallbackRefresh.contextualParseCount, 2);
+    assert.equal(fallbackRefresh.contextualParseCount, 3);
     assert.equal(fallbackRefresh.selectiveContextCacheHits, 0);
 
     client.send({
@@ -200,7 +203,7 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
       method: 'textDocument/didChange',
       params: {
         textDocument: { uri: alphaUri, version: 3 },
-        contentChanges: [{ text: 'Um alfa final é um byte.' }]
+        contentChanges: [{ text: 'Uma alfa final é um byte.' }]
       }
     });
     const selectiveStartIndex = client.events.length;
@@ -212,9 +215,16 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
       'selective reuse for an unaffected document',
       selectiveStartIndex
     );
-    assert.equal(selectiveRefresh.documents, 2);
-    assert.equal(selectiveRefresh.contextualParseCount, 1);
+    assert.equal(selectiveRefresh.documents, 3);
+    assert.equal(selectiveRefresh.contextualParseCount, 2);
     assert.equal(selectiveRefresh.selectiveContextCacheHits, 1);
+    const dependencySelection = client.events.slice(selectiveStartIndex).find(
+      event => event.event === 'workspace-context-reuse-selection'
+    );
+    assert.equal(dependencySelection.reason, 'dependency-closure');
+    assert.equal(dependencySelection.affectedDocuments, 2);
+    assert.equal(dependencySelection.regionAffectedDocuments, 2);
+    assert.equal(dependencySelection.reusableDocuments, 1);
 
     await client.request('shutdown', null);
     client.send({ jsonrpc: '2.0', method: 'exit', params: null });
