@@ -21,11 +21,56 @@ suite('Português Puro definitions', () => {
     // Symbols, navigation, and workspace references.
     test('Provides document symbols for an open source document', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
-        await (0, helper_1.setTestContent)('Um tipo é um byte.');
+        const missingType = `tipoAusente${Date.now()}`;
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri, diagnostics => diagnostics.some(diagnostic => diagnostic.message === `Unknown base type "${missingType}".`));
+        await (0, helper_1.setTestContent)([
+            'Um tipo é um byte.',
+            `Uma sonda é um ${missingType}.`
+        ].join('\n'));
         await diagnosticsUpdated;
         const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', docUri);
         assert.ok(symbols?.some(symbol => symbol.name === 'tipo'));
+    });
+    test('Completes declared symbols and locates routine implementations', async () => {
+        await (0, helper_1.activate)(docUri);
+        const source = [
+            'Uma caixa é uma estrutura com um byte denominado idade.',
+            'A janela é uma caixa.',
+            'Uma testeCompletion é um tipoCompletionAusente.',
+            'Rotina para que se centralize uma caixa:',
+            '  Retorne.',
+            'Rotina para que se teste:',
+            '  Atribua 0 para um byte denominado total.',
+            '  Centralize a janela.',
+            '  '
+        ].join('\n');
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri, diagnostics => diagnostics.some(diagnostic => diagnostic.message ===
+            'Unknown base type "tipoCompletionAusente".'));
+        await (0, helper_1.setTestContent)(source);
+        await diagnosticsUpdated;
+        const document = await vscode.workspace.openTextDocument(docUri);
+        const completionResult = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', docUri, document.positionAt(document.getText().length));
+        const completions = Array.isArray(completionResult)
+            ? completionResult
+            : completionResult?.items ?? [];
+        const labels = new Set(completions.map(item => item.label));
+        assert.ok(labels.has('caixa'));
+        assert.ok(labels.has('idade'));
+        assert.ok(labels.has('janela'));
+        assert.ok(labels.has('centralize'));
+        assert.ok(labels.has('total'));
+        const implementationResults = await vscode.commands.executeCommand('vscode.executeImplementationProvider', docUri, document.positionAt(document.getText().indexOf('Centralize') + 1));
+        assert.equal(implementationResults?.length, 1);
+        assert.equal(implementationResults[0].uri.toString(), docUri.toString());
+        assert.match(document.getText(implementationResults[0].range), /Retorne\./u);
+        const routineHover = await vscode.commands.executeCommand('vscode.executeHoverProvider', docUri, document.positionAt(document.getText().indexOf('centralize') + 1));
+        const routineHoverText = routineHover?.[0]?.contents.map(content => typeof content === 'string' ? content : content.value).join('\n') ?? '';
+        assert.match(routineHoverText, /Rotina centralize/u);
+        assert.match(routineHoverText, /caixa caixa/u);
+        const localHover = await vscode.commands.executeCommand('vscode.executeHoverProvider', docUri, document.positionAt(document.getText().indexOf('total') + 1));
+        const localHoverText = localHover?.[0]?.contents.map(content => typeof content === 'string' ? content : content.value).join('\n') ?? '';
+        assert.match(localHoverText, /Variável local/u);
+        assert.match(localHoverText, /Tipo: `byte`/u);
     });
     test('Resolves declarations and diagnostics from sibling source files', async () => {
         await (0, helper_1.activate)(docUri);
@@ -37,14 +82,15 @@ suite('Português Puro definitions', () => {
             'para que se conte um caractere:',
             '  Retorne.'
         ].join('\n'), 'latin1');
-        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri, diagnostics => diagnostics.some(diagnostic => diagnostic.message === 'Routine "marcador de sincronização" has no statements.'));
         try {
             await (0, helper_1.setTestContent)([
                 'Uma letra é um caractere.',
                 'O símbolo local é um caractere.',
                 'Rotina para que se teste:',
                 '  Conte um caractere.',
-                '  Atribua 1 para o símbolo externo.'
+                '  Atribua 1 para o símbolo externo.',
+                'para que se marcador de sincronização:'
             ].join('\n'));
             await diagnosticsUpdated;
             const document = await vscode.workspace.openTextDocument(docUri);
@@ -63,12 +109,63 @@ suite('Português Puro definitions', () => {
             const routineDefinitions = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(routineOffset));
             assert.ok(routineDefinitions);
             assert.equal(routineDefinitions[0].uri.toString(), externalUri.toString());
+            const routineImplementations = await vscode.commands.executeCommand('vscode.executeImplementationProvider', docUri, document.positionAt(routineOffset));
+            assert.equal(routineImplementations?.length, 1);
+            assert.equal(routineImplementations[0].uri.toString(), externalUri.toString());
             const variableOffset = text.lastIndexOf('símbolo externo') + 3;
             const variableDefinitions = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(variableOffset));
             assert.ok(variableDefinitions);
             assert.equal(variableDefinitions[0].uri.toString(), externalUri.toString());
+            const variableHover = await vscode.commands.executeCommand('vscode.executeHoverProvider', docUri, document.positionAt(variableOffset));
+            const variableHoverText = variableHover?.[0]?.contents.map(content => typeof content === 'string' ? content : content.value).join('\n') ?? '';
+            assert.match(variableHoverText, /\*\*símbolo externo\*\*/u);
+            assert.match(variableHoverText, /Variável global/u);
+            assert.match(variableHoverText, /Tipo: `caractere`/u);
         }
         finally {
+            await (0, promises_1.unlink)(externalPath);
+        }
+    });
+    test('Diagnoses duplicate type declarations across sibling source files', async () => {
+        await (0, helper_1.activate)(docUri);
+        const typeName = `tipoDuplicado${Date.now()}`;
+        const externalPath = (0, helper_1.getDocPath)('definitions/duplicate-type-test.pop');
+        const externalUri = vscode.Uri.file(externalPath);
+        await (0, promises_1.writeFile)(externalPath, `Um ${typeName} é um byte.`, 'latin1');
+        let externalDocument;
+        try {
+            externalDocument = await vscode.workspace.openTextDocument(externalUri);
+            const isDuplicateDiagnostic = (diagnostics) => diagnostics.some(diagnostic => diagnostic.message ===
+                `Identificador "${typeName}" (type) já declarado neste diretório.`);
+            const duplicateDiagnosticUpdated = new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    listener.dispose();
+                    reject(new Error('Timed out waiting for a duplicate declaration diagnostic.'));
+                }, 15000);
+                const listener = vscode.languages.onDidChangeDiagnostics(event => {
+                    const hasDuplicate = event.uris.some(uri => isDuplicateDiagnostic(vscode.languages.getDiagnostics(uri)));
+                    if (hasDuplicate) {
+                        clearTimeout(timeout);
+                        listener.dispose();
+                        resolve();
+                    }
+                });
+            });
+            await (0, helper_1.setTestContent)(`Um ${typeName} é um byte.`);
+            await duplicateDiagnosticUpdated;
+            const diagnostics = [
+                ...vscode.languages.getDiagnostics(docUri),
+                ...vscode.languages.getDiagnostics(externalUri)
+            ].filter(diagnostic => diagnostic.message ===
+                `Identificador "${typeName}" (type) já declarado neste diretório.`);
+            assert.equal(diagnostics.length, 1);
+            assert.equal(diagnostics[0].severity, vscode.DiagnosticSeverity.Error);
+        }
+        finally {
+            if (externalDocument) {
+                await vscode.window.showTextDocument(externalDocument);
+                await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+            }
             await (0, promises_1.unlink)(externalPath);
         }
     });
@@ -129,7 +226,8 @@ suite('Português Puro definitions', () => {
         const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
         await (0, helper_1.setTestContent)([
             'Um caractere é um byte.',
-            'Uma pessoa é uma estrutura.'
+            'Uma pessoa é uma estrutura com um byte denominado idade.',
+            'O usuário é uma pessoa.'
         ].join('\n'));
         await diagnosticsUpdated;
         const document = await vscode.workspace.openTextDocument(docUri);
@@ -148,6 +246,20 @@ suite('Português Puro definitions', () => {
         assert.ok(structureHover);
         assert.match(hoverText(structureHover), /tipo de dado composto/u);
         assert.match(hoverText(structureHover), /Permite agrupar diferentes campos/u);
+        const typeHover = (await hoverAt('pessoa'))?.[0];
+        assert.ok(typeHover);
+        assert.match(hoverText(typeHover), /\*\*pessoa\*\*/u);
+        assert.match(hoverText(typeHover), /Tipo base: `estrutura`/u);
+        assert.match(hoverText(typeHover), /`byte` idade/u);
+        const fieldHover = (await hoverAt('idade'))?.[0];
+        assert.ok(fieldHover);
+        assert.match(hoverText(fieldHover), /\*\*idade\*\*/u);
+        assert.match(hoverText(fieldHover), /Tipo: `byte`/u);
+        const variableHover = (await hoverAt('usuário'))?.[0];
+        assert.ok(variableHover);
+        assert.match(hoverText(variableHover), /\*\*usuário\*\*/u);
+        assert.match(hoverText(variableHover), /Variável global/u);
+        assert.match(hoverText(variableHover), /Tipo: `pessoa`/u);
         assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
     });
     test('Resolves definitions of global variables in assignment targets', async () => {
@@ -261,13 +373,14 @@ suite('Português Puro definitions', () => {
     });
     test('Provides hierarchical document symbols for declarations and fields', async () => {
         await (0, helper_1.activate)(docUri);
-        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri);
+        const diagnosticsUpdated = (0, helper_1.waitForDiagnosticsUpdate)(docUri, diagnostics => diagnostics.some(diagnostic => diagnostic.message === 'Unknown base type "tipo inexistente".'));
         await (0, helper_1.setTestContent)([
             'Uma pessoa é uma estrutura com',
             '  Um número denominado idade.',
             'O cliente é uma pessoa.',
             'Rotina para que se exemplifique com uma pessoa:',
-            '  Retorne.'
+            '  Retorne.',
+            'Uma sonda é um tipo inexistente.'
         ].join('\n'));
         await diagnosticsUpdated;
         const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', docUri);
@@ -275,7 +388,8 @@ suite('Português Puro definitions', () => {
         assert.deepEqual(symbols.map(symbol => symbol.name), [
             'pessoa',
             'cliente',
-            'exemplifique com'
+            'exemplifique com',
+            'sonda'
         ]);
         assert.equal(symbols[0].kind, vscode.SymbolKind.Struct);
         assert.equal(symbols[0].children?.[0].name, 'idade');
@@ -2008,7 +2122,7 @@ suite('Português Puro definitions', () => {
         await diagnosticsUpdated;
         const diagnostics = vscode.languages.getDiagnostics(docUri);
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message === '"Diga" requires the boolean literal "sim" or "não".').length, 1);
-        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.').length, 3);
+        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'Boolean functions should contain a valid "Diga sim" or "Diga não" statement.').length, 3);
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message.includes('has no statements')).length, 1);
     });
     test('Parses boolean headers with additional predicate verbs', async () => {
@@ -2058,7 +2172,7 @@ suite('Português Puro definitions', () => {
         ].join('\n'));
         await diagnosticsUpdated;
         const diagnostics = vscode.languages.getDiagnostics(docUri);
-        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'Boolean functions must contain a valid "Diga sim" or "Diga não" statement.').length, 2);
+        assert.equal(diagnostics.filter(diagnostic => diagnostic.message === 'Boolean functions should contain a valid "Diga sim" or "Diga não" statement.').length, 2);
     });
     test('Rejects Diga in ordinary routines and routine names', async () => {
         await (0, helper_1.activate)(docUri);
@@ -2301,7 +2415,10 @@ suite('Português Puro definitions', () => {
             '  Decodifique $0.'
         ].join('\n'));
         await diagnosticsUpdated;
-        assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
+        const diagnostics = vscode.languages.getDiagnostics(docUri);
+        assert.equal(diagnostics.length, 1);
+        assert.match(diagnostics[0].message, /Identificador "crie" \(routine\) já declarado neste diretório\./u);
+        assert.equal(diagnostics[0].severity, vscode.DiagnosticSeverity.Error);
     });
     test('Diagnoses local variables that reuse routine parameter names', async () => {
         await (0, helper_1.activate)(docUri);

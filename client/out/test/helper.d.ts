@@ -10,4 +10,4 @@ export declare function activate(docUri: vscode.Uri): Promise<void>;
 export declare const getDocPath: (p: string) => string;
 export declare const getDocUri: (p: string) => vscode.Uri;
 export declare function setTestContent(content: string): Promise<boolean>;
-export declare function waitForDiagnosticsUpdate(uri: vscode.Uri): Promise<void>;
+export declare function waitForDiagnosticsUpdate(uri: vscode.Uri, predicate?: (diagnostics: readonly vscode.Diagnostic[]) => boolean): Promise<void>;

@@ -74,8 +74,11 @@ export async function setTestContent(content: string): Promise<boolean> {
 	return editor.edit(eb => eb.replace(all, content));
 }
 
-export function waitForDiagnosticsUpdate(uri: vscode.Uri): Promise<void> {
-	return waitForDiagnostic(uri);
+export function waitForDiagnosticsUpdate(
+	uri: vscode.Uri,
+	predicate?: (diagnostics: readonly vscode.Diagnostic[]) => boolean
+): Promise<void> {
+	return waitForDiagnostic(uri, predicate);
 }
 
 function waitForDiagnostic(

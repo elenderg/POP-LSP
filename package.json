@@ -16,7 +16,6 @@
   "engines": {
     "vscode": "^1.100.0"
   },
-  
   "main": "./client/out/extension",
   "contributes": {
     "languages": [
@@ -39,7 +38,8 @@
         "language": "portugues-puro",
         "scopeName": "source.escopo.pop",
         "path": "./syntaxes/portugues-puro.tmLanguage.json"
-      }],
+      }
+    ],
     "configurationDefaults": {
       "[portugues-puro]": {
         "files.encoding": "windows1252"
@@ -66,7 +66,7 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         }
-      }      
+      }
     }
   },
   "scripts": {
@@ -75,17 +75,16 @@
     "watch": "tsc -b -w",
     "lint": "eslint",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-    "test": "npm run compile && node ./client/out/test/runTest.js"
+    "test": "npm run compile && node --test server/test/*.test.js && node ./client/out/test/runTest.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "@stylistic/eslint-plugin": "^2.9.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "^22",
-    "eslint": "^9.13.0",
+    "eslint": "^9.39.5",
     "mocha": "^12.0.3",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.39.0"
   }
-  
 }

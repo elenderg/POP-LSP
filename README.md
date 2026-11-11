@@ -238,9 +238,18 @@ if it appears in a boolean function header.
   this workspace, including the language-specific encoding setting.
 - Set `POP_LSP_PROFILE=1` in the environment before launching VS Code to emit
   optional `[POP-LSP profile]` timing and catalog-size records, including
-  per-request timings, to the language server output. The parser has no token
-  stream or separate lexer, so lexical scanning is included in the syntax phase
-  rather than reported as a separate measurement.
+  correlated request timings, per-document parse phases, cache activity,
+  catalog sizes, memory, CPU, event-loop lag, and garbage collection, to the
+  language server output. Requests still pending after 5 seconds emit a
+  watchdog record; slow completed phases also report their stage and available
+  counters. Set `POP_LSP_PROFILE_SLOW_MS` to change the threshold. A synchronous
+  phase can delay the watchdog until control returns to the event loop, whose
+  lag is measured separately. Profiling is diagnostic only and never interrupts
+  an operation. The parser has no token stream; lexical comment masking and
+  syntax parsing are measured separately.
+- Set `POP_LSP_CPU_PROFILE=1` before launching VS Code to capture a Node.js CPU
+  profile for the language-server process. The `.cpuprofile` file is written to
+  the operating system's temporary directory; profiling is disabled by default.
 
 The workspace catalog and parsed references are reused while source text is
 unchanged, regardless of LSP document-version changes. A source change or
@@ -254,7 +263,11 @@ explicit dependency graph so edits can invalidate dependent symbols without
 leaving stale diagnostics or navigation results.
 
 Routine-call resolution indexes normalized names per parse instead of
-comparing every call against every routine. Routine parsing also tracks
+comparing every call against every routine. Name matching normalizes each
+candidate word once, bounds lookahead by the longest declared routine name,
+and uses a bounded cache for repeated normalized names. Workspace updates
+coalesce concurrent open/change notifications and avoid invalidating cached
+analysis when the source text is unchanged. Routine parsing also tracks
 parenthesis depth in one pass, and searches for cast markers are bounded to
 their argument ranges to avoid rescanning the rest of large documents. Type
 name normalization uses a bounded string cache, and computed-field routine

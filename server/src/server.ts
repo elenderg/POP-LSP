@@ -4,15 +4,18 @@
  * ------------------------------------------------------------------------------------------ */
 import {
   createConnection,
+  CompletionItem,
+  CompletionItemKind,
+  CompletionParams,
   Diagnostic,
   DiagnosticSeverity,
   DocumentSymbol,
   InitializeResult,
+  ImplementationParams,
   Location,
   MarkupKind,
   ProposedFeatures,
   SymbolInformation,
-  SymbolKind,
   TextEdit,
   TextDocumentSyncKind,
   TextDocuments,
@@ -28,23 +31,26 @@ import {
 import { dirname, extname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
-  ByteArrayField,
-  GlobalVariableDeclaration,
-  NamedTypeField,
   ParsedDocument,
-  ParsedReferencesMetrics,
+  ParsedReference,
   ParsePerformanceMetrics,
   ParserSymbolCatalog,
+  RoutineParameter,
   RoutineDeclaration,
-  findRoutineDeclarationAtOffset,
-  findRoutineFieldAtOffset,
-  findParsedReferenceAtOffset,
-  findTypeDefinitionReferenceAtOffset,
-  findTypeReferenceAtOffset,
-  getParsedReferences,
   normalizeTypeName,
   parseTypeDeclarations
 } from './typeParser';
+import {
+  getWorkspaceDuplicateDeclarations,
+  DocumentAnalysisMetrics,
+  getDocumentAnalysis,
+  SyntaxNode,
+  WorkspaceDuplicateDeclaration,
+  WorkspaceDeclarationChange,
+  WorkspaceAnalysisIndex
+} from './analysisModel';
+import { isCurrentDocumentSnapshot } from './documentDiagnostics';
+import { buildDocumentSymbols } from './documentSymbols';
 import { formatDocument } from './documentFormatter';
 
 const connection = createConnection(ProposedFeatures.all);
@@ -77,6 +83,14 @@ let workspaceDocumentIndex: Map<
   string,
   { document: TextDocument; parsed: ParsedDocument }
 > | undefined;
+let previousWorkspaceDocumentIndex: Map<
+  string,
+  { document: TextDocument; parsed: ParsedDocument }
+> | undefined;
+const workspaceDocumentSources = new WeakMap<
+  Map<string, { document: TextDocument; parsed: ParsedDocument }>,
+  Map<string, string>
+>();
 let workspaceRefreshPromise: Promise<
   Map<string, { document: TextDocument; parsed: ParsedDocument }>
 > | undefined;
@@ -86,32 +100,677 @@ let workspaceDirectorySnapshots = new Map<string, {
   changeTime: number;
 }>();
 const documentSymbolsCache = new WeakMap<ParsedDocument, DocumentSymbol[]>();
+const workspaceAnalysisIndexes = new WeakMap<
+  Map<string, { document: TextDocument; parsed: ParsedDocument }>,
+  WorkspaceAnalysisIndex
+>();
+const workspaceCompletionItems = new WeakMap<
+  Map<string, { document: TextDocument; parsed: ParsedDocument }>,
+  Map<string, CompletionItem[]>
+>();
 let documentSymbolsUpdatePromise: Promise<void> | undefined;
 let documentSymbolsUpdatePending = false;
 let workspaceInvalidationPending = false;
 
-function logReferenceMetrics(metrics: ParsedReferencesMetrics): void {
-  logProfile({
-    event: 'reference-catalog',
-    durationMs: metrics.durationMs,
-    references: metrics.references,
-    cacheHit: metrics.cacheHit
+function documentAnalysisProfiler(
+  requestId: number,
+  requestDocumentUri: string,
+  documentUri = requestDocumentUri
+): ((metrics: DocumentAnalysisMetrics) => void) | undefined {
+  if (!profileEnabled) {
+    return undefined;
+  }
+  return metrics => logProfile({
+    event: 'document-analysis-index',
+    requestId,
+    requestDocumentUri,
+    documentUri,
+    ...metrics
   });
 }
 
-function getDocumentReferences(parsed: ParsedDocument) {
-  return getParsedReferences(
+function findDocumentReference(
+  parsed: ParsedDocument,
+  offset: number,
+  requestId: number,
+  documentUri: string,
+  sourceLength?: number,
+  kind?: ParsedReference['kind']
+) {
+  return getDocumentAnalysis(
     parsed,
-    profileEnabled ? logReferenceMetrics : undefined
-  );
+    sourceLength,
+    documentAnalysisProfiler(requestId, documentUri)
+  ).findReferenceAt(offset, kind);
 }
 
-function findDocumentReference(parsed: ParsedDocument, offset: number) {
-  return findParsedReferenceAtOffset(
-    parsed,
-    offset,
-    profileEnabled ? logReferenceMetrics : undefined
+function getWorkspaceAnalysisIndex(
+  workspaceDocuments: Map<
+    string,
+    { document: TextDocument; parsed: ParsedDocument }
+  >,
+  requestId = 0,
+  requestDocumentUri = ''
+): WorkspaceAnalysisIndex {
+  const cachedIndex = workspaceAnalysisIndexes.get(workspaceDocuments);
+  if (cachedIndex) {
+    logProfile({
+      event: 'workspace-reference-index',
+      requestId,
+      requestDocumentUri,
+      durationMs: 0,
+      documents: cachedIndex.documentCount,
+      references: cachedIndex.referenceCount,
+      dependencyEdges: cachedIndex.dependencyCount,
+      cacheHit: true
+    });
+    return cachedIndex;
+  }
+  const startedAt = profileEnabled ? performance.now() : 0;
+  const index = new WorkspaceAnalysisIndex(
+    [...workspaceDocuments.values()].map(({ document, parsed }) => ({
+      uri: document.uri,
+      directory: dirname(fileURLToPath(document.uri)),
+      analysis: getDocumentAnalysis(parsed, document.getText().length)
+    }))
   );
+  workspaceAnalysisIndexes.set(workspaceDocuments, index);
+  logProfile({
+    event: 'workspace-reference-index',
+    requestId,
+    requestDocumentUri,
+    durationMs: profileEnabled ? performance.now() - startedAt : 0,
+    documents: index.documentCount,
+    references: index.referenceCount,
+    dependencyEdges: index.dependencyCount,
+    cacheHit: false
+  });
+  return index;
+}
+
+interface DeclarationSurfaceEntry {
+  change: WorkspaceDeclarationChange;
+  fingerprints: string[];
+}
+
+function normalizeDeclarationText(
+  source: string,
+  range: { start: number; end: number },
+  commentRanges: readonly { start: number; end: number }[]
+): string {
+  const comments = commentRanges.filter(comment =>
+    comment.start < range.end && comment.end > range.start
+  );
+  let normalized = '';
+  let inString = false;
+  let pendingWhitespace = false;
+  let commentIndex = 0;
+  for (let offset = range.start; offset < range.end; offset++) {
+    while (
+      commentIndex < comments.length &&
+      comments[commentIndex].end <= offset
+    ) {
+      commentIndex++;
+    }
+    const comment = comments[commentIndex];
+    if (comment && offset >= comment.start && offset < comment.end) {
+      pendingWhitespace = true;
+      continue;
+    }
+    const character = source[offset];
+    if (inString) {
+      normalized += character;
+      if (character === '"' && source[offset + 1] === '"') {
+        normalized += source[++offset];
+      } else if (character === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (character === '"') {
+      if (pendingWhitespace && normalized.length > 0) {
+        normalized += ' ';
+      }
+      pendingWhitespace = false;
+      normalized += character;
+      inString = true;
+    } else if (/\s/u.test(character)) {
+      pendingWhitespace = true;
+    } else {
+      if (pendingWhitespace && normalized.length > 0) {
+        normalized += ' ';
+      }
+      pendingWhitespace = false;
+      normalized += character;
+    }
+  }
+  return normalized.trim();
+}
+
+function getDeclarationSurface(
+  parsed: ParsedDocument | undefined,
+  source: string
+): Map<string, DeclarationSurfaceEntry> {
+  const declarations = new Map<string, DeclarationSurfaceEntry>();
+  if (!parsed) {
+    return declarations;
+  }
+  const add = (
+    kind: WorkspaceDeclarationChange['kind'],
+    name: string | undefined,
+    range: { start: number; end: number },
+    semanticShape: unknown,
+    container?: string
+  ): void => {
+    if (!name) {
+      return;
+    }
+    const change = {
+      kind,
+      normalizedName: normalizeTypeName(name),
+      normalizedContainer: container
+        ? normalizeTypeName(container)
+        : undefined
+    };
+    const key = JSON.stringify(change);
+    const entry = declarations.get(key) ?? { change, fingerprints: [] };
+    entry.fingerprints.push(JSON.stringify([
+      normalizeDeclarationText(source, range, parsed.commentRanges ?? []),
+      semanticShape
+    ]));
+    declarations.set(key, entry);
+  };
+  const addFields = (
+    fields: NonNullable<ParsedDocument['declarations'][number]['fields']>,
+    container: string | undefined
+  ): void => {
+    for (const field of fields) {
+      const fieldType = field.kind === 'named'
+        ? field.type.normalizedName
+        : field.elementType.normalizedName;
+      add(
+        'field',
+        field.name?.normalizedName,
+        field.range,
+        [field.kind, fieldType],
+        container
+      );
+    }
+  };
+
+  for (const declaration of parsed.declarations) {
+    add(
+      'type',
+      declaration.name.normalizedName,
+      declaration.range,
+      [
+        declaration.baseType.normalizedName,
+        declaration.pointedType?.normalizedName,
+        declaration.scalarFactor
+      ]
+    );
+    addFields(declaration.fields ?? [], declaration.name.normalizedName);
+  }
+  for (const declaration of parsed.globalVariables) {
+    add(
+      'variable',
+      declaration.name.normalizedName,
+      declaration.range,
+      [
+        declaration.type?.normalizedName,
+        declaration.inferredTypeName,
+        declaration.initializer?.kind,
+        declaration.initializer?.text
+      ]
+    );
+    addFields(
+      declaration.fields ?? [],
+      declaration.type?.normalizedName ?? declaration.inferredTypeName
+    );
+  }
+  for (const routine of parsed.routines) {
+    const commonShape = [
+      routine.qualifier,
+      routine.annotation,
+      routine.isBooleanFunction,
+      routine.isCompatible,
+      routine.returnParameter
+        ? [
+          routine.returnParameter.name.normalizedName,
+          routine.returnParameter.type.normalizedName
+        ]
+        : undefined,
+      routine.computedField
+        ? [
+          routine.computedField.name.normalizedName,
+          routine.computedField.structureType.normalizedName,
+          routine.computedField.valueType?.normalizedName
+        ]
+        : undefined
+    ];
+    const parameterShape = (parameters: RoutineParameter[]) =>
+      parameters.map(parameter => [
+        parameter.name.normalizedName,
+        parameter.type.normalizedName
+      ]);
+    add(
+      'routine',
+      routine.name.normalizedName,
+      routine.range,
+      [commonShape, parameterShape(routine.parameters)]
+    );
+    for (const [index, alias] of routine.alternateNames.entries()) {
+      add(
+        'routine',
+        alias.normalizedName,
+        alias.range,
+        [
+          alias.qualifier,
+          commonShape,
+          parameterShape(routine.alternateParameters[index] ?? [])
+        ]
+      );
+    }
+    if (routine.computedField) {
+      add(
+        'field',
+        routine.computedField.name.normalizedName,
+        routine.computedField.name.range,
+        [
+          routine.computedField.structureType.normalizedName,
+          routine.computedField.valueType?.normalizedName
+        ],
+        routine.computedField.structureType.normalizedName
+      );
+    }
+  }
+  for (const entry of declarations.values()) {
+    entry.fingerprints.sort();
+  }
+  return declarations;
+}
+
+function getSelectiveContextReuseUris(
+  directory: string,
+  current: {
+    uri: string;
+    document: TextDocument;
+    source: string;
+    analysis: SourceAnalysisCacheEntry;
+    parsed: ParsedDocument;
+  }[],
+  previous: Map<string, {
+    document: TextDocument;
+    parsed: ParsedDocument;
+  }> | undefined,
+  previousSources: Map<string, string> | undefined,
+  requestId: number,
+  requestDocumentUri: string
+): Set<string> | undefined {
+  const logSelection = (
+    metrics: Record<string, number | string | boolean>
+  ): void => {
+    logProfile({
+      event: 'workspace-context-reuse-selection',
+      requestId,
+      requestDocumentUri,
+      directory,
+      ...metrics
+    });
+  };
+  if (!previous) {
+    logSelection({
+      reuse: false,
+      reason: 'no-previous-snapshot',
+      currentDocuments: current.length
+    });
+    return undefined;
+  }
+  if (!previousSources) {
+    logSelection({
+      reuse: false,
+      reason: 'previous-source-snapshot-unavailable',
+      currentDocuments: current.length
+    });
+    return undefined;
+  }
+  const oldEntries = new Map(
+    [...previous].filter(([uri]) =>
+      dirname(fileURLToPath(uri)) === directory
+    )
+  );
+  const currentByUri = new Map(current.map(entry => [entry.uri, entry]));
+  const changedUris = new Set<string>();
+  const allUris = new Set([...oldEntries.keys(), ...currentByUri.keys()]);
+  for (const uri of allUris) {
+    const oldEntry = oldEntries.get(uri);
+    const currentEntry = currentByUri.get(uri);
+    if (
+      oldEntry &&
+      currentEntry &&
+      previousSources.get(uri) === currentEntry.source
+    ) {
+      continue;
+    }
+    changedUris.add(uri);
+  }
+  if (changedUris.size === 0) {
+    logSelection({
+      reuse: false,
+      reason: 'no-source-changes',
+      previousDocuments: oldEntries.size,
+      currentDocuments: current.length
+    });
+    return new Set();
+  }
+
+  const changedDocumentHasDiagnostics = [...changedUris].some(uri =>
+    (oldEntries.get(uri)?.parsed.diagnostics.length ?? 0) > 0 ||
+    (currentByUri.get(uri)?.parsed.diagnostics.length ?? 0) > 0
+  );
+  if (changedDocumentHasDiagnostics) {
+    logSelection({
+      reuse: false,
+      reason: 'changed-document-has-diagnostics',
+      previousDocuments: oldEntries.size,
+      currentDocuments: current.length,
+      changedDocuments: changedUris.size
+    });
+    return undefined;
+  }
+
+  const declarationChangesByKey = new Map<
+    string,
+    WorkspaceDeclarationChange
+  >();
+  for (const uri of changedUris) {
+    const oldEntry = oldEntries.get(uri);
+    const currentEntry = currentByUri.get(uri);
+    const previousSurface = getDeclarationSurface(
+      oldEntry?.parsed,
+      previousSources.get(uri) ?? ''
+    );
+    const currentSurface = getDeclarationSurface(
+      currentEntry?.parsed,
+      currentEntry?.source ?? ''
+    );
+    const declarationKeys = new Set([
+      ...previousSurface.keys(),
+      ...currentSurface.keys()
+    ]);
+    for (const key of declarationKeys) {
+      const previousDeclaration = previousSurface.get(key);
+      const currentDeclaration = currentSurface.get(key);
+      if (
+        previousDeclaration &&
+        currentDeclaration &&
+        JSON.stringify(previousDeclaration.fingerprints) ===
+          JSON.stringify(currentDeclaration.fingerprints)
+      ) {
+        continue;
+      }
+      if (previousDeclaration) {
+        declarationChangesByKey.set(key, previousDeclaration.change);
+      }
+      if (currentDeclaration) {
+        declarationChangesByKey.set(key, currentDeclaration.change);
+      }
+    }
+  }
+  const declarationChanges = [...declarationChangesByKey.values()];
+  const diagnosticDocuments = [...oldEntries.values()].filter(entry =>
+    entry.parsed.diagnostics.length > 0
+  ).length;
+  if (declarationChanges.length > 0 && diagnosticDocuments > 0) {
+    logSelection({
+      reuse: false,
+      reason: 'diagnostic-snapshot-has-declaration-changes',
+      previousDocuments: oldEntries.size,
+      currentDocuments: current.length,
+      changedDocuments: changedUris.size,
+      declarationChanges: declarationChanges.length,
+      diagnosticDocuments
+    });
+    return undefined;
+  }
+
+  const previousIndex = getWorkspaceAnalysisIndex(previous);
+  const affected = new Set<string>();
+  for (const uri of changedUris) {
+    if (declarationChanges.length === 0) {
+      affected.add(uri);
+      continue;
+    }
+    for (const affectedUri of
+      previousIndex.getAffectedDocumentsForDeclarationChanges(
+        uri,
+        directory,
+        declarationChanges
+      )) {
+      affected.add(affectedUri);
+    }
+  }
+  const reusableUris = new Set(
+    current
+      .filter(entry =>
+        !affected.has(entry.uri) &&
+        entry.analysis.parsed !== undefined
+      )
+      .map(entry => entry.uri)
+  );
+  logSelection({
+    reuse: true,
+    reason: 'dependency-closure',
+    previousDocuments: oldEntries.size,
+    currentDocuments: current.length,
+    changedDocuments: changedUris.size,
+    declarationChanges: declarationChanges.length,
+    affectedDocuments: affected.size,
+    reusableDocuments: reusableUris.size
+  });
+  return reusableUris;
+}
+
+function getReusableRoutineRegionSnapshots(
+  directory: string,
+  current: {
+    uri: string;
+    source: string;
+    parsed: ParsedDocument;
+  }[],
+  previous: Map<string, {
+    document: TextDocument;
+    parsed: ParsedDocument;
+  }> | undefined,
+  previousSources: Map<string, string> | undefined
+): Map<string, { source: string; routines: readonly RoutineDeclaration[] }> {
+  const snapshots = new Map<
+    string,
+    { source: string; routines: readonly RoutineDeclaration[] }
+  >();
+  if (!previous || !previousSources) {
+    return snapshots;
+  }
+  const oldEntries = new Map(
+    [...previous].filter(([uri]) =>
+      dirname(fileURLToPath(uri)) === directory
+    )
+  );
+  const currentByUri = new Map(current.map(entry => [entry.uri, entry]));
+  if (
+    oldEntries.size !== currentByUri.size ||
+    [...oldEntries.keys()].some(uri => !currentByUri.has(uri)) ||
+    [...oldEntries.values()].some(entry =>
+      entry.parsed.diagnostics.length > 0
+    )
+  ) {
+    return snapshots;
+  }
+  const changedUris = [...currentByUri.values()].filter(entry =>
+    previousSources.get(entry.uri) !== entry.source
+  );
+  if (changedUris.length !== 1) {
+    return snapshots;
+  }
+  const changed = changedUris[0];
+  const previousEntry = oldEntries.get(changed.uri);
+  if (!previousEntry) {
+    return snapshots;
+  }
+  const previousSurface = getDeclarationSurface(
+    previousEntry.parsed,
+    previousSources.get(changed.uri) ?? ''
+  );
+  const currentSurface = getDeclarationSurface(changed.parsed, changed.source);
+  if (
+    previousSurface.size !== currentSurface.size ||
+    [...previousSurface].some(([key, oldDeclaration]) => {
+      const currentDeclaration = currentSurface.get(key);
+      return !currentDeclaration ||
+        JSON.stringify(oldDeclaration.fingerprints) !==
+          JSON.stringify(currentDeclaration.fingerprints);
+    })
+  ) {
+    return snapshots;
+  }
+  snapshots.set(changed.uri, {
+    source: previousSources.get(changed.uri) ?? '',
+    routines: previousEntry.parsed.routines
+  });
+  return snapshots;
+}
+
+function getWorkspaceCompletions(
+  workspaceDocuments: Map<
+    string,
+    { document: TextDocument; parsed: ParsedDocument }
+  >,
+  directory: string
+): CompletionItem[] {
+  let itemsByDirectory = workspaceCompletionItems.get(workspaceDocuments);
+  const cachedItems = itemsByDirectory?.get(directory);
+  if (cachedItems) {
+    return cachedItems;
+  }
+  const items: CompletionItem[] = [];
+  const seen = new Set<string>();
+  const add = (
+    key: string,
+    label: string,
+    kind: CompletionItemKind,
+    detail: string,
+    sortPrefix: string
+  ): void => {
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    items.push({
+      label,
+      kind,
+      detail,
+      filterText: normalizeTypeName(label),
+      sortText: `${sortPrefix}-${normalizeTypeName(label)}`
+    });
+  };
+
+  for (const [uri, { parsed }] of workspaceDocuments) {
+    if (dirname(fileURLToPath(uri)) !== directory) {
+      continue;
+    }
+    for (const type of parsed.symbols.entries.filter(symbol =>
+      symbol.kind === 'primitive' ||
+      Boolean(
+        symbol.declaration &&
+        parsed.declarations.includes(symbol.declaration)
+      )
+    )) {
+      add(
+        `type:${type.normalizedName}`,
+        type.name,
+        CompletionItemKind.Class,
+        type.kind === 'primitive' ? 'Tipo primitivo' : 'Tipo',
+        '0'
+      );
+      if (type.pluralName !== type.name) {
+        add(
+          `type:${normalizeTypeName(type.pluralName)}`,
+          type.pluralName,
+          CompletionItemKind.Class,
+          'Tipo no plural',
+          '0'
+        );
+      }
+    }
+    for (const variable of parsed.globalVariableSymbols.entries.filter(symbol =>
+      parsed.globalVariables.includes(symbol.declaration)
+    )) {
+      add(
+        `variable:${variable.normalizedName}`,
+        variable.name,
+        CompletionItemKind.Variable,
+        variable.typeName ? `Variável: ${variable.typeName}` : 'Variável global',
+        '1'
+      );
+    }
+    for (const routine of parsed.routines) {
+      const bindingId = routine.bindingId ??
+        `${routine.name.normalizedName}:${routine.range.start}:${routine.range.end}`;
+      const parameters = routine.parameters
+        .map(parameter => parameter.type.name)
+        .join(', ');
+      const detail = `${routine.annotation === 'função' ? 'Função' : 'Rotina'}${parameters ? ` (${parameters})` : ''}`;
+      const routineNames = [
+        {
+          ...routine.name,
+          name: routine.qualifier
+            ? `${routine.name.name} ${routine.qualifier}`
+            : routine.name.name
+        },
+        ...routine.alternateNames
+      ];
+      for (const name of routineNames) {
+        const label = name.qualifier
+          ? `${name.name} ${name.qualifier}`
+          : name.name;
+        add(
+          `routine:${bindingId}:${normalizeTypeName(label)}`,
+          label,
+          routine.annotation === 'função'
+            ? CompletionItemKind.Function
+            : CompletionItemKind.Method,
+          detail,
+          '2'
+        );
+      }
+    }
+    for (const type of parsed.symbols.entries.filter(symbol =>
+      Boolean(
+        symbol.declaration &&
+        parsed.declarations.includes(symbol.declaration)
+      )
+    )) {
+      for (const field of type.fields ?? []) {
+        if (!field.name) {
+          continue;
+        }
+        add(
+          `field:${type.normalizedName}:${field.name.normalizedName}`,
+          field.name.name,
+          CompletionItemKind.Field,
+          `${type.name}: ${field.kind === 'named' ? field.type.name : field.elementType.name}`,
+          '3'
+        );
+      }
+    }
+  }
+
+  if (!itemsByDirectory) {
+    itemsByDirectory = new Map();
+    workspaceCompletionItems.set(workspaceDocuments, itemsByDirectory);
+  }
+  itemsByDirectory.set(directory, items);
+  return items;
 }
 
 function logProfile(metrics: Record<string, number | string | boolean>): void {
@@ -287,6 +946,8 @@ connection.onInitialize((): InitializeResult => ({
     workspaceSymbolProvider: true,
     referencesProvider: true,
     renameProvider: { prepareProvider: true },
+    implementationProvider: true,
+    completionProvider: { triggerCharacters: [' '] },
     documentFormattingProvider: true
   }
 }));
@@ -311,57 +972,169 @@ connection.onDocumentFormatting(params => profileRequest('formatting', () => {
   }, formatted)];
 }));
 
-connection.onHover(params => profileRequest('hover', () => {
+connection.onHover(params => profileRequest('hover', async requestId => {
   const document = documents.get(params.textDocument.uri);
   const parsedDocument = document && parsedDocuments.get(document.uri);
   if (!document || !parsedDocument) {
     return undefined;
   }
 
-  const reference = findTypeReferenceAtOffset(
+  const analysis = getDocumentAnalysis(
     parsedDocument,
+    document.getText().length,
+    documentAnalysisProfiler(requestId, document.uri)
+  );
+  const reference = analysis.findReferenceAt(
     document.offsetAt(params.position)
   );
-  if (!reference) {
+  const symbol = reference && analysis.getSymbol(reference);
+  if (!reference || !symbol) {
     return undefined;
   }
 
-  const normalizedName = normalizeTypeName(reference.name);
-  const primitiveName = normalizedName === 'byte' || normalizedName === 'bytes'
-    ? 'byte'
-    : normalizedName === 'estrutura' || normalizedName === 'estruturas'
-      ? 'estrutura'
-      : undefined;
-  if (!primitiveName) {
-    return undefined;
+  let declarationNodes = analysis.getDeclarationNodes(reference);
+  if (declarationNodes.length === 0) {
+    const workspaceDocuments = await getWorkspaceDocuments(
+      requestId,
+      document.uri
+    );
+    const directory = dirname(fileURLToPath(document.uri));
+    const declaration = getWorkspaceAnalysisIndex(
+      workspaceDocuments,
+      requestId,
+      document.uri
+    ).getDeclaration(directory, reference, document.uri);
+    const owner = declaration &&
+      workspaceDocuments.get(declaration.uri);
+    if (declaration && owner) {
+      const ownerAnalysis = getDocumentAnalysis(
+        owner.parsed,
+        owner.document.getText().length,
+        documentAnalysisProfiler(requestId, document.uri, owner.document.uri)
+      );
+      declarationNodes = ownerAnalysis.getDeclarationNodes(
+        declaration.reference
+      );
+    }
   }
 
-  const contents = primitiveName === 'byte'
-    ? [
-      '*byte*',
-      '',
-      'Tipo primitivo',
-      'Representa um valor inteiro sem sinal de 8 bits.',
-      '',
-      '*Intervalo de valores*',
-      '`0` a `255`',
-      '',
-      '*Tamanho*',
-      '`1 byte`'
-    ].join('\n')
-    : [
-      '*estrutura*',
-      '',
-      'Tipo primitivo',
-      'Representa um tipo de dado composto, formado por um conjunto de campos que podem possuir diferentes tipos de dados.',
-      '',
-      '*Características*',
-      '',
-      '- Permite agrupar diferentes campos em uma única unidade de dados.',
-      '- Cada campo possui seu próprio tipo.',
-      '- Os campos são acessíveis individualmente.'
-    ].join('\n');
+  let contents: string | undefined;
+  if (reference.kind === 'type') {
+    const normalizedName = normalizeTypeName(reference.name);
+    const primitiveName = normalizedName === 'byte' || normalizedName === 'bytes'
+      ? 'byte'
+      : normalizedName === 'estrutura' || normalizedName === 'estruturas'
+        ? 'estrutura'
+        : undefined;
+    if (primitiveName === 'byte') {
+      contents = [
+        '*byte*',
+        '',
+        'Tipo primitivo',
+        'Representa um valor inteiro sem sinal de 8 bits.',
+        '',
+        '*Intervalo de valores*',
+        '`0` a `255`',
+        '',
+        '*Tamanho*',
+        '`1 byte`'
+      ].join('\n');
+    } else if (primitiveName === 'estrutura') {
+      contents = [
+        '*estrutura*',
+        '',
+        'Tipo primitivo',
+        'Representa um tipo de dado composto, formado por um conjunto de campos que podem possuir diferentes tipos de dados.',
+        '',
+        '*Características*',
+        '',
+        '- Permite agrupar diferentes campos em uma única unidade de dados.',
+        '- Cada campo possui seu próprio tipo.',
+        '- Os campos são acessíveis individualmente.'
+      ].join('\n');
+    } else {
+      const type = parsedDocument.symbols.lookup(reference.name);
+      if (type) {
+        const details = [
+          `**${type.name}**`,
+          '',
+          type.kind === 'scalar' ? 'Tipo escalar derivado.' : 'Tipo derivado.',
+          type.baseType ? `Tipo base: \`${type.baseType.name}\`.` : undefined,
+          type.pointedType
+            ? `Tipo apontado: \`${type.pointedType.name}\`.`
+            : undefined,
+          type.scalarFactor
+            ? `Fator escalar: \`${type.scalarFactor}\`.`
+            : undefined
+        ].filter((line): line is string => Boolean(line));
+        const fields = (type.fields ?? []).map(field =>
+          field.kind === 'named'
+            ? `- \`${field.type.name}\` ${field.name.name}`
+            : `- \`${field.elementType.name}\` ${field.count}${field.name ? ` ${field.name.name}` : ''}`
+        );
+        if (fields.length > 0) {
+          details.push('', '**Campos**', ...fields);
+        }
+        contents = details.join('\n');
+      }
+    }
+  } else {
+    const declarationNode = declarationNodes.find(node =>
+      node.globalVariableDeclaration ||
+      node.parameterDeclaration ||
+      node.localVariableDeclaration ||
+      node.fieldDeclaration ||
+      node.computedFieldDeclaration
+    ) ?? declarationNodes[0];
+    if (declarationNode?.globalVariableDeclaration) {
+      const variable = declarationNode.globalVariableDeclaration;
+      const typeName = variable.type?.name ??
+        variable.inferredTypeName ??
+        'desconhecido';
+      contents = `**${variable.name.name}**\n\nVariável global\n\nTipo: \`${typeName}\``;
+    } else if (declarationNode?.parameterDeclaration) {
+      const parameter = declarationNode.parameterDeclaration;
+      contents = `**${parameter.name.name}**\n\nParâmetro\n\nTipo: \`${parameter.type.name}\``;
+    } else if (declarationNode?.localVariableDeclaration) {
+      const variable = declarationNode.localVariableDeclaration;
+      contents = `**${variable.name.name}**\n\nVariável local\n\nTipo: \`${variable.type.name}\``;
+    } else if (declarationNode?.fieldDeclaration) {
+      const field = declarationNode.fieldDeclaration;
+      contents = field.kind === 'named'
+        ? `**${field.name.name}**\n\nCampo\n\nTipo: \`${field.type.name}\``
+        : field.name
+          ? `**${field.name.name}**\n\nCampo de lista\n\nTipo dos elementos: \`${field.elementType.name}\`\n\nQuantidade: \`${field.count}\``
+          : undefined;
+    } else if (declarationNode?.computedFieldDeclaration) {
+      const computedField = declarationNode.computedFieldDeclaration;
+      contents = computedField
+        ? `**${computedField.name.name}**\n\nCampo calculado\n\nEstrutura: \`${computedField.structureType.name}\`${computedField.valueType ? `\n\nTipo do valor: \`${computedField.valueType.name}\`` : ''}`
+        : undefined;
+    } else {
+      let owner: SyntaxNode | undefined = declarationNode;
+      while (
+        owner &&
+        !owner.routineDeclaration &&
+        owner.parentId !== undefined
+      ) {
+        owner = analysis.nodes.get(owner.parentId);
+      }
+      const routine = owner?.routineDeclaration;
+      if (routine) {
+        const routineKind = routine.annotation === 'função'
+          ? 'Função'
+          : 'Rotina';
+        const parameters = routine.parameters.map(parameter =>
+          `${parameter.type.name} ${parameter.name.name}`
+        );
+        contents = `**${routineKind} ${routine.name.name}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(', ')}` : ''}`;
+      }
+    }
+  }
 
+  if (!contents) {
+    return undefined;
+  }
   return {
     contents: { kind: MarkupKind.Markdown, value: contents },
     range: {
@@ -370,6 +1143,63 @@ connection.onHover(params => profileRequest('hover', () => {
     }
   };
 }));
+
+connection.onCompletion((params: CompletionParams) =>
+  profileRequest('completion', async requestId => {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) {
+      return [];
+    }
+    const workspaceDocuments = await getWorkspaceDocuments(
+      requestId,
+      document.uri
+    );
+    const parsedDocument = workspaceDocuments.get(document.uri)?.parsed;
+    if (!parsedDocument) {
+      return [];
+    }
+
+    const analysis = getDocumentAnalysis(
+      parsedDocument,
+      document.getText().length,
+      documentAnalysisProfiler(requestId, document.uri)
+    );
+    const directory = dirname(fileURLToPath(document.uri));
+    const items = [...getWorkspaceCompletions(workspaceDocuments, directory)];
+    const scope = analysis.getScopeAt(document.offsetAt(params.position));
+    const routine = scope?.kind === 'routine'
+      ? analysis.nodes.get(scope.ownerNodeId)?.routineDeclaration
+      : undefined;
+    if (routine) {
+      const localVariables = [
+        ...routine.parameters,
+        ...routine.preservedParameters.map(parameter => parameter.parameter),
+        ...(routine.returnParameter ? [routine.returnParameter] : []),
+        ...routine.localVariables,
+        ...routine.calls.flatMap(call => call.localVariables ?? []),
+        ...routine.processes.flatMap(process =>
+          process.returnVariable ? [process.returnVariable] : []
+        )
+      ];
+      const seenLocals = new Set<string>();
+      for (const variable of localVariables) {
+        const key = normalizeTypeName(variable.name.name);
+        if (seenLocals.has(key)) {
+          continue;
+        }
+        seenLocals.add(key);
+        items.push({
+          label: variable.name.name,
+          kind: CompletionItemKind.Variable,
+          detail: `Variável local: ${variable.type.name}`,
+          filterText: key,
+          sortText: `0-${key}`
+        });
+      }
+    }
+    return items;
+  })
+);
 
 function hasOpenDocumentSourceChanges(): boolean {
   for (const document of documents.all()) {
@@ -436,13 +1266,46 @@ async function publishOpenDocumentDiagnostics(): Promise<void> {
     pendingRequests: pendingProfileRequests
   });
   const workspaceDocuments = await getWorkspaceDocuments();
+  const duplicateDeclarations = getWorkspaceDuplicateDeclarations(
+    [...workspaceDocuments].map(([uri, { parsed }]) => ({
+      uri,
+      directory: dirname(fileURLToPath(uri)),
+      parsed
+    }))
+  );
   for (const document of openDocuments) {
-    const parsedDocument = workspaceDocuments.get(document.uri)?.parsed;
+    const currentDocument = documents.get(document.uri);
+    const indexedDocument = workspaceDocuments.get(document.uri);
+    if (
+      !currentDocument ||
+      !indexedDocument ||
+      !isCurrentDocumentSnapshot(
+        document.version,
+        currentDocument.version,
+        indexedDocument.document.version
+      )
+    ) {
+      if (profileEnabled) {
+        logProfile({
+          event: 'diagnostics-skipped-stale-snapshot',
+          documentUri: document.uri,
+          capturedVersion: document.version,
+          currentVersion: currentDocument?.version ?? -1,
+          indexedVersion: indexedDocument?.document.version ?? -1
+        });
+      }
+      continue;
+    }
+    const parsedDocument = indexedDocument.parsed;
     if (!parsedDocument) {
       continue;
     }
-    parsedDocuments.set(document.uri, parsedDocument);
-    publishDiagnostics(document, parsedDocument);
+    parsedDocuments.set(currentDocument.uri, parsedDocument);
+    publishDiagnostics(
+      currentDocument,
+      parsedDocument,
+      duplicateDeclarations.get(currentDocument.uri) ?? []
+    );
   }
   if (profileEnabled) {
     logProfile({
@@ -457,13 +1320,17 @@ async function publishOpenDocumentDiagnostics(): Promise<void> {
 }
 
 function invalidateWorkspaceDocuments(): void {
+  if (workspaceDocumentIndex) {
+    previousWorkspaceDocumentIndex = workspaceDocumentIndex;
+  }
   workspaceDocumentIndex = undefined;
   workspaceRevision++;
 }
 
 function publishDiagnostics(
   document: TextDocument,
-  parsedDocument: ParsedDocument
+  parsedDocument: ParsedDocument,
+  duplicateDeclarations: WorkspaceDuplicateDeclaration[] = []
 ): void {
   const diagnostics: Diagnostic[] = parsedDocument.diagnostics.map(diagnostic => ({
     severity: diagnostic.severity === 'hint'
@@ -476,7 +1343,22 @@ function publishDiagnostics(
     message: diagnostic.message,
     source: 'portugues-puro'
   }));
-  connection.sendDiagnostics({ uri: document.uri, diagnostics });
+  for (const duplicate of duplicateDeclarations) {
+    diagnostics.push({
+      severity: DiagnosticSeverity.Error,
+      range: {
+        start: document.positionAt(duplicate.range.start),
+        end: document.positionAt(duplicate.range.end)
+      },
+      message: `Identificador "${duplicate.name}" (${duplicate.kind}) já declarado neste diretório.`,
+      source: 'portugues-puro'
+    });
+  }
+  connection.sendDiagnostics({
+    uri: document.uri,
+    version: document.version,
+    diagnostics
+  });
 }
 
 documents.onDidOpen(({ document }) => {
@@ -554,7 +1436,7 @@ connection.onInitialized(async () => {
   });
 });
 
-connection.onDefinition(params => profileRequest('definition', async () => {
+connection.onDefinition(params => profileRequest('definition', async requestId => {
   const document = documents.get(params.textDocument.uri);
   if (!document) {
     return undefined;
@@ -567,11 +1449,64 @@ connection.onDefinition(params => profileRequest('definition', async () => {
     return undefined;
   }
   const documentDirectory = dirname(fileURLToPath(document.uri));
-  const candidates = [...workspaceDocuments.values()].filter(candidate =>
-    dirname(fileURLToPath(candidate.document.uri)) === documentDirectory
+  const workspaceAnalysis = getWorkspaceAnalysisIndex(
+    workspaceDocuments,
+    requestId,
+    document.uri
   );
   const offset = document.offsetAt(params.position);
-  const parsedReference = findDocumentReference(parsedDocument, offset);
+  const analysis = getDocumentAnalysis(
+    parsedDocument,
+    document.getText().length,
+    documentAnalysisProfiler(requestId, document.uri)
+  );
+  const parsedReference = findDocumentReference(
+    parsedDocument,
+    offset,
+    requestId,
+    document.uri,
+    document.getText().length,
+    undefined
+  );
+  const resolveReferenceDeclaration = (
+    reference: ParsedReference
+  ): ReturnType<typeof Location.create> | undefined => {
+    const declaration = workspaceAnalysis.getDeclaration(
+      documentDirectory,
+      reference,
+      document.uri
+    );
+    const owner = declaration &&
+      workspaceDocuments.get(declaration.uri);
+    if (declaration && owner) {
+      return Location.create(declaration.uri, {
+        start: owner.document.positionAt(declaration.reference.range.start),
+        end: owner.document.positionAt(declaration.reference.range.end)
+      });
+    }
+    return undefined;
+  };
+  const resolveTypeDefinition = (
+    reference: ParsedReference
+  ): ReturnType<typeof Location.create> | undefined =>
+    resolveReferenceDeclaration(reference);
+  const resolveTypeName = (
+    typeName: string
+  ): ReturnType<typeof Location.create> | undefined => {
+    const declaration = workspaceAnalysis.getTypeDeclaration(
+      documentDirectory,
+      normalizeTypeName(typeName)
+    );
+    const owner = declaration &&
+      workspaceDocuments.get(declaration.uri);
+    if (declaration && owner) {
+      return Location.create(declaration.uri, {
+        start: owner.document.positionAt(declaration.reference.range.start),
+        end: owner.document.positionAt(declaration.reference.range.end)
+      });
+    }
+    return undefined;
+  };
   if (parsedReference?.kind === 'variable') {
     const isTypePosition = parsedReference.scope !== undefined &&
       parsedDocument.routines
@@ -591,138 +1526,84 @@ connection.onDefinition(params => profileRequest('definition', async () => {
             offset < variable.type.range.end
           );
         });
-    if (parsedReference.scope !== undefined && !isTypePosition) {
-      const declaration = getDocumentReferences(parsedDocument).find(reference =>
-        reference.kind === 'variable' &&
-        reference.name === parsedReference.name &&
-        reference.scope === parsedReference.scope &&
-        reference.declaration
-      );
-      if (declaration) {
-        return Location.create(document.uri, {
-          start: document.positionAt(declaration.range.start),
-          end: document.positionAt(declaration.range.end)
-        });
+    if (parsedReference.scope !== undefined) {
+      if (!isTypePosition) {
+        const declaration = workspaceAnalysis.getDeclaration(
+          documentDirectory,
+          parsedReference,
+          document.uri
+        );
+        const owner = declaration && workspaceDocuments.get(declaration.uri);
+        if (declaration && owner) {
+          return Location.create(declaration.uri, {
+            start: owner.document.positionAt(declaration.reference.range.start),
+            end: owner.document.positionAt(declaration.reference.range.end)
+          });
+        }
       }
     } else {
-      const globalVariable = parsedDocument.globalVariableSymbols.lookup(parsedReference.name);
-      const owner = globalVariable && candidates.find(candidate =>
-        candidate.parsed.globalVariables.some(declaration =>
-          declaration.name.normalizedName ===
-            globalVariable.declaration.name.normalizedName &&
-          declaration.name.range.start === globalVariable.declaration.name.range.start &&
-          declaration.name.range.end === globalVariable.declaration.name.range.end
-        )
+      const declaration = workspaceAnalysis.getDeclaration(
+        documentDirectory,
+        parsedReference,
+        document.uri
       );
-      if (globalVariable && owner) {
-        return Location.create(owner.document.uri, {
-          start: owner.document.positionAt(globalVariable.declaration.name.range.start),
-          end: owner.document.positionAt(globalVariable.declaration.name.range.end)
+      const owner = declaration && workspaceDocuments.get(declaration.uri);
+      if (declaration && owner) {
+        return Location.create(declaration.uri, {
+          start: owner.document.positionAt(declaration.reference.range.start),
+          end: owner.document.positionAt(declaration.reference.range.end)
         });
+      }
+    }
+    if (isTypePosition) {
+      const typeReference = analysis.findReferenceAt(offset, 'type');
+      const location = typeReference &&
+        resolveTypeDefinition(typeReference);
+      if (location) {
+        return location;
       }
     }
   }
   if (parsedReference?.kind === 'routine') {
-    const callTarget = parsedDocument.routines
-      .flatMap(routine => routine.calls)
-      .find(call =>
-        offset >= call.name.range.start &&
-        offset <= call.name.range.end
-      )?.target;
-    if (callTarget) {
-      const owner = candidates.find(candidate =>
-        candidate.parsed.routines.some(routine =>
-          routine.name.normalizedName === callTarget.name.normalizedName &&
-          normalizeTypeName(routine.qualifier ?? '') ===
-            normalizeTypeName(callTarget.qualifier ?? '') &&
-          routine.parameters.length === callTarget.parameters.length &&
-          routine.parameters.every((parameter, index) =>
-            normalizeTypeName(parameter.type.name) ===
-            normalizeTypeName(callTarget.parameters[index].type.name)
-          )
-        )
-      );
-      if (owner) {
-        return Location.create(owner.document.uri, {
-          start: owner.document.positionAt(callTarget.name.range.start),
-          end: owner.document.positionAt(callTarget.name.range.end)
-        });
-      }
-    }
-
-    for (const candidate of candidates) {
-      const declaration = getDocumentReferences(candidate.parsed).find(reference =>
-        reference.kind === 'routine' &&
-        reference.name === parsedReference.name &&
-        reference.declaration
-      );
-      if (declaration) {
-        return Location.create(candidate.document.uri, {
-          start: candidate.document.positionAt(declaration.range.start),
-          end: candidate.document.positionAt(declaration.range.end)
-        });
-      }
+    const declaration = resolveReferenceDeclaration(parsedReference);
+    if (declaration) {
+      return declaration;
     }
   }
   if (parsedReference?.kind === 'type') {
-    const symbol = parsedDocument.symbols.lookup(parsedReference.name);
-    const owner = symbol?.declaration && candidates.find(candidate =>
-      candidate.parsed.declarations.some(declaration =>
-        declaration.name.normalizedName === symbol.declaration!.name.normalizedName &&
-        declaration.name.range.start === symbol.declaration!.name.range.start &&
-        declaration.name.range.end === symbol.declaration!.name.range.end
-      )
-    );
-    if (symbol?.declaration && owner) {
-      return Location.create(owner.document.uri, {
-        start: owner.document.positionAt(symbol.declaration.name.range.start),
-        end: owner.document.positionAt(symbol.declaration.name.range.end)
-      });
+    const location = resolveTypeDefinition(parsedReference);
+    if (location) {
+      return location;
     }
   }
-  const field = findRoutineFieldAtOffset(parsedDocument, offset);
-  if (field?.name) {
-    return Location.create(document.uri, {
-      start: document.positionAt(field.name.range.start),
-      end: document.positionAt(field.name.range.end)
-    });
-  }
-  const reference = findTypeReferenceAtOffset(
-    parsedDocument,
-    offset
-  );
-  if (reference) {
-    const symbol = parsedDocument.symbols.lookup(reference.name);
-    const owner = symbol?.declaration && candidates.find(candidate =>
-      candidate.parsed.declarations.some(declaration =>
-        declaration.name.normalizedName === symbol.declaration!.name.normalizedName &&
-        declaration.name.range.start === symbol.declaration!.name.range.start &&
-        declaration.name.range.end === symbol.declaration!.name.range.end
-      )
-    );
-    if (symbol?.declaration && owner) {
-      return Location.create(owner.document.uri, {
-        start: owner.document.positionAt(symbol.declaration.name.range.start),
-        end: owner.document.positionAt(symbol.declaration.name.range.end)
-      });
+  if (parsedReference?.kind === 'field') {
+    if (parsedReference.declaration) {
+      const matchingType = workspaceAnalysis.getTypeDeclaration(
+        documentDirectory,
+        normalizeTypeName(parsedReference.name)
+      ) !== undefined;
+      const typeName = matchingType
+        ? parsedReference.name
+        : analysis.findTypeDefinitionAt(offset);
+      const typeLocation = typeName && resolveTypeName(typeName);
+      if (typeLocation) {
+        return typeLocation;
+      }
+    }
+    const declaration = resolveReferenceDeclaration(parsedReference);
+    if (declaration) {
+      return declaration;
     }
   }
 
-  const routine = findRoutineDeclarationAtOffset(
-    parsedDocument,
-    document.offsetAt(params.position)
-  );
-  if (routine) {
-    return Location.create(document.uri, {
-      start: document.positionAt(routine.name.range.start),
-      end: document.positionAt(routine.name.range.end)
-    });
+  if (parsedReference?.kind === 'routine') {
+    return resolveReferenceDeclaration(parsedReference);
   }
 
   return undefined;
 }));
 
-connection.onTypeDefinition(params => profileRequest('type-definition', async () => {
+connection.onTypeDefinition(params => profileRequest('type-definition', async requestId => {
   const document = documents.get(params.textDocument.uri);
   if (!document) {
     return undefined;
@@ -735,37 +1616,81 @@ connection.onTypeDefinition(params => profileRequest('type-definition', async ()
     return undefined;
   }
 
-  const reference = findTypeDefinitionReferenceAtOffset(
+  const analysis = getDocumentAnalysis(
     parsedDocument,
+    document.getText().length,
+    documentAnalysisProfiler(requestId, document.uri)
+  );
+  const typeName = analysis.findTypeDefinitionAt(
     document.offsetAt(params.position)
   );
-  if (!reference) {
+  if (!typeName) {
     return undefined;
   }
 
   const documentDirectory = dirname(fileURLToPath(document.uri));
-  for (const candidate of workspaceDocuments.values()) {
-    if (dirname(fileURLToPath(candidate.document.uri)) !== documentDirectory) {
-      continue;
-    }
-    const symbol = parsedDocument.symbols.lookup(reference.name);
-    const declaration = symbol?.declaration &&
-      candidate.parsed.declarations.find(candidateDeclaration =>
-        candidateDeclaration.name.normalizedName ===
-          symbol.declaration!.name.normalizedName &&
-        candidateDeclaration.name.range.start === symbol.declaration!.name.range.start &&
-        candidateDeclaration.name.range.end === symbol.declaration!.name.range.end
-      );
-    if (declaration) {
-      return Location.create(candidate.document.uri, {
-        start: candidate.document.positionAt(declaration.name.range.start),
-        end: candidate.document.positionAt(declaration.name.range.end)
-      });
-    }
+  const declaration = getWorkspaceAnalysisIndex(
+    workspaceDocuments,
+    requestId,
+    document.uri
+  ).getTypeDeclaration(documentDirectory, normalizeTypeName(typeName));
+  const owner = declaration && workspaceDocuments.get(declaration.uri);
+  if (declaration && owner) {
+    return Location.create(declaration.uri, {
+      start: owner.document.positionAt(declaration.reference.range.start),
+      end: owner.document.positionAt(declaration.reference.range.end)
+    });
   }
 
   return undefined;
 }));
+
+connection.onImplementation((params: ImplementationParams) =>
+  profileRequest('implementation', async requestId => {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) {
+      return undefined;
+    }
+
+    const workspaceDocuments = await getWorkspaceDocuments(
+      requestId,
+      document.uri
+    );
+    const parsedDocument = workspaceDocuments.get(document.uri)?.parsed;
+    if (!parsedDocument) {
+      return undefined;
+    }
+    const reference = findDocumentReference(
+      parsedDocument,
+      document.offsetAt(params.position),
+      requestId,
+      document.uri,
+      document.getText().length,
+      'routine'
+    );
+    if (!reference) {
+      return undefined;
+    }
+
+    const directory = dirname(fileURLToPath(document.uri));
+    const declarations = getWorkspaceAnalysisIndex(
+      workspaceDocuments,
+      requestId,
+      document.uri
+    ).getRoutineDeclarations(directory, reference);
+    const locations = declarations.flatMap(({ uri, declaration }) => {
+      const owner = workspaceDocuments.get(uri);
+      if (!owner || declaration.bodyRange.end < declaration.bodyRange.start) {
+        return [];
+      }
+      return [Location.create(uri, {
+        start: owner.document.positionAt(declaration.bodyRange.start),
+        end: owner.document.positionAt(declaration.bodyRange.end)
+      })];
+    });
+    return locations.length > 0 ? locations : undefined;
+  })
+);
 
 connection.onDocumentSymbol(params => profileRequest('document-symbol', async requestId => {
   const documentLookupStartedAt = profileEnabled ? performance.now() : 0;
@@ -876,7 +1801,7 @@ connection.onWorkspaceSymbol(params => profileRequest('workspace-symbol', async 
   return results;
 }));
 
-connection.onReferences(params => profileRequest('references', async () => {
+connection.onReferences(params => profileRequest('references', async requestId => {
   const document = documents.get(params.textDocument.uri);
   const workspaceDocuments = await getWorkspaceDocuments();
   const parsedDocument = document &&
@@ -886,7 +1811,11 @@ connection.onReferences(params => profileRequest('references', async () => {
   }
   const target = findDocumentReference(
     parsedDocument,
-    document.offsetAt(params.position)
+    document.offsetAt(params.position),
+    requestId,
+    document.uri,
+    document.getText().length,
+    undefined
   );
   if (!target) {
     return undefined;
@@ -894,49 +1823,46 @@ connection.onReferences(params => profileRequest('references', async () => {
 
   const results: ReturnType<typeof Location.create>[] = [];
   const seen = new Set<string>();
-  for (const [uri, candidate] of workspaceDocuments) {
-    if (
-      dirname(fileURLToPath(candidate.document.uri)) !==
-      dirname(fileURLToPath(document.uri))
-    ) {
+  const directory = dirname(fileURLToPath(document.uri));
+  for (const { uri, reference } of getWorkspaceAnalysisIndex(
+    workspaceDocuments,
+    requestId,
+    document.uri
+  ).getReferences(directory, target, document.uri)) {
+    const candidate = workspaceDocuments.get(uri);
+    if (!candidate || target.scope !== undefined && uri !== document.uri) {
       continue;
     }
-    if (target.scope !== undefined && uri !== document.uri) {
+    if (!params.context.includeDeclaration && reference.declaration) {
       continue;
     }
-    for (const reference of getDocumentReferences(candidate.parsed)) {
-      if (
-        reference.kind !== target.kind ||
-        reference.name !== target.name ||
-        reference.container !== target.container ||
-        target.scope !== undefined &&
-          (reference.scope !== target.scope || uri !== document.uri) ||
-        !params.context.includeDeclaration &&
-          reference.declaration
-      ) {
-        continue;
-      }
-      const locationKey = `${uri}:${reference.range.start}:${reference.range.end}`;
-      if (seen.has(locationKey)) {
-        continue;
-      }
-      seen.add(locationKey);
-      results.push(Location.create(uri, {
-        start: candidate.document.positionAt(reference.range.start),
-        end: candidate.document.positionAt(reference.range.end)
-      }));
+    const locationKey = `${uri}:${reference.range.start}:${reference.range.end}`;
+    if (seen.has(locationKey)) {
+      continue;
     }
+    seen.add(locationKey);
+    results.push(Location.create(uri, {
+      start: candidate.document.positionAt(reference.range.start),
+      end: candidate.document.positionAt(reference.range.end)
+    }));
   }
   return results;
 }));
 
-connection.onPrepareRename(params => profileRequest('prepare-rename', () => {
+connection.onPrepareRename(params => profileRequest('prepare-rename', requestId => {
   const document = documents.get(params.textDocument.uri);
   const parsed = document && parsedDocuments.get(document.uri);
   if (!document || !parsed) {
     return undefined;
   }
-  const reference = findDocumentReference(parsed, document.offsetAt(params.position));
+  const reference = findDocumentReference(
+    parsed,
+    document.offsetAt(params.position),
+    requestId,
+    document.uri,
+    document.getText().length,
+    undefined
+  );
   if (!reference) {
     return undefined;
   }
@@ -949,7 +1875,7 @@ connection.onPrepareRename(params => profileRequest('prepare-rename', () => {
   };
 }));
 
-connection.onRenameRequest(params => profileRequest('rename', async (): Promise<WorkspaceEdit | undefined> => {
+connection.onRenameRequest(params => profileRequest('rename', async (requestId): Promise<WorkspaceEdit | undefined> => {
   const document = documents.get(params.textDocument.uri);
   const workspaceDocuments = await getWorkspaceDocuments();
   const parsed = document &&
@@ -958,44 +1884,39 @@ connection.onRenameRequest(params => profileRequest('rename', async (): Promise<
   if (!document || !parsed || !newName) {
     return undefined;
   }
-  const target = findDocumentReference(parsed, document.offsetAt(params.position));
+  const target = findDocumentReference(
+    parsed,
+    document.offsetAt(params.position),
+    requestId,
+    document.uri,
+    document.getText().length,
+    undefined
+  );
   if (!target) {
     return undefined;
   }
 
   const changes: NonNullable<WorkspaceEdit['changes']> = {};
   const seen = new Set<string>();
-  for (const [uri, candidate] of workspaceDocuments) {
-    if (
-      dirname(fileURLToPath(candidate.document.uri)) !==
-      dirname(fileURLToPath(document.uri))
-    ) {
+  const directory = dirname(fileURLToPath(document.uri));
+  for (const { uri, reference } of getWorkspaceAnalysisIndex(
+    workspaceDocuments,
+    requestId,
+    document.uri
+  ).getReferences(directory, target, document.uri)) {
+    const candidate = workspaceDocuments.get(uri);
+    if (!candidate || target.scope !== undefined && uri !== document.uri) {
       continue;
     }
-    if (target.scope !== undefined && uri !== document.uri) {
+    const locationKey = `${uri}:${reference.range.start}:${reference.range.end}`;
+    if (seen.has(locationKey)) {
       continue;
     }
-    for (const reference of getDocumentReferences(candidate.parsed)) {
-      if (
-        reference.kind !== target.kind ||
-        reference.name !== target.name ||
-        reference.container !== target.container ||
-        target.scope !== undefined &&
-          (reference.scope !== target.scope || uri !== document.uri)
-      ) {
-        continue;
-      }
-
-      const locationKey = `${uri}:${reference.range.start}:${reference.range.end}`;
-      if (seen.has(locationKey)) {
-        continue;
-      }
-      seen.add(locationKey);
-      (changes[uri] ??= []).push(TextEdit.replace({
-        start: candidate.document.positionAt(reference.range.start),
-        end: candidate.document.positionAt(reference.range.end)
-      }, newName));
-    }
+    seen.add(locationKey);
+    (changes[uri] ??= []).push(TextEdit.replace({
+      start: candidate.document.positionAt(reference.range.start),
+      end: candidate.document.positionAt(reference.range.end)
+    }, newName));
   }
 
   return Object.keys(changes).length > 0 ? { changes } : undefined;
@@ -1006,6 +1927,11 @@ function createDocumentSymbols(
   document: TextDocument,
   requestId = 0
 ): DocumentSymbol[] {
+  const analysis = getDocumentAnalysis(
+    parsed,
+    document.getText().length,
+    documentAnalysisProfiler(requestId, document.uri)
+  );
   const documentUri = document.uri;
   const cacheLookupStartedAt = profileEnabled ? performance.now() : 0;
   const cachedSymbols = documentSymbolsCache.get(parsed);
@@ -1020,161 +1946,19 @@ function createDocumentSymbols(
     return cachedSymbols;
   }
 
-  const toRange = (range: { start: number; end: number }) => ({
-    start: document.positionAt(range.start),
-    end: document.positionAt(range.end)
-  });
-  const fieldSymbol = (field: NamedTypeField | ByteArrayField): DocumentSymbol => {
-    fieldSymbols++;
-    if (field.kind === 'byte-array') {
-      const name = field.name?.name ?? `${field.count} bytes`;
-      const range = toRange(field.name?.range ?? field.range);
-      return DocumentSymbol.create(
-        name,
-        `${field.count} ${field.elementType.name}`,
-        SymbolKind.Field,
-        range,
-        range
-      );
-    }
-    return DocumentSymbol.create(
-      field.name.name,
-      field.type.name,
-      SymbolKind.Field,
-      toRange({
-        start: Math.min(field.name.range.start, field.type.range.start),
-        end: Math.max(field.name.range.end, field.type.range.end)
-      }),
-      toRange(field.name.range)
-    );
-  };
-  const fieldChildren = (
-    fields: (NamedTypeField | ByteArrayField)[] | undefined
-  ): DocumentSymbol[] => (fields ?? []).map(fieldSymbol);
-
-  const typeConstructionStartedAt = profileEnabled ? performance.now() : 0;
-  let inheritanceDistanceQueries = 0;
-  let fieldSymbols = 0;
-  const typeSymbols = parsed.declarations.map(declaration => {
-    const detail = declaration.pointedType
-      ? `${declaration.baseType.name} para ${declaration.pointedType.name}`
-      : declaration.baseType.name;
-    inheritanceDistanceQueries++;
-    const kind = parsed.symbols.getBaseTypeDistance(
-      declaration.name.name,
-      'estrutura'
-    ) !== undefined
-      ? SymbolKind.Struct
-      : SymbolKind.Class;
-    return DocumentSymbol.create(
-      declaration.name.name,
-      detail,
-      kind,
-      toRange(declaration.range),
-      toRange(declaration.name.range),
-      fieldChildren(declaration.fields)
-    );
-  });
-  const typeConstructionMs = profileEnabled
-    ? performance.now() - typeConstructionStartedAt
-    : 0;
-
-  const globalVariableConstructionStartedAt = profileEnabled
-    ? performance.now()
-    : 0;
-  const variableSymbols = parsed.globalVariables.map(
-    (declaration: GlobalVariableDeclaration) => {
-      const detail = declaration.type?.name ??
-        declaration.inferredTypeName ??
-        declaration.initializer?.kind;
-      return DocumentSymbol.create(
-        declaration.name.name,
-        detail,
-        SymbolKind.Variable,
-        toRange(declaration.range),
-        toRange(declaration.name.range),
-        fieldChildren(declaration.fields)
-      );
-    }
+  const { symbols, metrics } = buildDocumentSymbols(
+    parsed,
+    document,
+    analysis,
+    profileEnabled
   );
-  const globalVariableConstructionMs = profileEnabled
-    ? performance.now() - globalVariableConstructionStartedAt
-    : 0;
-
-  const routineConstructionStartedAt = profileEnabled ? performance.now() : 0;
-  let routineParameters = 0;
-  let routineLocals = 0;
-  const routineSymbols = parsed.routines.map((routine: RoutineDeclaration) => {
-    routineParameters += routine.parameters.length;
-    routineLocals += routine.localVariables.length;
-    const children = [
-      ...routine.parameters.map(parameter => DocumentSymbol.create(
-        parameter.name.name,
-        parameter.type.name,
-        SymbolKind.Variable,
-        toRange(parameter.name.range),
-        toRange(parameter.name.range)
-      )),
-      ...routine.localVariables.map(variable => DocumentSymbol.create(
-        variable.name.name,
-        variable.type.name,
-        SymbolKind.Variable,
-        toRange(variable.range),
-        toRange(variable.name.range)
-      ))
-    ];
-    const range = {
-      start: document.positionAt(routine.range.start),
-      end: document.positionAt(routine.bodyRange.end)
-    };
-    const name = routine.qualifier
-      ? `${routine.name.name} ${routine.qualifier}`
-      : routine.name.name;
-    const detail = [
-      routine.annotation,
-      ...routine.parameters.map(parameter =>
-        `${parameter.type.name} ${parameter.name.name}`
-      )
-    ].filter(Boolean).join(' ');
-    return DocumentSymbol.create(
-      name,
-      detail || undefined,
-      SymbolKind.Function,
-      range,
-      toRange(routine.name.range),
-      children
-    );
-  });
-  const routineConstructionMs = profileEnabled
-    ? performance.now() - routineConstructionStartedAt
-    : 0;
-
-  const sortStartedAt = profileEnabled ? performance.now() : 0;
-  const symbols = [...typeSymbols, ...variableSymbols, ...routineSymbols]
-    .sort((first, second) => first.range.start.line - second.range.start.line ||
-      first.range.start.character - second.range.start.character);
-  const sortMs = profileEnabled ? performance.now() - sortStartedAt : 0;
   if (profileEnabled) {
     logDocumentSymbolStage(
       requestId,
       documentUri,
       'construct-sort-and-cache-symbols',
       cacheLookupStartedAt,
-      {
-        cacheHit: false,
-        declarations: parsed.declarations.length,
-        globalVariables: parsed.globalVariables.length,
-        routines: parsed.routines.length,
-        fields: fieldSymbols,
-        routineParameters,
-        routineLocals,
-        symbols: symbols.length,
-        inheritanceDistanceQueries,
-        typeConstructionMs,
-        globalVariableConstructionMs,
-        routineConstructionMs,
-        sortMs
-      }
+      { cacheHit: false, ...metrics }
     );
   }
   documentSymbolsCache.set(parsed, symbols);
@@ -1440,6 +2224,7 @@ async function buildWorkspaceDocumentIndex(
     let baseParseCacheHits = 0;
     let contextualParseCount = 0;
     let contextualCacheHits = 0;
+    let selectiveContextCacheHits = 0;
     let catalogAssemblyMs = 0;
     for (const group of groups.values()) {
       const catalogKey = group
@@ -1487,12 +2272,76 @@ async function buildWorkspaceDocumentIndex(
       if (profileEnabled) {
         catalogAssemblyMs += performance.now() - catalogStartedAt;
       }
+      const directory = dirname(fileURLToPath(group[0].uri));
+      const reusableRoutineSnapshots = getReusableRoutineRegionSnapshots(
+        directory,
+        baseParses.map(({ entry, parsed }) => ({
+          uri: entry.uri,
+          source: entry.source,
+          parsed
+        })),
+        previousWorkspaceDocumentIndex,
+        previousWorkspaceDocumentIndex
+          ? workspaceDocumentSources.get(previousWorkspaceDocumentIndex)
+          : undefined
+      );
+      if (profileEnabled) {
+        logProfile({
+          event: 'workspace-region-checkpoints',
+          requestId,
+          requestDocumentUri,
+          directory,
+          eligibleDocuments: reusableRoutineSnapshots.size,
+          eligibleRoutines: [...reusableRoutineSnapshots.values()].reduce(
+            (total, snapshot) => total + snapshot.routines.length,
+            0
+          )
+        });
+      }
+      const selectiveReusableUris = getSelectiveContextReuseUris(
+        directory,
+        baseParses.map(({ entry, parsed }) => ({
+          ...entry,
+          parsed
+        })),
+        previousWorkspaceDocumentIndex,
+        previousWorkspaceDocumentIndex
+          ? workspaceDocumentSources.get(previousWorkspaceDocumentIndex)
+          : undefined,
+        requestId,
+        requestDocumentUri
+      );
       for (const { entry } of baseParses) {
+        if (
+          selectiveReusableUris?.has(entry.uri) &&
+          entry.analysis.parsed
+        ) {
+          entry.analysis.catalogKey = catalogKey;
+          result.set(entry.uri, {
+            document: entry.document,
+            parsed: entry.analysis.parsed
+          });
+          contextualCacheHits++;
+          selectiveContextCacheHits++;
+          continue;
+        }
         contextualParseCount++;
+        const localRoutineDeclarations = new Set(
+          entry.analysis.baseParsed?.routines ?? []
+        );
+        const contextualCatalog: ParserSymbolCatalog = {
+          ...catalog,
+          routines: catalog.routines.filter(routine =>
+            !localRoutineDeclarations.has(routine)
+          )
+        };
         const parsed = parseTypeDeclarations(
           entry.source,
-          catalog,
-          collectDocumentParseMetrics(entry.uri, entry.source, 'contextual')
+          contextualCatalog,
+          collectDocumentParseMetrics(entry.uri, entry.source, 'contextual'),
+          {
+            reusableRoutineRegions: reusableRoutineSnapshots.get(entry.uri)
+          }
         );
         entry.analysis.parsed = parsed;
         entry.analysis.catalogKey = catalogKey;
@@ -1526,6 +2375,7 @@ async function buildWorkspaceDocumentIndex(
         baseParseCacheHits,
         contextualParseCount,
         contextualCacheHits,
+        selectiveContextCacheHits,
         declarations: [...result.values()].reduce(
           (total, entry) => total + entry.parsed.declarations.length,
           0
@@ -1552,6 +2402,13 @@ async function buildWorkspaceDocumentIndex(
       continue;
     }
     workspaceDocumentIndex = result;
+    workspaceDocumentSources.set(
+      result,
+      new Map(
+        [...result].map(([uri, entry]) => [uri, entry.document.getText()])
+      )
+    );
+    previousWorkspaceDocumentIndex = undefined;
     workspaceDirectorySnapshots = directorySnapshots;
     return result;
   }

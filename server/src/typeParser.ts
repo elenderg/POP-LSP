@@ -46,6 +46,7 @@ export interface TypeDeclaration {
   pointedType?: TypeReference;
   fields?: TypeField[];
   scalarFactor?: string;
+  scalarFactorRange?: SourceRange;
   operator: 'é' | 'são';
   range: SourceRange;
 }
@@ -99,6 +100,7 @@ export interface RoutineExpressionOperand {
 export interface RoutineExpressionBinary {
   kind: 'binary';
   operator: ExpressionOperator;
+  operatorRange: SourceRange;
   left: RoutineExpression;
   right: RoutineExpression;
   range: SourceRange;
@@ -107,6 +109,7 @@ export interface RoutineExpressionBinary {
 export interface RoutineExpressionUnary {
   kind: 'unary';
   operator: '+' | '-';
+  operatorRange: SourceRange;
   operand: RoutineExpression;
   range: SourceRange;
 }
@@ -150,11 +153,23 @@ export interface RoutineConditionalBlock {
   condition: TypeReference;
   conditionArguments: TypeReference[];
   target?: RoutineDeclaration;
+  predicateCall?: RoutineCall;
+  bodyRange: SourceRange;
   statements: SourceRange[];
   range: SourceRange;
 }
 
+export interface RoutineLoopBlock {
+  kind: 'explicit' | 'implicit';
+  range: SourceRange;
+  bodyRange: SourceRange;
+  startInstruction?: RoutineLoopInstruction;
+  endInstruction?: RoutineLoopInstruction;
+  complete: boolean;
+}
+
 export interface RoutineDeclaration {
+  bindingId?: string;
   name: TypeReference;
   qualifier?: string;
   alternateNames: TypeReference[];
@@ -163,13 +178,18 @@ export interface RoutineDeclaration {
   preservedParameters: PreservedRoutineParameter[];
   assignments: RoutineAssignment[];
   outputs: RoutineOutput[];
+  returnStatements: RoutineReturnStatement[];
+  simpleInstructions: RoutineSimpleInstruction[];
   localVariables: RoutineLocalVariable[];
   memoryAllocations: RoutineMemoryAllocation[];
   memoryDeallocations: RoutineMemoryDeallocation[];
   conditionals: RoutineConditionalBlock[];
+  loopBlocks: RoutineLoopBlock[];
+  statements: SourceRange[];
   processes: RoutineProcess[];
   loopInstructions: RoutineLoopInstruction[];
   computedFieldAccesses: RoutineComputedFieldAccess[];
+  listSpecialFieldAccesses: RoutineListSpecialFieldAccess[];
   computedField?: RoutineComputedField;
   returnParameter?: RoutineParameter;
   calls: RoutineCall[];
@@ -226,6 +246,19 @@ export interface RoutineLoopInstruction {
   range: SourceRange;
 }
 
+export interface RoutineReturnStatement {
+  kind: 'return' | 'boolean-return';
+  range: SourceRange;
+}
+
+export interface RoutineSimpleInstruction {
+  kind: 'decode' | 'push';
+  range: SourceRange;
+  literal?: GlobalVariableLiteral;
+  variableAccesses?: RoutineVariableAccess[];
+  isValid: boolean;
+}
+
 export interface RoutineComputedField {
   name: TypeReference;
   structureType: TypeReference;
@@ -235,6 +268,13 @@ export interface RoutineComputedField {
 export interface RoutineComputedFieldAccess {
   reference: TypeReference;
   target: RoutineDeclaration;
+}
+
+export interface RoutineListSpecialFieldAccess {
+  kind: 'first' | 'last' | 'next' | 'previous';
+  reference: TypeReference;
+  listType: TypeReference;
+  elementType: TypeReference;
 }
 
 export interface RoutineFieldAccess {
@@ -316,6 +356,9 @@ export interface TypeSymbol {
 export class TypeSymbolTable {
   private readonly symbols = new Map<string, TypeSymbol>();
   private readonly names = new Map<string, TypeSymbol>();
+  private readonly symbolsByPluralName = new Map<string, TypeSymbol[]>();
+  private readonly symbolEntries: TypeSymbol[];
+  private scalarTypeNames: string[] = [];
   private readonly inheritanceEntryTimes = new Map<TypeSymbol, number>();
   private readonly inheritanceExitTimes = new Map<TypeSymbol, number>();
   private readonly inheritanceDepths = new Map<TypeSymbol, number>();
@@ -362,12 +405,14 @@ export class TypeSymbolTable {
       this.addName(symbol.pluralName, symbol);
     }
 
+    this.symbolEntries = [...this.symbols.values()];
     this.buildInheritanceIndex();
 
     const dependencyStartedAt = onDependencyProfile ? performance.now() : 0;
-    for (const symbol of this.symbols.values()) {
+    for (const symbol of this.symbolEntries) {
       this.resolveScale(symbol);
     }
+    this.indexResolvedTypeNames();
     if (onDependencyProfile) {
       const dependencyFinishedAt = performance.now();
       onDependencyProfile(
@@ -426,8 +471,16 @@ export class TypeSymbolTable {
     return undefined;
   }
 
-  get entries(): TypeSymbol[] {
-    return [...new Set(this.symbols.values())];
+  get entries(): readonly TypeSymbol[] {
+    return this.symbolEntries;
+  }
+
+  getPluralMatches(name: string): readonly TypeSymbol[] {
+    return this.symbolsByPluralName.get(normalizeTypeName(name)) ?? [];
+  }
+
+  get scalarNames(): readonly string[] {
+    return this.scalarTypeNames;
   }
 
   private addPrimitive(name: string, isScalar: boolean): void {
@@ -449,6 +502,22 @@ export class TypeSymbolTable {
     if (!this.names.has(key)) {
       this.names.set(key, symbol);
     }
+  }
+
+  private indexResolvedTypeNames(): void {
+    const scalarNames: string[] = [];
+    for (const symbol of this.symbolEntries) {
+      const pluralKey = normalizeTypeName(symbol.pluralName);
+      const pluralSymbols = this.symbolsByPluralName.get(pluralKey) ?? [];
+      pluralSymbols.push(symbol);
+      this.symbolsByPluralName.set(pluralKey, pluralSymbols);
+      if (symbol.isScalar) {
+        scalarNames.push(symbol.name, symbol.pluralName);
+      }
+    }
+    this.scalarTypeNames = scalarNames.sort(
+      (first, second) => second.length - first.length
+    );
   }
 
   private buildInheritanceIndex(): void {
@@ -601,16 +670,34 @@ export interface ParsedDocument {
   declarations: TypeDeclaration[];
   globalVariables: GlobalVariableDeclaration[];
   routines: RoutineDeclaration[];
+  regions: ParserRegion[];
+  commentRanges?: SourceRange[];
   symbols: TypeSymbolTable;
   globalVariableSymbols: GlobalVariableSymbolTable;
   routineSymbols: RoutineSymbolTable;
   diagnostics: ParserDiagnostic[];
 }
 
+export interface ParserRegion {
+  kind: 'type' | 'global-variable' | 'routine';
+  name: string;
+  range: SourceRange;
+  headerRange?: SourceRange;
+  bodyRange?: SourceRange;
+}
+
 export interface ParserSymbolCatalog {
   declarations: TypeDeclaration[];
   globalVariables: GlobalVariableDeclaration[];
   routines: RoutineDeclaration[];
+}
+
+export interface ParseOptions {
+  resolveRoutineCalls?: boolean;
+  reusableRoutineRegions?: {
+    source: string;
+    routines: readonly RoutineDeclaration[];
+  };
 }
 
 export interface ParsePerformanceMetrics {
@@ -639,12 +726,17 @@ export interface ParsePerformanceMetrics {
   routineNameMatchSearches: number;
   routineNameSpanChecks: number;
   routineNameCandidateChecks: number;
+  routineNameCandidatesSkippedByQualifier: number;
+  routineNameNormalizationCalls: number;
+  routineNameNormalizationCacheHits: number;
+  routineNameNormalizationCacheMisses: number;
   totalMs: number;
   sourceCodeUnits: number;
   tokenCount: number;
   declarations: number;
   globalVariables: number;
   routines: number;
+  reusedRoutineCount: number;
   symbols: number;
 }
 
@@ -653,6 +745,10 @@ interface RoutineResolutionProfileCounters {
   nameMatchSearches: number;
   nameSpanChecks: number;
   nameCandidateChecks: number;
+  nameCandidatesSkippedByQualifier: number;
+  nameNormalizationCalls: number;
+  nameNormalizationCacheHits: number;
+  nameNormalizationCacheMisses: number;
 }
 
 let activeRoutineResolutionProfileCounters: RoutineResolutionProfileCounters | undefined;
@@ -667,6 +763,7 @@ export interface ParsedReference {
   kind: 'type' | 'routine' | 'variable' | 'field';
   name: string;
   range: SourceRange;
+  symbolId?: string;
   scope?: number;
   container?: string;
   declaration?: boolean;
@@ -784,7 +881,7 @@ const articles = new Set([
 ]);
 const builtInStatementStarts = new Set([
   'atribua','diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
-  'processe', 'itere', 'pare', 'reitere', 
+  'processe', 'itere', 'pare', 'reitere',
   'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
 const reservedStatementKeywordDisplayNames = new Map<string, string>([
@@ -802,7 +899,7 @@ const reservedStatementKeywordDisplayNames = new Map<string, string>([
   ['redirecione', 'Redirecione']
 ]);
 const routineNameDelimiters = new Set([
-  'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente', 
+  'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
   'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
   'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante',
   , 'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
@@ -812,7 +909,7 @@ const routineNameDelimiters = new Set([
   'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',
   'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
   'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
-  'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas', 
+  'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
   'limitando-o', 'igual', 'while', 'ultrapassou', 'usando',
   ...definiteArticles, ...conjunctions,
   ...routineContractions.keys(), ...routineWordReplacements.keys()
@@ -846,11 +943,19 @@ export function normalizeTypeName(name: string): string {
 }
 
 function normalizeRoutineName(name: string): string {
+  const profileCounters = activeRoutineResolutionProfileCounters;
+  if (profileCounters) {
+    profileCounters.nameNormalizationCalls++;
+  }
   const cached = normalizedRoutineNameCache.get(name);
   if (cached !== undefined) {
-    normalizedRoutineNameCache.delete(name);
-    normalizedRoutineNameCache.set(name, cached);
+    if (profileCounters) {
+      profileCounters.nameNormalizationCacheHits++;
+    }
     return cached;
+  }
+  if (profileCounters) {
+    profileCounters.nameNormalizationCacheMisses++;
   }
 
   let normalized = '';
@@ -963,7 +1068,8 @@ function pluralizeTypeName(name: string): string {
 export function parseTypeDeclarations(
   source: string,
   workspaceSymbols?: ParserSymbolCatalog,
-  onProfile?: (metrics: ParsePerformanceMetrics) => void
+  onProfile?: (metrics: ParsePerformanceMetrics) => void,
+  options: ParseOptions = {}
 ): ParsedDocument {
   const startedAt = onProfile ? performance.now() : 0;
   const memoryBefore = onProfile ? process.memoryUsage() : undefined;
@@ -972,13 +1078,18 @@ export function parseTypeDeclarations(
       statementsVisited: 0,
       nameMatchSearches: 0,
       nameSpanChecks: 0,
-      nameCandidateChecks: 0
+      nameCandidateChecks: 0,
+      nameCandidatesSkippedByQualifier: 0,
+      nameNormalizationCalls: 0,
+      nameNormalizationCacheHits: 0,
+      nameNormalizationCacheMisses: 0
     }
     : undefined;
   activeRoutineResolutionProfileCounters = routineProfileCounters;
   const diagnostics: ParserDiagnostic[] = [];
   const lexicalStartedAt = onProfile ? performance.now() : 0;
-  const parserSource = maskComments(source, diagnostics);
+  const commentRanges: SourceRange[] = [];
+  const parserSource = maskComments(source, diagnostics, commentRanges);
   const lexicalFinishedAt = onProfile ? performance.now() : 0;
   const syntaxStartedAt = lexicalFinishedAt;
   const declarations: TypeDeclaration[] = [];
@@ -1030,12 +1141,20 @@ export function parseTypeDeclarations(
     ...globalVariables,
     ...(workspaceSymbols?.globalVariables ?? [])
   ]);
-  const routineSymbols = new RoutineSymbolTable(routines);
   setRoutineBodyRanges(
     parserSource,
     routines,
     [...declarations, ...globalVariables].map(declaration => declaration.range)
   );
+  const reusedRoutines = reuseRoutineRegions(
+    source,
+    routines,
+    options.reusableRoutineRegions
+  );
+  const routinesToResolve = routines.filter(routine =>
+    !reusedRoutines.has(routine)
+  );
+  const routineSymbols = new RoutineSymbolTable(routines);
   const catalogFinishedAt = onProfile ? performance.now() : 0;
   const catalogBuildMs = catalogFinishedAt - catalogStartedAt;
   const typeResolutionStartedAt = catalogFinishedAt;
@@ -1053,7 +1172,12 @@ export function parseTypeDeclarations(
   );
   const routineResolutionStartedAt = onProfile ? performance.now() : 0;
   const routineParameterResolutionStartedAt = routineResolutionStartedAt;
-  resolveRoutineParameters(parserSource, routines, symbols, diagnostics);
+  resolveRoutineParameters(
+    parserSource,
+    routinesToResolve,
+    symbols,
+    diagnostics
+  );
   const routineParameterResolutionFinishedAt = onProfile
     ? performance.now()
     : 0;
@@ -1061,7 +1185,7 @@ export function parseTypeDeclarations(
     ? routineParameterResolutionFinishedAt - routineParameterResolutionStartedAt
     : 0;
   const computedFieldResolutionStartedAt = onProfile ? performance.now() : 0;
-  resolveComputedFields(routines, symbols, diagnostics);
+  resolveComputedFields(routinesToResolve, symbols, diagnostics);
   const computedFieldResolutionFinishedAt = onProfile
     ? performance.now()
     : 0;
@@ -1069,14 +1193,16 @@ export function parseTypeDeclarations(
     ? computedFieldResolutionFinishedAt - computedFieldResolutionStartedAt
     : 0;
   const routineCallResolutionStartedAt = onProfile ? performance.now() : 0;
-  resolveRoutineCalls(
-    parserSource,
-    routines,
-    globalVariableSymbols.entries.map(symbol => symbol.declaration),
-    symbols,
-    diagnostics,
-    [...routines, ...(workspaceSymbols?.routines ?? [])]
-  );
+  if (options.resolveRoutineCalls !== false) {
+    resolveRoutineCalls(
+      parserSource,
+      routinesToResolve,
+      globalVariableSymbols.entries.map(symbol => symbol.declaration),
+      symbols,
+      diagnostics,
+      [...routines, ...(workspaceSymbols?.routines ?? [])]
+    );
+  }
   const routineCallResolutionFinishedAt = onProfile ? performance.now() : 0;
   const routineCallResolutionMs = onProfile
     ? routineCallResolutionFinishedAt - routineCallResolutionStartedAt
@@ -1084,7 +1210,7 @@ export function parseTypeDeclarations(
   const routineVariableValidationStartedAt = onProfile
     ? performance.now()
     : 0;
-  validateRoutineVariableNames(routines, diagnostics);
+  validateRoutineVariableNames(routinesToResolve, diagnostics);
   const routineVariableValidationFinishedAt = onProfile
     ? performance.now()
     : 0;
@@ -1215,12 +1341,21 @@ export function parseTypeDeclarations(
       routineNameSpanChecks: routineProfileCounters?.nameSpanChecks ?? 0,
       routineNameCandidateChecks:
         routineProfileCounters?.nameCandidateChecks ?? 0,
+      routineNameCandidatesSkippedByQualifier:
+        routineProfileCounters?.nameCandidatesSkippedByQualifier ?? 0,
+      routineNameNormalizationCalls:
+        routineProfileCounters?.nameNormalizationCalls ?? 0,
+      routineNameNormalizationCacheHits:
+        routineProfileCounters?.nameNormalizationCacheHits ?? 0,
+      routineNameNormalizationCacheMisses:
+        routineProfileCounters?.nameNormalizationCacheMisses ?? 0,
       totalMs: finishedAt - startedAt,
       sourceCodeUnits: source.length,
       tokenCount,
       declarations: declarations.length,
       globalVariables: globalVariables.length,
       routines: routines.length,
+      reusedRoutineCount: reusedRoutines.size,
       symbols: symbols.entries.length +
         globalVariableSymbols.entries.length +
         routineSymbols.entries.length
@@ -1232,6 +1367,8 @@ export function parseTypeDeclarations(
     declarations,
     globalVariables,
     routines,
+    regions: createParserRegions(declarations, globalVariables, routines),
+    commentRanges,
     symbols,
     globalVariableSymbols,
     routineSymbols,
@@ -1328,6 +1465,174 @@ function setRoutineBodyRanges(
   }
 }
 
+function getRoutineRegionKey(routine: RoutineDeclaration): string {
+  return routine.bindingId ?? JSON.stringify([
+    routine.name.normalizedName,
+    routine.qualifier,
+    routine.parameters.map(parameter => parameter.type.normalizedName)
+  ]);
+}
+
+function routineHasResolvedFieldTargets(routine: RoutineDeclaration): boolean {
+  return [
+    ...routine.assignments.flatMap(assignment =>
+      assignment.fieldAccesses ?? []
+    ),
+    ...routine.outputs.flatMap(output => output.fieldAccesses ?? []),
+    ...routine.calls.flatMap(call => call.fieldAccesses ?? []),
+    ...routine.processes.flatMap(process => process.fieldAccesses),
+    ...routine.memoryDeallocations.flatMap(
+      deallocation => deallocation.fieldAccesses ?? []
+    )
+  ].length > 0;
+}
+
+function reuseRoutineRegions(
+  source: string,
+  routines: RoutineDeclaration[],
+  previous: ParseOptions['reusableRoutineRegions']
+): Set<RoutineDeclaration> {
+  const reused = new Set<RoutineDeclaration>();
+  if (!previous) {
+    return reused;
+  }
+  const previousByRegion = new Map<string, RoutineDeclaration[]>();
+  const currentByIdentity = new Map<string, RoutineDeclaration[]>();
+  const oldToCurrent = new Map<object, object>();
+  const getRegionText = (
+    regionSource: string,
+    routine: RoutineDeclaration
+  ): string => regionSource.slice(
+    routine.range.start,
+    routine.bodyRange.end
+  ).trimEnd();
+  for (const routine of previous.routines) {
+    const key = `${getRoutineRegionKey(routine)}\n${getRegionText(
+      previous.source,
+      routine
+    )}`;
+    const candidates = previousByRegion.get(key) ?? [];
+    candidates.push(routine);
+    previousByRegion.set(key, candidates);
+  }
+  for (const routine of routines) {
+    const identity = getRoutineRegionKey(routine);
+    const candidates = currentByIdentity.get(identity) ?? [];
+    candidates.push(routine);
+    currentByIdentity.set(identity, candidates);
+  }
+  for (const oldRoutine of previous.routines) {
+    const candidates = currentByIdentity.get(
+      getRoutineRegionKey(oldRoutine)
+    );
+    const currentRoutine = candidates?.shift();
+    if (currentRoutine) {
+      oldToCurrent.set(oldRoutine, currentRoutine);
+    }
+  }
+  for (let index = 0; index < routines.length; index++) {
+    const current = routines[index];
+    const key = `${getRoutineRegionKey(current)}\n${getRegionText(
+      source,
+      current
+    )}`;
+    const previousRoutine = previousByRegion.get(key)?.shift();
+    if (
+      !previousRoutine ||
+      routineHasResolvedFieldTargets(previousRoutine) ||
+      !oldToCurrent.has(previousRoutine)
+    ) {
+      continue;
+    }
+    const delta = current.range.start - previousRoutine.range.start;
+    const clone = <T>(value: T, visited = new Map<object, unknown>()): T => {
+      if (value === null || typeof value !== 'object') {
+        return value;
+      }
+      const routineTarget = oldToCurrent.get(value);
+      if (routineTarget && !Object.is(value, previousRoutine)) {
+        return routineTarget as T;
+      }
+      const existing = visited.get(value);
+      if (existing) {
+        return existing as T;
+      }
+      if (Array.isArray(value)) {
+        const cloned: unknown[] = [];
+        visited.set(value, cloned);
+        for (const item of value) {
+          cloned.push(clone(item, visited));
+        }
+        return cloned as T;
+      }
+      const sourceObject = value as Record<string, unknown>;
+      const cloned: Record<string, unknown> = {};
+      visited.set(value, cloned);
+      for (const [property, child] of Object.entries(sourceObject)) {
+        if (
+          (property === 'start' || property === 'end') &&
+          typeof child === 'number' &&
+          typeof sourceObject.start === 'number' &&
+          typeof sourceObject.end === 'number'
+        ) {
+          cloned[property] = child + delta;
+        } else if (
+          property === 'scope' &&
+          child === previousRoutine.range.start
+        ) {
+          cloned[property] = current.range.start;
+        } else {
+          cloned[property] = clone(child, visited);
+        }
+      }
+      return cloned as T;
+    };
+    const rebased = clone(previousRoutine);
+    Object.assign(current, rebased, {
+      range: { ...current.range },
+      bodyRange: { ...current.bodyRange }
+    });
+    reused.add(current);
+  }
+  return reused;
+}
+
+function createParserRegions(
+  declarations: readonly TypeDeclaration[],
+  globalVariables: readonly GlobalVariableDeclaration[],
+  routines: readonly RoutineDeclaration[]
+): ParserRegion[] {
+  const regions: ParserRegion[] = [
+    ...declarations.map(declaration => ({
+      kind: 'type' as const,
+      name: declaration.name.normalizedName,
+      range: { ...declaration.range }
+    })),
+    ...globalVariables.map(declaration => ({
+      kind: 'global-variable' as const,
+      name: declaration.name.normalizedName,
+      range: { ...declaration.range }
+    })),
+    ...routines.map(routine => ({
+      kind: 'routine' as const,
+      name: routine.name.normalizedName,
+      range: {
+        start: routine.range.start,
+        end: routine.bodyRange.end
+      },
+      headerRange: {
+        start: routine.range.start,
+        end: routine.bodyRange.start
+      },
+      bodyRange: { ...routine.bodyRange }
+    }))
+  ];
+  return regions.sort((first, second) =>
+    first.range.start - second.range.start ||
+    first.range.end - second.range.end
+  );
+}
+
 function resolveRoutineCalls(
   source: string,
   routines: RoutineDeclaration[],
@@ -1369,6 +1674,7 @@ function resolveRoutineCalls(
         );
         if (conditional) {
           routine.conditionals.push(conditional.block);
+          routine.statements.push(...conditional.block.statements);
           if (conditional.nestedRange) {
             diagnostics.push({
               message: 'Conditional blocks cannot be nested.',
@@ -1396,6 +1702,7 @@ function resolveRoutineCalls(
             }
           }
         } else {
+          routine.statements.push(statementRange);
           hasDecodeInstruction = isDecodeInstruction(
             source,
             statementRange
@@ -1414,7 +1721,15 @@ function resolveRoutineCalls(
       statementStart = periodIndex + 1;
       periodIndex = findDeclarationPeriod(source, statementStart);
     }
-
+    const seenLocalRanges = new Set<string>();
+    routine.localVariables = routine.localVariables.filter(variable => {
+      const key = `${variable.name.range.start}:${variable.name.range.end}`;
+      if (seenLocalRanges.has(key)) {
+        return false;
+      }
+      seenLocalRanges.add(key);
+      return true;
+    });
     if (
       routine.isBooleanFunction &&
       !hasValidBooleanReturn &&
@@ -1425,7 +1740,88 @@ function resolveRoutineCalls(
         range: routine.name.range
       });
     }
+    routine.loopBlocks = buildRoutineLoopBlocks(routine);
   }
+}
+
+function buildRoutineLoopBlocks(
+  routine: RoutineDeclaration
+): RoutineLoopBlock[] {
+  const instructions = [...routine.loopInstructions].sort(
+    (first, second) => first.range.start - second.range.start
+  );
+  const explicitStarts = instructions.filter(
+    instruction => instruction.kind === 'iterate'
+  );
+  const pending: RoutineLoopInstruction[] = [];
+  const blocks: RoutineLoopBlock[] = [];
+  for (const instruction of instructions) {
+    if (instruction.kind === 'iterate') {
+      pending.push(instruction);
+      continue;
+    }
+    if (
+      instruction.kind !== 'repeat' ||
+      routine.conditionals.some(conditional =>
+        instruction.range.start >= conditional.bodyRange.start &&
+        instruction.range.end <= conditional.bodyRange.end
+      )
+    ) {
+      continue;
+    }
+    const startInstruction = pending.pop();
+    if (!startInstruction) {
+      continue;
+    }
+    const bodyRange = {
+      start: startInstruction.range.end,
+      end: instruction.range.start
+    };
+    blocks.push({
+      kind: 'explicit',
+      range: {
+        start: startInstruction.range.start,
+        end: instruction.range.end
+      },
+      bodyRange,
+      startInstruction,
+      endInstruction: instruction,
+      complete: true
+    });
+  }
+
+  for (const startInstruction of pending) {
+    const bodyRange = {
+      start: startInstruction.range.end,
+      end: routine.bodyRange.end
+    };
+    blocks.push({
+      kind: 'explicit',
+      range: {
+        start: startInstruction.range.start,
+        end: routine.bodyRange.end
+      },
+      bodyRange,
+      startInstruction,
+      complete: false
+    });
+  }
+
+  if (
+    explicitStarts.length === 0 &&
+    instructions.some(instruction => instruction.kind === 'repeat')
+  ) {
+    blocks.push({
+      kind: 'implicit',
+      range: { ...routine.bodyRange },
+      bodyRange: { ...routine.bodyRange },
+      complete: true
+    });
+  }
+  return blocks.sort((first, second) =>
+    first.range.start - second.range.start ||
+    second.range.end - first.range.end
+  );
 }
 
 function validateRoutineVariableNames(
@@ -1486,7 +1882,15 @@ function processRoutineStatement(
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[]
 ): boolean {
+  const statementDiagnosticStart = diagnostics.length;
   const statementKeyword = readWord(source, statement.start, statement.end);
+  for (const localVariable of parseRoutineStatementLocalVariables(
+    source,
+    statement,
+    symbols
+  )) {
+    caller.localVariables.push(localVariable);
+  }
   if (
     statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua'
   ) {
@@ -1532,6 +1936,13 @@ function processRoutineStatement(
         diagnostics
       );
     }
+  }
+  const statementKind = statementKeyword?.value.toLocaleLowerCase('pt-BR');
+  if (statementKind === 'diga' || statementKind === 'retorne') {
+    caller.returnStatements.push({
+      kind: statementKind === 'diga' ? 'boolean-return' : 'return',
+      range: statement
+    });
   }
   if (validatePreserveStatement(source, statement, caller, diagnostics)) {
     return false;
@@ -1595,10 +2006,12 @@ function processRoutineStatement(
   if (validateReturnStatement(source, statement, diagnostics)) {
     return false;
   }
-  if (validateDecodeStatement(source, statement, diagnostics)) {
+  const decodeInstruction = parseDecodeStatement(source, statement, diagnostics);
+  if (decodeInstruction) {
+    caller.simpleInstructions.push(decodeInstruction);
     return false;
   }
-  if (validatePushStatement(
+  const pushInstruction = parsePushStatement(
     source,
     statement,
     caller,
@@ -1606,7 +2019,9 @@ function processRoutineStatement(
     globalVariables,
     symbols,
     diagnostics
-  )) {
+  );
+  if (pushInstruction) {
+    caller.simpleInstructions.push(pushInstruction);
     return false;
   }
   const firstWord = readWord(source, statement.start, statement.end);
@@ -1654,6 +2069,9 @@ function processRoutineStatement(
     }
     return false;
   }
+  const routineNameMatches: { matches: RoutineNameMatch[] } = {
+    matches: []
+  };
   const call = resolveRoutineCall(
     source,
     statement,
@@ -1661,7 +2079,8 @@ function processRoutineStatement(
     caller,
     globalVariables,
     symbols,
-    diagnostics
+    diagnostics,
+    routineNameMatches
   );
   if (call) {
     caller.calls.push(call);
@@ -1669,12 +2088,19 @@ function processRoutineStatement(
       caller.localVariables.push(...call.localVariables);
     }
   } else {
-    if (diagnostics.some(diagnostic =>
-      diagnostic.message.startsWith('Ambiguous structure field access') &&
-      diagnostic.range.start >= statement.start &&
-      diagnostic.range.end <= statement.end
-    )) {
-      return false;
+    for (
+      let index = statementDiagnosticStart;
+      index < diagnostics.length;
+      index++
+    ) {
+      const diagnostic = diagnostics[index];
+      if (
+        diagnostic.message.startsWith('Ambiguous structure field access') &&
+        diagnostic.range.start >= statement.start &&
+        diagnostic.range.end <= statement.end
+      ) {
+        return false;
+      }
     }
     if (validateMemoryDeallocationStatement(
       source,
@@ -1689,11 +2115,11 @@ function processRoutineStatement(
     diagnoseUnresolvedRoutineCall(
       source,
       statement,
-      routines,
       caller,
       globalVariables,
       symbols,
-      diagnostics
+      diagnostics,
+      routineNameMatches.matches
     );
   }
   return false;
@@ -1773,6 +2199,8 @@ function parseConditionalBlock(
       condition: createTypeReference(source, conditionRange),
       conditionArguments: resolvedCondition?.call.arguments ?? [],
       target: resolvedCondition?.call.target,
+      predicateCall: resolvedCondition?.call,
+      bodyRange,
       statements,
       range: { start: statement.start, end: blockEnd + 1 }
     },
@@ -2280,6 +2708,7 @@ function parseRoutineExpression(
     expression = {
       kind: 'binary',
       operator: operators[index].operator,
+      operatorRange: operators[index].range,
       left: expression,
       right: operands[index + 1],
       range: { start: expression.range.start, end: operands[index + 1].range.end }
@@ -2318,6 +2747,7 @@ function parseSignedExpressionOperand(
   return {
     kind: 'unary',
     operator: firstCharacter,
+    operatorRange: { start: operandRange.start, end: operandRange.start + 1 },
     operand,
     range: operandRange
   };
@@ -2450,23 +2880,32 @@ function parseLoopInstruction(
   return { kind, range: statement };
 }
 
-function validateDecodeStatement(
+function parseDecodeStatement(
   source: string,
   statement: SourceRange,
   diagnostics: ParserDiagnostic[]
-): boolean {
+): RoutineSimpleInstruction | undefined {
   const keyword = readWord(source, statement.start, statement.end);
   if (!isDecodeInstruction(source, statement)) {
-    return false;
+    return undefined;
   }
 
   if (!keyword) {
-    return false;
+    return undefined;
   }
 
   const valueRange = trimRange(source, keyword.end, statement.end);
   if (valueRange.start < valueRange.end && /^\$[a-f\d]+$/iu.test(source.slice(valueRange.start, valueRange.end))) {
-    return true;
+    return {
+      kind: 'decode',
+      range: statement,
+      literal: {
+        kind: 'hexadecimal',
+        text: source.slice(valueRange.start, valueRange.end),
+        range: valueRange
+      },
+      isValid: true
+    };
   }
 
   diagnostics.push({
@@ -2475,7 +2914,11 @@ function validateDecodeStatement(
       ? valueRange
       : { start: keyword.start, end: keyword.end }
   });
-  return true;
+  return {
+    kind: 'decode',
+    range: statement,
+    isValid: false
+  };
 }
 
 function isDecodeInstruction(source: string, statement: SourceRange): boolean {
@@ -2483,7 +2926,7 @@ function isDecodeInstruction(source: string, statement: SourceRange): boolean {
   return keyword?.value.toLocaleLowerCase('pt-BR') === 'decodifique';
 }
 
-function validatePushStatement(
+function parsePushStatement(
   source: string,
   statement: SourceRange,
   caller: RoutineDeclaration,
@@ -2491,27 +2934,37 @@ function validatePushStatement(
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[]
-): boolean {
+): RoutineSimpleInstruction | undefined {
   const keyword = readWord(source, statement.start, statement.end);
   if (!keyword || keyword.value.toLocaleLowerCase('pt-BR') !== 'empilhe') {
-    return false;
+    return undefined;
   }
 
   const valueRange = trimRange(source, keyword.end, statement.end);
   const literal = parseGlobalVariableLiteral(source, valueRange);
   if (literal && literal.kind !== 'string') {
-    return true;
+    return {
+      kind: 'push',
+      range: statement,
+      literal,
+      isValid: true
+    };
   }
 
   const article = readWord(source, valueRange.start, valueRange.end);
   if (article && definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
     const variableNameRange = trimRange(source, article.end, valueRange.end);
+    const variableAccesses: RoutineVariableAccess[] = [];
     const variableType = resolveRoutineArgumentType(
       source,
       valueRange,
       caller,
       globalVariables,
-      symbols
+      symbols,
+      [],
+      routines,
+      [],
+      variableAccesses
     );
     if (!variableType) {
       diagnostics.push({
@@ -2520,17 +2973,31 @@ function validatePushStatement(
           ? variableNameRange
           : { start: keyword.start, end: keyword.end }
       });
-      return true;
+      return {
+        kind: 'push',
+        range: statement,
+        isValid: false
+      };
     }
 
     if (isPushableNumericType(variableType.name, symbols)) {
-      return true;
+      return {
+        kind: 'push',
+        range: statement,
+        variableAccesses,
+        isValid: true
+      };
     }
     diagnostics.push({
       message: '"Empilhe" only accepts variables of type "byte", "word", or "número".',
       range: valueRange
     });
-    return true;
+    return {
+      kind: 'push',
+      range: statement,
+      variableAccesses,
+      isValid: false
+    };
   }
 
   diagnostics.push({
@@ -2539,7 +3006,11 @@ function validatePushStatement(
       ? valueRange
       : { start: keyword.start, end: keyword.end }
   });
-  return true;
+  return {
+    kind: 'push',
+    range: statement,
+    isValid: false
+  };
 }
 
 function validateMemoryAllocationStatement(
@@ -2789,6 +3260,9 @@ function validateRoutineAddressStatement(
   }
 
   const routineRange = trimRange(source, markerEnd, statement.end);
+  const routineNameMatches: { matches: RoutineNameMatch[] } = {
+    matches: []
+  };
   const call = resolveRoutineCall(
     source,
     routineRange,
@@ -2796,10 +3270,11 @@ function validateRoutineAddressStatement(
     caller,
     globalVariables,
     symbols,
-    diagnostics
+    diagnostics,
+    routineNameMatches
   );
   if (!call?.target) {
-    if (findRoutineNameMatches(source, routineRange, routines).length === 0) {
+    if (routineNameMatches.matches.length === 0) {
       diagnostics.push({
         message: `No routine found for address reference "${source.slice(routineRange.start, routineRange.end)}".`,
         range: routineRange
@@ -3376,7 +3851,8 @@ function resolveRoutineCall(
   caller: RoutineDeclaration,
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
-  diagnostics: ParserDiagnostic[]
+  diagnostics: ParserDiagnostic[],
+  nameMatchResult?: { matches: RoutineNameMatch[] }
 ): RoutineCall | undefined {
   const statementQualifier = findTrailingParentheticalQualifier(
     source,
@@ -3414,7 +3890,11 @@ function resolveRoutineCall(
     argumentsList: SourceRange[];
     localVariablesByArgument: Map<number, RoutineLocalVariable>;
   }>();
-  for (const nameMatch of findRoutineNameMatches(source, statementRange, routines)) {
+  const nameMatches = findRoutineNameMatches(source, statementRange, routines);
+  if (nameMatchResult) {
+    nameMatchResult.matches = nameMatches;
+  }
+  for (const nameMatch of nameMatches) {
     const {
       routine,
       name: routineName,
@@ -3684,7 +4164,8 @@ function resolveRoutineCall(
       routines,
       caller,
       globalVariables,
-      symbols
+      symbols,
+      nameMatches
     );
   }
   return resolvedCall;
@@ -3938,9 +4419,10 @@ function recordUnresolvedRoutineCallReferences(
   routines: RoutineDeclaration[],
   caller: RoutineDeclaration,
   globalVariables: GlobalVariableSymbolTable,
-  symbols: TypeSymbolTable
+  symbols: TypeSymbolTable,
+  nameMatches: readonly RoutineNameMatch[]
 ): void {
-  const nameMatch = findRoutineNameMatches(source, statement, routines)
+  const nameMatch = nameMatches
     .filter(match => match.parameters.length > 0)
     .sort((first, second) =>
       second.nameEnd - first.nameEnd || first.order - second.order
@@ -4143,11 +4625,7 @@ function findScalarRoutineLiteral(
   }
 
   const typeStart = start + numberPrefix[0].length;
-  const scalarTypeNames = symbols.entries
-    .filter(symbol => symbol.isScalar)
-    .flatMap(symbol => [symbol.name, symbol.pluralName])
-    .sort((first, second) => second.length - first.length);
-  for (const typeName of scalarTypeNames) {
+  for (const typeName of symbols.scalarNames) {
     const escapedTypeName = typeName
       .replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
       .replace(/\s+/gu, '\\s+');
@@ -4177,11 +4655,11 @@ function findScalarRoutineLiteral(
 function diagnoseUnresolvedRoutineCall(
   source: string,
   statement: SourceRange,
-  routines: RoutineDeclaration[],
   caller: RoutineDeclaration,
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
-  diagnostics: ParserDiagnostic[]
+  diagnostics: ParserDiagnostic[],
+  nameMatches: readonly RoutineNameMatch[]
 ): void {
   const firstWord = readWord(source, statement.start, statement.end);
   if (!firstWord || builtInStatementStarts.has(firstWord.value.toLocaleLowerCase('pt-BR'))) {
@@ -4190,7 +4668,6 @@ function diagnoseUnresolvedRoutineCall(
 
   const rest = trimRange(source, firstWord.end, statement.end);
   const definiteArticle = findAnyWord(source, rest.start, rest.end, definiteArticles);
-  const nameMatches = findRoutineNameMatches(source, statement, routines);
   const matchesDeclaredRoutineName = nameMatches.some(({ nameEnd }) =>
     /\s/u.test(source[nameEnd] ?? '') &&
     trimRange(source, nameEnd, statement.end).start < statement.end
@@ -4201,7 +4678,7 @@ function diagnoseUnresolvedRoutineCall(
     return;
   }
 
-  for (const { routine: candidate, name, nameEnd, parameters } of nameMatches) {
+  for (const { name, nameEnd, parameters } of nameMatches) {
     if (!parameters.length) {
       continue;
     }
@@ -4285,7 +4762,12 @@ interface RoutineNameMatch extends RoutineNameCandidate {
 
 interface RoutineNameLookupIndex {
   byNormalizedName: Map<string, RoutineNameCandidate[]>;
+  byNormalizedNameAndQualifier: Map<string, RoutineNameCandidate[]>;
   maximumNameWords: number;
+}
+
+function routineNameQualifierKey(name: string, qualifier?: string): string {
+  return `${name}\u0000${qualifier ?? ''}`;
 }
 
 const routineNameLookupIndexes = new WeakMap<
@@ -4300,6 +4782,10 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
   }
 
   const byNormalizedName = new Map<string, RoutineNameCandidate[]>();
+  const byNormalizedNameAndQualifier = new Map<
+    string,
+    RoutineNameCandidate[]
+  >();
   let order = 0;
   let maximumNameWords = 0;
   for (const routine of routines) {
@@ -4317,12 +4803,25 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
         normalizedName.split(/\s+/u).filter(Boolean).length
       );
       const candidates = byNormalizedName.get(normalizedName) ?? [];
-      candidates.push({ routine, name, parameters, order: order++ });
+      const candidate = { routine, name, parameters, order: order++ };
+      candidates.push(candidate);
       byNormalizedName.set(normalizedName, candidates);
+      const qualifierKey = routineNameQualifierKey(
+        normalizedName,
+        name.qualifier
+      );
+      const qualifiedCandidates =
+        byNormalizedNameAndQualifier.get(qualifierKey) ?? [];
+      qualifiedCandidates.push(candidate);
+      byNormalizedNameAndQualifier.set(qualifierKey, qualifiedCandidates);
     }
   }
 
-  const index = { byNormalizedName, maximumNameWords };
+  const index = {
+    byNormalizedName,
+    byNormalizedNameAndQualifier,
+    maximumNameWords
+  };
   routineNameLookupIndexes.set(routines, index);
   return index;
 }
@@ -4337,25 +4836,45 @@ function findRoutineNameMatches(
   if (profileCounters) {
     profileCounters.nameMatchSearches++;
   }
-  const { byNormalizedName, maximumNameWords } = getRoutineNameIndex(routines);
+  const {
+    byNormalizedName,
+    byNormalizedNameAndQualifier,
+    maximumNameWords
+  } = getRoutineNameIndex(routines);
   const matches: RoutineNameMatch[] = [];
   if (maximumNameWords === 0) {
     return matches;
   }
 
   const addCandidates = (
-    candidates: RoutineNameCandidate[] | undefined,
+    normalizedName: string,
     nameStart: number,
     nameEnd: number,
     implicitDefiniteArticle: boolean,
     matchedCandidates: Set<RoutineNameCandidate>
   ): void => {
-    if (profileCounters && candidates) {
-      profileCounters.nameCandidateChecks += candidates.length;
+    const allCandidates = byNormalizedName.get(normalizedName);
+    if (!allCandidates) {
+      return;
+    }
+    const callQualifier = findTrailingParentheticalQualifier(
+      source,
+      nameEnd,
+      range.end
+    )?.text;
+    const candidates = byNormalizedNameAndQualifier.get(
+      routineNameQualifierKey(normalizedName, callQualifier)
+    );
+    if (profileCounters) {
+      profileCounters.nameCandidatesSkippedByQualifier +=
+        allCandidates.length - (candidates?.length ?? 0);
     }
     for (const candidate of candidates ?? []) {
       if (matchedCandidates.has(candidate)) {
         continue;
+      }
+      if (profileCounters) {
+        profileCounters.nameCandidateChecks++;
       }
       matchedCandidates.add(candidate);
       matches.push({
@@ -4410,7 +4929,7 @@ function findRoutineNameMatches(
         ? normalizeRoutineName(source.slice(nameStart, nameEnd))
         : normalizedWords.join(' ');
       addCandidates(
-        byNormalizedName.get(normalizedName),
+        normalizedName,
         nameStart,
         nameEnd,
         false,
@@ -4437,7 +4956,7 @@ function findRoutineNameMatches(
           ...expandedWords.slice(0, -1)
         ].join(' ');
         addCandidates(
-          byNormalizedName.get(normalizeRoutineName(nameWithoutArticle)),
+          normalizeRoutineName(nameWithoutArticle),
           nameStart,
           nameEnd,
           true,
@@ -5021,10 +5540,11 @@ function resolveStructureFieldAccess(
       );
       if (!computedField?.computedField?.valueType) {
         const listElementType = resolveListSpecialField(
-          currentType.name,
-          fieldName,
+          source,
+          currentType,
           fieldRange,
-          symbols
+          symbols,
+          caller
         );
         if (listElementType) {
           currentType = listElementType;
@@ -5050,31 +5570,58 @@ function resolveStructureFieldAccess(
 }
 
 function resolveListSpecialField(
-  listTypeName: string,
-  fieldName: string,
+  source: string,
+  listType: TypeReference,
   range: SourceRange,
-  symbols: TypeSymbolTable
+  symbols: TypeSymbolTable,
+  caller: RoutineDeclaration
 ): TypeReference | undefined {
-  if (symbols.getBaseTypeDistance(listTypeName, 'lista') === undefined) {
+  if (symbols.getBaseTypeDistance(listType.name, 'lista') === undefined) {
     return undefined;
   }
 
-  const prefixForm = /^(?:primeiro|primeira|último|última|próximo|próxima)\s+(.+)$/u.exec(fieldName);
-  if (prefixForm) {
-    const elementType = symbols.lookup(prefixForm[1]);
-    return elementType
-      ? createSyntheticTypeReference(elementType.name, range)
-      : undefined;
+  const rawFieldName = source.slice(range.start, range.end);
+  const prefixForm = /^(primeiro|primeira|último|última|próximo|próxima)\s+(.+)$/iu.exec(rawFieldName);
+  const suffixForm = /^(.+)\s+(anterior|precedente)$/iu.exec(rawFieldName);
+  const match = prefixForm ?? suffixForm;
+  if (!match) {
+    return undefined;
+  }
+  const accessWord = (prefixForm ? match[1] : match[2]).toLocaleLowerCase('pt-BR');
+  const elementName = prefixForm ? match[2] : match[1];
+  const accessKind: RoutineListSpecialFieldAccess['kind'] =
+    ['primeiro', 'primeira'].includes(accessWord)
+      ? 'first'
+      : ['último', 'última'].includes(accessWord)
+        ? 'last'
+        : ['próximo', 'próxima'].includes(accessWord)
+          ? 'next'
+          : 'previous';
+  const elementNameStart = rawFieldName.indexOf(elementName);
+  const elementRange = trimRange(
+    source,
+    range.start + elementNameStart,
+    range.start + elementNameStart + elementName.length
+  );
+  const elementSymbol = symbols.lookup(elementName);
+  if (!elementSymbol) {
+    return undefined;
   }
 
-  const suffixForm = /^(.+)\s+(?:anterior|precedente)$/u.exec(fieldName);
-  if (suffixForm) {
-    const elementType = symbols.lookup(suffixForm[1]);
-    return elementType
-      ? createSyntheticTypeReference(elementType.name, range)
-      : undefined;
+  const access: RoutineListSpecialFieldAccess = {
+    kind: accessKind,
+    reference: createTypeReference(source, range),
+    listType: createSyntheticTypeReference(listType.name, range),
+    elementType: createSyntheticTypeReference(elementSymbol.name, elementRange)
+  };
+  if (!caller.listSpecialFieldAccesses.some(existing =>
+    existing.kind === access.kind &&
+    existing.reference.range.start === access.reference.range.start &&
+    existing.reference.range.end === access.reference.range.end
+  )) {
+    caller.listSpecialFieldAccesses.push(access);
   }
-  return undefined;
+  return access.elementType;
 }
 
 function resolveTypeOperator(
@@ -5386,9 +5933,7 @@ function getRoutineArgumentTypeDistance(
     return 0;
   }
 
-  const expectedNormalizedName = normalizeTypeName(expectedName);
-  return symbols.entries
-    .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
+  return symbols.getPluralMatches(expectedName)
     .map(symbol => symbols.getBaseTypeDistance(actual.name, symbol.name))
     .find((distance): distance is number => distance !== undefined);
 }
@@ -5546,9 +6091,7 @@ function getRoutineExpressionTypeDistance(
     return -expectedDistance;
   }
 
-  const expectedNormalizedName = normalizeTypeName(expectedName);
-  const pluralDistances = symbols.entries
-    .filter(symbol => normalizeTypeName(symbol.pluralName) === expectedNormalizedName)
+  const pluralDistances = symbols.getPluralMatches(expectedName)
     .map(symbol => symbols.getBaseTypeDistance(symbol.name, expressionType.name))
     .filter((distance): distance is number => distance !== undefined);
   return pluralDistances.length
@@ -5648,6 +6191,45 @@ function parseLocalVariableDeclaration(
     articles.lastIndex = declarationEnd;
   }
   return localVariable;
+}
+
+function parseRoutineStatementLocalVariables(
+  source: string,
+  statement: SourceRange,
+  symbols: TypeSymbolTable
+): RoutineLocalVariable[] {
+  const quotedRanges = findQuotedRanges(source, statement);
+  const articles: SourceRange[] = [];
+  const words = /\p{L}+/gu;
+  words.lastIndex = statement.start;
+  let match: RegExpExecArray | null;
+  while ((match = words.exec(source)) && match.index < statement.end) {
+    if (!indefiniteArticles.has(match[0].toLocaleLowerCase('pt-BR'))) {
+      continue;
+    }
+    const range = { start: match.index, end: match.index + match[0].length };
+    if (quotedRanges.some(quoted =>
+      range.start >= quoted.start && range.end <= quoted.end
+    )) {
+      continue;
+    }
+    articles.push(range);
+  }
+
+  const variables: RoutineLocalVariable[] = [];
+  for (let index = 0; index < articles.length; index++) {
+    const article = articles[index];
+    const argumentEnd = articles[index + 1]?.start ?? statement.end;
+    const candidate = parseLocalVariableDeclaration(
+      source,
+      trimRange(source, article.start, argumentEnd),
+      symbols
+    );
+    if (candidate) {
+      variables.push(candidate);
+    }
+  }
+  return variables;
 }
 
 function trimTrailingWord(source: string, range: SourceRange, word: string): SourceRange {
@@ -6244,6 +6826,9 @@ function parseRoutineDeclarations(
         }
       }
       declarations.push({
+        bindingId: `routine:${normalizeTypeName(
+          source.slice(header.range.start, header.range.end)
+        )}`,
         name: header.name,
         qualifier: header.qualifier,
         alternateNames: alternateHeaders.map(alternate => ({
@@ -6255,11 +6840,16 @@ function parseRoutineDeclarations(
         preservedParameters: [],
         assignments: [],
         outputs: [],
+        returnStatements: [],
+        simpleInstructions: [],
         localVariables: [],
         conditionals: [],
+        loopBlocks: [],
+        statements: [],
         processes: [],
         loopInstructions: [],
         computedFieldAccesses: [],
+        listSpecialFieldAccesses: [],
         computedField: header.computedField,
         returnParameter: header.returnParameter,
         calls: [],
@@ -6565,13 +7155,18 @@ function resolveComputedFields(
   }
 }
 
-function maskComments(source: string, diagnostics: ParserDiagnostic[]): string {
+function maskComments(
+  source: string,
+  diagnostics: ParserDiagnostic[],
+  commentRanges: SourceRange[]
+): string {
   const characters = new Uint16Array(source.length);
   for (let index = 0; index < source.length; index++) {
     characters[index] = source.charCodeAt(index);
   }
   let inString = false;
   let inBlockComment = false;
+  let blockCommentStart = -1;
 
   for (let index = 0; index < characters.length; index++) {
     const character = source[index];
@@ -6581,6 +7176,8 @@ function maskComments(source: string, diagnostics: ParserDiagnostic[]): string {
       if (character === ']') {
         characters[index] = 32;
         inBlockComment = false;
+        commentRanges.push({ start: blockCommentStart, end: index + 1 });
+        blockCommentStart = -1;
       } else if (/[\p{Cc}]/u.test(character)) {
         diagnostics.push({
           message: 'Non-printable characters are not allowed in comments.',
@@ -6614,11 +7211,13 @@ function maskComments(source: string, diagnostics: ParserDiagnostic[]): string {
     if (character === '[') {
       characters[index] = 32;
       inBlockComment = true;
+      blockCommentStart = index;
       continue;
     }
 
     if (character === '\\') {
       characters[index] = 32;
+      const commentStart = index;
       for (; index < characters.length; index++) {
         const commentCharacter = source[index];
         if (commentCharacter === '\n' || commentCharacter === '\r') {
@@ -6632,7 +7231,18 @@ function maskComments(source: string, diagnostics: ParserDiagnostic[]): string {
         }
         characters[index] = 32;
       }
+      commentRanges.push({
+        start: commentStart,
+        end: index < characters.length ? index : characters.length
+      });
     }
+  }
+
+  if (blockCommentStart !== -1) {
+    commentRanges.push({
+      start: blockCommentStart,
+      end: characters.length
+    });
   }
 
   const chunks: string[] = [];
@@ -7173,9 +7783,9 @@ export function findTypeReferenceAtOffset(
 }
 
 const parsedReferencesCache = new WeakMap<ParsedDocument, ParsedReference[]>();
-const parsedReferenceIndexCache = new WeakMap<
+const fieldOwnersByDocument = new WeakMap<
   ParsedDocument,
-  { entries: { reference: ParsedReference; order: number }[]; prefixMaxEnd: number[] }
+  WeakMap<TypeField, string>
 >();
 
 export function getParsedReferences(
@@ -7200,7 +7810,10 @@ export function getParsedReferences(
     kind: ParsedReference['kind'],
     name: string,
     range: SourceRange,
-    options: Pick<ParsedReference, 'scope' | 'container' | 'declaration'> = {}
+    options: Pick<
+      ParsedReference,
+      'scope' | 'container' | 'declaration' | 'symbolId'
+    > = {}
   ): void => {
     if (range.start >= range.end) {
       return;
@@ -7265,6 +7878,19 @@ export function getParsedReferences(
       }
     }
   };
+  const addComputedFieldAccesses = (
+    accesses: RoutineComputedFieldAccess[] | undefined
+  ): void => {
+    for (const access of accesses ?? []) {
+      const field = access.target.computedField;
+      if (!field) {
+        continue;
+      }
+      add('field', field.name.name, access.reference.range, {
+        container: normalizeTypeName(field.structureType.name)
+      });
+    }
+  };
 
   for (const declaration of parsed.declarations) {
     add('type', declaration.name.name, declaration.name.range, { declaration: true });
@@ -7277,17 +7903,37 @@ export function getParsedReferences(
     addType(declaration.type);
     addFields(declaration.fields, declaration.type?.name ?? declaration.inferredTypeName ?? '');
   }
+  const routineSymbolId = (routine: RoutineDeclaration): string =>
+    routine.bindingId ?? `routine:${JSON.stringify([
+      routine.name.normalizedName,
+      normalizeTypeName(routine.qualifier ?? ''),
+      routine.parameters.map(parameter =>
+        parameter.type.normalizedName
+      ),
+      routine.range.start,
+      routine.range.end
+    ])}`;
   for (const routine of parsed.routines) {
     const routineName = normalizeTypeName(routine.name.name);
-    add('routine', routineName, routine.name.range, { declaration: true });
+    const symbolId = routineSymbolId(routine);
+    add('routine', routineName, routine.name.range, {
+      declaration: true,
+      symbolId
+    });
     for (const alias of routine.alternateNames) {
-      add('routine', routineName, alias.range, { declaration: true });
+      add('routine', routineName, alias.range, {
+        declaration: true,
+        symbolId
+      });
     }
     for (const parameter of routine.parameters) {
       add('variable', parameter.name.name, parameter.name.range, {
         scope: routine.range.start,
         declaration: true
       });
+      addType(parameter.type);
+    }
+    for (const parameter of routine.alternateParameters.flat()) {
       addType(parameter.type);
     }
     if (routine.returnParameter) {
@@ -7323,12 +7969,15 @@ export function getParsedReferences(
     }
     for (const call of routine.calls) {
       if (call.target) {
-        add('routine', call.target.name.name, call.name.range);
+        add('routine', call.target.name.name, call.name.range, {
+          symbolId: routineSymbolId(call.target)
+        });
       }
       addType(call.addressType);
       call.typeReferences?.forEach(reference => addType(reference));
       addVariableAccesses(call.variableAccesses, routine);
       addFieldAccesses(call.fieldAccesses);
+      addComputedFieldAccesses(call.computedFieldAccesses);
     }
     for (const allocation of routine.memoryAllocations) {
       addType(allocation.variableAccess ? undefined : allocation.type);
@@ -7348,7 +7997,18 @@ export function getParsedReferences(
     for (const process of routine.processes) {
       addVariableAccesses(process.variableAccesses, routine);
       addFieldAccesses(process.fieldAccesses);
+      addComputedFieldAccesses(process.computedFieldAccesses);
     }
+    for (const instruction of routine.simpleInstructions) {
+      addVariableAccesses(instruction.variableAccesses, routine);
+    }
+    for (const access of routine.listSpecialFieldAccesses) {
+      add('field', access.reference.name, access.reference.range, {
+        container: 'lista'
+      });
+      addType(access.elementType);
+    }
+    addComputedFieldAccesses(routine.computedFieldAccesses);
   }
 
   parsedReferencesCache.set(parsed, references);
@@ -7362,89 +8022,34 @@ export function getParsedReferences(
   return references;
 }
 
-export function findParsedReferenceAtOffset(
-  parsed: ParsedDocument,
-  offset: number,
-  onProfile?: (metrics: ParsedReferencesMetrics) => void
-): ParsedReference | undefined {
-  const references = getParsedReferences(parsed, onProfile);
-  let index = parsedReferenceIndexCache.get(parsed);
-  if (!index) {
-    const entries = references.map((reference, order) => ({ reference, order }));
-    entries.sort((first, second) =>
-      first.reference.range.start - second.reference.range.start ||
-      first.order - second.order
-    );
-    const prefixMaxEnd: number[] = [];
-    let maxEnd = Number.NEGATIVE_INFINITY;
-    for (const entry of entries) {
-      maxEnd = Math.max(maxEnd, entry.reference.range.end);
-      prefixMaxEnd.push(maxEnd);
-    }
-    index = { entries, prefixMaxEnd };
-    parsedReferenceIndexCache.set(parsed, index);
-  }
-
-  let low = 0;
-  let high = index.entries.length;
-  while (low < high) {
-    const middle = (low + high) >>> 1;
-    if (index.entries[middle].reference.range.start <= offset) {
-      low = middle + 1;
-    } else {
-      high = middle;
-    }
-  }
-
-  const priority: Record<ParsedReference['kind'], number> = {
-    variable: 0,
-    field: 1,
-    routine: 2,
-    type: 3
-  };
-  let selected: ParsedReference | undefined;
-  let selectedPriority = Number.POSITIVE_INFINITY;
-  let selectedOrder = Number.POSITIVE_INFINITY;
-  for (let position = low - 1; position >= 0; position--) {
-    if (index.prefixMaxEnd[position] < offset) {
-      break;
-    }
-    const { reference, order } = index.entries[position];
-    if (offset > reference.range.end) {
-      continue;
-    }
-    const candidatePriority = priority[reference.kind];
-    const declarationDifference = Number(reference.declaration) -
-      Number(selected?.declaration);
-    if (
-      candidatePriority < selectedPriority ||
-      candidatePriority === selectedPriority &&
-        !Number.isNaN(declarationDifference) &&
-        declarationDifference > 0 ||
-      candidatePriority === selectedPriority &&
-        (Number.isNaN(declarationDifference) || declarationDifference === 0) &&
-        order < selectedOrder
-    ) {
-      selected = reference;
-      selectedPriority = candidatePriority;
-      selectedOrder = order;
-    }
-  }
-  return selected;
-}
 
 function findFieldOwner(field: TypeField, parsed: ParsedDocument): string | undefined {
-  for (const declaration of parsed.declarations) {
-    if (declaration.fields?.includes(field)) {
-      return declaration.name.name;
+  let owners = fieldOwnersByDocument.get(parsed);
+  if (!owners) {
+    owners = new WeakMap();
+    for (const declaration of parsed.declarations) {
+      for (const declaredField of declaration.fields ?? []) {
+        owners.set(declaredField, declaration.name.name);
+      }
     }
-  }
-  for (const declaration of parsed.globalVariables) {
-    if (declaration.fields?.includes(field)) {
-      return declaration.type?.name ?? declaration.name.name;
+    for (const declaration of parsed.globalVariables) {
+      for (const declaredField of declaration.fields ?? []) {
+        owners.set(
+          declaredField,
+          declaration.type?.name ?? declaration.name.name
+        );
+      }
     }
+    for (const symbol of parsed.symbols.entries) {
+      for (const declaredField of symbol.fields ?? []) {
+        if (!owners.has(declaredField)) {
+          owners.set(declaredField, symbol.name);
+        }
+      }
+    }
+    fieldOwnersByDocument.set(parsed, owners);
   }
-  return undefined;
+  return owners.get(field);
 }
 
 function parseDeclaration(
@@ -7528,6 +8133,9 @@ function parseDeclaration(
     pointedType,
     fields,
     scalarFactor: normalizedScalarFactor,
+    scalarFactorRange: scalarFactor
+      ? { start: scalarFactor.start, end: scalarFactor.end }
+      : undefined,
     operator: operator.value,
     range: {
       start: contentStart,

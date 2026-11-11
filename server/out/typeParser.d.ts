@@ -37,6 +37,7 @@ export interface TypeDeclaration {
     pointedType?: TypeReference;
     fields?: TypeField[];
     scalarFactor?: string;
+    scalarFactorRange?: SourceRange;
     operator: 'é' | 'são';
     range: SourceRange;
 }
@@ -76,6 +77,7 @@ export interface RoutineExpressionOperand {
 export interface RoutineExpressionBinary {
     kind: 'binary';
     operator: ExpressionOperator;
+    operatorRange: SourceRange;
     left: RoutineExpression;
     right: RoutineExpression;
     range: SourceRange;
@@ -83,6 +85,7 @@ export interface RoutineExpressionBinary {
 export interface RoutineExpressionUnary {
     kind: 'unary';
     operator: '+' | '-';
+    operatorRange: SourceRange;
     operand: RoutineExpression;
     range: SourceRange;
 }
@@ -117,10 +120,21 @@ export interface RoutineConditionalBlock {
     condition: TypeReference;
     conditionArguments: TypeReference[];
     target?: RoutineDeclaration;
+    predicateCall?: RoutineCall;
+    bodyRange: SourceRange;
     statements: SourceRange[];
     range: SourceRange;
 }
+export interface RoutineLoopBlock {
+    kind: 'explicit' | 'implicit';
+    range: SourceRange;
+    bodyRange: SourceRange;
+    startInstruction?: RoutineLoopInstruction;
+    endInstruction?: RoutineLoopInstruction;
+    complete: boolean;
+}
 export interface RoutineDeclaration {
+    bindingId?: string;
     name: TypeReference;
     qualifier?: string;
     alternateNames: TypeReference[];
@@ -129,13 +143,18 @@ export interface RoutineDeclaration {
     preservedParameters: PreservedRoutineParameter[];
     assignments: RoutineAssignment[];
     outputs: RoutineOutput[];
+    returnStatements: RoutineReturnStatement[];
+    simpleInstructions: RoutineSimpleInstruction[];
     localVariables: RoutineLocalVariable[];
     memoryAllocations: RoutineMemoryAllocation[];
     memoryDeallocations: RoutineMemoryDeallocation[];
     conditionals: RoutineConditionalBlock[];
+    loopBlocks: RoutineLoopBlock[];
+    statements: SourceRange[];
     processes: RoutineProcess[];
     loopInstructions: RoutineLoopInstruction[];
     computedFieldAccesses: RoutineComputedFieldAccess[];
+    listSpecialFieldAccesses: RoutineListSpecialFieldAccess[];
     computedField?: RoutineComputedField;
     returnParameter?: RoutineParameter;
     calls: RoutineCall[];
@@ -186,6 +205,17 @@ export interface RoutineLoopInstruction {
     kind: 'iterate' | 'break' | 'repeat';
     range: SourceRange;
 }
+export interface RoutineReturnStatement {
+    kind: 'return' | 'boolean-return';
+    range: SourceRange;
+}
+export interface RoutineSimpleInstruction {
+    kind: 'decode' | 'push';
+    range: SourceRange;
+    literal?: GlobalVariableLiteral;
+    variableAccesses?: RoutineVariableAccess[];
+    isValid: boolean;
+}
 export interface RoutineComputedField {
     name: TypeReference;
     structureType: TypeReference;
@@ -194,6 +224,12 @@ export interface RoutineComputedField {
 export interface RoutineComputedFieldAccess {
     reference: TypeReference;
     target: RoutineDeclaration;
+}
+export interface RoutineListSpecialFieldAccess {
+    kind: 'first' | 'last' | 'next' | 'previous';
+    reference: TypeReference;
+    listType: TypeReference;
+    elementType: TypeReference;
 }
 export interface RoutineFieldAccess {
     reference: TypeReference;
@@ -234,6 +270,9 @@ export interface TypeSymbol {
 export declare class TypeSymbolTable {
     private readonly symbols;
     private readonly names;
+    private readonly symbolsByPluralName;
+    private readonly symbolEntries;
+    private scalarTypeNames;
     private readonly inheritanceEntryTimes;
     private readonly inheritanceExitTimes;
     private readonly inheritanceDepths;
@@ -241,9 +280,12 @@ export declare class TypeSymbolTable {
     constructor(declarations?: TypeDeclaration[], onDependencyProfile?: (durationMs: number, startTimeMs: number, endTimeMs: number) => void);
     lookup(name: string): TypeSymbol | undefined;
     getBaseTypeDistance(actualName: string, expectedName: string): number | undefined;
-    get entries(): TypeSymbol[];
+    get entries(): readonly TypeSymbol[];
+    getPluralMatches(name: string): readonly TypeSymbol[];
+    get scalarNames(): readonly string[];
     private addPrimitive;
     private addName;
+    private indexResolvedTypeNames;
     private buildInheritanceIndex;
     private resolveScale;
 }
@@ -251,15 +293,31 @@ export interface ParsedDocument {
     declarations: TypeDeclaration[];
     globalVariables: GlobalVariableDeclaration[];
     routines: RoutineDeclaration[];
+    regions: ParserRegion[];
+    commentRanges?: SourceRange[];
     symbols: TypeSymbolTable;
     globalVariableSymbols: GlobalVariableSymbolTable;
     routineSymbols: RoutineSymbolTable;
     diagnostics: ParserDiagnostic[];
 }
+export interface ParserRegion {
+    kind: 'type' | 'global-variable' | 'routine';
+    name: string;
+    range: SourceRange;
+    headerRange?: SourceRange;
+    bodyRange?: SourceRange;
+}
 export interface ParserSymbolCatalog {
     declarations: TypeDeclaration[];
     globalVariables: GlobalVariableDeclaration[];
     routines: RoutineDeclaration[];
+}
+export interface ParseOptions {
+    resolveRoutineCalls?: boolean;
+    reusableRoutineRegions?: {
+        source: string;
+        routines: readonly RoutineDeclaration[];
+    };
 }
 export interface ParsePerformanceMetrics {
     phases: Array<{
@@ -287,12 +345,17 @@ export interface ParsePerformanceMetrics {
     routineNameMatchSearches: number;
     routineNameSpanChecks: number;
     routineNameCandidateChecks: number;
+    routineNameCandidatesSkippedByQualifier: number;
+    routineNameNormalizationCalls: number;
+    routineNameNormalizationCacheHits: number;
+    routineNameNormalizationCacheMisses: number;
     totalMs: number;
     sourceCodeUnits: number;
     tokenCount: number;
     declarations: number;
     globalVariables: number;
     routines: number;
+    reusedRoutineCount: number;
     symbols: number;
 }
 export interface ParsedReferencesMetrics {
@@ -304,15 +367,15 @@ export interface ParsedReference {
     kind: 'type' | 'routine' | 'variable' | 'field';
     name: string;
     range: SourceRange;
+    symbolId?: string;
     scope?: number;
     container?: string;
     declaration?: boolean;
 }
 export declare function normalizeTypeName(name: string): string;
-export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void): ParsedDocument;
+export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void, options?: ParseOptions): ParsedDocument;
 export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDocument, offset: number): RoutineDeclaration | undefined;
 export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): TypeField | undefined;
 export declare function findTypeDefinitionReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function findTypeReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function getParsedReferences(parsed: ParsedDocument, onProfile?: (metrics: ParsedReferencesMetrics) => void): ParsedReference[];
-export declare function findParsedReferenceAtOffset(parsed: ParsedDocument, offset: number, onProfile?: (metrics: ParsedReferencesMetrics) => void): ParsedReference | undefined;

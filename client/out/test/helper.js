@@ -58,8 +58,8 @@ async function setTestContent(content) {
     const all = new vscode.Range(exports.doc.positionAt(0), exports.doc.positionAt(exports.doc.getText().length));
     return exports.editor.edit(eb => eb.replace(all, content));
 }
-function waitForDiagnosticsUpdate(uri) {
-    return waitForDiagnostic(uri);
+function waitForDiagnosticsUpdate(uri, predicate) {
+    return waitForDiagnostic(uri, predicate);
 }
 function waitForDiagnostic(uri, predicate) {
     return new Promise((resolve, reject) => {
