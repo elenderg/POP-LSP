@@ -9,6 +9,7 @@ const {
 } = require('../out/analysisModel.js');
 const {
   getParsedReferences,
+  parseTypeDeclarationSyntax,
   parseTypeDeclarations
 } = require('../out/typeParser.js');
 
@@ -279,6 +280,44 @@ test('marks only lexically and syntactically complete regions as reusable', () =
     '  Retorne'
   ].join('\n'));
   assert.equal(incompleteRoutine.regions[0].complete, false);
+});
+
+test('exposes declaration syntax before semantic resolution', () => {
+  const source = [
+    'Uma pessoa é um tipo ausente.',
+    'Rotina para que se consulte:',
+    '  Retorne.'
+  ].join('\n');
+  const syntax = parseTypeDeclarationSyntax(source);
+  const parsed = parseTypeDeclarations(source);
+
+  assert.equal(syntax.parserSource.length, source.length);
+  assert.deepEqual(syntax.diagnostics, []);
+  assert.deepEqual(
+    syntax.declarations.map(declaration => [
+      declaration.name.normalizedName,
+      declaration.range
+    ]),
+    parsed.declarations.map(declaration => [
+      declaration.name.normalizedName,
+      declaration.range
+    ])
+  );
+  assert.deepEqual(
+    syntax.routines.map(routine => [
+      routine.name.normalizedName,
+      routine.range,
+      routine.bodyRange
+    ]),
+    parsed.routines.map(routine => [
+      routine.name.normalizedName,
+      routine.range,
+      routine.bodyRange
+    ])
+  );
+  assert.ok(parsed.diagnostics.some(diagnostic =>
+    diagnostic.message === 'Unknown base type "tipo ausente".'
+  ));
 });
 
 test('reuses unchanged declaration syntax and rebases all source ranges', () => {

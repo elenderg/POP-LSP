@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TypeSymbolTable = exports.GlobalVariableSymbolTable = exports.RoutineSymbolTable = void 0;
 exports.normalizeTypeName = normalizeTypeName;
+exports.parseTypeDeclarationSyntax = parseTypeDeclarationSyntax;
 exports.parseTypeDeclarations = parseTypeDeclarations;
 exports.findRoutineDeclarationAtOffset = findRoutineDeclarationAtOffset;
 exports.findRoutineFieldAtOffset = findRoutineFieldAtOffset;
@@ -583,28 +584,13 @@ function pluralizeTypeName(name) {
         ? word
         : (0, plural_1.default)(word)).join(' ');
 }
-function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}) {
-    const startedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
-    const memoryBefore = onProfile ? process.memoryUsage() : undefined;
-    const routineProfileCounters = onProfile
-        ? {
-            statementsVisited: 0,
-            nameMatchSearches: 0,
-            nameSpanChecks: 0,
-            nameCandidateChecks: 0,
-            nameCandidatesSkippedByQualifier: 0,
-            nameNormalizationCalls: 0,
-            nameNormalizationCacheHits: 0,
-            nameNormalizationCacheMisses: 0
-        }
-        : undefined;
-    activeRoutineResolutionProfileCounters = routineProfileCounters;
+function parseTypeDeclarationSyntax(source, options = {}, profile = false) {
     const diagnostics = [];
-    const lexicalStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const lexicalStartedAt = profile ? node_perf_hooks_1.performance.now() : 0;
     const commentRanges = [];
     const maskedSource = maskComments(source, diagnostics, commentRanges);
     const parserSource = maskedSource.source;
-    const lexicalFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const lexicalFinishedAt = profile ? node_perf_hooks_1.performance.now() : 0;
     const syntaxStartedAt = lexicalFinishedAt;
     const declarations = [];
     const globalVariables = [];
@@ -649,7 +635,43 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
         segmentStart = periodIndex + 1;
         periodIndex = findDeclarationPeriod(parserSource, segmentStart);
     }
-    const syntaxFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    setRoutineBodyRanges(parserSource, routines, [...declarations, ...globalVariables].map(declaration => declaration.range));
+    const syntaxFinishedAt = profile ? node_perf_hooks_1.performance.now() : 0;
+    return {
+        parserSource,
+        declarations,
+        globalVariables,
+        routines,
+        commentRanges,
+        diagnostics,
+        lexicallyComplete: maskedSource.complete,
+        metrics: {
+            lexicalStartedAt,
+            lexicalFinishedAt,
+            syntaxStartedAt,
+            syntaxFinishedAt,
+            reusedDeclarationCount
+        }
+    };
+}
+function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}) {
+    const startedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const memoryBefore = onProfile ? process.memoryUsage() : undefined;
+    const routineProfileCounters = onProfile
+        ? {
+            statementsVisited: 0,
+            nameMatchSearches: 0,
+            nameSpanChecks: 0,
+            nameCandidateChecks: 0,
+            nameCandidatesSkippedByQualifier: 0,
+            nameNormalizationCalls: 0,
+            nameNormalizationCacheHits: 0,
+            nameNormalizationCacheMisses: 0
+        }
+        : undefined;
+    activeRoutineResolutionProfileCounters = routineProfileCounters;
+    const syntax = parseTypeDeclarationSyntax(source, options, Boolean(onProfile));
+    const { parserSource, declarations, globalVariables, routines, commentRanges, diagnostics, lexicallyComplete, metrics: { lexicalStartedAt, lexicalFinishedAt, syntaxStartedAt, syntaxFinishedAt, reusedDeclarationCount } } = syntax;
     let dependencyResolutionMs = 0;
     let dependencyResolutionStartedAt = 0;
     let dependencyResolutionFinishedAt = 0;
@@ -668,7 +690,6 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
         ...globalVariables,
         ...(workspaceSymbols?.globalVariables ?? [])
     ]);
-    setRoutineBodyRanges(parserSource, routines, [...declarations, ...globalVariables].map(declaration => declaration.range));
     const reusedRoutines = reuseRoutineRegions(source, routines, options.reusableRoutineRegions);
     const routinesToResolve = routines.filter(routine => !reusedRoutines.has(routine));
     const routineSymbols = new RoutineSymbolTable(routines);
@@ -860,7 +881,7 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
         declarations,
         globalVariables,
         routines,
-        regions: createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, maskedSource.complete),
+        regions: createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, lexicallyComplete),
         commentRanges,
         symbols,
         globalVariableSymbols,

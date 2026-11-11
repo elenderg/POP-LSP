@@ -271,6 +271,14 @@ for every document that is not reused as a whole. Declaration-level semantic
 resolution remains disabled until region-level differential equivalence is
 established.
 
+The parser now exposes `parseTypeDeclarationSyntax` as a syntax-only phase:
+it returns parsed declaration and routine records, source-preserving masked
+text, and lexical/syntax diagnostics before semantic resolution. The existing
+`parseTypeDeclarations` path composes this phase with the unchanged full
+resolver, so callers retain the same fully resolved result. This is the first
+separation step; per-region resolution worklists and full-parse differential
+verification are still pending.
+
 Routine-call resolution indexes normalized names per parse instead of
 comparing every call against every routine. Name matching normalizes each
 candidate word once, bounds lookahead by the longest declared routine name,

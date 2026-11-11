@@ -325,6 +325,23 @@ export interface ParseOptions {
         routines: readonly RoutineDeclaration[];
     };
 }
+export interface SyntaxParseMetrics {
+    lexicalStartedAt: number;
+    lexicalFinishedAt: number;
+    syntaxStartedAt: number;
+    syntaxFinishedAt: number;
+    reusedDeclarationCount: number;
+}
+export interface ParsedDocumentSyntax {
+    parserSource: string;
+    declarations: TypeDeclaration[];
+    globalVariables: GlobalVariableDeclaration[];
+    routines: RoutineDeclaration[];
+    commentRanges: SourceRange[];
+    diagnostics: ParserDiagnostic[];
+    lexicallyComplete: boolean;
+    metrics: SyntaxParseMetrics;
+}
 export interface ParsePerformanceMetrics {
     phases: Array<{
         name: string;
@@ -380,6 +397,7 @@ export interface ParsedReference {
     declaration?: boolean;
 }
 export declare function normalizeTypeName(name: string): string;
+export declare function parseTypeDeclarationSyntax(source: string, options?: Pick<ParseOptions, 'reusableDeclarationRegions'>, profile?: boolean): ParsedDocumentSyntax;
 export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void, options?: ParseOptions): ParsedDocument;
 export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDocument, offset: number): RoutineDeclaration | undefined;
 export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): TypeField | undefined;

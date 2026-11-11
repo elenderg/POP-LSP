@@ -706,6 +706,25 @@ export interface ParseOptions {
   };
 }
 
+export interface SyntaxParseMetrics {
+  lexicalStartedAt: number;
+  lexicalFinishedAt: number;
+  syntaxStartedAt: number;
+  syntaxFinishedAt: number;
+  reusedDeclarationCount: number;
+}
+
+export interface ParsedDocumentSyntax {
+  parserSource: string;
+  declarations: TypeDeclaration[];
+  globalVariables: GlobalVariableDeclaration[];
+  routines: RoutineDeclaration[];
+  commentRanges: SourceRange[];
+  diagnostics: ParserDiagnostic[];
+  lexicallyComplete: boolean;
+  metrics: SyntaxParseMetrics;
+}
+
 export interface ParsePerformanceMetrics {
   phases: Array<{
     name: string;
@@ -1072,33 +1091,17 @@ function pluralizeTypeName(name: string): string {
   ).join(' ');
 }
 
-export function parseTypeDeclarations(
+export function parseTypeDeclarationSyntax(
   source: string,
-  workspaceSymbols?: ParserSymbolCatalog,
-  onProfile?: (metrics: ParsePerformanceMetrics) => void,
-  options: ParseOptions = {}
-): ParsedDocument {
-  const startedAt = onProfile ? performance.now() : 0;
-  const memoryBefore = onProfile ? process.memoryUsage() : undefined;
-  const routineProfileCounters = onProfile
-    ? {
-      statementsVisited: 0,
-      nameMatchSearches: 0,
-      nameSpanChecks: 0,
-      nameCandidateChecks: 0,
-      nameCandidatesSkippedByQualifier: 0,
-      nameNormalizationCalls: 0,
-      nameNormalizationCacheHits: 0,
-      nameNormalizationCacheMisses: 0
-    }
-    : undefined;
-  activeRoutineResolutionProfileCounters = routineProfileCounters;
+  options: Pick<ParseOptions, 'reusableDeclarationRegions'> = {},
+  profile = false
+): ParsedDocumentSyntax {
   const diagnostics: ParserDiagnostic[] = [];
-  const lexicalStartedAt = onProfile ? performance.now() : 0;
+  const lexicalStartedAt = profile ? performance.now() : 0;
   const commentRanges: SourceRange[] = [];
   const maskedSource = maskComments(source, diagnostics, commentRanges);
   const parserSource = maskedSource.source;
-  const lexicalFinishedAt = onProfile ? performance.now() : 0;
+  const lexicalFinishedAt = profile ? performance.now() : 0;
   const syntaxStartedAt = lexicalFinishedAt;
   const declarations: TypeDeclaration[] = [];
   const globalVariables: GlobalVariableDeclaration[] = [];
@@ -1111,7 +1114,11 @@ export function parseTypeDeclarations(
   let periodIndex = findDeclarationPeriod(parserSource, segmentStart);
 
   while (periodIndex !== -1) {
-    const declarationStart = findDeclarationStart(parserSource, segmentStart, periodIndex);
+    const declarationStart = findDeclarationStart(
+      parserSource,
+      segmentStart,
+      periodIndex
+    );
     const article = declarationStart === undefined
       ? undefined
       : readWord(parserSource, declarationStart, periodIndex);
@@ -1171,7 +1178,73 @@ export function parseTypeDeclarations(
     segmentStart = periodIndex + 1;
     periodIndex = findDeclarationPeriod(parserSource, segmentStart);
   }
-  const syntaxFinishedAt = onProfile ? performance.now() : 0;
+  setRoutineBodyRanges(
+    parserSource,
+    routines,
+    [...declarations, ...globalVariables].map(declaration => declaration.range)
+  );
+  const syntaxFinishedAt = profile ? performance.now() : 0;
+
+  return {
+    parserSource,
+    declarations,
+    globalVariables,
+    routines,
+    commentRanges,
+    diagnostics,
+    lexicallyComplete: maskedSource.complete,
+    metrics: {
+      lexicalStartedAt,
+      lexicalFinishedAt,
+      syntaxStartedAt,
+      syntaxFinishedAt,
+      reusedDeclarationCount
+    }
+  };
+}
+
+export function parseTypeDeclarations(
+  source: string,
+  workspaceSymbols?: ParserSymbolCatalog,
+  onProfile?: (metrics: ParsePerformanceMetrics) => void,
+  options: ParseOptions = {}
+): ParsedDocument {
+  const startedAt = onProfile ? performance.now() : 0;
+  const memoryBefore = onProfile ? process.memoryUsage() : undefined;
+  const routineProfileCounters = onProfile
+    ? {
+      statementsVisited: 0,
+      nameMatchSearches: 0,
+      nameSpanChecks: 0,
+      nameCandidateChecks: 0,
+      nameCandidatesSkippedByQualifier: 0,
+      nameNormalizationCalls: 0,
+      nameNormalizationCacheHits: 0,
+      nameNormalizationCacheMisses: 0
+    }
+    : undefined;
+  activeRoutineResolutionProfileCounters = routineProfileCounters;
+  const syntax = parseTypeDeclarationSyntax(
+    source,
+    options,
+    Boolean(onProfile)
+  );
+  const {
+    parserSource,
+    declarations,
+    globalVariables,
+    routines,
+    commentRanges,
+    diagnostics,
+    lexicallyComplete,
+    metrics: {
+      lexicalStartedAt,
+      lexicalFinishedAt,
+      syntaxStartedAt,
+      syntaxFinishedAt,
+      reusedDeclarationCount
+    }
+  } = syntax;
   let dependencyResolutionMs = 0;
   let dependencyResolutionStartedAt = 0;
   let dependencyResolutionFinishedAt = 0;
@@ -1190,11 +1263,6 @@ export function parseTypeDeclarations(
     ...globalVariables,
     ...(workspaceSymbols?.globalVariables ?? [])
   ]);
-  setRoutineBodyRanges(
-    parserSource,
-    routines,
-    [...declarations, ...globalVariables].map(declaration => declaration.range)
-  );
   const reusedRoutines = reuseRoutineRegions(
     source,
     routines,
@@ -1424,7 +1492,7 @@ export function parseTypeDeclarations(
       globalVariables,
       routines,
       diagnostics,
-      maskedSource.complete
+      lexicallyComplete
     ),
     commentRanges,
     symbols,
