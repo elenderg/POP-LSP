@@ -71,6 +71,39 @@ test('builds a position-preserving syntax tree and shared symbol index', () => {
   assert.equal(getDocumentAnalysis(parsed, source.length), analysis);
 });
 
+test('preserves the full symbol catalog for large comment-free documents', () => {
+  const alphabeticName = index => {
+    let name = '';
+    do {
+      name = String.fromCharCode(97 + index % 26) + name;
+      index = Math.floor(index / 26) - 1;
+    } while (index >= 0);
+    return name;
+  };
+  const count = 1200;
+  const source = Array.from(
+    { length: count },
+    (_, index) => `Uma pessoa tipo${alphabeticName(index)} é uma estrutura.`
+  ).join('\n');
+  const parsed = parseTypeDeclarations(source);
+
+  assert.equal(parsed.declarations.length, count);
+  assert.equal(parsed.symbols.entries.length, count + 2);
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(parsed.declarations[0].name.name, 'pessoa tipoa');
+  assert.equal(
+    parsed.declarations.at(-1).name.name,
+    `pessoa tipo${alphabeticName(count - 1)}`
+  );
+
+  const withComment = parseTypeDeclarations(
+    'Uma pessoa é uma estrutura. [ comentário ]\nO valor é uma pessoa.'
+  );
+  assert.equal(withComment.declarations.length, 1);
+  assert.equal(withComment.globalVariables.length, 1);
+  assert.deepEqual(withComment.diagnostics, []);
+});
+
 test('records region boundaries and reuses unchanged routine checkpoints', () => {
   const source = [
     'Uma pessoa é uma estrutura.',

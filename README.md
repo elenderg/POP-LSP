@@ -246,7 +246,8 @@ if it appears in a boolean function header.
   phase can delay the watchdog until control returns to the event loop, whose
   lag is measured separately. Profiling is diagnostic only and never interrupts
   an operation. The parser has no token stream; lexical comment masking and
-  syntax parsing are measured separately.
+  syntax parsing are measured separately. Comment-free documents reuse their
+  original source string instead of allocating and rebuilding a masked copy.
 - Set `POP_LSP_CPU_PROFILE=1` before launching VS Code to capture a Node.js CPU
   profile for the language-server process. The `.cpuprofile` file is written to
   the operating system's temporary directory; profiling is disabled by default.

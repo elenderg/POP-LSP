@@ -7160,21 +7160,28 @@ function maskComments(
   diagnostics: ParserDiagnostic[],
   commentRanges: SourceRange[]
 ): string {
-  const characters = new Uint16Array(source.length);
-  for (let index = 0; index < source.length; index++) {
-    characters[index] = source.charCodeAt(index);
-  }
+  let characters: Uint16Array | undefined;
+  const ensureCharacters = (): Uint16Array => {
+    if (!characters) {
+      characters = new Uint16Array(source.length);
+      for (let index = 0; index < source.length; index++) {
+        characters[index] = source.charCodeAt(index);
+      }
+    }
+    return characters;
+  };
   let inString = false;
   let inBlockComment = false;
   let blockCommentStart = -1;
 
-  for (let index = 0; index < characters.length; index++) {
+  for (let index = 0; index < source.length; index++) {
     const character = source[index];
     const nextCharacter = source[index + 1];
 
     if (inBlockComment) {
+      const maskedCharacters = ensureCharacters();
       if (character === ']') {
-        characters[index] = 32;
+        maskedCharacters[index] = 32;
         inBlockComment = false;
         commentRanges.push({ start: blockCommentStart, end: index + 1 });
         blockCommentStart = -1;
@@ -7184,10 +7191,10 @@ function maskComments(
           range: { start: index, end: index + 1 }
         });
         if (character !== '\n' && character !== '\r') {
-          characters[index] = 32;
+          maskedCharacters[index] = 32;
         }
       } else {
-        characters[index] = 32;
+        maskedCharacters[index] = 32;
       }
       continue;
     }
@@ -7209,16 +7216,17 @@ function maskComments(
     }
 
     if (character === '[') {
-      characters[index] = 32;
+      ensureCharacters()[index] = 32;
       inBlockComment = true;
       blockCommentStart = index;
       continue;
     }
 
     if (character === '\\') {
-      characters[index] = 32;
+      const maskedCharacters = ensureCharacters();
+      maskedCharacters[index] = 32;
       const commentStart = index;
-      for (; index < characters.length; index++) {
+      for (; index < source.length; index++) {
         const commentCharacter = source[index];
         if (commentCharacter === '\n' || commentCharacter === '\r') {
           break;
@@ -7229,11 +7237,11 @@ function maskComments(
             range: { start: index, end: index + 1 }
           });
         }
-        characters[index] = 32;
+        maskedCharacters[index] = 32;
       }
       commentRanges.push({
         start: commentStart,
-        end: index < characters.length ? index : characters.length
+        end: index < source.length ? index : source.length
       });
     }
   }
@@ -7241,16 +7249,21 @@ function maskComments(
   if (blockCommentStart !== -1) {
     commentRanges.push({
       start: blockCommentStart,
-      end: characters.length
+      end: source.length
     });
+  }
+
+  const maskedCharacters = characters;
+  if (!maskedCharacters) {
+    return source;
   }
 
   const chunks: string[] = [];
   const chunkSize = 8192;
-  for (let start = 0; start < characters.length; start += chunkSize) {
-    chunks.push(String.fromCharCode(...characters.subarray(
+  for (let start = 0; start < maskedCharacters.length; start += chunkSize) {
+    chunks.push(String.fromCharCode(...maskedCharacters.subarray(
       start,
-      Math.min(start + chunkSize, characters.length)
+      Math.min(start + chunkSize, maskedCharacters.length)
     )));
   }
   return chunks.join('');
