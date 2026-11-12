@@ -333,6 +333,7 @@ export interface ParseOptions {
     reusableRoutineRegions?: {
         source: string;
         routines: readonly RoutineDeclaration[];
+        allRoutines: readonly RoutineDeclaration[];
     };
 }
 export interface SyntaxParseMetrics {

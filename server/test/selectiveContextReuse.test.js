@@ -405,18 +405,19 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
   );
   writeWindows1252(routinePath, initialSource);
 
+  const childEnvironment = {
+    ...process.env,
+    POP_LSP_PROFILE: '1',
+    POP_LSP_VERIFY_INCREMENTAL_ROUTINES: '1',
+    POP_LSP_INCREMENTAL_DECLARATIONS: '1',
+    POP_LSP_VERIFY_INCREMENTAL_DECLARATIONS: '1'
+  };
+  delete childEnvironment.POP_LSP_INCREMENTAL_ROUTINES;
   const child = spawn(
     process.execPath,
     [path.resolve(__dirname, '../out/server.js'), '--stdio'],
     {
-      env: {
-        ...process.env,
-        POP_LSP_PROFILE: '1',
-        POP_LSP_INCREMENTAL_ROUTINES: '1',
-        POP_LSP_VERIFY_INCREMENTAL_ROUTINES: '1',
-        POP_LSP_INCREMENTAL_DECLARATIONS: '1',
-        POP_LSP_VERIFY_INCREMENTAL_DECLARATIONS: '1'
-      },
+      env: childEnvironment,
       stdio: ['pipe', 'pipe', 'pipe']
     }
   );

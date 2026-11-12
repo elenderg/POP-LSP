@@ -289,22 +289,21 @@ full parser. `resolveRoutineSyntaxRegions` adds an explicit routine-resolution
 worklist over selected routine regions, using the full local/workspace symbol
 catalog and resolving parameters, computed fields, calls, and local variables
 only for those routines. Its output is differentially tested against the full
-routine pass. The language server's opt-in path uses the shared full-parse
-catalog and resolves only routines that could not reuse safe checkpoints; it
-does not call this standalone API, which would rebuild a second catalog.
-Conservative checkpoint reuse and selected routine resolution can be enabled
-with
-`POP_LSP_INCREMENTAL_ROUTINES=1` (disabled by default). For rollout
-verification, also set `POP_LSP_VERIFY_INCREMENTAL_ROUTINES=1`; each contextual
-result that actually reuses a routine is compared with a complete parse,
-including declarations, symbol references, routines, and diagnostics. A
-mismatch is reported and the complete result is used. Contextual parses with no
-reusable routines skip the redundant verification parse. Verification mode
-deliberately incurs the cost of a second parse when used and is intended for
-development and differential testing.
-The optimization remains opt-in: synthetic runs so far show that parsing and
-snapshot-rebasing costs can offset the saved routine resolution, so gains must
-be measured on representative project documents before enabling it broadly.
+routine pass. The language server's default incremental path uses the shared
+full-parse catalog and resolves only routines that could not reuse safe
+checkpoints; it does not call this standalone API, which would rebuild a second
+catalog.
+Conservative routine checkpoint reuse and selected routine resolution are
+enabled by default; set `POP_LSP_INCREMENTAL_ROUTINES=0` to disable them. On
+the 918 KB `Rotinas.pop` fixture, a body edit reused 259 routines, reduced
+routine-resolution time from 22.0 s to 20.1 s (about 9%), and visited 6.5%
+fewer routine statements. The edited result matched a complete parse,
+including declarations, symbol references, routines, and diagnostics.
+For differential verification on other workspaces, set
+`POP_LSP_VERIFY_INCREMENTAL_ROUTINES=1`; each contextual result that reuses a
+routine is compared with a complete parse, and a mismatch is reported and
+replaced by the complete result. Verification deliberately incurs the extra
+parse cost and is intended for development and differential testing.
 
 Type and global-variable resolution still runs over complete local catalogs.
 The worklist avoids repeating selected per-declaration type and variable
@@ -312,9 +311,11 @@ resolution, but the server still lexes and parses each contextual document and
 builds the full symbol/type catalogs and indexes. It is not incremental
 lexing, parsing, or catalog construction. Routine-call and field dependencies
 are conservatively tracked, while workspace-wide catalog construction remains
-a full pass. Both declaration and routine worklists are opt-in: profiling on
-representative projects is needed to determine whether snapshot rebasing and
-differential verification costs are outweighed by avoided resolution work.
+a full pass. Declaration worklists remain opt-in. Routine checkpoint reuse
+remains conservative: regions with incomplete syntax/diagnostics, resolved
+field targets, or type references outside their own source region are not
+reused. The server remaps cached routine targets to the current catalog and
+falls back to complete resolution whenever verification detects a mismatch.
 Profiling also records worklist mode, verification status and duration
 alongside phase timings and counts, region-graph construction, invalidation
 selection/closure duration, memory, and LSP request latency.

@@ -1033,10 +1033,41 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
             reusableSemanticRegions: undefined,
             reusableRoutineRegions: undefined
         });
+        const snapshotValue = (value, includeRoutine = false, ancestors = new Set()) => {
+            if (value === null || typeof value !== 'object') {
+                return value;
+            }
+            const object = value;
+            if (!includeRoutine &&
+                'bodyRange' in object &&
+                Array.isArray(object.calls) &&
+                object.name !== null &&
+                typeof object.name === 'object') {
+                const routine = value;
+                return {
+                    routineTarget: routine.bindingId,
+                    name: routine.name.normalizedName,
+                    range: routine.range,
+                    bodyRange: routine.bodyRange
+                };
+            }
+            if (ancestors.has(value)) {
+                throw new Error('Incremental verification encountered a non-routine cycle.');
+            }
+            ancestors.add(value);
+            const snapshot = Array.isArray(value)
+                ? value.map(item => snapshotValue(item, false, ancestors))
+                : Object.fromEntries(Object.entries(object).map(([key, child]) => [
+                    key,
+                    snapshotValue(child, false, ancestors)
+                ]));
+            ancestors.delete(value);
+            return snapshot;
+        };
         const getSnapshot = (parsed) => ({
             declarations: parsed.declarations,
             globalVariables: parsed.globalVariables,
-            routines: parsed.routines,
+            routines: parsed.routines.map(routine => snapshotValue(routine, true)),
             references: getParsedReferences(parsed),
             diagnostics: parsed.diagnostics
         });
@@ -1293,12 +1324,52 @@ function routineHasResolvedFieldTargets(routine) {
         ...routine.memoryDeallocations.flatMap(deallocation => deallocation.fieldAccesses ?? [])
     ].length > 0;
 }
+function routineHasExternalTypeReferenceRanges(routine) {
+    const visited = new Set();
+    const visit = (value) => {
+        if (value === null || typeof value !== 'object') {
+            return false;
+        }
+        if (visited.has(value)) {
+            return false;
+        }
+        visited.add(value);
+        if (Array.isArray(value)) {
+            return value.some(visit);
+        }
+        const object = value;
+        if (typeof object.name === 'string' &&
+            typeof object.normalizedName === 'string' &&
+            object.range !== null &&
+            typeof object.range === 'object') {
+            const range = object.range;
+            if (range.start < routine.range.start ||
+                range.end > routine.bodyRange.end) {
+                return true;
+            }
+        }
+        return Object.entries(object).some(([property, child]) => {
+            if (property === 'target' &&
+                child !== null &&
+                typeof child === 'object' &&
+                ('bodyRange' in child ||
+                    (('kind' in child) &&
+                        (child.kind === 'named' ||
+                            child.kind === 'byte-array')))) {
+                return false;
+            }
+            return visit(child);
+        });
+    };
+    return visit(routine);
+}
 function reuseRoutineRegions(source, routines, previous) {
     const reused = new Set();
     if (!previous) {
         return reused;
     }
     const previousByRegion = new Map();
+    const currentByRegion = new Map();
     const currentByIdentity = new Map();
     const oldToCurrent = new Map();
     const getRegionText = (regionSource, routine) => regionSource.slice(routine.range.start, routine.bodyRange.end).trimEnd();
@@ -1313,11 +1384,31 @@ function reuseRoutineRegions(source, routines, previous) {
         const candidates = currentByIdentity.get(identity) ?? [];
         candidates.push(routine);
         currentByIdentity.set(identity, candidates);
+        const key = `${identity}\n${getRegionText(source, routine)}`;
+        const regionCandidates = currentByRegion.get(key) ?? [];
+        regionCandidates.push(routine);
+        currentByRegion.set(key, regionCandidates);
     }
-    for (const oldRoutine of previous.routines) {
-        const candidates = currentByIdentity.get(getRoutineRegionKey(oldRoutine));
-        const currentRoutine = candidates?.shift();
+    const mappedCurrentRoutines = new Set();
+    const previousRoutines = previous.allRoutines;
+    const routinesWithExternalTypeReferences = new Set(previous.routines.filter(routineHasExternalTypeReferenceRanges));
+    for (const oldRoutine of previousRoutines) {
+        const key = `${getRoutineRegionKey(oldRoutine)}\n${getRegionText(previous.source, oldRoutine)}`;
+        const currentRoutine = currentByRegion.get(key)?.shift();
         if (currentRoutine) {
+            oldToCurrent.set(oldRoutine, currentRoutine);
+            mappedCurrentRoutines.add(currentRoutine);
+        }
+    }
+    for (const oldRoutine of previousRoutines) {
+        if (oldToCurrent.has(oldRoutine)) {
+            continue;
+        }
+        const candidates = currentByIdentity.get(getRoutineRegionKey(oldRoutine));
+        const currentIndex = candidates?.findIndex(candidate => !mappedCurrentRoutines.has(candidate)) ?? -1;
+        if (currentIndex >= 0) {
+            const currentRoutine = candidates[currentIndex];
+            mappedCurrentRoutines.add(currentRoutine);
             oldToCurrent.set(oldRoutine, currentRoutine);
         }
     }
@@ -1327,6 +1418,7 @@ function reuseRoutineRegions(source, routines, previous) {
         const previousRoutine = previousByRegion.get(key)?.shift();
         if (!previousRoutine ||
             routineHasResolvedFieldTargets(previousRoutine) ||
+            routinesWithExternalTypeReferences.has(previousRoutine) ||
             !oldToCurrent.has(previousRoutine)) {
             continue;
         }
@@ -1355,10 +1447,27 @@ function reuseRoutineRegions(source, routines, previous) {
             const cloned = {};
             visited.set(value, cloned);
             for (const [property, child] of Object.entries(sourceObject)) {
+                if (property === 'target' &&
+                    child !== null &&
+                    typeof child === 'object') {
+                    const currentRoutineTarget = oldToCurrent.get(child);
+                    if (currentRoutineTarget) {
+                        cloned[property] = currentRoutineTarget;
+                    }
+                    else if ('bodyRange' in child || 'kind' in child) {
+                        cloned[property] = child;
+                    }
+                    else {
+                        cloned[property] = clone(child, visited);
+                    }
+                    continue;
+                }
                 if ((property === 'start' || property === 'end') &&
                     typeof child === 'number' &&
                     typeof sourceObject.start === 'number' &&
-                    typeof sourceObject.end === 'number') {
+                    typeof sourceObject.end === 'number' &&
+                    sourceObject.start >= previousRoutine.range.start &&
+                    sourceObject.end <= previousRoutine.bodyRange.end) {
                     cloned[property] = child + delta;
                 }
                 else if (property === 'scope' &&

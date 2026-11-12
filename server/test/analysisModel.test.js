@@ -156,7 +156,8 @@ test('records region boundaries and reuses unchanged routine checkpoints', () =>
     {
       reusableRoutineRegions: {
         source,
-        routines: previous.routines
+        routines: previous.routines,
+        allRoutines: previous.routines
       }
     }
   );
@@ -197,7 +198,8 @@ test('records region boundaries and reuses unchanged routine checkpoints', () =>
     {
       reusableRoutineRegions: {
         source,
-        routines: previous.routines
+        routines: previous.routines,
+        allRoutines: previous.routines
       }
     }
   );
@@ -233,7 +235,8 @@ test('records region boundaries and reuses unchanged routine checkpoints', () =>
     {
       reusableRoutineRegions: {
         source,
-        routines: previous.routines
+        routines: previous.routines,
+        allRoutines: previous.routines
       }
     }
   );
@@ -365,7 +368,8 @@ test('verifies routine worklists and falls back when a reused snapshot differs',
     onIncrementalVerification: matched => verificationResults.push(matched),
     reusableRoutineRegions: {
       source,
-      routines: previous.routines
+      routines: previous.routines,
+      allRoutines: previous.routines
     }
   };
   const verified = parseTypeDeclarations(
@@ -398,6 +402,109 @@ test('verifies routine worklists and falls back when a reused snapshot differs',
   assert.deepEqual(fallback.routines, complete.routines);
   assert.deepEqual(fallback.diagnostics, complete.diagnostics);
   assert.deepEqual(getParsedReferences(fallback), getParsedReferences(complete));
+});
+
+test('preserves external routine target ranges when rebasing reused routines', () => {
+  const librarySource = [
+    ' '.repeat(60),
+    'Rotina para que se alvo:',
+    '  Retorne.'
+  ].join('\n');
+  const library = parseTypeDeclarations(librarySource);
+  const workspaceSymbols = {
+    declarations: [],
+    globalVariables: [],
+    routines: library.routines
+  };
+  const source = [
+    'Rotina para que se edite:',
+    '  Retorne.',
+    'Rotina para que se chamadora:',
+    '  Alvo.',
+    '  Retorne.'
+  ].join('\n');
+  const previous = parseTypeDeclarations(source, workspaceSymbols);
+  const previousTargetRange = previous.routines[1].calls[0].target.range;
+  assert.ok(
+    previousTargetRange.start >= previous.routines[1].range.start &&
+    previousTargetRange.end <= previous.routines[1].bodyRange.end
+  );
+  const shiftedSource = `\n${source}`;
+  const metrics = {};
+  const incremental = parseTypeDeclarations(
+    shiftedSource,
+    workspaceSymbols,
+    value => Object.assign(metrics, value),
+    {
+      incrementalRoutineResolution: true,
+      verifyIncrementalRoutineResolution: true,
+      reusableRoutineRegions: {
+        source,
+        routines: previous.routines,
+        allRoutines: previous.routines
+      }
+    }
+  );
+  const complete = parseTypeDeclarations(shiftedSource, workspaceSymbols);
+
+  assert.equal(metrics.routineVerificationStatus, 'matched');
+  assert.equal(metrics.reusedRoutineCount, 2);
+  assert.deepEqual(incremental.routines, complete.routines);
+  assert.deepEqual(incremental.diagnostics, complete.diagnostics);
+  assert.deepEqual(getParsedReferences(incremental), getParsedReferences(complete));
+  assert.deepEqual(
+    incremental.routines[1].calls[0].target.range,
+    previousTargetRange
+  );
+});
+
+test('rebinds cached calls to routines that are not eligible for reuse', () => {
+  const source = [
+    'Rotina para que se edite:',
+    '  Retorne.',
+    'Rotina para que se alvo:',
+    '  Inexistente.',
+    'Rotina para que se chamadora:',
+    '  Alvo.',
+    '  Retorne.'
+  ].join('\n');
+  const previous = parseTypeDeclarations(source);
+  const reusableRoutines = previous.routines.filter(routine => {
+    const region = previous.regions.find(candidate =>
+      candidate.kind === 'routine' &&
+      candidate.range.start === routine.range.start &&
+      candidate.range.end === routine.bodyRange.end
+    );
+    return region?.complete;
+  });
+  assert.equal(reusableRoutines.length, 2);
+  const shiftedSource = `\n${source}`;
+  const metrics = {};
+  const incremental = parseTypeDeclarations(
+    shiftedSource,
+    undefined,
+    value => Object.assign(metrics, value),
+    {
+      incrementalRoutineResolution: true,
+      verifyIncrementalRoutineResolution: true,
+      reusableRoutineRegions: {
+        source,
+        routines: reusableRoutines,
+        allRoutines: previous.routines
+      }
+    }
+  );
+  const complete = parseTypeDeclarations(shiftedSource);
+
+  assert.equal(metrics.routineVerificationStatus, 'matched');
+  assert.equal(metrics.reusedRoutineCount, 2);
+  assert.deepEqual(incremental.routines, complete.routines);
+  assert.deepEqual(incremental.diagnostics, complete.diagnostics);
+  assert.deepEqual(getParsedReferences(incremental), getParsedReferences(complete));
+  assert.equal(
+    incremental.routines[2].calls[0].target,
+    incremental.routines[1]
+  );
 });
 
 test('marks only lexically and syntactically complete regions as reusable', () => {

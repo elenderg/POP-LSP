@@ -19,7 +19,7 @@ const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
 const documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
 const parsedDocuments = new Map();
 const profileEnabled = process.env.POP_LSP_PROFILE === '1';
-const incrementalRoutineResolutionEnabled = process.env.POP_LSP_INCREMENTAL_ROUTINES === '1';
+const incrementalRoutineResolutionEnabled = process.env.POP_LSP_INCREMENTAL_ROUTINES !== '0';
 const incrementalDeclarationResolutionEnabled = process.env.POP_LSP_INCREMENTAL_DECLARATIONS === '1';
 const verifyIncrementalRoutineResolution = incrementalRoutineResolutionEnabled &&
     process.env.POP_LSP_VERIFY_INCREMENTAL_ROUTINES === '1';
@@ -520,7 +520,8 @@ function getReusableRoutineRegionSnapshots(directory, current, previous, previou
         if (reusableRoutines.length > 0) {
             snapshots.set(uri, {
                 source: oldSource,
-                routines: reusableRoutines
+                routines: reusableRoutines,
+                allRoutines: oldEntry.parsed.routines
             });
         }
     }

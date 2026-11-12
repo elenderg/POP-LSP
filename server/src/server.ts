@@ -61,7 +61,7 @@ const documents = new TextDocuments(TextDocument);
 const parsedDocuments = new Map<string, ReturnType<typeof parseTypeDeclarations>>();
 const profileEnabled = process.env.POP_LSP_PROFILE === '1';
 const incrementalRoutineResolutionEnabled =
-  process.env.POP_LSP_INCREMENTAL_ROUTINES === '1';
+  process.env.POP_LSP_INCREMENTAL_ROUTINES !== '0';
 const incrementalDeclarationResolutionEnabled =
   process.env.POP_LSP_INCREMENTAL_DECLARATIONS === '1';
 const verifyIncrementalRoutineResolution =
@@ -658,10 +658,18 @@ function getReusableRoutineRegionSnapshots(
     parsed: ParsedDocument;
   }> | undefined,
   previousSources: Map<string, string> | undefined
-): Map<string, { source: string; routines: readonly RoutineDeclaration[] }> {
+): Map<string, {
+  source: string;
+  routines: readonly RoutineDeclaration[];
+  allRoutines: readonly RoutineDeclaration[];
+}> {
   const snapshots = new Map<
     string,
-    { source: string; routines: readonly RoutineDeclaration[] }
+    {
+      source: string;
+      routines: readonly RoutineDeclaration[];
+      allRoutines: readonly RoutineDeclaration[];
+    }
   >();
   if (!previous || !previousSources) {
     return snapshots;
@@ -799,7 +807,8 @@ function getReusableRoutineRegionSnapshots(
     if (reusableRoutines.length > 0) {
       snapshots.set(uri, {
         source: oldSource,
-        routines: reusableRoutines
+        routines: reusableRoutines,
+        allRoutines: oldEntry.parsed.routines
       });
     }
   }
@@ -2638,7 +2647,11 @@ async function buildWorkspaceDocumentIndex(
         )
         : new Map<
           string,
-          { source: string; routines: readonly RoutineDeclaration[] }
+          {
+            source: string;
+            routines: readonly RoutineDeclaration[];
+            allRoutines: readonly RoutineDeclaration[];
+          }
         >();
       const reusableSemanticSnapshots =
         incrementalDeclarationResolutionEnabled

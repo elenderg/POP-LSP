@@ -720,6 +720,7 @@ export interface ParseOptions {
   reusableRoutineRegions?: {
     source: string;
     routines: readonly RoutineDeclaration[];
+    allRoutines: readonly RoutineDeclaration[];
   };
 }
 
@@ -1858,10 +1859,53 @@ function resolveTypeDeclarationSyntaxCore(
         reusableRoutineRegions: undefined
       }
     );
+    const snapshotValue = (
+      value: unknown,
+      includeRoutine = false,
+      ancestors = new Set<object>()
+    ): unknown => {
+      if (value === null || typeof value !== 'object') {
+        return value;
+      }
+      const object = value as Record<string, unknown>;
+      if (
+        !includeRoutine &&
+        'bodyRange' in object &&
+        Array.isArray(object.calls) &&
+        object.name !== null &&
+        typeof object.name === 'object'
+      ) {
+        const routine = value as RoutineDeclaration;
+        return {
+          routineTarget: routine.bindingId,
+          name: routine.name.normalizedName,
+          range: routine.range,
+          bodyRange: routine.bodyRange
+        };
+      }
+      if (ancestors.has(value)) {
+        throw new Error(
+          'Incremental verification encountered a non-routine cycle.'
+        );
+      }
+      ancestors.add(value);
+      const snapshot = Array.isArray(value)
+        ? value.map(item => snapshotValue(item, false, ancestors))
+        : Object.fromEntries(
+          Object.entries(object).map(([key, child]) => [
+            key,
+            snapshotValue(child, false, ancestors)
+          ])
+        );
+      ancestors.delete(value);
+      return snapshot;
+    };
     const getSnapshot = (parsed: ParsedDocument) => ({
       declarations: parsed.declarations,
       globalVariables: parsed.globalVariables,
-      routines: parsed.routines,
+      routines: parsed.routines.map(routine =>
+        snapshotValue(routine, true)
+      ),
       references: getParsedReferences(parsed),
       diagnostics: parsed.diagnostics
     });
@@ -2159,6 +2203,54 @@ function routineHasResolvedFieldTargets(routine: RoutineDeclaration): boolean {
   ].length > 0;
 }
 
+function routineHasExternalTypeReferenceRanges(
+  routine: RoutineDeclaration
+): boolean {
+  const visited = new Set<object>();
+  const visit = (value: unknown): boolean => {
+    if (value === null || typeof value !== 'object') {
+      return false;
+    }
+    if (visited.has(value)) {
+      return false;
+    }
+    visited.add(value);
+    if (Array.isArray(value)) {
+      return value.some(visit);
+    }
+    const object = value as Record<string, unknown>;
+    if (
+      typeof object.name === 'string' &&
+      typeof object.normalizedName === 'string' &&
+      object.range !== null &&
+      typeof object.range === 'object'
+    ) {
+      const range = object.range as SourceRange;
+      if (
+        range.start < routine.range.start ||
+        range.end > routine.bodyRange.end
+      ) {
+        return true;
+      }
+    }
+    return Object.entries(object).some(([property, child]) => {
+      if (
+        property === 'target' &&
+        child !== null &&
+        typeof child === 'object' &&
+        ('bodyRange' in child ||
+          (('kind' in child) &&
+            ((child as { kind?: unknown }).kind === 'named' ||
+              (child as { kind?: unknown }).kind === 'byte-array')))
+      ) {
+        return false;
+      }
+      return visit(child);
+    });
+  };
+  return visit(routine);
+}
+
 function reuseRoutineRegions(
   source: string,
   routines: RoutineDeclaration[],
@@ -2169,6 +2261,7 @@ function reuseRoutineRegions(
     return reused;
   }
   const previousByRegion = new Map<string, RoutineDeclaration[]>();
+  const currentByRegion = new Map<string, RoutineDeclaration[]>();
   const currentByIdentity = new Map<string, RoutineDeclaration[]>();
   const oldToCurrent = new Map<object, object>();
   const getRegionText = (
@@ -2192,13 +2285,38 @@ function reuseRoutineRegions(
     const candidates = currentByIdentity.get(identity) ?? [];
     candidates.push(routine);
     currentByIdentity.set(identity, candidates);
+    const key = `${identity}\n${getRegionText(source, routine)}`;
+    const regionCandidates = currentByRegion.get(key) ?? [];
+    regionCandidates.push(routine);
+    currentByRegion.set(key, regionCandidates);
   }
-  for (const oldRoutine of previous.routines) {
-    const candidates = currentByIdentity.get(
-      getRoutineRegionKey(oldRoutine)
-    );
-    const currentRoutine = candidates?.shift();
+  const mappedCurrentRoutines = new Set<RoutineDeclaration>();
+  const previousRoutines = previous.allRoutines;
+  const routinesWithExternalTypeReferences = new Set(
+    previous.routines.filter(routineHasExternalTypeReferenceRanges)
+  );
+  for (const oldRoutine of previousRoutines) {
+    const key = `${getRoutineRegionKey(oldRoutine)}\n${getRegionText(
+      previous.source,
+      oldRoutine
+    )}`;
+    const currentRoutine = currentByRegion.get(key)?.shift();
     if (currentRoutine) {
+      oldToCurrent.set(oldRoutine, currentRoutine);
+      mappedCurrentRoutines.add(currentRoutine);
+    }
+  }
+  for (const oldRoutine of previousRoutines) {
+    if (oldToCurrent.has(oldRoutine)) {
+      continue;
+    }
+    const candidates = currentByIdentity.get(getRoutineRegionKey(oldRoutine));
+    const currentIndex = candidates?.findIndex(candidate =>
+      !mappedCurrentRoutines.has(candidate)
+    ) ?? -1;
+    if (currentIndex >= 0) {
+      const currentRoutine = candidates![currentIndex];
+      mappedCurrentRoutines.add(currentRoutine);
       oldToCurrent.set(oldRoutine, currentRoutine);
     }
   }
@@ -2212,6 +2330,7 @@ function reuseRoutineRegions(
     if (
       !previousRoutine ||
       routineHasResolvedFieldTargets(previousRoutine) ||
+      routinesWithExternalTypeReferences.has(previousRoutine) ||
       !oldToCurrent.has(previousRoutine)
     ) {
       continue;
@@ -2242,10 +2361,27 @@ function reuseRoutineRegions(
       visited.set(value, cloned);
       for (const [property, child] of Object.entries(sourceObject)) {
         if (
+          property === 'target' &&
+          child !== null &&
+          typeof child === 'object'
+        ) {
+          const currentRoutineTarget = oldToCurrent.get(child);
+          if (currentRoutineTarget) {
+            cloned[property] = currentRoutineTarget;
+          } else if ('bodyRange' in child || 'kind' in child) {
+            cloned[property] = child;
+          } else {
+            cloned[property] = clone(child, visited);
+          }
+          continue;
+        }
+        if (
           (property === 'start' || property === 'end') &&
           typeof child === 'number' &&
           typeof sourceObject.start === 'number' &&
-          typeof sourceObject.end === 'number'
+          typeof sourceObject.end === 'number' &&
+          sourceObject.start >= previousRoutine.range.start &&
+          sourceObject.end <= previousRoutine.bodyRange.end
         ) {
           cloned[property] = child + delta;
         } else if (
