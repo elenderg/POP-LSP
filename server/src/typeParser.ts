@@ -756,6 +756,25 @@ export interface DeclarationRegionParseMetrics {
   totalMs: number;
 }
 
+export interface RoutineResolutionWorklistMetrics {
+  routineCount: number;
+  declarationCount: number;
+  globalVariableCount: number;
+  routineCandidates: number;
+  statementsVisited: number;
+  symbolSetupMs: number;
+  routineParameterResolutionMs: number;
+  computedFieldResolutionMs: number;
+  routineCallResolutionMs: number;
+  routineVariableValidationMs: number;
+  totalMs: number;
+}
+
+export interface RoutineResolutionWorklistResult {
+  routines: RoutineDeclaration[];
+  diagnostics: ParserDiagnostic[];
+}
+
 export interface ParsePerformanceMetrics {
   phases: Array<{
     name: string;
@@ -1348,6 +1367,189 @@ export function parseTypeDeclarationRegion(
   }
   reportProfile();
   return { kind: 'routine', region, declaration };
+}
+
+export function resolveRoutineSyntaxRegions(
+  source: string,
+  syntax: ParsedDocumentSyntax,
+  regions: readonly ParserRegion[],
+  workspaceSymbols?: ParserSymbolCatalog,
+  onProfile?: (metrics: RoutineResolutionWorklistMetrics) => void
+): RoutineResolutionWorklistResult {
+  const startedAt = onProfile ? performance.now() : 0;
+  if (syntax.source !== source) {
+    throw new Error('Syntax snapshot does not match the source document.');
+  }
+  const syntaxRoutinesByRegion = new Map(
+    syntax.regions
+      .filter(region => region.kind === 'routine')
+      .map(region => [
+        `${region.range.start}:${region.range.end}:${region.fingerprint}`,
+        region
+      ])
+  );
+  const requestedRoutines: RoutineDeclaration[] = regions.map(region => {
+    if (region.kind !== 'routine' || !region.syntacticallyComplete) {
+      throw new Error(
+        'Routine resolution worklists require syntactically complete routine regions.'
+      );
+    }
+    const key = `${region.range.start}:${region.range.end}:${region.fingerprint}`;
+    if (!syntaxRoutinesByRegion.has(key)) {
+      throw new Error('Routine region does not belong to the syntax snapshot.');
+    }
+    const parsedRegion = parseTypeDeclarationRegion(source, region);
+    if (parsedRegion.kind !== 'routine') {
+      throw new Error('Routine region parser returned a non-routine declaration.');
+    }
+    return parsedRegion.declaration;
+  });
+
+  const localDeclarations = syntax.declarations.map(declaration =>
+    rebaseParsedRegion(declaration, 0)
+  );
+  const localGlobalVariables = syntax.globalVariables.map(declaration =>
+    rebaseParsedRegion(declaration, 0)
+  );
+  const workspaceDeclarations = (workspaceSymbols?.declarations ?? []).map(
+    declaration => rebaseParsedRegion(declaration, 0)
+  );
+  const workspaceGlobalVariables = (
+    workspaceSymbols?.globalVariables ?? []
+  ).map(declaration => rebaseParsedRegion(declaration, 0));
+  const workspaceRoutines = (workspaceSymbols?.routines ?? []).map(routine =>
+    rebaseParsedRegion(routine, 0)
+  );
+  const symbols = new TypeSymbolTable([
+    ...localDeclarations,
+    ...workspaceDeclarations
+  ]);
+  resolveFields(
+    syntax.parserSource,
+    [...localDeclarations, ...localGlobalVariables],
+    symbols,
+    []
+  );
+  const globalVariables = [
+    ...localGlobalVariables,
+    ...workspaceGlobalVariables
+  ];
+  const requestedByRegion = new Map(
+    regions.map((region, index) => [
+      `${region.range.start}:${region.range.end}:${region.fingerprint}`,
+      requestedRoutines[index]
+    ])
+  );
+  const routineRegionsByRange = new Map(
+    syntax.regions
+      .filter(region => region.kind === 'routine')
+      .map(region => [
+        `${region.range.start}:${region.range.end}`,
+        region
+      ])
+  );
+  const routineCandidates = [
+    ...syntax.routines.map(routine => {
+      const region = routineRegionsByRange.get(
+        `${routine.range.start}:${routine.bodyRange.end}`
+      );
+      const requested = region
+        ? requestedByRegion.get(
+          `${region.range.start}:${region.range.end}:${region.fingerprint}`
+        )
+        : undefined;
+      return requested ?? rebaseParsedRegion(routine, 0);
+    }),
+    ...workspaceRoutines
+  ];
+  const symbolSetupMs = onProfile ? performance.now() - startedAt : 0;
+  const profileCounters: RoutineResolutionProfileCounters | undefined =
+    onProfile
+      ? {
+        statementsVisited: 0,
+        nameMatchSearches: 0,
+        nameSpanChecks: 0,
+        nameCandidateChecks: 0,
+        nameCandidatesSkippedByQualifier: 0,
+        nameNormalizationCalls: 0,
+        nameNormalizationCacheHits: 0,
+        nameNormalizationCacheMisses: 0
+      }
+      : undefined;
+  const previousCounters = activeRoutineResolutionProfileCounters;
+  activeRoutineResolutionProfileCounters = profileCounters;
+  const diagnostics: ParserDiagnostic[] = [];
+  let routineParameterResolutionMs = 0;
+  let computedFieldResolutionMs = 0;
+  let routineCallResolutionMs = 0;
+  let routineVariableValidationMs = 0;
+  try {
+    let phaseStartedAt = onProfile ? performance.now() : 0;
+    const candidateDiagnostics: ParserDiagnostic[] = [];
+    resolveRoutineParameters(
+      source,
+      routineCandidates,
+      symbols,
+      candidateDiagnostics
+    );
+    diagnostics.push(...candidateDiagnostics.filter(diagnostic =>
+      regions.some(region =>
+        diagnostic.range.start >= region.range.start &&
+        diagnostic.range.end <= region.range.end
+      )
+    ));
+    routineParameterResolutionMs = onProfile
+      ? performance.now() - phaseStartedAt
+      : 0;
+    phaseStartedAt = onProfile ? performance.now() : 0;
+    candidateDiagnostics.length = 0;
+    resolveComputedFields(routineCandidates, symbols, candidateDiagnostics);
+    diagnostics.push(...candidateDiagnostics.filter(diagnostic =>
+      regions.some(region =>
+        diagnostic.range.start >= region.range.start &&
+        diagnostic.range.end <= region.range.end
+      )
+    ));
+    computedFieldResolutionMs = onProfile
+      ? performance.now() - phaseStartedAt
+      : 0;
+    phaseStartedAt = onProfile ? performance.now() : 0;
+    resolveRoutineCalls(
+      syntax.parserSource,
+      requestedRoutines,
+      globalVariables,
+      symbols,
+      diagnostics,
+      routineCandidates
+    );
+    routineCallResolutionMs = onProfile
+      ? performance.now() - phaseStartedAt
+      : 0;
+    phaseStartedAt = onProfile ? performance.now() : 0;
+    validateRoutineVariableNames(requestedRoutines, diagnostics);
+    routineVariableValidationMs = onProfile
+      ? performance.now() - phaseStartedAt
+      : 0;
+  } finally {
+    activeRoutineResolutionProfileCounters = previousCounters;
+  }
+
+  if (onProfile) {
+    onProfile({
+      routineCount: requestedRoutines.length,
+      declarationCount: localDeclarations.length,
+      globalVariableCount: globalVariables.length,
+      routineCandidates: routineCandidates.length,
+      statementsVisited: profileCounters?.statementsVisited ?? 0,
+      symbolSetupMs,
+      routineParameterResolutionMs,
+      computedFieldResolutionMs,
+      routineCallResolutionMs,
+      routineVariableValidationMs,
+      totalMs: performance.now() - startedAt
+    });
+  }
+  return { routines: requestedRoutines, diagnostics };
 }
 
 export function parseTypeDeclarations(

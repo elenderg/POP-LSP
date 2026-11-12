@@ -368,6 +368,23 @@ export interface DeclarationRegionParseMetrics {
     syntaxMs: number;
     totalMs: number;
 }
+export interface RoutineResolutionWorklistMetrics {
+    routineCount: number;
+    declarationCount: number;
+    globalVariableCount: number;
+    routineCandidates: number;
+    statementsVisited: number;
+    symbolSetupMs: number;
+    routineParameterResolutionMs: number;
+    computedFieldResolutionMs: number;
+    routineCallResolutionMs: number;
+    routineVariableValidationMs: number;
+    totalMs: number;
+}
+export interface RoutineResolutionWorklistResult {
+    routines: RoutineDeclaration[];
+    diagnostics: ParserDiagnostic[];
+}
 export interface ParsePerformanceMetrics {
     phases: Array<{
         name: string;
@@ -425,6 +442,7 @@ export interface ParsedReference {
 export declare function normalizeTypeName(name: string): string;
 export declare function parseTypeDeclarationSyntax(source: string, options?: Pick<ParseOptions, 'reusableDeclarationRegions'>, profile?: boolean): ParsedDocumentSyntax;
 export declare function parseTypeDeclarationRegion(source: string, region: ParserRegion, onProfile?: (metrics: DeclarationRegionParseMetrics) => void): ParsedSyntaxRegion;
+export declare function resolveRoutineSyntaxRegions(source: string, syntax: ParsedDocumentSyntax, regions: readonly ParserRegion[], workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: RoutineResolutionWorklistMetrics) => void): RoutineResolutionWorklistResult;
 export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void, options?: ParseOptions): ParsedDocument;
 export declare function resolveTypeDeclarationSyntax(source: string, syntax: ParsedDocumentSyntax, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void, options?: ParseOptions): ParsedDocument;
 export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDocument, offset: number): RoutineDeclaration | undefined;

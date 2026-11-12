@@ -14,6 +14,7 @@ const {
   parseTypeDeclarationRegion,
   parseTypeDeclarationSyntax,
   parseTypeDeclarations,
+  resolveRoutineSyntaxRegions,
   resolveTypeDeclarationSyntax
 } = require('../out/typeParser.js');
 
@@ -423,7 +424,7 @@ test('parses complete syntax regions from repository fixtures independently', ()
     assert.deepEqual(
       semanticSnapshot(resolved),
       semanticSnapshot(fullParse),
-      fixture
+      fixture.name
     );
     assert.ok(resolutionMetrics.totalMs >= resolutionMetrics.syntaxMs);
     assert.equal(
@@ -465,6 +466,131 @@ test('parses complete syntax regions from repository fixtures independently', ()
     ),
     /Cannot parse a syntactically incomplete declaration region/u
   );
+});
+
+test('resolves selected routine regions equivalently to the full routine pass', () => {
+  const fixtures = [
+    {
+      name: 'routine-worklist.pop',
+      source: [
+        'Uma pessoa é uma estrutura.',
+        'Rotina para que se primeira:',
+        '  Retorne.',
+        'Rotina para que se segunda:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    ...[
+      path.join(__dirname, '../../client/testFixture/definition.pop'),
+      path.join(__dirname, '../../client/testFixture/formatting.pop')
+    ].map(fixture => ({
+      name: fixture,
+      source: readFileSync(fixture, 'utf8')
+    }))
+  ];
+  let resolvedRoutineCount = 0;
+  const profileSamples = [];
+
+  for (const fixture of fixtures) {
+    const { source } = fixture;
+    const fullParse = parseTypeDeclarations(source);
+    const syntax = parseTypeDeclarationSyntax(source);
+    const routineRegions = syntax.regions.filter(region =>
+      region.kind === 'routine' && region.syntacticallyComplete
+    );
+    for (const region of routineRegions) {
+      const result = resolveRoutineSyntaxRegions(
+        source,
+        syntax,
+        [region],
+        undefined,
+        metrics => profileSamples.push(metrics)
+      );
+      const expected = fullParse.routines.find(routine =>
+        routine.range.start === region.range.start &&
+        routine.bodyRange.end === region.range.end
+      );
+      assert.ok(expected, `${fixture.name}: routine region should match full parse`);
+      assert.deepEqual(result.routines, [expected]);
+      const expectedDiagnostics = fullParse.diagnostics.filter(diagnostic =>
+        diagnostic.range.start >= region.range.start &&
+        diagnostic.range.end <= region.range.end
+      );
+      assert.deepEqual(result.diagnostics, expectedDiagnostics);
+      resolvedRoutineCount++;
+    }
+  }
+
+  const batchSource = fixtures[0].source;
+  const batchSyntax = parseTypeDeclarationSyntax(batchSource);
+  const batchRegions = batchSyntax.regions.filter(region =>
+    region.kind === 'routine' && region.syntacticallyComplete
+  );
+  const batchMetrics = {};
+  const batch = resolveRoutineSyntaxRegions(
+    batchSource,
+    batchSyntax,
+    batchRegions,
+    undefined,
+    metrics => Object.assign(batchMetrics, metrics)
+  );
+  const batchFullParse = parseTypeDeclarations(batchSource);
+  assert.deepEqual(batch.routines, batchFullParse.routines);
+  assert.deepEqual(batch.diagnostics, batchFullParse.diagnostics);
+  assert.equal(batchMetrics.routineCount, batchRegions.length);
+  assert.ok(batchMetrics.totalMs >= batchMetrics.symbolSetupMs);
+
+  const librarySource = [
+    'Um byte é um byte.',
+    'Rotina para que se bar:',
+    '  Retorne.'
+  ].join('\n');
+  const callerSource = [
+    'Rotina para que se some um byte denominado valor:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Some 1.',
+    '  Bar.',
+    '  Retorne.'
+  ].join('\n');
+  const library = parseTypeDeclarations(librarySource);
+  const workspaceSymbols = {
+    declarations: library.declarations,
+    globalVariables: library.globalVariables,
+    routines: library.routines
+  };
+  const callerSyntax = parseTypeDeclarationSyntax(callerSource);
+  const callerFullParse = parseTypeDeclarations(
+    callerSource,
+    workspaceSymbols
+  );
+  const callerRoutineRegions = callerSyntax.regions.filter(region =>
+    region.kind === 'routine' && region.syntacticallyComplete
+  );
+  const callerWorklist = resolveRoutineSyntaxRegions(
+    callerSource,
+    callerSyntax,
+    callerRoutineRegions,
+    workspaceSymbols
+  );
+  assert.deepEqual(callerWorklist.routines, callerFullParse.routines);
+  assert.deepEqual(
+    callerWorklist.diagnostics,
+    callerFullParse.diagnostics.filter(diagnostic =>
+      callerRoutineRegions.some(region =>
+        diagnostic.range.start >= region.range.start &&
+        diagnostic.range.end <= region.range.end
+      )
+    )
+  );
+
+  assert.ok(resolvedRoutineCount > 0);
+  assert.equal(profileSamples.length, resolvedRoutineCount);
+  assert.ok(profileSamples.every(sample =>
+    sample.routineCount === 1 &&
+    sample.routineCandidates >= sample.routineCount &&
+    sample.totalMs >= sample.symbolSetupMs
+  ));
 });
 
 test('reuses unchanged declaration syntax and rebases all source ranges', () => {

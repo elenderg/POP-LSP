@@ -278,10 +278,15 @@ resolved result. `parseTypeDeclarationRegion` can parse a single fingerprint-
 verified, syntactically complete region and rebase its ranges; syntactic
 completeness is tracked separately from semantic diagnostics. These APIs are
 validated against repository fixtures, including semantic snapshots from the
-full parser. Profiling also records region-graph construction and invalidation
-selection/closure duration, alongside existing parse-phase, memory, and LSP
-request latency records. A semantic resolution worklist and its full-parse
-verifier are still pending.
+full parser. `resolveRoutineSyntaxRegions` adds an explicit routine-resolution
+worklist over selected routine regions, using the full local/workspace symbol
+catalog and resolving parameters, computed fields, calls, and local variables
+only for those routines. Its output is differentially tested against the full
+routine pass, but the language server does not yet select affected regions
+with it. Declaration/type worklists remain coupled to global type and field
+resolution. Profiling also records worklist phase timings and counts,
+region-graph construction, and invalidation selection/closure duration,
+alongside existing parse-phase, memory, and LSP request latency records.
 
 Routine-call resolution indexes normalized names per parse instead of
 comparing every call against every routine. Name matching normalizes each

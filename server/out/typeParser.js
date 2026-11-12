@@ -7,6 +7,7 @@ exports.TypeSymbolTable = exports.GlobalVariableSymbolTable = exports.RoutineSym
 exports.normalizeTypeName = normalizeTypeName;
 exports.parseTypeDeclarationSyntax = parseTypeDeclarationSyntax;
 exports.parseTypeDeclarationRegion = parseTypeDeclarationRegion;
+exports.resolveRoutineSyntaxRegions = resolveRoutineSyntaxRegions;
 exports.parseTypeDeclarations = parseTypeDeclarations;
 exports.resolveTypeDeclarationSyntax = resolveTypeDeclarationSyntax;
 exports.findRoutineDeclarationAtOffset = findRoutineDeclarationAtOffset;
@@ -732,6 +733,133 @@ function parseTypeDeclarationRegion(source, region, onProfile) {
     }
     reportProfile();
     return { kind: 'routine', region, declaration };
+}
+function resolveRoutineSyntaxRegions(source, syntax, regions, workspaceSymbols, onProfile) {
+    const startedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    if (syntax.source !== source) {
+        throw new Error('Syntax snapshot does not match the source document.');
+    }
+    const syntaxRoutinesByRegion = new Map(syntax.regions
+        .filter(region => region.kind === 'routine')
+        .map(region => [
+        `${region.range.start}:${region.range.end}:${region.fingerprint}`,
+        region
+    ]));
+    const requestedRoutines = regions.map(region => {
+        if (region.kind !== 'routine' || !region.syntacticallyComplete) {
+            throw new Error('Routine resolution worklists require syntactically complete routine regions.');
+        }
+        const key = `${region.range.start}:${region.range.end}:${region.fingerprint}`;
+        if (!syntaxRoutinesByRegion.has(key)) {
+            throw new Error('Routine region does not belong to the syntax snapshot.');
+        }
+        const parsedRegion = parseTypeDeclarationRegion(source, region);
+        if (parsedRegion.kind !== 'routine') {
+            throw new Error('Routine region parser returned a non-routine declaration.');
+        }
+        return parsedRegion.declaration;
+    });
+    const localDeclarations = syntax.declarations.map(declaration => rebaseParsedRegion(declaration, 0));
+    const localGlobalVariables = syntax.globalVariables.map(declaration => rebaseParsedRegion(declaration, 0));
+    const workspaceDeclarations = (workspaceSymbols?.declarations ?? []).map(declaration => rebaseParsedRegion(declaration, 0));
+    const workspaceGlobalVariables = (workspaceSymbols?.globalVariables ?? []).map(declaration => rebaseParsedRegion(declaration, 0));
+    const workspaceRoutines = (workspaceSymbols?.routines ?? []).map(routine => rebaseParsedRegion(routine, 0));
+    const symbols = new TypeSymbolTable([
+        ...localDeclarations,
+        ...workspaceDeclarations
+    ]);
+    resolveFields(syntax.parserSource, [...localDeclarations, ...localGlobalVariables], symbols, []);
+    const globalVariables = [
+        ...localGlobalVariables,
+        ...workspaceGlobalVariables
+    ];
+    const requestedByRegion = new Map(regions.map((region, index) => [
+        `${region.range.start}:${region.range.end}:${region.fingerprint}`,
+        requestedRoutines[index]
+    ]));
+    const routineRegionsByRange = new Map(syntax.regions
+        .filter(region => region.kind === 'routine')
+        .map(region => [
+        `${region.range.start}:${region.range.end}`,
+        region
+    ]));
+    const routineCandidates = [
+        ...syntax.routines.map(routine => {
+            const region = routineRegionsByRange.get(`${routine.range.start}:${routine.bodyRange.end}`);
+            const requested = region
+                ? requestedByRegion.get(`${region.range.start}:${region.range.end}:${region.fingerprint}`)
+                : undefined;
+            return requested ?? rebaseParsedRegion(routine, 0);
+        }),
+        ...workspaceRoutines
+    ];
+    const symbolSetupMs = onProfile ? node_perf_hooks_1.performance.now() - startedAt : 0;
+    const profileCounters = onProfile
+        ? {
+            statementsVisited: 0,
+            nameMatchSearches: 0,
+            nameSpanChecks: 0,
+            nameCandidateChecks: 0,
+            nameCandidatesSkippedByQualifier: 0,
+            nameNormalizationCalls: 0,
+            nameNormalizationCacheHits: 0,
+            nameNormalizationCacheMisses: 0
+        }
+        : undefined;
+    const previousCounters = activeRoutineResolutionProfileCounters;
+    activeRoutineResolutionProfileCounters = profileCounters;
+    const diagnostics = [];
+    let routineParameterResolutionMs = 0;
+    let computedFieldResolutionMs = 0;
+    let routineCallResolutionMs = 0;
+    let routineVariableValidationMs = 0;
+    try {
+        let phaseStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+        const candidateDiagnostics = [];
+        resolveRoutineParameters(source, routineCandidates, symbols, candidateDiagnostics);
+        diagnostics.push(...candidateDiagnostics.filter(diagnostic => regions.some(region => diagnostic.range.start >= region.range.start &&
+            diagnostic.range.end <= region.range.end)));
+        routineParameterResolutionMs = onProfile
+            ? node_perf_hooks_1.performance.now() - phaseStartedAt
+            : 0;
+        phaseStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+        candidateDiagnostics.length = 0;
+        resolveComputedFields(routineCandidates, symbols, candidateDiagnostics);
+        diagnostics.push(...candidateDiagnostics.filter(diagnostic => regions.some(region => diagnostic.range.start >= region.range.start &&
+            diagnostic.range.end <= region.range.end)));
+        computedFieldResolutionMs = onProfile
+            ? node_perf_hooks_1.performance.now() - phaseStartedAt
+            : 0;
+        phaseStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+        resolveRoutineCalls(syntax.parserSource, requestedRoutines, globalVariables, symbols, diagnostics, routineCandidates);
+        routineCallResolutionMs = onProfile
+            ? node_perf_hooks_1.performance.now() - phaseStartedAt
+            : 0;
+        phaseStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+        validateRoutineVariableNames(requestedRoutines, diagnostics);
+        routineVariableValidationMs = onProfile
+            ? node_perf_hooks_1.performance.now() - phaseStartedAt
+            : 0;
+    }
+    finally {
+        activeRoutineResolutionProfileCounters = previousCounters;
+    }
+    if (onProfile) {
+        onProfile({
+            routineCount: requestedRoutines.length,
+            declarationCount: localDeclarations.length,
+            globalVariableCount: globalVariables.length,
+            routineCandidates: routineCandidates.length,
+            statementsVisited: profileCounters?.statementsVisited ?? 0,
+            symbolSetupMs,
+            routineParameterResolutionMs,
+            computedFieldResolutionMs,
+            routineCallResolutionMs,
+            routineVariableValidationMs,
+            totalMs: node_perf_hooks_1.performance.now() - startedAt
+        });
+    }
+    return { routines: requestedRoutines, diagnostics };
 }
 function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}) {
     const syntax = parseTypeDeclarationSyntax(source, options, Boolean(onProfile));
