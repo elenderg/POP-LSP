@@ -234,6 +234,11 @@ if it appears in a boolean function header.
 - Open this folder in VS Code and press Ctrl+Shift+B to compile in watch mode.
 - Press F5 and open a `.pop` file in the Extension Development Host to test the
   language server.
+- Simple type declarations also receive parser-backed semantic tokens for both
+  articles, the derived type name, assignment operator, and final period.
+  Tokens are cached with the parsed-document snapshot and naturally replaced
+  when that snapshot changes. The TextMate grammar remains registered as the
+  immediate highlighting fallback before semantic tokens are available.
 - Run `npm test` to compile and execute the VS Code end-to-end tests against
   this workspace, including the language-specific encoding setting.
 - Set `POP_LSP_PROFILE=1` in the environment before launching VS Code to emit

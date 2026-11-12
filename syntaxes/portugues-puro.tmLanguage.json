@@ -86,11 +86,9 @@
       ]
     },
     "types": {
-      "patterns": [        
+      "patterns": [
         {
-          "name": "meta.type.declaration.simple.pop",
-          "begin": "(?i)^[ \\t]*\\b(um|uma|uns|umas)\\b(?=(?:(?![.,;:\\\\]|\\b(?:é|são)\\b)[\\s\\S])*(?:é|são)\\b)(?![^.,;:\\\\]*\\b(?:[^.,;:\\\\]+)[ \\t]+com\\b)(?![^.,;:\\\\]*\\bponteiro[ \\t]+para\\b)(?![^.,;:\\\\]*\\b(?:é|são)[ \\t]+(?!um\\b|uma\\b|uns\\b|umas\\b)\\S)",
-          
+          "begin": "(?i)^[ \\t]*\\b(um|uma|uns|umas|esse|essa|esses|essas)\\b(?=(?:(?![.\\\\])[\\s\\S])*?\\b(?:é|são)\\b[\\s]*(?:\\[[^\\]]*\\][\\s]*)*\\b(?:um|uma|uns|umas|esse|essa|esses|essas)\\b(?!(?:(?![.\\\\])[\\s\\S])*\\b(?:com|para)\\b))",
           "beginCaptures": {
             "1": {
               "name": "storage.type.language.article.pop"
@@ -107,23 +105,17 @@
               "include": "#comment"
             },
             {
-              "include": "#strings"
-            },
-            {
               "name": "meta.type.name.pop",
-              "begin": "(?i)(?<=\\b(?:um|uma|uns|umas))\\s+",
-              "end": "(?i:\\b(?:é|são)\\b)",
+              "begin": "(?=[\\s\\S])",
+              "end": "(?i)\\b(é|são)\\b",
               "endCaptures": {
-                "0": {
-                  "name": "keyword.control.pop"
+                "1": {
+                  "name": "meta.type.declaration.simple.pop"
                 }
               },
               "patterns": [
                 {
                   "include": "#comment"
-                },
-                {
-                  "include": "#strings"
                 },
                 {
                   "name": "entity.name.type.pop",
@@ -145,18 +137,12 @@
                   "include": "#comment"
                 },
                 {
-                  "include": "#strings"
-                },
-                {
                   "name": "support.type.pop",
                   "begin": "(?=\\S)",
                   "end": "(?=\\.)",
                   "patterns": [
                     {
                       "include": "#comment"
-                    },
-                    {
-                      "include": "#strings"
                     }
                   ]
                 }

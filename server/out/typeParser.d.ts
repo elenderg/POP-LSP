@@ -34,6 +34,9 @@ export interface ParserDiagnostic {
 export interface TypeDeclaration {
     kind: 'type-declaration';
     name: TypeReference;
+    articleRange: SourceRange;
+    baseArticleRange?: SourceRange;
+    operatorRange: SourceRange;
     baseType: TypeReference;
     pointedType?: TypeReference;
     fields?: TypeField[];

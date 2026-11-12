@@ -258,6 +258,160 @@ test('reuses dependency-independent documents despite unrelated diagnostics', as
   }
 });
 
+test('provides cached semantic tokens only for simple type declarations', async () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-semantic-tokens-'));
+  const filePath = path.join(workspace, 'types.pop');
+  const uri = pathToFileURL(filePath).toString();
+  const workspaceFolder = {
+    uri: pathToFileURL(workspace).toString(),
+    name: 'semantic-token-test'
+  };
+  const source = [
+    'Um [comentário] nome [comentário] do tipo [comentário] derivado é [comentário] um nome [comentário] do tipo base.',
+    'Uma',
+    '  coisa derivada',
+    '  são',
+    '  uns tipos',
+    '  base.',
+    'Um pchar é um ponteiro para um byte.',
+    'Um centímetro são 254/100 polegadas.',
+    'Uma word é uma estrutura com Um byte denominado byte inicial.'
+  ].join('\n');
+  writeWindows1252(filePath, source);
+
+  const child = spawn(
+    process.execPath,
+    [path.resolve(__dirname, '../out/server.js'), '--stdio'],
+    {
+      env: process.env,
+      stdio: ['pipe', 'pipe', 'pipe']
+    }
+  );
+  const client = createLspClient(child, workspaceFolder);
+  let stderr = '';
+  child.stderr.on('data', data => {
+    stderr += data.toString();
+  });
+
+  try {
+    const initialize = await client.request('initialize', {
+      processId: process.pid,
+      rootUri: workspaceFolder.uri,
+      workspaceFolders: [workspaceFolder],
+      capabilities: {
+        workspace: { workspaceFolders: { supported: true } }
+      }
+    });
+    const legend =
+      initialize.result?.capabilities.semanticTokensProvider?.legend;
+    assert.deepEqual(legend?.tokenTypes, [
+      'popTypeArticle',
+      'popTypeDeclarationName',
+      'popSimpleTypeOperator',
+      'popTypeTerminator'
+    ]);
+
+    client.send({ jsonrpc: '2.0', method: 'initialized', params: {} });
+    client.send({
+      jsonrpc: '2.0',
+      method: 'textDocument/didOpen',
+      params: {
+        textDocument: {
+          uri,
+          languageId: 'portugues-puro',
+          version: 1,
+          text: source
+        }
+      }
+    });
+    const first = await client.request(
+      'textDocument/semanticTokens/full',
+      { textDocument: { uri } }
+    );
+    const second = await client.request(
+      'textDocument/semanticTokens/full',
+      { textDocument: { uri } }
+    );
+    assert.deepEqual(second.result, first.result);
+    const changedSource = source.replace(
+      'nome [comentário] do tipo [comentário] derivado',
+      'novo'
+    );
+    client.send({
+      jsonrpc: '2.0',
+      method: 'textDocument/didChange',
+      params: {
+        textDocument: { uri, version: 2 },
+        contentChanges: [{ text: changedSource }]
+      }
+    });
+    const changedTokens = await client.request(
+      'textDocument/semanticTokens/full',
+      { textDocument: { uri } }
+    );
+    assert.notDeepEqual(changedTokens.result, first.result);
+
+    const tokensByLine = new Map();
+    let line = 0;
+    let character = 0;
+    const data = first.result.data;
+    for (let index = 0; index < data.length; index += 5) {
+      const deltaLine = data[index];
+      line += deltaLine;
+      character = deltaLine === 0
+        ? character + data[index + 1]
+        : data[index + 1];
+      const tokenText = source.split('\n')[line].slice(
+        character,
+        character + data[index + 2]
+      );
+      const type = legend.tokenTypes[data[index + 3]];
+      const lineTokens = tokensByLine.get(line) ?? [];
+      lineTokens.push({ text: tokenText, type });
+      tokensByLine.set(line, lineTokens);
+    }
+    assert.deepEqual(tokensByLine.get(0), [
+      { text: 'Um', type: 'popTypeArticle' },
+      { text: 'nome', type: 'popTypeDeclarationName' },
+      { text: 'do', type: 'popTypeDeclarationName' },
+      { text: 'tipo', type: 'popTypeDeclarationName' },
+      { text: 'derivado', type: 'popTypeDeclarationName' },
+      { text: 'é', type: 'popSimpleTypeOperator' },
+      { text: 'um', type: 'popTypeArticle' },
+      { text: '.', type: 'popTypeTerminator' }
+    ]);
+    assert.deepEqual(tokensByLine.get(1), [
+      { text: 'Uma', type: 'popTypeArticle' }
+    ]);
+    assert.deepEqual(tokensByLine.get(2), [
+      { text: 'coisa', type: 'popTypeDeclarationName' },
+      { text: 'derivada', type: 'popTypeDeclarationName' }
+    ]);
+    assert.deepEqual(tokensByLine.get(3), [
+      { text: 'são', type: 'popSimpleTypeOperator' }
+    ]);
+    assert.deepEqual(tokensByLine.get(4), [
+      { text: 'uns', type: 'popTypeArticle' }
+    ]);
+    assert.deepEqual(tokensByLine.get(5), [
+      { text: '.', type: 'popTypeTerminator' }
+    ]);
+    for (const excludedLine of [6, 7, 8]) {
+      assert.equal(tokensByLine.has(excludedLine), false);
+    }
+  } finally {
+    if (child.exitCode === null) {
+      client.send({ jsonrpc: '2.0', method: 'exit', params: {} });
+      child.kill();
+      await once(child, 'exit');
+    }
+    fs.rmSync(workspace, { recursive: true, force: true });
+    if (stderr) {
+      assert.fail(stderr);
+    }
+  }
+});
+
 test('reuses unchanged documents with unrelated diagnostics after body-only edits', async () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-body-edit-'));
   const invalidPath = path.join(workspace, 'invalid.pop');

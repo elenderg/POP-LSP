@@ -40,6 +40,25 @@
         "path": "./syntaxes/portugues-puro.tmLanguage.json"
       }
     ],
+    "semanticTokenScopes": [
+      {
+        "language": "portugues-puro",
+        "scopes": {
+          "popTypeArticle": [
+            "storage.type.language.article.pop"
+          ],
+          "popTypeDeclarationName": [
+            "entity.name.type.pop"
+          ],
+          "popSimpleTypeOperator": [
+            "meta.type.declaration.simple.pop"
+          ],
+          "popTypeTerminator": [
+            "punctuation.terminator.pop"
+          ]
+        }
+      }
+    ],
     "configurationDefaults": {
       "[portugues-puro]": {
         "files.encoding": "windows1252"

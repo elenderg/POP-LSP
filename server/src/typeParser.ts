@@ -50,6 +50,9 @@ export interface ParserDiagnostic {
 export interface TypeDeclaration {
   kind: 'type-declaration';
   name: TypeReference;
+  articleRange: SourceRange;
+  baseArticleRange?: SourceRange;
+  operatorRange: SourceRange;
   baseType: TypeReference;
   pointedType?: TypeReference;
   fields?: TypeField[];
@@ -9424,6 +9427,7 @@ function parseDeclaration(
   const derivedNameRange = trimRange(source, derivedArticle.end, operator.start);
   const scalarFactor = readScalarFactor(source, operator.end, periodIndex);
   let baseNameRange: SourceRange;
+  let baseArticleRange: SourceRange | undefined;
   let pointedType: TypeReference | undefined;
   let fields: TypeField[] | undefined;
   if (scalarFactor) {
@@ -9433,6 +9437,10 @@ function parseDeclaration(
     if (!baseArticle || !indefiniteArticles.has(baseArticle.value.toLocaleLowerCase('pt-BR'))) {
       return undefined;
     }
+    baseArticleRange = {
+      start: baseArticle.start,
+      end: baseArticle.end
+    };
 
     const pointerTarget = findWord(source, baseArticle.end, periodIndex, 'para');
     const fieldsKeyword = findWord(source, baseArticle.end, pointerTarget?.start ?? periodIndex, 'com');
@@ -9477,6 +9485,15 @@ function parseDeclaration(
   return {
     kind: 'type-declaration',
     name,
+    articleRange: {
+      start: derivedArticle.start,
+      end: derivedArticle.end
+    },
+    baseArticleRange,
+    operatorRange: {
+      start: operator.start,
+      end: operator.end
+    },
     baseType,
     pointedType,
     fields,

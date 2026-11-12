@@ -15,6 +15,8 @@ import {
   Location,
   MarkupKind,
   ProposedFeatures,
+  SemanticTokens,
+  SemanticTokensBuilder,
   SymbolInformation,
   TextEdit,
   TextDocumentSyncKind,
@@ -114,6 +116,16 @@ let workspaceDirectorySnapshots = new Map<string, {
   changeTime: number;
 }>();
 const documentSymbolsCache = new WeakMap<ParsedDocument, DocumentSymbol[]>();
+const semanticTokensCache = new WeakMap<ParsedDocument, SemanticTokens>();
+const semanticTokenTypes = [
+  'popTypeArticle',
+  'popTypeDeclarationName',
+  'popSimpleTypeOperator',
+  'popTypeTerminator'
+] as const;
+const semanticTokenTypeIndex = new Map(
+  semanticTokenTypes.map((type, index) => [type, index])
+);
 const workspaceAnalysisIndexes = new WeakMap<
   Map<string, { document: TextDocument; parsed: ParsedDocument }>,
   WorkspaceAnalysisIndex
@@ -1334,9 +1346,178 @@ connection.onInitialize((): InitializeResult => ({
     renameProvider: { prepareProvider: true },
     implementationProvider: true,
     completionProvider: { triggerCharacters: [' '] },
-    documentFormattingProvider: true
+    documentFormattingProvider: true,
+    semanticTokensProvider: {
+      legend: {
+        tokenTypes: [...semanticTokenTypes],
+        tokenModifiers: []
+      },
+      full: true
+    }
   }
 }));
+
+connection.languages.semanticTokens.on(params =>
+  profileRequest(
+    'semantic-tokens',
+    async requestId => {
+      const document = documents.get(params.textDocument.uri);
+      if (!document) {
+        return { data: [] };
+      }
+
+      const source = document.getText();
+      const cachedParse = parsedDocuments.get(document.uri);
+      const cachedAnalysis = sourceAnalysisCache.get(document.uri);
+      let parsed = cachedAnalysis?.source === source &&
+        cachedAnalysis.parsed === cachedParse
+        ? cachedParse
+        : undefined;
+      let indexedDocument = workspaceDocumentIndex?.get(document.uri);
+      if (!parsed || !indexedDocument) {
+        const workspaceDocuments = await getWorkspaceDocuments(
+          requestId,
+          document.uri
+        );
+        indexedDocument = workspaceDocuments.get(document.uri);
+        if (
+          !parsed &&
+          indexedDocument &&
+          indexedDocument.document.getText() === source
+        ) {
+          parsed = indexedDocument.parsed;
+        }
+      }
+      const currentDocument = documents.get(document.uri);
+      if (
+        !parsed ||
+        !indexedDocument ||
+        indexedDocument.document.getText() !== source ||
+        !currentDocument ||
+        currentDocument.getText() !== source
+      ) {
+        return { data: [] };
+      }
+
+      const cachedTokens = semanticTokensCache.get(parsed);
+      if (cachedTokens) {
+        return cachedTokens;
+      }
+
+      const tokenRanges: Array<{
+        start: number;
+        end: number;
+        type: typeof semanticTokenTypes[number];
+      }> = [];
+      const addNameTokens = (
+        range: { start: number; end: number },
+        type: typeof semanticTokenTypes[number]
+      ): void => {
+        let start = range.start;
+        for (const comment of parsed.commentRanges ?? []) {
+          if (comment.end <= start || comment.start >= range.end) {
+            continue;
+          }
+          if (comment.start > start) {
+            addNameTextTokens(
+              start,
+              Math.min(comment.start, range.end),
+              type
+            );
+          }
+          start = Math.max(start, comment.end);
+          if (start >= range.end) {
+            return;
+          }
+        }
+        if (start < range.end) {
+          addNameTextTokens(start, range.end, type);
+        }
+      };
+      const addNameTextTokens = (
+        start: number,
+        end: number,
+        type: typeof semanticTokenTypes[number]
+      ): void => {
+        const text = source.slice(start, end);
+        const words = /\S+/gu;
+        let word: RegExpExecArray | null;
+        while ((word = words.exec(text)) !== null) {
+          tokenRanges.push({
+            start: start + word.index,
+            end: start + word.index + word[0].length,
+            type
+          });
+        }
+      };
+      for (const declaration of parsed.declarations) {
+        if (
+          declaration.pointedType ||
+          declaration.scalarFactorRange ||
+          declaration.fields
+        ) {
+          continue;
+        }
+        tokenRanges.push(
+          {
+            ...declaration.articleRange,
+            type: 'popTypeArticle'
+          },
+          ...(declaration.baseArticleRange
+            ? [{
+              ...declaration.baseArticleRange,
+              type: 'popTypeArticle' as const
+            }]
+            : []),
+          {
+            ...declaration.operatorRange,
+            type: 'popSimpleTypeOperator'
+          },
+          {
+            start: declaration.range.end - 1,
+            end: declaration.range.end,
+            type: 'popTypeTerminator'
+          }
+        );
+        addNameTokens(
+          declaration.name.range,
+          'popTypeDeclarationName'
+        );
+      }
+
+      tokenRanges.sort((left, right) => left.start - right.start);
+      const builder = new SemanticTokensBuilder();
+      for (const token of tokenRanges) {
+        if (
+          token.start < 0 ||
+          token.end > source.length ||
+          token.start >= token.end
+        ) {
+          continue;
+        }
+        const position = document.positionAt(token.start);
+        builder.push(
+          position.line,
+          position.character,
+          token.end - token.start,
+          semanticTokenTypeIndex.get(token.type)!,
+          0
+        );
+      }
+      const semanticTokens = builder.build();
+      semanticTokensCache.set(parsed, semanticTokens);
+      logProfile({
+        event: 'semantic-tokens',
+        requestId,
+        documentUri: document.uri,
+        tokens: tokenRanges.length,
+        cacheHit: false
+      });
+      return semanticTokens;
+    },
+    params.textDocument.uri
+  )
+);
 
 connection.onDocumentFormatting(params => profileRequest('formatting', () => {
   const document = documents.get(params.textDocument.uri);
