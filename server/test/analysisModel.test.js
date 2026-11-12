@@ -11,6 +11,7 @@ const {
 } = require('../out/analysisModel.js');
 const {
   getParsedReferences,
+  getParserRegionKey,
   parseTypeDeclarationRegion,
   parseTypeDeclarationSyntax,
   parseTypeDeclarations,
@@ -247,6 +248,86 @@ test('records region boundaries and reuses unchanged routine checkpoints', () =>
   );
 });
 
+test('resolves only declaration regions outside the dependency closure', () => {
+  const uri = `${directory}/types.pop`;
+  const source = [
+    'Uma pessoa é uma estrutura.',
+    'Um cliente é uma pessoa.',
+    'Uma palavra é um byte.'
+  ].join('\n');
+  const previous = parseTypeDeclarations(source);
+  const graph = new DeclarationDependencyGraph([{
+    uri,
+    directory,
+    parsed: previous,
+    analysis: getDocumentAnalysis(previous, source.length)
+  }]);
+  const pessoaRegion = graph.getRegions(uri).find(region =>
+    region.region.kind === 'type' && region.region.name === 'pessoa'
+  );
+  const clienteRegion = graph.getRegions(uri).find(region =>
+    region.region.kind === 'type' && region.region.name === 'cliente'
+  );
+  const palavraRegion = graph.getRegions(uri).find(region =>
+    region.region.kind === 'type' && region.region.name === 'palavra'
+  );
+  assert.ok(pessoaRegion);
+  assert.ok(clienteRegion);
+  assert.ok(palavraRegion);
+  const affected = graph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    [{ kind: 'type', normalizedName: 'pessoa' }],
+    [pessoaRegion.id]
+  );
+  assert.ok(affected.has(pessoaRegion.id));
+  assert.ok(affected.has(clienteRegion.id));
+  assert.equal(affected.has(palavraRegion.id), false);
+
+  const updatedSource = source.replace(
+    'Uma pessoa é uma estrutura.',
+    'Uma pessoa é um byte.'
+  );
+  const syntax = parseTypeDeclarationSyntax(updatedSource);
+  const reusableRegionKeys = new Set(
+    syntax.regions
+      .filter(region => region.kind === 'type' && region.name === 'palavra')
+      .map(region => getParserRegionKey(region))
+  );
+  const metrics = {};
+  const incremental = parseTypeDeclarations(
+    updatedSource,
+    undefined,
+    value => Object.assign(metrics, value),
+    {
+      reusableSemanticRegions: {
+        source,
+        parsed: previous,
+        regionKeys: reusableRegionKeys
+      }
+    }
+  );
+  const complete = parseTypeDeclarations(updatedSource);
+  assert.equal(metrics.reusedSemanticRegionCount, 1);
+  assert.equal(metrics.declarationResolutionStrategy, 'worklist');
+  assert.deepEqual(incremental.declarations, complete.declarations);
+  assert.deepEqual(incremental.diagnostics, complete.diagnostics);
+  assert.deepEqual(getParsedReferences(incremental), getParsedReferences(complete));
+  assert.deepEqual(
+    incremental.symbols.entries.map(symbol => [
+      symbol.normalizedName,
+      symbol.kind,
+      symbol.scale,
+      symbol.isScalar
+    ]),
+    complete.symbols.entries.map(symbol => [
+      symbol.normalizedName,
+      symbol.kind,
+      symbol.scale,
+      symbol.isScalar
+    ])
+  );
+});
+
 test('verifies routine worklists and falls back when a reused snapshot differs', () => {
   const source = [
     'Rotina para que se primeira:',
@@ -296,6 +377,7 @@ test('verifies routine worklists and falls back when a reused snapshot differs',
   const complete = parseTypeDeclarations(source);
 
   assert.equal(metrics.routineResolutionStrategy, 'worklist');
+  assert.equal(metrics.declarationResolutionStrategy, 'complete');
   assert.equal(metrics.routineVerificationStatus, 'matched');
   assert.equal(metrics.reusedRoutineCount, 1);
   assert.deepEqual(verificationResults, [true]);
@@ -1164,6 +1246,46 @@ test('keeps routine-local dependency edges within their document', () => {
   for (const edge of localVariableEdges) {
     assert.equal(edge.from.uri, edge.to.uri);
   }
+});
+
+test('tracks ambiguous type aliases and unresolved routine calls conservatively', () => {
+  const aliasDocuments = createWorkspace([
+    {
+      name: 'aliases.pop',
+      text: [
+        'Uma coordenada é uma estrutura.',
+        'Uma caixa é uma estrutura com uma nome coordenada.'
+      ].join('\n')
+    },
+    {
+      name: 'calls.pop',
+      text: [
+        'Rotina para que se teste:',
+        '  Execute.',
+        '  Retorne.'
+      ].join('\n')
+    }
+  ]);
+  const aliasGraph = new DeclarationDependencyGraph(aliasDocuments.documents);
+  const aliasRegion = aliasGraph.nodes.find(node =>
+    node.region.kind === 'type' && node.region.name === 'caixa'
+  );
+  const callRegion = aliasGraph.nodes.find(node =>
+    node.region.kind === 'routine' && node.region.name === 'teste'
+  );
+  assert.ok(aliasRegion);
+  assert.ok(callRegion);
+  const typeImpact = aliasGraph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    [{ kind: 'type', normalizedName: 'coordenada' }]
+  );
+  const routineImpact = aliasGraph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    [{ kind: 'routine', normalizedName: 'execute' }]
+  );
+  assert.ok(typeImpact.has(aliasRegion.id));
+  assert.ok(routineImpact.has(callRegion.id));
+  assert.ok(aliasGraph.unresolvedReferenceCount > 0);
 });
 
 test('computes conservative impact for added and removed declarations', () => {

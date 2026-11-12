@@ -256,6 +256,10 @@ export class DeclarationDependencyGraph {
     string,
     Map<string, Set<string>>
   >();
+  private readonly ambiguousDependentsByDirectoryAndKind = new Map<
+    string,
+    Map<WorkspaceDependencyKind, Set<string>>
+  >();
   private readonly dependentsByRegion = new Map<string, Set<string>>();
 
   constructor(documents: Iterable<{
@@ -272,6 +276,38 @@ export class DeclarationDependencyGraph {
       node: DeclarationRegionNode;
       reference: ParsedReference;
     }[] = [];
+    const addAmbiguousDependent = (
+      directory: string,
+      kind: WorkspaceDependencyKind,
+      node: DeclarationRegionNode
+    ): void => {
+      let byKind = this.ambiguousDependentsByDirectoryAndKind.get(directory);
+      if (!byKind) {
+        byKind = new Map();
+        this.ambiguousDependentsByDirectoryAndKind.set(directory, byKind);
+      }
+      const dependents = byKind.get(kind) ?? new Set<string>();
+      dependents.add(node.id);
+      byKind.set(kind, dependents);
+    };
+    const addPotentialName = (
+      node: DeclarationRegionNode,
+      kind: WorkspaceDependencyKind,
+      name: string,
+      container?: string
+    ): void => {
+      const key = workspaceNameKey(kind, name, container);
+      let byName = this.potentialDependentsByDirectoryAndName.get(
+        node.directory
+      );
+      if (!byName) {
+        byName = new Map();
+        this.potentialDependentsByDirectoryAndName.set(node.directory, byName);
+      }
+      const dependents = byName.get(key) ?? new Set<string>();
+      dependents.add(node.id);
+      byName.set(key, dependents);
+    };
 
     for (const { uri, directory, parsed, analysis } of workspaceDocuments) {
       const occurrenceByFingerprint = new Map<string, number>();
@@ -311,6 +347,189 @@ export class DeclarationDependencyGraph {
           }
         } else {
           pendingReferences.push({ node: owner, reference });
+        }
+        if (reference.kind === 'field' && !reference.container) {
+          addAmbiguousDependent(directory, 'field', owner);
+        }
+      }
+
+      const analysisReferences = references;
+      for (const regionNode of documentNodes) {
+        if (regionNode.region.kind === 'routine') {
+          const routine = parsed.routines.find(candidate =>
+            candidate.range.start === regionNode.region.range.start
+          );
+          if (!routine) {
+            addAmbiguousDependent(directory, 'type', regionNode);
+            addAmbiguousDependent(directory, 'routine', regionNode);
+            addAmbiguousDependent(directory, 'variable', regionNode);
+            addAmbiguousDependent(directory, 'field', regionNode);
+            continue;
+          }
+          if (
+            routine.parameters.length > 0 ||
+            routine.alternateParameters.some(parameters =>
+              parameters.length > 0
+            ) ||
+            routine.returnParameter ||
+            routine.computedField
+          ) {
+            addAmbiguousDependent(directory, 'type', regionNode);
+          }
+          if (
+            routine.calls.length > 0 ||
+            routine.conditionals.some(conditional =>
+              conditional.predicateCall
+            )
+          ) {
+            addAmbiguousDependent(directory, 'routine', regionNode);
+          }
+          if (
+            routine.localVariables.length > 0 ||
+            routine.calls.some(call =>
+              (call.variableAccesses?.length ?? 0) > 0
+            ) ||
+            routine.assignments.some(assignment =>
+              (assignment.variableAccesses?.length ?? 0) > 0
+            ) ||
+            routine.outputs.some(output =>
+              (output.variableAccesses?.length ?? 0) > 0
+            ) ||
+            routine.processes.some(process =>
+              (process.variableAccesses?.length ?? 0) > 0
+            )
+          ) {
+            addAmbiguousDependent(directory, 'variable', regionNode);
+          }
+          if (
+            routine.computedFieldAccesses.length > 0 ||
+            routine.listSpecialFieldAccesses.length > 0 ||
+            routine.assignments.some(assignment =>
+              (assignment.fieldAccesses?.length ?? 0) > 0
+            ) ||
+            routine.outputs.some(output =>
+              (output.fieldAccesses?.length ?? 0) > 0
+            ) ||
+            routine.calls.some(call =>
+              (call.fieldAccesses?.length ?? 0) > 0
+            ) ||
+            routine.processes.some(process =>
+              process.fieldAccesses.length > 0
+            ) ||
+            routine.memoryDeallocations.some(deallocation =>
+              (deallocation.fieldAccesses?.length ?? 0) > 0
+            )
+          ) {
+            addAmbiguousDependent(directory, 'field', regionNode);
+          }
+          continue;
+        }
+
+        const declaration = regionNode.region.kind === 'type'
+          ? parsed.declarations.find(candidate =>
+            candidate.range.start === regionNode.region.range.start
+          )
+          : parsed.globalVariables.find(candidate =>
+            candidate.range.start === regionNode.region.range.start
+          );
+        if (
+          declaration?.fields?.some(field =>
+            field.kind === 'named' && field.usesTypeAlias
+          )
+        ) {
+          addAmbiguousDependent(directory, 'type', regionNode);
+          const aliases = declaration.fields?.filter(
+            (field): field is Extract<TypeField, { kind: 'named' }> =>
+              field.kind === 'named' && field.usesTypeAlias
+          ) ?? [];
+          for (const field of aliases) {
+            const words = normalizeTypeName(field.name.name)
+              .split(/\s+/u)
+              .filter(Boolean);
+            for (let start = 0; start < words.length; start++) {
+              addPotentialName(regionNode, 'type', words.slice(start).join(' '));
+            }
+            if (
+              regionNode.region.kind === 'type' &&
+              'baseType' in declaration &&
+              parsed.symbols.getBaseTypeDistance(
+                declaration.name.name,
+                'lista'
+              ) !== undefined
+            ) {
+              for (let end = 1; end <= words.length; end++) {
+                addPotentialName(
+                  regionNode,
+                  'type',
+                  words.slice(0, end).join(' ')
+                );
+              }
+            }
+          }
+        }
+      }
+
+      for (const reference of analysisReferences) {
+        if (reference.kind === 'type' && reference.scope !== undefined) {
+          const owner = findDeclarationRegion(documentNodes, reference.range);
+          if (owner) {
+            addAmbiguousDependent(directory, 'type', owner);
+          }
+        }
+      }
+      for (const diagnostic of parsed.diagnostics) {
+        const owner = findDeclarationRegion(
+          documentNodes,
+          diagnostic.range
+        );
+        if (!owner) {
+          continue;
+        }
+        const message = diagnostic.message;
+        const quotedName = /"([^"]+)"/u.exec(message)?.[1];
+        if (
+          /type|tipo/u.test(message) ||
+          message.startsWith('No type matches field alias')
+        ) {
+          addAmbiguousDependent(directory, 'type', owner);
+          if (quotedName) {
+            const words = normalizeTypeName(quotedName)
+              .split(/\s+/u)
+              .filter(Boolean);
+            for (let start = 0; start < words.length; start++) {
+              addPotentialName(owner, 'type', words.slice(start).join(' '));
+            }
+          }
+        }
+        if (/routine|function|rotina|função/u.test(message)) {
+          addAmbiguousDependent(directory, 'routine', owner);
+          if (quotedName) {
+            addPotentialName(
+              owner,
+              'routine',
+              normalizeTypeName(quotedName)
+            );
+          }
+        }
+        if (/variable|variável/u.test(message)) {
+          addAmbiguousDependent(directory, 'variable', owner);
+          if (quotedName) {
+            addPotentialName(
+              owner,
+              'variable',
+              normalizeTypeName(quotedName)
+            );
+          }
+        }
+        if (/field|campo/u.test(message)) {
+          addAmbiguousDependent(directory, 'field', owner);
+          if (quotedName) {
+            addPotentialName(
+              owner,
+              'field',
+              normalizeTypeName(quotedName)
+            );
+          }
         }
       }
     }
@@ -393,6 +612,16 @@ export class DeclarationDependencyGraph {
       }
       for (const key of keys) {
         for (const dependent of byName?.get(key) ?? []) {
+          if (!affected.has(dependent)) {
+            affected.add(dependent);
+            pending.push(dependent);
+          }
+        }
+        for (
+          const dependent of this.ambiguousDependentsByDirectoryAndKind
+            .get(directory)
+            ?.get(change.kind) ?? []
+        ) {
           if (!affected.has(dependent)) {
             affected.add(dependent);
             pending.push(dependent);

@@ -37,10 +37,12 @@ import {
   ParserSymbolCatalog,
   RoutineParameter,
   RoutineDeclaration,
+  getParserRegionKey,
   normalizeTypeName,
   parseTypeDeclarations
 } from './typeParser';
 import {
+  DeclarationRegionNode,
   DeclarationDependencyGraph,
   getWorkspaceDuplicateDeclarations,
   DocumentAnalysisMetrics,
@@ -60,9 +62,14 @@ const parsedDocuments = new Map<string, ReturnType<typeof parseTypeDeclarations>
 const profileEnabled = process.env.POP_LSP_PROFILE === '1';
 const incrementalRoutineResolutionEnabled =
   process.env.POP_LSP_INCREMENTAL_ROUTINES === '1';
+const incrementalDeclarationResolutionEnabled =
+  process.env.POP_LSP_INCREMENTAL_DECLARATIONS === '1';
 const verifyIncrementalRoutineResolution =
   incrementalRoutineResolutionEnabled &&
   process.env.POP_LSP_VERIFY_INCREMENTAL_ROUTINES === '1';
+const verifyIncrementalDeclarationResolution =
+  incrementalDeclarationResolutionEnabled &&
+  process.env.POP_LSP_VERIFY_INCREMENTAL_DECLARATIONS === '1';
 const configuredSlowProfileThreshold = Number(
   process.env.POP_LSP_PROFILE_SLOW_MS
 );
@@ -738,6 +745,175 @@ function getReusableRoutineRegionSnapshots(
     routines: previousEntry.parsed.routines
   });
   return snapshots;
+}
+
+function getReusableSemanticRegionSnapshots(
+  directory: string,
+  current: {
+    uri: string;
+    source: string;
+    parsed: ParsedDocument;
+  }[],
+  previous: Map<string, {
+    document: TextDocument;
+    parsed: ParsedDocument;
+  }> | undefined,
+  previousSources: Map<string, string> | undefined
+): Map<string, {
+  source: string;
+  parsed: ParsedDocument;
+  regionKeys: ReadonlySet<string>;
+}> {
+  const snapshots = new Map<string, {
+    source: string;
+    parsed: ParsedDocument;
+    regionKeys: ReadonlySet<string>;
+  }>();
+  if (!previous || !previousSources) {
+    return snapshots;
+  }
+  const oldEntries = new Map(
+    [...previous].filter(([uri]) =>
+      dirname(fileURLToPath(uri)) === directory
+    )
+  );
+  const currentByUri = new Map(current.map(entry => [entry.uri, entry]));
+  if (
+    oldEntries.size !== currentByUri.size ||
+    [...oldEntries.keys()].some(uri => !currentByUri.has(uri)) ||
+    [...oldEntries.values()].some(entry =>
+      entry.parsed.diagnostics.length > 0
+    )
+  ) {
+    return snapshots;
+  }
+
+  const changesByKey = new Map<string, WorkspaceDeclarationChange>();
+  const changedUris = new Set<string>();
+  for (const [uri, entry] of currentByUri) {
+    const previousEntry = oldEntries.get(uri);
+    const previousSource = previousSources.get(uri);
+    if (!previousEntry || previousSource === undefined) {
+      return new Map();
+    }
+    if (previousSource !== entry.source) {
+      changedUris.add(uri);
+    }
+    const previousSurface = getDeclarationSurface(
+      previousEntry.parsed,
+      previousSource
+    );
+    const currentSurface = getDeclarationSurface(entry.parsed, entry.source);
+    const keys = new Set([...previousSurface.keys(), ...currentSurface.keys()]);
+    for (const key of keys) {
+      const oldDeclaration = previousSurface.get(key);
+      const newDeclaration = currentSurface.get(key);
+      if (
+        oldDeclaration &&
+        newDeclaration &&
+        JSON.stringify(oldDeclaration.fingerprints) ===
+          JSON.stringify(newDeclaration.fingerprints)
+      ) {
+        continue;
+      }
+      if (oldDeclaration) {
+        changesByKey.set(key, oldDeclaration.change);
+      }
+      if (newDeclaration) {
+        changesByKey.set(key, newDeclaration.change);
+      }
+    }
+  }
+
+  const graph = previous.size > 0
+    ? getWorkspaceDeclarationDependencyGraph(previous)
+    : undefined;
+  if (!graph) {
+    return snapshots;
+  }
+  const oldRegionKeysByUri = new Map<
+    string,
+    Map<string, DeclarationRegionNode>
+  >();
+  for (const uri of oldEntries.keys()) {
+    const regionsByKey = new Map<string, DeclarationRegionNode>();
+    const nodes = graph.getRegions(uri);
+    const keys = getParserRegionKeys(nodes.map(node => node.region));
+    for (let index = 0; index < nodes.length; index++) {
+      regionsByKey.set(keys[index], nodes[index]);
+    }
+    oldRegionKeysByUri.set(uri, regionsByKey);
+  }
+
+  const changedRegionIds: string[] = [];
+  for (const uri of changedUris) {
+    const entry = currentByUri.get(uri)!;
+    const remainingCurrent = new Map<string, number>();
+    for (const key of getParserRegionKeys(entry.parsed.regions)) {
+      remainingCurrent.set(key, (remainingCurrent.get(key) ?? 0) + 1);
+    }
+    const nodes = graph.getRegions(uri);
+    const oldKeys = getParserRegionKeys(nodes.map(node => node.region));
+    for (let index = 0; index < nodes.length; index++) {
+      const node = nodes[index];
+      const key = oldKeys[index];
+      const remaining = remainingCurrent.get(key) ?? 0;
+      if (remaining > 0) {
+        remainingCurrent.set(key, remaining - 1);
+      } else {
+        changedRegionIds.push(node.id);
+      }
+    }
+  }
+
+  const affectedRegionIds = graph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    [...changesByKey.values()],
+    changedRegionIds
+  );
+  for (const [uri, entry] of currentByUri) {
+    const previousSource = previousSources.get(uri)!;
+    const oldRegionsByKey = oldRegionKeysByUri.get(uri)!;
+    const reusableRegionKeys = new Set<string>();
+    for (const [key, region] of getParserRegionKeys(entry.parsed.regions)
+      .map((key, index) => [key, entry.parsed.regions[index]] as const)) {
+      if (region.kind === 'routine' || !region.syntacticallyComplete) {
+        continue;
+      }
+      const previousNode = oldRegionsByKey.get(key);
+      if (
+        !previousNode ||
+        affectedRegionIds.has(previousNode.id) ||
+        previousSource.slice(
+          previousNode.region.range.start,
+          previousNode.region.range.end
+        ) !== entry.source.slice(region.range.start, region.range.end)
+      ) {
+        continue;
+      }
+      reusableRegionKeys.add(key);
+    }
+    if (reusableRegionKeys.size > 0) {
+      snapshots.set(uri, {
+        source: previousSource,
+        parsed: oldEntries.get(uri)!.parsed,
+        regionKeys: reusableRegionKeys
+      });
+    }
+  }
+  return snapshots;
+}
+
+function getParserRegionKeys(
+  regions: readonly ParsedDocument['regions'][number][]
+): string[] {
+  const occurrences = new Map<string, number>();
+  return regions.map(region => {
+    const identity = `${region.kind}\u0000${region.fingerprint}`;
+    const occurrence = occurrences.get(identity) ?? 0;
+    occurrences.set(identity, occurrence + 1);
+    return getParserRegionKey(region, occurrence);
+  });
 }
 
 function getWorkspaceCompletions(
@@ -2215,7 +2391,9 @@ async function buildWorkspaceDocumentIndex(
       globalVariableResolutionMs: 0,
       routineResolutionMs: 0,
       routineVerificationMs: 0,
+      incrementalVerificationMs: 0,
       reusedDeclarationCount: 0,
+      reusedSemanticRegionCount: 0,
       tokenCount: 0,
       totalMs: 0
     };
@@ -2230,7 +2408,11 @@ async function buildWorkspaceDocumentIndex(
         parseTotals.routineResolutionMs += metrics.routineResolutionMs;
         parseTotals.routineVerificationMs +=
           metrics.routineVerificationMs ?? 0;
+        parseTotals.incrementalVerificationMs +=
+          metrics.incrementalVerificationMs ?? 0;
         parseTotals.reusedDeclarationCount += metrics.reusedDeclarationCount;
+        parseTotals.reusedSemanticRegionCount +=
+          metrics.reusedSemanticRegionCount ?? 0;
         parseTotals.tokenCount += metrics.tokenCount;
         parseTotals.totalMs += metrics.totalMs;
       }
@@ -2408,6 +2590,25 @@ async function buildWorkspaceDocumentIndex(
           string,
           { source: string; routines: readonly RoutineDeclaration[] }
         >();
+      const reusableSemanticSnapshots =
+        incrementalDeclarationResolutionEnabled
+          ? getReusableSemanticRegionSnapshots(
+            directory,
+            baseParses.map(({ entry, parsed }) => ({
+              uri: entry.uri,
+              source: entry.source,
+              parsed
+            })),
+            previousWorkspaceDocumentIndex,
+            previousWorkspaceDocumentIndex
+              ? workspaceDocumentSources.get(previousWorkspaceDocumentIndex)
+              : undefined
+          )
+          : new Map<string, {
+            source: string;
+            parsed: ParsedDocument;
+            regionKeys: ReadonlySet<string>;
+          }>();
       if (profileEnabled) {
         logProfile({
           event: 'workspace-region-checkpoints',
@@ -2415,11 +2616,15 @@ async function buildWorkspaceDocumentIndex(
           requestDocumentUri,
           directory,
           incrementalRoutineResolutionEnabled,
+          incrementalDeclarationResolutionEnabled,
           eligibleDocuments: reusableRoutineSnapshots.size,
           eligibleRoutines: [...reusableRoutineSnapshots.values()].reduce(
             (total, snapshot) => total + snapshot.routines.length,
             0
-          )
+          ),
+          eligibleSemanticRegions: [...reusableSemanticSnapshots.values()]
+            .reduce((total, snapshot) =>
+              total + snapshot.regionKeys.size, 0)
         });
       }
       const selectiveReusableUris = getSelectiveContextReuseUris(
@@ -2464,17 +2669,24 @@ async function buildWorkspaceDocumentIndex(
           contextualCatalog,
           collectDocumentParseMetrics(entry.uri, entry.source, 'contextual'),
           {
+            reusableSemanticRegions: incrementalDeclarationResolutionEnabled
+              ? reusableSemanticSnapshots.get(entry.uri)
+              : undefined,
             reusableRoutineRegions: incrementalRoutineResolutionEnabled
               ? reusableRoutineSnapshots.get(entry.uri)
               : undefined,
             incrementalRoutineResolution:
               incrementalRoutineResolutionEnabled,
-            verifyIncrementalRoutineResolution,
-            onIncrementalVerification: verifyIncrementalRoutineResolution
+            verifyIncrementalRoutineResolution:
+              verifyIncrementalRoutineResolution ||
+              verifyIncrementalDeclarationResolution,
+            onIncrementalVerification:
+              verifyIncrementalRoutineResolution ||
+              verifyIncrementalDeclarationResolution
               ? matched => {
                 if (!matched) {
                   connection.console.warn(
-                    `Incremental routine verification failed for ${entry.uri}; using complete parse.`
+                    `Incremental semantic verification failed for ${entry.uri}; using complete parse.`
                   );
                 }
               }

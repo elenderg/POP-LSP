@@ -140,6 +140,7 @@ export declare class DeclarationDependencyGraph {
     readonly unresolvedReferenceCount: number;
     private readonly regionsByUri;
     private readonly potentialDependentsByDirectoryAndName;
+    private readonly ambiguousDependentsByDirectoryAndKind;
     private readonly dependentsByRegion;
     constructor(documents: Iterable<{
         uri: string;

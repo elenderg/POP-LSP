@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TypeSymbolTable = exports.GlobalVariableSymbolTable = exports.RoutineSymbolTable = void 0;
+exports.getParserRegionKey = getParserRegionKey;
 exports.normalizeTypeName = normalizeTypeName;
 exports.parseTypeDeclarationSyntax = parseTypeDeclarationSyntax;
 exports.parseTypeDeclarationRegion = parseTypeDeclarationRegion;
@@ -18,6 +19,9 @@ exports.getParsedReferences = getParsedReferences;
 const plural_1 = __importDefault(require("./plural"));
 const node_perf_hooks_1 = require("node:perf_hooks");
 const node_util_1 = require("node:util");
+function getParserRegionKey(region, occurrence = 0) {
+    return `${region.kind}\u0000${region.fingerprint}\u0000${occurrence}`;
+}
 class RoutineSymbolTable {
     routines = new Map();
     constructor(declarations = []) {
@@ -901,10 +905,10 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
         : undefined;
     activeRoutineResolutionProfileCounters = routineProfileCounters;
     const { parserSource, commentRanges, lexicallyComplete, metrics: { lexicalStartedAt, lexicalFinishedAt, syntaxStartedAt, syntaxFinishedAt, reusedDeclarationCount } } = syntax;
-    const declarations = preserveSyntax
+    let declarations = preserveSyntax
         ? syntax.declarations.map(declaration => rebaseParsedRegion(declaration, 0))
         : syntax.declarations;
-    const globalVariables = preserveSyntax
+    let globalVariables = preserveSyntax
         ? syntax.globalVariables.map(declaration => rebaseParsedRegion(declaration, 0))
         : syntax.globalVariables;
     const routines = preserveSyntax
@@ -916,6 +920,24 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
             range: { ...diagnostic.range }
         }))
         : syntax.diagnostics;
+    const regionKeysByRange = getParserRegionKeysByRange(syntax.regions);
+    const reusedSemanticRegionKeys = new Set();
+    if (options.reusableSemanticRegions) {
+        const reused = reuseSemanticDeclarationRegions(source, syntax.regions, declarations, globalVariables, options.reusableSemanticRegions);
+        declarations = reused.declarations;
+        globalVariables = reused.globalVariables;
+        for (const key of reused.regionKeys) {
+            reusedSemanticRegionKeys.add(key);
+        }
+    }
+    const declarationsToResolve = declarations.filter(declaration => !reusedSemanticRegionKeys.has(regionKeysByRange.get(parserRegionRangeKey('type', declaration.range)) ?? ''));
+    const globalVariablesToResolve = globalVariables.filter(declaration => !reusedSemanticRegionKeys.has(regionKeysByRange.get(parserRegionRangeKey('global-variable', declaration.range)) ?? ''));
+    for (const declaration of declarationsToResolve) {
+        resetTypeAliasFields(parserSource, declaration.fields);
+    }
+    for (const declaration of globalVariablesToResolve) {
+        resetTypeAliasFields(parserSource, declaration.fields);
+    }
     let dependencyResolutionMs = 0;
     let dependencyResolutionStartedAt = 0;
     let dependencyResolutionFinishedAt = 0;
@@ -940,11 +962,11 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
     const catalogFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
     const catalogBuildMs = catalogFinishedAt - catalogStartedAt;
     const typeResolutionStartedAt = catalogFinishedAt;
-    validateBaseTypes(declarations, symbols, diagnostics);
-    resolveFields(parserSource, [...declarations, ...globalVariables], symbols, diagnostics);
+    validateBaseTypes(declarationsToResolve, symbols, diagnostics);
+    resolveFields(parserSource, [...declarationsToResolve, ...globalVariablesToResolve], symbols, diagnostics);
     const typeResolutionFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
     const globalVariableResolutionStartedAt = typeResolutionFinishedAt;
-    validateGlobalVariableTypes(globalVariables, symbols, diagnostics);
+    validateGlobalVariableTypes(globalVariablesToResolve, symbols, diagnostics);
     const globalVariableResolutionFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
     validateReservedNames(parserSource, declarations, globalVariables, diagnostics);
     validateIdentifierPunctuation(parserSource, [...declarations, ...globalVariables].map(declaration => declaration.name), diagnostics);
@@ -996,18 +1018,19 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
         diagnostics
     };
     let routineVerificationStatus = 'not-requested';
+    let incrementalVerificationStatus = 'not-requested';
     let routineVerificationStartedAt = 0;
     let routineVerificationMs = 0;
     let verificationFallback;
-    if (options.incrementalRoutineResolution &&
-        options.verifyIncrementalRoutineResolution &&
-        reusedRoutines.size > 0) {
+    if (options.verifyIncrementalRoutineResolution &&
+        (reusedRoutines.size > 0 || reusedSemanticRegionKeys.size > 0)) {
         routineVerificationStartedAt = node_perf_hooks_1.performance.now();
         const completeParse = parseTypeDeclarations(source, workspaceSymbols, undefined, {
             ...options,
             incrementalRoutineResolution: false,
             verifyIncrementalRoutineResolution: false,
             onIncrementalVerification: undefined,
+            reusableSemanticRegions: undefined,
             reusableRoutineRegions: undefined
         });
         const getSnapshot = (parsed) => ({
@@ -1018,7 +1041,10 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
             diagnostics: parsed.diagnostics
         });
         const matched = (0, node_util_1.isDeepStrictEqual)(getSnapshot(parsedDocument), getSnapshot(completeParse));
-        routineVerificationStatus = matched ? 'matched' : 'fallback';
+        incrementalVerificationStatus = matched ? 'matched' : 'fallback';
+        if (reusedRoutines.size > 0) {
+            routineVerificationStatus = incrementalVerificationStatus;
+        }
         routineVerificationMs = node_perf_hooks_1.performance.now() - routineVerificationStartedAt;
         options.onIncrementalVerification?.(matched);
         if (!matched) {
@@ -1167,11 +1193,17 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
             symbols: symbols.entries.length +
                 globalVariableSymbols.entries.length +
                 routineSymbols.entries.length,
+            reusedSemanticRegionCount: reusedSemanticRegionKeys.size,
             routineResolutionStrategy: reusedRoutines.size > 0
                 ? 'worklist'
                 : 'complete',
+            declarationResolutionStrategy: reusedSemanticRegionKeys.size > 0 ? 'worklist' : 'complete',
             routineVerificationStatus,
-            routineVerificationMs
+            routineVerificationMs: reusedRoutines.size > 0
+                ? routineVerificationMs
+                : 0,
+            incrementalVerificationStatus,
+            incrementalVerificationMs: routineVerificationMs
         });
     }
     activeRoutineResolutionProfileCounters = undefined;
@@ -1503,6 +1535,90 @@ function rebaseParsedRegion(value, delta, scopeRebase) {
         return result;
     };
     return clone(value, new Map());
+}
+function parserRegionRangeKey(kind, range) {
+    return `${kind}:${range.start}:${range.end}`;
+}
+function getParserRegionKeysByRange(regions) {
+    const occurrences = new Map();
+    const keys = new Map();
+    for (const region of regions) {
+        const identity = `${region.kind}\u0000${region.fingerprint}`;
+        const occurrence = occurrences.get(identity) ?? 0;
+        occurrences.set(identity, occurrence + 1);
+        keys.set(parserRegionRangeKey(region.kind, region.range), getParserRegionKey(region, occurrence));
+    }
+    return keys;
+}
+function reuseSemanticDeclarationRegions(source, currentRegions, declarations, globalVariables, previous) {
+    const regionKeys = new Set();
+    if (previous.parsed.diagnostics.length > 0 ||
+        previous.parsed.regions.some(region => !region.complete)) {
+        return { declarations, globalVariables, regionKeys };
+    }
+    const previousDeclarationsByRange = new Map(previous.parsed.declarations.map(declaration => [
+        parserRegionRangeKey('type', declaration.range),
+        declaration
+    ]));
+    const previousVariablesByRange = new Map(previous.parsed.globalVariables.map(declaration => [
+        parserRegionRangeKey('global-variable', declaration.range),
+        declaration
+    ]));
+    const previousRegionKeysByRange = getParserRegionKeysByRange(previous.parsed.regions);
+    const previousRegionsByKey = new Map();
+    for (const region of previous.parsed.regions) {
+        const key = previousRegionKeysByRange.get(parserRegionRangeKey(region.kind, region.range));
+        if (key) {
+            previousRegionsByKey.set(key, region);
+        }
+    }
+    const currentKeysByRange = getParserRegionKeysByRange(currentRegions);
+    const currentRegionsByRange = new Map(currentRegions.map(region => [
+        parserRegionRangeKey(region.kind, region.range),
+        region
+    ]));
+    const replaceDeclarations = (kind, current, previousByRange) => {
+        return current.map(declaration => {
+            const currentRangeKey = parserRegionRangeKey(kind, declaration.range);
+            const currentKey = currentKeysByRange.get(currentRangeKey);
+            const currentRegion = currentRegionsByRange.get(currentRangeKey);
+            if (!currentKey ||
+                !currentRegion ||
+                !currentRegion.syntacticallyComplete ||
+                !previous.regionKeys.has(currentKey)) {
+                return declaration;
+            }
+            const previousRegion = previousRegionsByKey.get(currentKey);
+            if (!previousRegion ||
+                previousRegion.kind !== kind ||
+                !previousRegion.complete) {
+                return declaration;
+            }
+            const previousText = previous.source.slice(previousRegion.range.start, previousRegion.range.end);
+            const currentText = source.slice(currentRegion.range.start, currentRegion.range.end);
+            if (previousText !== currentText) {
+                return declaration;
+            }
+            const previousDeclaration = previousByRange.get(parserRegionRangeKey(kind, previousRegion.range));
+            if (!previousDeclaration) {
+                return declaration;
+            }
+            regionKeys.add(currentKey);
+            return rebaseParsedRegion(previousDeclaration, currentRegion.range.start - previousRegion.range.start);
+        });
+    };
+    return {
+        declarations: replaceDeclarations('type', declarations, previousDeclarationsByRange),
+        globalVariables: replaceDeclarations('global-variable', globalVariables, previousVariablesByRange),
+        regionKeys
+    };
+}
+function resetTypeAliasFields(source, fields) {
+    for (const field of fields ?? []) {
+        if (field.kind === 'named' && field.usesTypeAlias) {
+            field.type = createTypeReference(source, field.name.range);
+        }
+    }
 }
 function fingerprintRegion(kind, name, source) {
     let hash = 2166136261;

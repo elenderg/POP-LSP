@@ -401,7 +401,9 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
         ...process.env,
         POP_LSP_PROFILE: '1',
         POP_LSP_INCREMENTAL_ROUTINES: '1',
-        POP_LSP_VERIFY_INCREMENTAL_ROUTINES: '1'
+        POP_LSP_VERIFY_INCREMENTAL_ROUTINES: '1',
+        POP_LSP_INCREMENTAL_DECLARATIONS: '1',
+        POP_LSP_VERIFY_INCREMENTAL_DECLARATIONS: '1'
       },
       stdio: ['pipe', 'pipe', 'pipe']
     }
@@ -461,8 +463,11 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       startIndex
     );
     assert.equal(contextualParse.reusedRoutineCount, 1);
+    assert.equal(contextualParse.reusedSemanticRegionCount, 2);
     assert.equal(contextualParse.routineResolutionStrategy, 'worklist');
+    assert.equal(contextualParse.declarationResolutionStrategy, 'worklist');
     assert.equal(contextualParse.routineVerificationStatus, 'matched');
+    assert.equal(contextualParse.incrementalVerificationStatus, 'matched');
     const baseParse = await waitForEvent(
       client.events,
       event => event.event === 'document-parse' &&
@@ -767,6 +772,162 @@ test('excludes the current document base routines from contextual candidates', a
       workspaceFolders: [workspaceFolder],
       capabilities: {
         workspace: { workspaceFolders: { supported: true } }
+      }
+    });
+
+    test('reuses declarations outside the cross-document semantic dependency closure', async () => {
+      const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-semantic-worklist-'));
+      const typesPath = path.join(workspace, 'types.pop');
+      const consumerPath = path.join(workspace, 'consumer.pop');
+      const typesUri = pathToFileURL(typesPath).toString();
+      const consumerUri = pathToFileURL(consumerPath).toString();
+      const workspaceFolder = {
+        uri: pathToFileURL(workspace).toString(),
+        name: 'semantic-worklist-test'
+      };
+      const initialTypes = [
+        'Uma pessoa é uma estrutura.',
+        'Uma palavra é um byte.'
+      ].join('\n');
+      const changedTypes = initialTypes.replace(
+        'Uma pessoa é uma estrutura.',
+        'Uma pessoa é um byte.'
+      );
+      const consumerSource = [
+        'Um cliente é uma pessoa.',
+        'Uma letra é uma palavra.'
+      ].join('\n');
+      writeWindows1252(typesPath, initialTypes);
+      writeWindows1252(consumerPath, consumerSource);
+
+      const child = spawn(
+        process.execPath,
+        [path.resolve(__dirname, '../out/server.js'), '--stdio'],
+        {
+          env: {
+            ...process.env,
+            POP_LSP_PROFILE: '1',
+            POP_LSP_INCREMENTAL_DECLARATIONS: '1',
+            POP_LSP_VERIFY_INCREMENTAL_DECLARATIONS: '1'
+          },
+          stdio: ['pipe', 'pipe', 'pipe']
+        }
+      );
+      const client = createLspClient(child, workspaceFolder);
+      let stderr = '';
+      child.stderr.on('data', data => {
+        stderr += data.toString();
+      });
+
+      try {
+        const initialize = await client.request('initialize', {
+          processId: process.pid,
+          rootUri: workspaceFolder.uri,
+          workspaceFolders: [workspaceFolder],
+          capabilities: {
+            workspace: { workspaceFolders: { supported: true } }
+          }
+        });
+        assert.ok(initialize.result);
+        client.send({ jsonrpc: '2.0', method: 'initialized', params: {} });
+        await waitForEvent(
+          client.events,
+          event => event.event === 'workspace-refresh' &&
+            event.documents === 2,
+          'the initial two-document semantic catalog'
+        );
+        client.send({
+          jsonrpc: '2.0',
+          method: 'textDocument/didOpen',
+          params: {
+            textDocument: {
+              uri: typesUri,
+              languageId: 'portugues-puro',
+              version: 1,
+              text: initialTypes
+            }
+          }
+        });
+        const startIndex = client.events.length;
+        client.send({
+          jsonrpc: '2.0',
+          method: 'textDocument/didChange',
+          params: {
+            textDocument: { uri: typesUri, version: 2 },
+            contentChanges: [{ text: changedTypes }]
+          }
+        });
+        const refresh = await waitForEvent(
+          client.events,
+          event => event.event === 'workspace-refresh' &&
+            event.sourceChanges === 1,
+          'the cross-document type dependency refresh',
+          startIndex
+        );
+        assert.equal(refresh.contextualParseCount, 2);
+        const contextualParses = client.events.slice(startIndex).filter(event =>
+          event.event === 'document-parse' &&
+          event.pass === 'contextual' &&
+          event.requestId === refresh.requestId &&
+          (event.documentUri === typesUri || event.documentUri === consumerUri) &&
+          event.sourceCodeUnits > 0
+        );
+        const typesParse = contextualParses.find(event =>
+          event.documentUri === typesUri &&
+          event.sourceCodeUnits === changedTypes.length
+        );
+        const consumerParse = contextualParses.find(event =>
+          event.documentUri === consumerUri &&
+          event.sourceCodeUnits === consumerSource.length
+        );
+        assert.ok(typesParse);
+        assert.ok(consumerParse);
+        assert.equal(typesParse.reusedSemanticRegionCount, 1);
+        assert.equal(consumerParse.reusedSemanticRegionCount, 1);
+        assert.equal(typesParse.incrementalVerificationStatus, 'matched');
+        assert.equal(consumerParse.incrementalVerificationStatus, 'matched');
+
+        client.send({
+          jsonrpc: '2.0',
+          method: 'textDocument/didOpen',
+          params: {
+            textDocument: {
+              uri: consumerUri,
+              languageId: 'portugues-puro',
+              version: 1,
+              text: consumerSource
+            }
+          }
+        });
+        const clientOffset = consumerSource.indexOf('pessoa');
+        const definition = await client.request('textDocument/definition', {
+          textDocument: { uri: consumerUri },
+          position: {
+            line: 0,
+            character: clientOffset
+          }
+        });
+        const locations = Array.isArray(definition.result)
+          ? definition.result
+          : definition.result
+            ? [definition.result]
+            : [];
+        assert.ok(locations.some(location => location.uri === typesUri));
+
+        await client.request('shutdown', null);
+        client.send({ jsonrpc: '2.0', method: 'exit', params: null });
+        await once(child, 'close');
+      } catch (error) {
+        child.stdin.end();
+        if (child.exitCode === null) {
+          child.kill();
+          await once(child, 'close');
+        }
+        throw new Error(
+          `${error instanceof Error ? error.message : String(error)}\n${stderr}`
+        );
+      } finally {
+        fs.rmSync(workspace, { recursive: true, force: true });
       }
     });
     assert.ok(initialize.result);

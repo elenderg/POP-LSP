@@ -255,21 +255,28 @@ if it appears in a boolean function header.
 The workspace catalog and parsed references are reused while source text is
 unchanged, regardless of LSP document-version changes. A source change or
 watched `.pop` file update rebuilds context-sensitive results for documents in
-the same directory. Declaration-level incremental parsing is not yet enabled.
-The parser now records fingerprinted declaration/routine regions and
-conservatively marks incomplete or diagnosed regions as non-reusable.
-Unchanged, complete type and global-variable declarations can reuse their
-syntax records after source offsets are rebased. An initial region dependency
-graph records resolved and unresolved references and can calculate candidate
-impact sets. During selective workspace reuse, the region graph is now
-cross-checked against the existing document dependency index. The server
-widens invalidation with the graph's affected regions, and falls back to a
-full directory refresh if the graph misses any affected document identified
-by the document index. This validates dependency coverage without yet skipping
-semantic work: type, variable, routine, and reference resolution still run
-for every document that is not reused as a whole. Declaration-level semantic
-resolution remains disabled until region-level differential equivalence is
-established.
+the same directory. The parser records fingerprinted declaration/routine
+regions and distinguishes syntactic completeness from semantic diagnostics.
+An opt-in declaration worklist can reuse unchanged, complete type and
+global-variable semantic snapshots outside the affected dependency closure,
+rebasing their source ranges before building the current document's catalog.
+The region graph tracks resolved and unresolved type, variable, routine, and
+field references. Ambiguous aliases, unresolved names, and routine accesses
+that cannot be mapped precisely conservatively widen invalidation.
+
+The dependency graph is cross-checked against the document-level dependency
+index during selective workspace reuse. Invalidation is widened with affected
+regions, and the server falls back to a full directory refresh if the region
+graph misses a document affected by the existing index. Semantic declaration
+reuse requires a clean previous snapshot and a matching set of workspace
+documents; incomplete or diagnosed snapshots are not reused. Enable the
+declaration worklist with `POP_LSP_INCREMENTAL_DECLARATIONS=1` (disabled by
+default). For differential rollout, also set
+`POP_LSP_VERIFY_INCREMENTAL_DECLARATIONS=1`. Each contextual parse that reuses
+a declaration is compared with a complete parse, including declarations,
+global variables, routines, references, and diagnostics. A mismatch is
+reported and the complete result is used. Verification skips the extra parse
+when no declaration was reused.
 
 The parser exposes `parseTypeDeclarationSyntax` as a syntax-only phase and
 `resolveTypeDeclarationSyntax` as a separate semantic phase. The regular
@@ -300,13 +307,17 @@ snapshot-rebasing costs can offset the saved routine resolution, so gains must
 be measured on representative project documents before enabling it broadly.
 
 Type and global-variable resolution still runs over complete local catalogs.
-Type fields and aliases are consumed across declarations, so declaration-level
-semantic worklists remain coupled to global type and field resolution until
-those dependencies are represented and validated more precisely. Profiling
-also records routine worklist mode, verification status and duration alongside
-worklist phase timings and counts, region-graph construction, invalidation
-selection/closure duration, parse-phase, memory, and LSP request latency
-records.
+The worklist avoids repeating selected per-declaration type and variable
+resolution, but the server still lexes and parses each contextual document and
+builds the full symbol/type catalogs and indexes. It is not incremental
+lexing, parsing, or catalog construction. Routine-call and field dependencies
+are conservatively tracked, while workspace-wide catalog construction remains
+a full pass. Both declaration and routine worklists are opt-in: profiling on
+representative projects is needed to determine whether snapshot rebasing and
+differential verification costs are outweighed by avoided resolution work.
+Profiling also records worklist mode, verification status and duration
+alongside phase timings and counts, region-graph construction, invalidation
+selection/closure duration, memory, and LSP request latency.
 
 Routine-call resolution indexes normalized names per parse instead of
 comparing every call against every routine. Name matching normalizes each

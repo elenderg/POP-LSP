@@ -2,6 +2,7 @@ export interface SourceRange {
     start: number;
     end: number;
 }
+export declare function getParserRegionKey(region: ParserRegion, occurrence?: number): string;
 export interface TypeReference {
     name: string;
     normalizedName: string;
@@ -320,6 +321,11 @@ export interface ParseOptions {
     incrementalRoutineResolution?: boolean;
     verifyIncrementalRoutineResolution?: boolean;
     onIncrementalVerification?: (matched: boolean) => void;
+    reusableSemanticRegions?: {
+        source: string;
+        parsed: ParsedDocument;
+        regionKeys: ReadonlySet<string>;
+    };
     reusableDeclarationRegions?: {
         source: string;
         parsed: ParsedDocument;
@@ -427,9 +433,13 @@ export interface ParsePerformanceMetrics {
     reusedDeclarationCount: number;
     reusedRoutineCount: number;
     symbols: number;
+    reusedSemanticRegionCount?: number;
     routineResolutionStrategy?: 'complete' | 'worklist';
+    declarationResolutionStrategy?: 'complete' | 'worklist';
     routineVerificationStatus?: 'not-requested' | 'matched' | 'fallback';
     routineVerificationMs?: number;
+    incrementalVerificationStatus?: 'not-requested' | 'matched' | 'fallback';
+    incrementalVerificationMs?: number;
 }
 export interface ParsedReferencesMetrics {
     durationMs: number;
