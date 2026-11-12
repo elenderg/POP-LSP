@@ -1,0 +1,156 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "portugues-puro",
+  "scopeName": "source.escopo.pop",
+  "patterns": [
+    {"include": "#comment"},
+    {"include": "#strings"},
+    {"include": "#literal-constants"},
+    {"include": "#types"}
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.character.pop",
+          "match": "\\\\.*$"
+        },
+        {
+          "name": "comment.block.pop",
+          "begin": "\\[",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.pop"
+            }
+          },
+          "end": "\\]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.pop"
+            }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.pop",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.pop"
+            }
+          },
+          "end": "\"(?!\")",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.pop"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.pop",
+              "match": "\"\""
+            }
+          ]
+        }
+      ]
+    },
+    "literal-constants": {
+      "patterns": [
+        {
+          "name": "constant.numeric.integer.mixed.pop",
+          "match": "(?<![\\w$])([+-]?\\d+)\\+([+-]?\\d+)/([+-]?\\d+)(?![\\w/])"
+        },
+        {
+          "name": "constant.numeric.fraction.pop",
+          "match": "(?<![\\w$])([+-]?\\d+)/([+-]?\\d+)(?![\\w/])"
+        },
+        {
+          "name": "constant.numeric.integer.hexadecimal.pop",
+          "match": "\\$[a-fA-F0-9]+"
+        },
+        {
+          "name": "constant.numeric.integer.decimal.pop",
+          "match": "(?<![\\w$])[+-]?\\d+(?![\\w/])"
+        },
+        {
+          "name": "constant.language.boolean.pop",
+          "match": "\\b(?i:sim|não)\\b"
+        },
+        {
+          "name": "constant.language.null.pop",
+          "match": "\\b(?i:nulo|nula|nulos|nulas|inexistente|inexistentes|zerado)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "begin": "(?i)^[ \\t]*\\b(um|uma|uns|umas|esse|essa|esses|essas)\\b(?=(?:(?:\\[[^\\]\\r\\n]*\\]|[^\\r\\n\\[\\]])*?)\\b(?:é|são)\\b(?:(?:\\[[^\\]\\r\\n]*\\]|[^\\r\\n\\[\\]])*?)\\b(?:um|uma|uns|umas|esse|essa|esses|essas)\\b(?:(?:\\[[^\\]\\r\\n]*\\]|[^\\r\\n\\[\\]])*?)\\.$)(?!(?:(?:\\[[^\\]\\r\\n]*\\]|[^\\r\\n\\[\\]])*?)\\b(?:com|para)\\b)",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.language.article.pop"
+            }
+          },
+          "end": "\\.",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.terminator.pop"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "name": "meta.type.name.pop",
+              "begin": "(?=[\\s\\S])",
+              "end": "(?i)\\b(é|são)\\b",
+              "endCaptures": {
+                "1": {
+                  "name": "meta.type.declaration.simple.pop"
+                }
+              },
+              "patterns": [
+                {
+                  "include": "#comment"
+                },
+                {
+                  "name": "entity.name.type.pop",
+                  "match": "(?i)(?:(?!\\b(?:é|são)\\b)[^\\[\\]\"\\\\])+"
+                }
+              ]
+            },
+            {
+              "name": "meta.type.base.pop",
+              "begin": "(?i:\\b(?:um|uma|uns|umas|esse|essa|esses|essas)\\b)",
+              "beginCaptures": {
+                "0": {
+                  "name": "storage.type.language.article.pop"
+                }
+              },
+              "end": "(?=\\.)",
+              "patterns": [
+                {
+                  "include": "#comment"
+                },
+                {
+                  "name": "support.type.pop",
+                  "begin": "(?=\\S)",
+                  "end": "(?=\\.)",
+                  "patterns": [
+                    {
+                      "include": "#comment"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

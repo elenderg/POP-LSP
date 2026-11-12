@@ -44,6 +44,14 @@ let workspaceRefreshPromise;
 let workspaceRevision = 0;
 let workspaceDirectorySnapshots = new Map();
 const documentSymbolsCache = new WeakMap();
+const semanticTokensCache = new WeakMap();
+const semanticTokenTypes = [
+    'popTypeArticle',
+    'popTypeDeclarationName',
+    'popSimpleTypeOperator',
+    'popTypeTerminator'
+];
+const semanticTokenTypeIndex = new Map(semanticTokenTypes.map((type, index) => [type, index]));
 const workspaceAnalysisIndexes = new WeakMap();
 const workspaceDeclarationDependencyGraphs = new WeakMap();
 const workspaceCompletionItems = new WeakMap();
@@ -914,9 +922,127 @@ connection.onInitialize(() => ({
         renameProvider: { prepareProvider: true },
         implementationProvider: true,
         completionProvider: { triggerCharacters: [' '] },
-        documentFormattingProvider: true
+        documentFormattingProvider: true,
+        semanticTokensProvider: {
+            legend: {
+                tokenTypes: [...semanticTokenTypes],
+                tokenModifiers: []
+            },
+            full: true
+        }
     }
 }));
+connection.languages.semanticTokens.on(params => profileRequest('semantic-tokens', async (requestId) => {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) {
+        return { data: [] };
+    }
+    const source = document.getText();
+    const cachedParse = parsedDocuments.get(document.uri);
+    const cachedAnalysis = sourceAnalysisCache.get(document.uri);
+    let parsed = cachedAnalysis?.source === source &&
+        cachedAnalysis.parsed === cachedParse
+        ? cachedParse
+        : undefined;
+    let indexedDocument = workspaceDocumentIndex?.get(document.uri);
+    if (!parsed || !indexedDocument) {
+        const workspaceDocuments = await getWorkspaceDocuments(requestId, document.uri);
+        indexedDocument = workspaceDocuments.get(document.uri);
+        if (!parsed &&
+            indexedDocument &&
+            indexedDocument.document.getText() === source) {
+            parsed = indexedDocument.parsed;
+        }
+    }
+    const currentDocument = documents.get(document.uri);
+    if (!parsed ||
+        !indexedDocument ||
+        indexedDocument.document.getText() !== source ||
+        !currentDocument ||
+        currentDocument.getText() !== source) {
+        return { data: [] };
+    }
+    const cachedTokens = semanticTokensCache.get(parsed);
+    if (cachedTokens) {
+        return cachedTokens;
+    }
+    const tokenRanges = [];
+    const addNameTokens = (range, type) => {
+        let start = range.start;
+        for (const comment of parsed.commentRanges ?? []) {
+            if (comment.end <= start || comment.start >= range.end) {
+                continue;
+            }
+            if (comment.start > start) {
+                addNameTextTokens(start, Math.min(comment.start, range.end), type);
+            }
+            start = Math.max(start, comment.end);
+            if (start >= range.end) {
+                return;
+            }
+        }
+        if (start < range.end) {
+            addNameTextTokens(start, range.end, type);
+        }
+    };
+    const addNameTextTokens = (start, end, type) => {
+        const text = source.slice(start, end);
+        const words = /\S+/gu;
+        let word;
+        while ((word = words.exec(text)) !== null) {
+            tokenRanges.push({
+                start: start + word.index,
+                end: start + word.index + word[0].length,
+                type
+            });
+        }
+    };
+    for (const declaration of parsed.declarations) {
+        if (declaration.pointedType ||
+            declaration.scalarFactorRange ||
+            declaration.fields) {
+            continue;
+        }
+        tokenRanges.push({
+            ...declaration.articleRange,
+            type: 'popTypeArticle'
+        }, ...(declaration.baseArticleRange
+            ? [{
+                    ...declaration.baseArticleRange,
+                    type: 'popTypeArticle'
+                }]
+            : []), {
+            ...declaration.operatorRange,
+            type: 'popSimpleTypeOperator'
+        }, {
+            start: declaration.range.end - 1,
+            end: declaration.range.end,
+            type: 'popTypeTerminator'
+        });
+        addNameTokens(declaration.name.range, 'popTypeDeclarationName');
+    }
+    tokenRanges.sort((left, right) => left.start - right.start);
+    const builder = new node_1.SemanticTokensBuilder();
+    for (const token of tokenRanges) {
+        if (token.start < 0 ||
+            token.end > source.length ||
+            token.start >= token.end) {
+            continue;
+        }
+        const position = document.positionAt(token.start);
+        builder.push(position.line, position.character, token.end - token.start, semanticTokenTypeIndex.get(token.type), 0);
+    }
+    const semanticTokens = builder.build();
+    semanticTokensCache.set(parsed, semanticTokens);
+    logProfile({
+        event: 'semantic-tokens',
+        requestId,
+        documentUri: document.uri,
+        tokens: tokenRanges.length,
+        cacheHit: false
+    });
+    return semanticTokens;
+}, params.textDocument.uri));
 connection.onDocumentFormatting(params => profileRequest('formatting', () => {
     const document = documents.get(params.textDocument.uri);
     if (!document) {
@@ -1736,6 +1862,18 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
         const revision = workspaceRevision;
         const startedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
         const discoveryStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
+        logProfile({
+            event: 'stage-progress',
+            requestId,
+            requestDocumentUri,
+            message: 'Iniciando a atualização do catálogo do workspace.'
+        });
+        logProfile({
+            event: 'stage-progress',
+            requestId,
+            requestDocumentUri,
+            message: 'Iniciando a descoberta dos documentos do workspace.'
+        });
         const sourceDocuments = new Map();
         const sourceByteLengths = new Map();
         const directories = new Set();
@@ -1778,6 +1916,13 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
         const sourceDiscoveryMs = profileEnabled
             ? node_perf_hooks_1.performance.now() - discoveryStartedAt
             : 0;
+        logProfile({
+            event: 'stage-progress',
+            requestId,
+            requestDocumentUri,
+            durationMs: sourceDiscoveryMs,
+            message: `Finalizada a descoberta dos documentos do workspace. Esta etapa levou ${sourceDiscoveryMs.toFixed(2)} ms.`
+        });
         const parseTotals = {
             lexicalMs: 0,
             syntaxMs: 0,
@@ -2035,14 +2180,15 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
             }
         }
         if (profileEnabled) {
+            const endTimeMs = node_perf_hooks_1.performance.now();
             logProfile({
                 event: 'workspace-refresh',
                 requestId,
                 requestDocumentUri,
                 accepted: revision === workspaceRevision,
                 startTimeMs: startedAt,
-                endTimeMs: node_perf_hooks_1.performance.now(),
-                refreshMs: node_perf_hooks_1.performance.now() - startedAt,
+                endTimeMs,
+                refreshMs: endTimeMs - startedAt,
                 sourceDiscoveryMs,
                 catalogAssemblyMs,
                 documents: result.size,
@@ -2063,6 +2209,13 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                     entry.parsed.globalVariableSymbols.entries.length +
                     entry.parsed.routineSymbols.entries.length, 0),
                 ...parseTotals
+            });
+            logProfile({
+                event: 'stage-progress',
+                requestId,
+                requestDocumentUri,
+                durationMs: endTimeMs - startedAt,
+                message: `Finalizada a atualização do catálogo do workspace. Esta etapa levou ${(endTimeMs - startedAt).toFixed(2)} ms.`
             });
         }
         if (revision !== workspaceRevision) {
