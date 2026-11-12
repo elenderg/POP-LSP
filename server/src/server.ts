@@ -58,6 +58,11 @@ const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
 const parsedDocuments = new Map<string, ReturnType<typeof parseTypeDeclarations>>();
 const profileEnabled = process.env.POP_LSP_PROFILE === '1';
+const incrementalRoutineResolutionEnabled =
+  process.env.POP_LSP_INCREMENTAL_ROUTINES === '1';
+const verifyIncrementalRoutineResolution =
+  incrementalRoutineResolutionEnabled &&
+  process.env.POP_LSP_VERIFY_INCREMENTAL_ROUTINES === '1';
 const configuredSlowProfileThreshold = Number(
   process.env.POP_LSP_PROFILE_SLOW_MS
 );
@@ -2209,6 +2214,7 @@ async function buildWorkspaceDocumentIndex(
       typeResolutionMs: 0,
       globalVariableResolutionMs: 0,
       routineResolutionMs: 0,
+      routineVerificationMs: 0,
       reusedDeclarationCount: 0,
       tokenCount: 0,
       totalMs: 0
@@ -2222,6 +2228,8 @@ async function buildWorkspaceDocumentIndex(
         parseTotals.typeResolutionMs += metrics.typeResolutionMs;
         parseTotals.globalVariableResolutionMs += metrics.globalVariableResolutionMs;
         parseTotals.routineResolutionMs += metrics.routineResolutionMs;
+        parseTotals.routineVerificationMs +=
+          metrics.routineVerificationMs ?? 0;
         parseTotals.reusedDeclarationCount += metrics.reusedDeclarationCount;
         parseTotals.tokenCount += metrics.tokenCount;
         parseTotals.totalMs += metrics.totalMs;
@@ -2383,24 +2391,30 @@ async function buildWorkspaceDocumentIndex(
         catalogAssemblyMs += performance.now() - catalogStartedAt;
       }
       const directory = dirname(fileURLToPath(group[0].uri));
-      const reusableRoutineSnapshots = getReusableRoutineRegionSnapshots(
-        directory,
-        baseParses.map(({ entry, parsed }) => ({
-          uri: entry.uri,
-          source: entry.source,
-          parsed
-        })),
-        previousWorkspaceDocumentIndex,
-        previousWorkspaceDocumentIndex
-          ? workspaceDocumentSources.get(previousWorkspaceDocumentIndex)
-          : undefined
-      );
+      const reusableRoutineSnapshots = incrementalRoutineResolutionEnabled
+        ? getReusableRoutineRegionSnapshots(
+          directory,
+          baseParses.map(({ entry, parsed }) => ({
+            uri: entry.uri,
+            source: entry.source,
+            parsed
+          })),
+          previousWorkspaceDocumentIndex,
+          previousWorkspaceDocumentIndex
+            ? workspaceDocumentSources.get(previousWorkspaceDocumentIndex)
+            : undefined
+        )
+        : new Map<
+          string,
+          { source: string; routines: readonly RoutineDeclaration[] }
+        >();
       if (profileEnabled) {
         logProfile({
           event: 'workspace-region-checkpoints',
           requestId,
           requestDocumentUri,
           directory,
+          incrementalRoutineResolutionEnabled,
           eligibleDocuments: reusableRoutineSnapshots.size,
           eligibleRoutines: [...reusableRoutineSnapshots.values()].reduce(
             (total, snapshot) => total + snapshot.routines.length,
@@ -2450,7 +2464,21 @@ async function buildWorkspaceDocumentIndex(
           contextualCatalog,
           collectDocumentParseMetrics(entry.uri, entry.source, 'contextual'),
           {
-            reusableRoutineRegions: reusableRoutineSnapshots.get(entry.uri)
+            reusableRoutineRegions: incrementalRoutineResolutionEnabled
+              ? reusableRoutineSnapshots.get(entry.uri)
+              : undefined,
+            incrementalRoutineResolution:
+              incrementalRoutineResolutionEnabled,
+            verifyIncrementalRoutineResolution,
+            onIncrementalVerification: verifyIncrementalRoutineResolution
+              ? matched => {
+                if (!matched) {
+                  connection.console.warn(
+                    `Incremental routine verification failed for ${entry.uri}; using complete parse.`
+                  );
+                }
+              }
+              : undefined
           }
         );
         entry.analysis.parsed = parsed;

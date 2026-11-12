@@ -19,6 +19,9 @@ const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
 const documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
 const parsedDocuments = new Map();
 const profileEnabled = process.env.POP_LSP_PROFILE === '1';
+const incrementalRoutineResolutionEnabled = process.env.POP_LSP_INCREMENTAL_ROUTINES === '1';
+const verifyIncrementalRoutineResolution = incrementalRoutineResolutionEnabled &&
+    process.env.POP_LSP_VERIFY_INCREMENTAL_ROUTINES === '1';
 const configuredSlowProfileThreshold = Number(process.env.POP_LSP_PROFILE_SLOW_MS);
 const slowProfileThresholdMs = Number.isFinite(configuredSlowProfileThreshold) &&
     configuredSlowProfileThreshold > 0
@@ -1583,6 +1586,7 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
             typeResolutionMs: 0,
             globalVariableResolutionMs: 0,
             routineResolutionMs: 0,
+            routineVerificationMs: 0,
             reusedDeclarationCount: 0,
             tokenCount: 0,
             totalMs: 0
@@ -1596,6 +1600,8 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                 parseTotals.typeResolutionMs += metrics.typeResolutionMs;
                 parseTotals.globalVariableResolutionMs += metrics.globalVariableResolutionMs;
                 parseTotals.routineResolutionMs += metrics.routineResolutionMs;
+                parseTotals.routineVerificationMs +=
+                    metrics.routineVerificationMs ?? 0;
                 parseTotals.reusedDeclarationCount += metrics.reusedDeclarationCount;
                 parseTotals.tokenCount += metrics.tokenCount;
                 parseTotals.totalMs += metrics.totalMs;
@@ -1738,19 +1744,22 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                 catalogAssemblyMs += node_perf_hooks_1.performance.now() - catalogStartedAt;
             }
             const directory = (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(group[0].uri));
-            const reusableRoutineSnapshots = getReusableRoutineRegionSnapshots(directory, baseParses.map(({ entry, parsed }) => ({
-                uri: entry.uri,
-                source: entry.source,
-                parsed
-            })), previousWorkspaceDocumentIndex, previousWorkspaceDocumentIndex
-                ? workspaceDocumentSources.get(previousWorkspaceDocumentIndex)
-                : undefined);
+            const reusableRoutineSnapshots = incrementalRoutineResolutionEnabled
+                ? getReusableRoutineRegionSnapshots(directory, baseParses.map(({ entry, parsed }) => ({
+                    uri: entry.uri,
+                    source: entry.source,
+                    parsed
+                })), previousWorkspaceDocumentIndex, previousWorkspaceDocumentIndex
+                    ? workspaceDocumentSources.get(previousWorkspaceDocumentIndex)
+                    : undefined)
+                : new Map();
             if (profileEnabled) {
                 logProfile({
                     event: 'workspace-region-checkpoints',
                     requestId,
                     requestDocumentUri,
                     directory,
+                    incrementalRoutineResolutionEnabled,
                     eligibleDocuments: reusableRoutineSnapshots.size,
                     eligibleRoutines: [...reusableRoutineSnapshots.values()].reduce((total, snapshot) => total + snapshot.routines.length, 0)
                 });
@@ -1780,7 +1789,18 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                     routines: catalog.routines.filter(routine => !localRoutineDeclarations.has(routine))
                 };
                 const parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, contextualCatalog, collectDocumentParseMetrics(entry.uri, entry.source, 'contextual'), {
-                    reusableRoutineRegions: reusableRoutineSnapshots.get(entry.uri)
+                    reusableRoutineRegions: incrementalRoutineResolutionEnabled
+                        ? reusableRoutineSnapshots.get(entry.uri)
+                        : undefined,
+                    incrementalRoutineResolution: incrementalRoutineResolutionEnabled,
+                    verifyIncrementalRoutineResolution,
+                    onIncrementalVerification: verifyIncrementalRoutineResolution
+                        ? matched => {
+                            if (!matched) {
+                                connection.console.warn(`Incremental routine verification failed for ${entry.uri}; using complete parse.`);
+                            }
+                        }
+                        : undefined
                 });
                 entry.analysis.parsed = parsed;
                 entry.analysis.catalogKey = catalogKey;

@@ -397,7 +397,12 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
     process.execPath,
     [path.resolve(__dirname, '../out/server.js'), '--stdio'],
     {
-      env: { ...process.env, POP_LSP_PROFILE: '1' },
+      env: {
+        ...process.env,
+        POP_LSP_PROFILE: '1',
+        POP_LSP_INCREMENTAL_ROUTINES: '1',
+        POP_LSP_VERIFY_INCREMENTAL_ROUTINES: '1'
+      },
       stdio: ['pipe', 'pipe', 'pipe']
     }
   );
@@ -456,6 +461,8 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       startIndex
     );
     assert.equal(contextualParse.reusedRoutineCount, 1);
+    assert.equal(contextualParse.routineResolutionStrategy, 'worklist');
+    assert.equal(contextualParse.routineVerificationStatus, 'matched');
     const baseParse = await waitForEvent(
       client.events,
       event => event.event === 'document-parse' &&
@@ -588,7 +595,12 @@ test('treats declaration whitespace as non-semantic but preserves literal spaces
     process.execPath,
     [path.resolve(__dirname, '../out/server.js'), '--stdio'],
     {
-      env: { ...process.env, POP_LSP_PROFILE: '1' },
+      env: {
+        ...process.env,
+        POP_LSP_PROFILE: '1',
+        POP_LSP_INCREMENTAL_ROUTINES: '1',
+        POP_LSP_VERIFY_INCREMENTAL_ROUTINES: '1'
+      },
       stdio: ['pipe', 'pipe', 'pipe']
     }
   );
@@ -671,6 +683,7 @@ test('treats declaration whitespace as non-semantic but preserves literal spaces
       event.sourceCodeUnits === whitespaceChangedDeclarations.length
     );
     assert.equal(whitespaceParse.reusedRoutineCount, 1);
+    assert.equal(whitespaceParse.routineVerificationStatus, 'matched');
 
     const literalStart = client.events.length;
     client.send({

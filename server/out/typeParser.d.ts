@@ -317,6 +317,9 @@ export interface ParserSymbolCatalog {
 }
 export interface ParseOptions {
     resolveRoutineCalls?: boolean;
+    incrementalRoutineResolution?: boolean;
+    verifyIncrementalRoutineResolution?: boolean;
+    onIncrementalVerification?: (matched: boolean) => void;
     reusableDeclarationRegions?: {
         source: string;
         parsed: ParsedDocument;
@@ -424,6 +427,9 @@ export interface ParsePerformanceMetrics {
     reusedDeclarationCount: number;
     reusedRoutineCount: number;
     symbols: number;
+    routineResolutionStrategy?: 'complete' | 'worklist';
+    routineVerificationStatus?: 'not-requested' | 'matched' | 'fallback';
+    routineVerificationMs?: number;
 }
 export interface ParsedReferencesMetrics {
     durationMs: number;

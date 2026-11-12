@@ -1,5 +1,6 @@
 import pluralize from './plural';
 import { performance } from 'node:perf_hooks';
+import { isDeepStrictEqual } from 'node:util';
 
 export interface SourceRange {
   start: number;
@@ -697,6 +698,9 @@ export interface ParserSymbolCatalog {
 
 export interface ParseOptions {
   resolveRoutineCalls?: boolean;
+  incrementalRoutineResolution?: boolean;
+  verifyIncrementalRoutineResolution?: boolean;
+  onIncrementalVerification?: (matched: boolean) => void;
   reusableDeclarationRegions?: {
     source: string;
     parsed: ParsedDocument;
@@ -814,6 +818,9 @@ export interface ParsePerformanceMetrics {
   reusedDeclarationCount: number;
   reusedRoutineCount: number;
   symbols: number;
+  routineResolutionStrategy?: 'complete' | 'worklist';
+  routineVerificationStatus?: 'not-requested' | 'matched' | 'fallback';
+  routineVerificationMs?: number;
 }
 
 interface RoutineResolutionProfileCounters {
@@ -1746,8 +1753,69 @@ function resolveTypeDeclarationSyntaxCore(
   const routineVariableValidationMs = onProfile
     ? routineVariableValidationFinishedAt - routineVariableValidationStartedAt
     : 0;
+  const routineResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const parsedDocument: ParsedDocument = {
+    declarations,
+    globalVariables,
+    routines,
+    regions: createParserRegions(
+      source,
+      parserSource,
+      declarations,
+      globalVariables,
+      routines,
+      diagnostics,
+      lexicallyComplete,
+      syntax.syntaxDiagnostics
+    ),
+    commentRanges,
+    symbols,
+    globalVariableSymbols,
+    routineSymbols,
+    diagnostics
+  };
+  let routineVerificationStatus: ParsePerformanceMetrics[
+    'routineVerificationStatus'
+  ] = 'not-requested';
+  let routineVerificationStartedAt = 0;
+  let routineVerificationMs = 0;
+  let verificationFallback: ParsedDocument | undefined;
+  if (
+    options.incrementalRoutineResolution &&
+    options.verifyIncrementalRoutineResolution
+  ) {
+    routineVerificationStartedAt = performance.now();
+    const completeParse = parseTypeDeclarations(
+      source,
+      workspaceSymbols,
+      undefined,
+      {
+        ...options,
+        incrementalRoutineResolution: false,
+        verifyIncrementalRoutineResolution: false,
+        onIncrementalVerification: undefined,
+        reusableRoutineRegions: undefined
+      }
+    );
+    const getSnapshot = (parsed: ParsedDocument) => ({
+      declarations: parsed.declarations,
+      globalVariables: parsed.globalVariables,
+      routines: parsed.routines,
+      references: getParsedReferences(parsed),
+      diagnostics: parsed.diagnostics
+    });
+    const matched = isDeepStrictEqual(
+      getSnapshot(parsedDocument),
+      getSnapshot(completeParse)
+    );
+    routineVerificationStatus = matched ? 'matched' : 'fallback';
+    routineVerificationMs = performance.now() - routineVerificationStartedAt;
+    options.onIncrementalVerification?.(matched);
+    if (!matched) {
+      verificationFallback = completeParse;
+    }
+  }
   if (onProfile) {
-    const routineResolutionFinishedAt = performance.now();
     const tokenCountingStartedAt = performance.now();
     const tokenPattern = /[\p{L}\p{N}_]+|[^\s]/gu;
     let tokenCount = 0;
@@ -1835,6 +1903,14 @@ function resolveTypeDeclarationSyntaxCore(
           endTimeMs: routineResolutionFinishedAt,
           durationMs: routineResolutionFinishedAt - routineResolutionStartedAt
         },
+        ...(routineVerificationMs > 0
+          ? [{
+            name: 'incremental-verification',
+            startTimeMs: routineVerificationStartedAt,
+            endTimeMs: routineVerificationStartedAt + routineVerificationMs,
+            durationMs: routineVerificationMs
+          }]
+          : []),
         {
           name: 'profile-token-count',
           startTimeMs: tokenCountingStartedAt,
@@ -1888,31 +1964,17 @@ function resolveTypeDeclarationSyntaxCore(
       reusedRoutineCount: reusedRoutines.size,
       symbols: symbols.entries.length +
         globalVariableSymbols.entries.length +
-        routineSymbols.entries.length
+        routineSymbols.entries.length,
+      routineResolutionStrategy: options.incrementalRoutineResolution
+        ? 'worklist'
+        : 'complete',
+      routineVerificationStatus,
+      routineVerificationMs
     });
   }
   activeRoutineResolutionProfileCounters = undefined;
 
-  return {
-    declarations,
-    globalVariables,
-    routines,
-    regions: createParserRegions(
-      source,
-      parserSource,
-      declarations,
-      globalVariables,
-      routines,
-      diagnostics,
-      lexicallyComplete,
-      syntax.syntaxDiagnostics
-    ),
-    commentRanges,
-    symbols,
-    globalVariableSymbols,
-    routineSymbols,
-    diagnostics
-  };
+  return verificationFallback ?? parsedDocument;
 }
 
 function validateIdentifierPunctuation(

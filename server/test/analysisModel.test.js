@@ -247,6 +247,61 @@ test('records region boundaries and reuses unchanged routine checkpoints', () =>
   );
 });
 
+test('verifies routine worklists and falls back when a reused snapshot differs', () => {
+  const source = [
+    'Rotina para que se primeira:',
+    '  Retorne.'
+  ].join('\n');
+  const previous = parseTypeDeclarations(source);
+  const defaultMetrics = {};
+  parseTypeDeclarations(
+    source,
+    undefined,
+    value => Object.assign(defaultMetrics, value)
+  );
+  assert.equal(defaultMetrics.routineResolutionStrategy, 'complete');
+  const metrics = {};
+  const verificationResults = [];
+  const incrementalOptions = {
+    incrementalRoutineResolution: true,
+    verifyIncrementalRoutineResolution: true,
+    onIncrementalVerification: matched => verificationResults.push(matched),
+    reusableRoutineRegions: {
+      source,
+      routines: previous.routines
+    }
+  };
+  const verified = parseTypeDeclarations(
+    source,
+    undefined,
+    value => Object.assign(metrics, value),
+    incrementalOptions
+  );
+  const complete = parseTypeDeclarations(source);
+
+  assert.equal(metrics.routineResolutionStrategy, 'worklist');
+  assert.equal(metrics.routineVerificationStatus, 'matched');
+  assert.equal(metrics.reusedRoutineCount, 1);
+  assert.deepEqual(verificationResults, [true]);
+  assert.deepEqual(verified.routines, complete.routines);
+  assert.deepEqual(verified.diagnostics, complete.diagnostics);
+  assert.deepEqual(getParsedReferences(verified), getParsedReferences(complete));
+
+  previous.routines[0].isCompatible = !previous.routines[0].isCompatible;
+  const fallbackMetrics = {};
+  const fallback = parseTypeDeclarations(
+    source,
+    undefined,
+    value => Object.assign(fallbackMetrics, value),
+    incrementalOptions
+  );
+  assert.equal(fallbackMetrics.routineVerificationStatus, 'fallback');
+  assert.deepEqual(verificationResults, [true, false]);
+  assert.deepEqual(fallback.routines, complete.routines);
+  assert.deepEqual(fallback.diagnostics, complete.diagnostics);
+  assert.deepEqual(getParsedReferences(fallback), getParsedReferences(complete));
+});
+
 test('marks only lexically and syntactically complete regions as reusable', () => {
   const source = [
     'Uma pessoa é uma estrutura.',
