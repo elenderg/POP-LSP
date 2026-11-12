@@ -325,7 +325,23 @@ export class DeclarationDependencyGraph {
       });
       this.regionsByUri.set(uri, documentNodes);
 
-      const references = (analysis ?? getDocumentAnalysis(parsed)).references;
+      const references = analysis?.references ?? getParsedReferences(parsed);
+      const routinesByStart = new Map(
+        parsed.routines.map(routine => [routine.range.start, routine])
+      );
+      const declarationsByStart = new Map<
+        number,
+        TypeDeclaration | GlobalVariableDeclaration
+      >([
+        ...parsed.declarations.map(declaration => [
+          declaration.range.start,
+          declaration
+        ] as const),
+        ...parsed.globalVariables.map(declaration => [
+          declaration.range.start,
+          declaration
+        ] as const)
+      ]);
       for (const reference of references) {
         const owner = findDeclarationRegion(documentNodes, reference.range);
         if (!owner) {
@@ -356,9 +372,7 @@ export class DeclarationDependencyGraph {
       const analysisReferences = references;
       for (const regionNode of documentNodes) {
         if (regionNode.region.kind === 'routine') {
-          const routine = parsed.routines.find(candidate =>
-            candidate.range.start === regionNode.region.range.start
-          );
+          const routine = routinesByStart.get(regionNode.region.range.start);
           if (!routine) {
             addAmbiguousDependent(directory, 'type', regionNode);
             addAmbiguousDependent(directory, 'routine', regionNode);
@@ -425,13 +439,9 @@ export class DeclarationDependencyGraph {
           continue;
         }
 
-        const declaration = regionNode.region.kind === 'type'
-          ? parsed.declarations.find(candidate =>
-            candidate.range.start === regionNode.region.range.start
-          )
-          : parsed.globalVariables.find(candidate =>
-            candidate.range.start === regionNode.region.range.start
-          );
+        const declaration = declarationsByStart.get(
+          regionNode.region.range.start
+        );
         if (
           declaration?.fields?.some(field =>
             field.kind === 'named' && field.usesTypeAlias
@@ -821,10 +831,33 @@ export class WorkspaceAnalysisIndex {
     documents: Iterable<{
       uri: string;
       directory: string;
-      analysis: DocumentAnalysis;
+      parsed?: ParsedDocument;
+      analysis?: DocumentAnalysis;
     }>
   ) {
-    const workspaceDocuments = [...documents];
+    const workspaceDocuments = [...documents].map(entry => {
+      if (!entry.parsed && !entry.analysis) {
+        throw new Error(
+          'Workspace analysis documents require a parsed document or document analysis.'
+        );
+      }
+      const references = entry.analysis?.references ??
+        getParsedReferences(entry.parsed!);
+      const routines = entry.parsed?.routines ??
+        [...entry.analysis!.nodes.values()].flatMap(node =>
+          node.kind === 'routine-declaration' && node.routineDeclaration
+            ? [node.routineDeclaration]
+            : []
+        );
+      const diagnostics = entry.parsed?.diagnostics ??
+        entry.analysis?.diagnostics ?? [];
+      return {
+        ...entry,
+        references,
+        routines,
+        diagnostics
+      };
+    });
     let documentCount = 0;
     let referenceCount = 0;
     let dependencyCount = 0;
@@ -893,7 +926,12 @@ export class WorkspaceAnalysisIndex {
         dependencyCount++;
       }
     };
-    for (const { uri, directory, analysis } of workspaceDocuments) {
+    for (const {
+      uri,
+      directory,
+      references,
+      routines
+    } of workspaceDocuments) {
       documentCount++;
       this.dependenciesByDocument.set(uri, new Set());
       this.dependentsByDocument.set(uri, new Set());
@@ -930,27 +968,34 @@ export class WorkspaceAnalysisIndex {
           routinesByName
         );
       }
-      for (const node of analysis.nodes.values()) {
-        if (
-          node.kind !== 'routine-declaration' ||
-          !node.routineDeclaration ||
-          !node.symbolId
-        ) {
+      const routineReferencesByRange = new Map(
+        references
+          .filter(reference =>
+            reference.kind === 'routine' && reference.declaration
+          )
+          .map(reference => [
+            `${reference.range.start}:${reference.range.end}`,
+            reference
+          ])
+      );
+      for (const routine of routines) {
+        const primaryReference = routineReferencesByRange.get(
+          `${routine.name.range.start}:${routine.name.range.end}`
+        );
+        if (!primaryReference) {
           continue;
         }
-        const routines = routinesBySymbol.get(node.symbolId) ?? [];
-        routines.push({ uri, declaration: node.routineDeclaration });
-        routinesBySymbol.set(node.symbolId, routines);
+        const symbolId = referenceKey(primaryReference);
+        const symbolRoutines = routinesBySymbol.get(symbolId) ?? [];
+        symbolRoutines.push({ uri, declaration: routine });
+        routinesBySymbol.set(symbolId, symbolRoutines);
         const routinesWithName =
-          routinesByName.get(node.routineDeclaration.name.normalizedName) ?? [];
-        routinesWithName.push({ uri, declaration: node.routineDeclaration });
-        routinesByName.set(
-          node.routineDeclaration.name.normalizedName,
-          routinesWithName
-        );
-        for (const alias of node.routineDeclaration.alternateNames) {
+          routinesByName.get(routine.name.normalizedName) ?? [];
+        routinesWithName.push({ uri, declaration: routine });
+        routinesByName.set(routine.name.normalizedName, routinesWithName);
+        for (const alias of routine.alternateNames) {
           const aliasCandidates = routinesByName.get(alias.normalizedName) ?? [];
-          aliasCandidates.push({ uri, declaration: node.routineDeclaration });
+          aliasCandidates.push({ uri, declaration: routine });
           routinesByName.set(alias.normalizedName, aliasCandidates);
           addPotentialDependent(
             directory,
@@ -961,9 +1006,9 @@ export class WorkspaceAnalysisIndex {
           );
         }
       }
-      for (const reference of analysis.references) {
+      for (const reference of references) {
         referenceCount++;
-        const symbol = analysis.getSymbol(reference);
+        const symbolId = referenceKey(reference);
         if (reference.declaration) {
           addPotentialDependent(
             directory,
@@ -973,17 +1018,14 @@ export class WorkspaceAnalysisIndex {
             uri
           );
         }
-        if (!symbol) {
-          continue;
-        }
         const documentReferences =
-          documentReferencesBySymbol.get(symbol.id) ?? [];
+          documentReferencesBySymbol.get(symbolId) ?? [];
         documentReferences.push({ uri, reference });
-        documentReferencesBySymbol.set(symbol.id, documentReferences);
+        documentReferencesBySymbol.set(symbolId, documentReferences);
         if (reference.scope === undefined) {
-          const references = referencesBySymbol.get(symbol.id) ?? [];
-          references.push({ uri, reference });
-          referencesBySymbol.set(symbol.id, references);
+          const symbolReferences = referencesBySymbol.get(symbolId) ?? [];
+          symbolReferences.push({ uri, reference });
+          referencesBySymbol.set(symbolId, symbolReferences);
         }
         if (reference.kind === 'type' && reference.declaration) {
           let declarationsByName =
@@ -1001,8 +1043,14 @@ export class WorkspaceAnalysisIndex {
         }
       }
     }
-    for (const { uri, directory, analysis } of workspaceDocuments) {
-      for (const diagnostic of analysis.diagnostics) {
+    for (const {
+      uri,
+      directory,
+      references,
+      diagnostics,
+      routines
+    } of workspaceDocuments) {
+      for (const diagnostic of diagnostics) {
         const quotedName = /"([^"]+)"/u.exec(diagnostic.message)?.[1];
         const normalizedName = quotedName
           ? normalizeUnresolvedName(quotedName)
@@ -1125,7 +1173,7 @@ export class WorkspaceAnalysisIndex {
           }
         }
       }
-      for (const reference of analysis.references) {
+      for (const reference of references) {
         if (reference.declaration) {
           continue;
         }
@@ -1156,29 +1204,14 @@ export class WorkspaceAnalysisIndex {
           );
         }
       }
-      for (const node of analysis.nodes.values()) {
-        const call = node.routineCall;
-        if (!call) {
-          continue;
-        }
-        addPotentialDependent(
-          directory,
-          'routine',
-          call.name.normalizedName,
-          undefined,
-          uri
-        );
-        if (call.target) {
-          continue;
-        }
-        const candidates = this.routineDeclarationsByDirectoryAndName
-          .get(directory)
-          ?.get(call.name.normalizedName) ?? [];
-        if (candidates.length > 0) {
-          for (const candidate of candidates) {
-            addDependency(uri, candidate.uri, 'routine');
-          }
-        } else {
+      for (const routine of routines) {
+        const calls = [
+          ...routine.calls,
+          ...routine.conditionals.flatMap(conditional =>
+            conditional.predicateCall ? [conditional.predicateCall] : []
+          )
+        ];
+        for (const call of calls) {
           addPotentialDependent(
             directory,
             'routine',
@@ -1186,6 +1219,25 @@ export class WorkspaceAnalysisIndex {
             undefined,
             uri
           );
+          if (call.target) {
+            continue;
+          }
+          const candidates = this.routineDeclarationsByDirectoryAndName
+            .get(directory)
+            ?.get(call.name.normalizedName) ?? [];
+          if (candidates.length > 0) {
+            for (const candidate of candidates) {
+              addDependency(uri, candidate.uri, 'routine');
+            }
+          } else {
+            addPotentialDependent(
+              directory,
+              'routine',
+              call.name.normalizedName,
+              undefined,
+              uri
+            );
+          }
         }
       }
     }
@@ -1599,10 +1651,27 @@ function fieldRange(field: TypeField): SourceRange {
   return field.range;
 }
 
+interface ExpressionReferenceIndex {
+  references: readonly ParsedReference[];
+}
+
+function createExpressionReferenceIndex(
+  references: readonly ParsedReference[]
+): ExpressionReferenceIndex {
+  return {
+    references: references
+      .filter(reference => !reference.declaration)
+      .sort((first, second) =>
+        first.range.start - second.range.start ||
+        first.range.end - second.range.end
+      )
+  };
+}
+
 function addExpressionNodes(
   parent: SyntaxNode,
   expression: RoutineExpression | undefined,
-  references: readonly ParsedReference[],
+  referenceIndex: ExpressionReferenceIndex,
   addNode: (
     kind: SyntaxNodeKind,
     range: SourceRange,
@@ -1644,22 +1713,28 @@ function addExpressionNodes(
     } else if (current.expression.kind === 'unary') {
       pending.push({ expression: current.expression.operand, parent: node });
     } else {
-      const operandReferences = references
-        .filter(reference =>
-          !reference.declaration &&
-          reference.range.start >= current.expression.range.start &&
-          reference.range.end <= current.expression.range.end
-        )
-        .sort((first, second) =>
-          first.range.start - second.range.start ||
-          first.range.end - second.range.end
-        );
+      const { references } = referenceIndex;
+      let low = 0;
+      let high = references.length;
+      while (low < high) {
+        const middle = (low + high) >>> 1;
+        if (references[middle].range.start < current.expression.range.start) {
+          low = middle + 1;
+        } else {
+          high = middle;
+        }
+      }
       const parts: ExpressionOperandPart[] = [];
       let cursor = current.expression.range.start;
-      for (const reference of operandReferences) {
-        if (reference.range.start < cursor) {
+      for (let index = low; index < references.length; index++) {
+        const reference = references[index];
+        if (reference.range.start >= current.expression.range.end) {
+          break;
+        }
+        if (reference.range.end > current.expression.range.end) {
           continue;
         }
+        if (reference.range.start < cursor) continue;
         if (cursor < reference.range.start) {
           parts.push({
             kind: 'text',
@@ -1734,6 +1809,7 @@ export function getDocumentAnalysis(
 
   const referenceExtractionStartedAt = onProfile ? performance.now() : 0;
   const references = getParsedReferences(parsed);
+  const expressionReferenceIndex = createExpressionReferenceIndex(references);
   const referenceExtractionMs = onProfile
     ? performance.now() - referenceExtractionStartedAt
     : 0;
@@ -2424,7 +2500,12 @@ export function getDocumentAnalysis(
         undefined,
         { assignment }
       );
-      addExpressionNodes(child, assignment.expression, references, addNode);
+      addExpressionNodes(
+        child,
+        assignment.expression,
+        expressionReferenceIndex,
+        addNode
+      );
       addAccessNodes(
         child,
         assignment.fieldAccesses,
@@ -2439,7 +2520,12 @@ export function getDocumentAnalysis(
         undefined,
         { output }
       );
-      addExpressionNodes(child, output.expression, references, addNode);
+      addExpressionNodes(
+        child,
+        output.expression,
+        expressionReferenceIndex,
+        addNode
+      );
       addAccessNodes(
         child,
         output.fieldAccesses,

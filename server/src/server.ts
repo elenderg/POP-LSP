@@ -188,7 +188,7 @@ function getWorkspaceAnalysisIndex(
     [...workspaceDocuments.values()].map(({ document, parsed }) => ({
       uri: document.uri,
       directory: dirname(fileURLToPath(document.uri)),
-      analysis: getDocumentAnalysis(parsed, document.getText().length)
+      parsed
     }))
   );
   workspaceAnalysisIndexes.set(workspaceDocuments, index);
@@ -230,8 +230,7 @@ function getWorkspaceDeclarationDependencyGraph(
     [...workspaceDocuments.values()].map(({ document, parsed }) => ({
       uri: document.uri,
       directory: dirname(fileURLToPath(document.uri)),
-      parsed,
-      analysis: getDocumentAnalysis(parsed, document.getText().length)
+      parsed
     }))
   );
   workspaceDeclarationDependencyGraphs.set(workspaceDocuments, graph);
@@ -526,21 +525,6 @@ function getSelectiveContextReuseUris(
     return new Set();
   }
 
-  const changedDocumentHasDiagnostics = [...changedUris].some(uri =>
-    (oldEntries.get(uri)?.parsed.diagnostics.length ?? 0) > 0 ||
-    (currentByUri.get(uri)?.parsed.diagnostics.length ?? 0) > 0
-  );
-  if (changedDocumentHasDiagnostics) {
-    logSelection({
-      reuse: false,
-      reason: 'changed-document-has-diagnostics',
-      previousDocuments: oldEntries.size,
-      currentDocuments: current.length,
-      changedDocuments: changedUris.size
-    });
-    return undefined;
-  }
-
   const declarationChangesByKey = new Map<
     string,
     WorkspaceDeclarationChange
@@ -580,22 +564,6 @@ function getSelectiveContextReuseUris(
     }
   }
   const declarationChanges = [...declarationChangesByKey.values()];
-  const diagnosticDocuments = [...oldEntries.values()].filter(entry =>
-    entry.parsed.diagnostics.length > 0
-  ).length;
-  if (declarationChanges.length > 0 && diagnosticDocuments > 0) {
-    logSelection({
-      reuse: false,
-      reason: 'diagnostic-snapshot-has-declaration-changes',
-      previousDocuments: oldEntries.size,
-      currentDocuments: current.length,
-      changedDocuments: changedUris.size,
-      declarationChanges: declarationChanges.length,
-      diagnosticDocuments
-    });
-    return undefined;
-  }
-
   const previousIndex = getWorkspaceAnalysisIndex(previous);
   const regionGraph = getWorkspaceDeclarationDependencyGraph(previous);
   const affected = new Set<string>();
@@ -706,44 +674,135 @@ function getReusableRoutineRegionSnapshots(
   const currentByUri = new Map(current.map(entry => [entry.uri, entry]));
   if (
     oldEntries.size !== currentByUri.size ||
-    [...oldEntries.keys()].some(uri => !currentByUri.has(uri)) ||
-    [...oldEntries.values()].some(entry =>
-      entry.parsed.diagnostics.length > 0
-    )
+    [...oldEntries.keys()].some(uri => !currentByUri.has(uri))
   ) {
     return snapshots;
   }
-  const changedUris = [...currentByUri.values()].filter(entry =>
-    previousSources.get(entry.uri) !== entry.source
+  const changesByKey = new Map<string, WorkspaceDeclarationChange>();
+  const changedUris = new Set<string>();
+  for (const [uri, entry] of currentByUri) {
+    const previousEntry = oldEntries.get(uri);
+    const previousSource = previousSources.get(uri);
+    if (!previousEntry || previousSource === undefined) {
+      return new Map();
+    }
+    if (previousSource !== entry.source) {
+      changedUris.add(uri);
+    }
+    const previousSurface = getDeclarationSurface(
+      previousEntry.parsed,
+      previousSource
+    );
+    const currentSurface = getDeclarationSurface(entry.parsed, entry.source);
+    for (const key of new Set([
+      ...previousSurface.keys(),
+      ...currentSurface.keys()
+    ])) {
+      const oldDeclaration = previousSurface.get(key);
+      const newDeclaration = currentSurface.get(key);
+      if (
+        oldDeclaration &&
+        newDeclaration &&
+        JSON.stringify(oldDeclaration.fingerprints) ===
+          JSON.stringify(newDeclaration.fingerprints)
+      ) {
+        continue;
+      }
+      if (oldDeclaration) {
+        changesByKey.set(key, oldDeclaration.change);
+      }
+      if (newDeclaration) {
+        changesByKey.set(key, newDeclaration.change);
+      }
+    }
+  }
+
+  const graph = getWorkspaceDeclarationDependencyGraph(previous);
+  const previousRegionsByUri = new Map<
+    string,
+    Map<string, DeclarationRegionNode>
+  >();
+  for (const uri of oldEntries.keys()) {
+    const regions = graph.getRegions(uri);
+    const keys = getParserRegionKeys(regions.map(node => node.region));
+    previousRegionsByUri.set(
+      uri,
+      new Map(regions.map((node, index) => [keys[index], node]))
+    );
+  }
+
+  const changedRegionIds: string[] = [];
+  for (const uri of changedUris) {
+    const currentEntry = currentByUri.get(uri)!;
+    const remainingKeys = new Map<string, number>();
+    for (const key of getParserRegionKeys(currentEntry.parsed.regions)) {
+      remainingKeys.set(key, (remainingKeys.get(key) ?? 0) + 1);
+    }
+    const previousRegions = graph.getRegions(uri);
+    const previousKeys = getParserRegionKeys(
+      previousRegions.map(node => node.region)
+    );
+    for (let index = 0; index < previousRegions.length; index++) {
+      const key = previousKeys[index];
+      const remaining = remainingKeys.get(key) ?? 0;
+      if (remaining > 0) {
+        remainingKeys.set(key, remaining - 1);
+      } else {
+        changedRegionIds.push(previousRegions[index].id);
+      }
+    }
+  }
+  const affectedRegionIds = graph.getAffectedRegionsForDeclarationChanges(
+    directory,
+    [...changesByKey.values()],
+    changedRegionIds
   );
-  if (changedUris.length !== 1) {
-    return snapshots;
+  for (const [uri, entry] of currentByUri) {
+    const oldEntry = oldEntries.get(uri)!;
+    const oldSource = previousSources.get(uri)!;
+    const oldRegionsByKey = previousRegionsByUri.get(uri)!;
+    const oldRoutinesByRange = new Map(
+      oldEntry.parsed.routines.map(routine => [
+        `${routine.range.start}:${routine.bodyRange.end}`,
+        routine
+      ])
+    );
+    const reusableRoutines: RoutineDeclaration[] = [];
+    const keys = getParserRegionKeys(entry.parsed.regions);
+    for (let index = 0; index < entry.parsed.regions.length; index++) {
+      const region = entry.parsed.regions[index];
+      if (region.kind !== 'routine' || !region.syntacticallyComplete) {
+        continue;
+      }
+      const previousNode = oldRegionsByKey.get(keys[index]);
+      if (!previousNode || affectedRegionIds.has(previousNode.id)) {
+        continue;
+      }
+      const previousRegion = previousNode.region;
+      if (
+        !previousRegion.complete ||
+        oldSource.slice(
+          previousRegion.range.start,
+          previousRegion.range.end
+        ).trimEnd() !==
+          entry.source.slice(region.range.start, region.range.end).trimEnd()
+      ) {
+        continue;
+      }
+      const routine = oldRoutinesByRange.get(
+        `${previousRegion.range.start}:${previousRegion.range.end}`
+      );
+      if (routine) {
+        reusableRoutines.push(routine);
+      }
+    }
+    if (reusableRoutines.length > 0) {
+      snapshots.set(uri, {
+        source: oldSource,
+        routines: reusableRoutines
+      });
+    }
   }
-  const changed = changedUris[0];
-  const previousEntry = oldEntries.get(changed.uri);
-  if (!previousEntry) {
-    return snapshots;
-  }
-  const previousSurface = getDeclarationSurface(
-    previousEntry.parsed,
-    previousSources.get(changed.uri) ?? ''
-  );
-  const currentSurface = getDeclarationSurface(changed.parsed, changed.source);
-  if (
-    previousSurface.size !== currentSurface.size ||
-    [...previousSurface].some(([key, oldDeclaration]) => {
-      const currentDeclaration = currentSurface.get(key);
-      return !currentDeclaration ||
-        JSON.stringify(oldDeclaration.fingerprints) !==
-          JSON.stringify(currentDeclaration.fingerprints);
-    })
-  ) {
-    return snapshots;
-  }
-  snapshots.set(changed.uri, {
-    source: previousSources.get(changed.uri) ?? '',
-    routines: previousEntry.parsed.routines
-  });
   return snapshots;
 }
 
@@ -780,10 +839,7 @@ function getReusableSemanticRegionSnapshots(
   const currentByUri = new Map(current.map(entry => [entry.uri, entry]));
   if (
     oldEntries.size !== currentByUri.size ||
-    [...oldEntries.keys()].some(uri => !currentByUri.has(uri)) ||
-    [...oldEntries.values()].some(entry =>
-      entry.parsed.diagnostics.length > 0
-    )
+    [...oldEntries.keys()].some(uri => !currentByUri.has(uri))
   ) {
     return snapshots;
   }
@@ -2203,11 +2259,6 @@ function createDocumentSymbols(
   document: TextDocument,
   requestId = 0
 ): DocumentSymbol[] {
-  const analysis = getDocumentAnalysis(
-    parsed,
-    document.getText().length,
-    documentAnalysisProfiler(requestId, document.uri)
-  );
   const documentUri = document.uri;
   const cacheLookupStartedAt = profileEnabled ? performance.now() : 0;
   const cachedSymbols = documentSymbolsCache.get(parsed);
@@ -2225,7 +2276,6 @@ function createDocumentSymbols(
   const { symbols, metrics } = buildDocumentSymbols(
     parsed,
     document,
-    analysis,
     profileEnabled
   );
   if (profileEnabled) {

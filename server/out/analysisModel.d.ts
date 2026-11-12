@@ -174,7 +174,8 @@ export declare class WorkspaceAnalysisIndex {
     constructor(documents: Iterable<{
         uri: string;
         directory: string;
-        analysis: DocumentAnalysis;
+        parsed?: ParsedDocument;
+        analysis?: DocumentAnalysis;
     }>);
     getReferences(directory: string, reference: ParsedReference, documentUri?: string): readonly WorkspaceReference[];
     getDeclaration(directory: string, reference: ParsedReference, documentUri?: string): WorkspaceReference | undefined;

@@ -55,7 +55,18 @@ class DeclarationDependencyGraph {
                 return node;
             });
             this.regionsByUri.set(uri, documentNodes);
-            const references = (analysis ?? getDocumentAnalysis(parsed)).references;
+            const references = analysis?.references ?? (0, typeParser_1.getParsedReferences)(parsed);
+            const routinesByStart = new Map(parsed.routines.map(routine => [routine.range.start, routine]));
+            const declarationsByStart = new Map([
+                ...parsed.declarations.map(declaration => [
+                    declaration.range.start,
+                    declaration
+                ]),
+                ...parsed.globalVariables.map(declaration => [
+                    declaration.range.start,
+                    declaration
+                ])
+            ]);
             for (const reference of references) {
                 const owner = findDeclarationRegion(documentNodes, reference.range);
                 if (!owner) {
@@ -78,7 +89,7 @@ class DeclarationDependencyGraph {
             const analysisReferences = references;
             for (const regionNode of documentNodes) {
                 if (regionNode.region.kind === 'routine') {
-                    const routine = parsed.routines.find(candidate => candidate.range.start === regionNode.region.range.start);
+                    const routine = routinesByStart.get(regionNode.region.range.start);
                     if (!routine) {
                         addAmbiguousDependent(directory, 'type', regionNode);
                         addAmbiguousDependent(directory, 'routine', regionNode);
@@ -114,9 +125,7 @@ class DeclarationDependencyGraph {
                     }
                     continue;
                 }
-                const declaration = regionNode.region.kind === 'type'
-                    ? parsed.declarations.find(candidate => candidate.range.start === regionNode.region.range.start)
-                    : parsed.globalVariables.find(candidate => candidate.range.start === regionNode.region.range.start);
+                const declaration = declarationsByStart.get(regionNode.region.range.start);
                 if (declaration?.fields?.some(field => field.kind === 'named' && field.usesTypeAlias)) {
                     addAmbiguousDependent(directory, 'type', regionNode);
                     const aliases = declaration.fields?.filter((field) => field.kind === 'named' && field.usesTypeAlias) ?? [];
@@ -350,7 +359,25 @@ class WorkspaceAnalysisIndex {
     dependentsByDocument = new Map();
     dependencyKindsByDocument = new Map();
     constructor(documents) {
-        const workspaceDocuments = [...documents];
+        const workspaceDocuments = [...documents].map(entry => {
+            if (!entry.parsed && !entry.analysis) {
+                throw new Error('Workspace analysis documents require a parsed document or document analysis.');
+            }
+            const references = entry.analysis?.references ??
+                (0, typeParser_1.getParsedReferences)(entry.parsed);
+            const routines = entry.parsed?.routines ??
+                [...entry.analysis.nodes.values()].flatMap(node => node.kind === 'routine-declaration' && node.routineDeclaration
+                    ? [node.routineDeclaration]
+                    : []);
+            const diagnostics = entry.parsed?.diagnostics ??
+                entry.analysis?.diagnostics ?? [];
+            return {
+                ...entry,
+                references,
+                routines,
+                diagnostics
+            };
+        });
         let documentCount = 0;
         let referenceCount = 0;
         let dependencyCount = 0;
@@ -397,7 +424,7 @@ class WorkspaceAnalysisIndex {
                 dependencyCount++;
             }
         };
-        for (const { uri, directory, analysis } of workspaceDocuments) {
+        for (const { uri, directory, references, routines } of workspaceDocuments) {
             documentCount++;
             this.dependenciesByDocument.set(uri, new Set());
             this.dependentsByDocument.set(uri, new Set());
@@ -419,41 +446,44 @@ class WorkspaceAnalysisIndex {
                 routinesByName = new Map();
                 this.routineDeclarationsByDirectoryAndName.set(directory, routinesByName);
             }
-            for (const node of analysis.nodes.values()) {
-                if (node.kind !== 'routine-declaration' ||
-                    !node.routineDeclaration ||
-                    !node.symbolId) {
+            const routineReferencesByRange = new Map(references
+                .filter(reference => reference.kind === 'routine' && reference.declaration)
+                .map(reference => [
+                `${reference.range.start}:${reference.range.end}`,
+                reference
+            ]));
+            for (const routine of routines) {
+                const primaryReference = routineReferencesByRange.get(`${routine.name.range.start}:${routine.name.range.end}`);
+                if (!primaryReference) {
                     continue;
                 }
-                const routines = routinesBySymbol.get(node.symbolId) ?? [];
-                routines.push({ uri, declaration: node.routineDeclaration });
-                routinesBySymbol.set(node.symbolId, routines);
-                const routinesWithName = routinesByName.get(node.routineDeclaration.name.normalizedName) ?? [];
-                routinesWithName.push({ uri, declaration: node.routineDeclaration });
-                routinesByName.set(node.routineDeclaration.name.normalizedName, routinesWithName);
-                for (const alias of node.routineDeclaration.alternateNames) {
+                const symbolId = referenceKey(primaryReference);
+                const symbolRoutines = routinesBySymbol.get(symbolId) ?? [];
+                symbolRoutines.push({ uri, declaration: routine });
+                routinesBySymbol.set(symbolId, symbolRoutines);
+                const routinesWithName = routinesByName.get(routine.name.normalizedName) ?? [];
+                routinesWithName.push({ uri, declaration: routine });
+                routinesByName.set(routine.name.normalizedName, routinesWithName);
+                for (const alias of routine.alternateNames) {
                     const aliasCandidates = routinesByName.get(alias.normalizedName) ?? [];
-                    aliasCandidates.push({ uri, declaration: node.routineDeclaration });
+                    aliasCandidates.push({ uri, declaration: routine });
                     routinesByName.set(alias.normalizedName, aliasCandidates);
                     addPotentialDependent(directory, 'routine', alias.normalizedName, undefined, uri);
                 }
             }
-            for (const reference of analysis.references) {
+            for (const reference of references) {
                 referenceCount++;
-                const symbol = analysis.getSymbol(reference);
+                const symbolId = referenceKey(reference);
                 if (reference.declaration) {
                     addPotentialDependent(directory, reference.kind, reference.name, reference.container, uri);
                 }
-                if (!symbol) {
-                    continue;
-                }
-                const documentReferences = documentReferencesBySymbol.get(symbol.id) ?? [];
+                const documentReferences = documentReferencesBySymbol.get(symbolId) ?? [];
                 documentReferences.push({ uri, reference });
-                documentReferencesBySymbol.set(symbol.id, documentReferences);
+                documentReferencesBySymbol.set(symbolId, documentReferences);
                 if (reference.scope === undefined) {
-                    const references = referencesBySymbol.get(symbol.id) ?? [];
-                    references.push({ uri, reference });
-                    referencesBySymbol.set(symbol.id, references);
+                    const symbolReferences = referencesBySymbol.get(symbolId) ?? [];
+                    symbolReferences.push({ uri, reference });
+                    referencesBySymbol.set(symbolId, symbolReferences);
                 }
                 if (reference.kind === 'type' && reference.declaration) {
                     let declarationsByName = this.typeDeclarationsByDirectoryAndName.get(directory);
@@ -467,8 +497,8 @@ class WorkspaceAnalysisIndex {
                 }
             }
         }
-        for (const { uri, directory, analysis } of workspaceDocuments) {
-            for (const diagnostic of analysis.diagnostics) {
+        for (const { uri, directory, references, diagnostics, routines } of workspaceDocuments) {
+            for (const diagnostic of diagnostics) {
                 const quotedName = /"([^"]+)"/u.exec(diagnostic.message)?.[1];
                 const normalizedName = quotedName
                     ? normalizeUnresolvedName(quotedName)
@@ -535,7 +565,7 @@ class WorkspaceAnalysisIndex {
                     }
                 }
             }
-            for (const reference of analysis.references) {
+            for (const reference of references) {
                 if (reference.declaration) {
                     continue;
                 }
@@ -556,25 +586,27 @@ class WorkspaceAnalysisIndex {
                     addPotentialDependent(directory, reference.kind, reference.name, reference.container, uri);
                 }
             }
-            for (const node of analysis.nodes.values()) {
-                const call = node.routineCall;
-                if (!call) {
-                    continue;
-                }
-                addPotentialDependent(directory, 'routine', call.name.normalizedName, undefined, uri);
-                if (call.target) {
-                    continue;
-                }
-                const candidates = this.routineDeclarationsByDirectoryAndName
-                    .get(directory)
-                    ?.get(call.name.normalizedName) ?? [];
-                if (candidates.length > 0) {
-                    for (const candidate of candidates) {
-                        addDependency(uri, candidate.uri, 'routine');
-                    }
-                }
-                else {
+            for (const routine of routines) {
+                const calls = [
+                    ...routine.calls,
+                    ...routine.conditionals.flatMap(conditional => conditional.predicateCall ? [conditional.predicateCall] : [])
+                ];
+                for (const call of calls) {
                     addPotentialDependent(directory, 'routine', call.name.normalizedName, undefined, uri);
+                    if (call.target) {
+                        continue;
+                    }
+                    const candidates = this.routineDeclarationsByDirectoryAndName
+                        .get(directory)
+                        ?.get(call.name.normalizedName) ?? [];
+                    if (candidates.length > 0) {
+                        for (const candidate of candidates) {
+                            addDependency(uri, candidate.uri, 'routine');
+                        }
+                    }
+                    else {
+                        addPotentialDependent(directory, 'routine', call.name.normalizedName, undefined, uri);
+                    }
                 }
             }
         }
@@ -884,7 +916,15 @@ function getFieldTypeName(field) {
 function fieldRange(field) {
     return field.range;
 }
-function addExpressionNodes(parent, expression, references, addNode) {
+function createExpressionReferenceIndex(references) {
+    return {
+        references: references
+            .filter(reference => !reference.declaration)
+            .sort((first, second) => first.range.start - second.range.start ||
+            first.range.end - second.range.end)
+    };
+}
+function addExpressionNodes(parent, expression, referenceIndex, addNode) {
     if (!expression) {
         return;
     }
@@ -904,18 +944,30 @@ function addExpressionNodes(parent, expression, references, addNode) {
             pending.push({ expression: current.expression.operand, parent: node });
         }
         else {
-            const operandReferences = references
-                .filter(reference => !reference.declaration &&
-                reference.range.start >= current.expression.range.start &&
-                reference.range.end <= current.expression.range.end)
-                .sort((first, second) => first.range.start - second.range.start ||
-                first.range.end - second.range.end);
+            const { references } = referenceIndex;
+            let low = 0;
+            let high = references.length;
+            while (low < high) {
+                const middle = (low + high) >>> 1;
+                if (references[middle].range.start < current.expression.range.start) {
+                    low = middle + 1;
+                }
+                else {
+                    high = middle;
+                }
+            }
             const parts = [];
             let cursor = current.expression.range.start;
-            for (const reference of operandReferences) {
-                if (reference.range.start < cursor) {
+            for (let index = low; index < references.length; index++) {
+                const reference = references[index];
+                if (reference.range.start >= current.expression.range.end) {
+                    break;
+                }
+                if (reference.range.end > current.expression.range.end) {
                     continue;
                 }
+                if (reference.range.start < cursor)
+                    continue;
                 if (cursor < reference.range.start) {
                     parts.push({
                         kind: 'text',
@@ -973,6 +1025,7 @@ function getDocumentAnalysis(parsed, sourceLength = getDocumentSourceEnd(parsed)
     }
     const referenceExtractionStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
     const references = (0, typeParser_1.getParsedReferences)(parsed);
+    const expressionReferenceIndex = createExpressionReferenceIndex(references);
     const referenceExtractionMs = onProfile
         ? node_perf_hooks_1.performance.now() - referenceExtractionStartedAt
         : 0;
@@ -1409,12 +1462,12 @@ function getDocumentAnalysis(parsed, sourceLength = getDocumentSourceEnd(parsed)
         ]));
         for (const assignment of routine.assignments) {
             const child = addNode('assignment', assignment.range, statementParentForRangeWithCondition(assignment.range), undefined, { assignment });
-            addExpressionNodes(child, assignment.expression, references, addNode);
+            addExpressionNodes(child, assignment.expression, expressionReferenceIndex, addNode);
             addAccessNodes(child, assignment.fieldAccesses, assignment.variableAccesses);
         }
         for (const output of routine.outputs) {
             const child = addNode('output', output.range, statementParentForRangeWithCondition(output.range), undefined, { output });
-            addExpressionNodes(child, output.expression, references, addNode);
+            addExpressionNodes(child, output.expression, expressionReferenceIndex, addNode);
             addAccessNodes(child, output.fieldAccesses, output.variableAccesses);
         }
         for (const call of routine.calls) {

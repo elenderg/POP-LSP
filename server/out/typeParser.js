@@ -1552,10 +1552,6 @@ function getParserRegionKeysByRange(regions) {
 }
 function reuseSemanticDeclarationRegions(source, currentRegions, declarations, globalVariables, previous) {
     const regionKeys = new Set();
-    if (previous.parsed.diagnostics.length > 0 ||
-        previous.parsed.regions.some(region => !region.complete)) {
-        return { declarations, globalVariables, regionKeys };
-    }
     const previousDeclarationsByRange = new Map(previous.parsed.declarations.map(declaration => [
         parserRegionRangeKey('type', declaration.range),
         declaration

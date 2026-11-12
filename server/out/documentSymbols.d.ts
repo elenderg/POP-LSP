@@ -1,7 +1,6 @@
 import { DocumentSymbol } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { ParsedDocument } from './typeParser';
-import { DocumentAnalysis } from './analysisModel';
 export interface DocumentSymbolBuildMetrics {
     declarations: number;
     globalVariables: number;
@@ -22,4 +21,4 @@ export interface DocumentSymbolBuildResult {
     symbols: DocumentSymbol[];
     metrics: DocumentSymbolBuildMetrics;
 }
-export declare function buildDocumentSymbols(parsed: ParsedDocument, document: TextDocument, analysis: DocumentAnalysis, measureTimings?: boolean): DocumentSymbolBuildResult;
+export declare function buildDocumentSymbols(parsed: ParsedDocument, document: TextDocument, measureTimings?: boolean): DocumentSymbolBuildResult;

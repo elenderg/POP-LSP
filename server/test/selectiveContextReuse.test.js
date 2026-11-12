@@ -96,7 +96,7 @@ function writeWindows1252(filePath, contents) {
   fs.writeFileSync(filePath, Buffer.from(contents, 'latin1'));
 }
 
-test('falls back for diagnostic snapshots and reuses unaffected clean documents', async () => {
+test('reuses dependency-independent documents despite unrelated diagnostics', async () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-context-'));
   const alphaPath = path.join(workspace, 'alpha.pop');
   const betaPath = path.join(workspace, 'beta.pop');
@@ -173,6 +173,12 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
         }
       }
     });
+    await waitForEvent(
+      client.events,
+      event => event.event === 'document-update' &&
+        event.openDocuments === 2,
+      'the two open document updates'
+    );
 
     client.send({
       jsonrpc: '2.0',
@@ -182,21 +188,22 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
         contentChanges: [{ text: 'Uma alfa é um byte.' }]
       }
     });
-    const fallbackSelection = await waitForEvent(
+    const diagnosticRefresh = await waitForEvent(
       client.events,
-      event => event.event === 'workspace-context-reuse-selection' &&
-        event.reason === 'changed-document-has-diagnostics',
-      'the changed diagnostic-bearing document fallback'
+      event => event.event === 'workspace-refresh' &&
+        event.sourceChanges === 1,
+      'the diagnostic-bearing declaration refresh'
     );
-    const fallbackIndex = client.events.indexOf(fallbackSelection);
-    const fallbackRefresh = await waitForEvent(
-      client.events,
-      event => event.event === 'workspace-refresh',
-      'the directory-wide fallback parse',
-      fallbackIndex + 1
+    assert.equal(diagnosticRefresh.contextualParseCount, 2);
+    assert.equal(diagnosticRefresh.selectiveContextCacheHits, 1);
+    const diagnosticSelection = client.events.find(event =>
+      event.event === 'workspace-context-reuse-selection' &&
+      event.requestId === diagnosticRefresh.requestId &&
+      event.reason === 'dependency-closure'
     );
-    assert.equal(fallbackRefresh.contextualParseCount, 3);
-    assert.equal(fallbackRefresh.selectiveContextCacheHits, 0);
+    assert.ok(diagnosticSelection);
+    assert.equal(diagnosticSelection.affectedDocuments, 2);
+    assert.equal(diagnosticSelection.reusableDocuments, 1);
 
     client.send({
       jsonrpc: '2.0',
@@ -385,6 +392,11 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
     'Rotina para que se primeira:',
     '  Retorne.',
     'Rotina para que se segunda:',
+    '  Retorne.',
+    'Rotina para que se chamadora:',
+    '  Segunda.',
+    '  Retorne.',
+    'Rotina para que se independente:',
     '  Retorne.'
   ].join('\n');
   const changedSource = initialSource.replace(
@@ -462,7 +474,7 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       'the edited document contextual parse',
       startIndex
     );
-    assert.equal(contextualParse.reusedRoutineCount, 1);
+    assert.equal(contextualParse.reusedRoutineCount, 2);
     assert.equal(contextualParse.reusedSemanticRegionCount, 2);
     assert.equal(contextualParse.routineResolutionStrategy, 'worklist');
     assert.equal(contextualParse.declarationResolutionStrategy, 'worklist');
@@ -491,7 +503,7 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       textDocument: { uri: routineUri }
     });
     assert.equal(symbols.error, undefined);
-    assert.equal(symbols.result.length, 4);
+    assert.equal(symbols.result.length, 6);
 
     const changedHeaderSource = changedSource.replace(
       'Rotina para que se segunda:',
@@ -515,7 +527,7 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       'the routine-header edit parse',
       headerEditStart
     );
-    assert.equal(headerParse.reusedRoutineCount, 0);
+    assert.equal(headerParse.reusedRoutineCount, 2);
 
     const shiftedSource = `\n${changedHeaderSource}`;
     const shiftEditStart = client.events.length;
@@ -536,7 +548,7 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       'the offset-shifted routine parse',
       shiftEditStart
     );
-    assert.equal(shiftedParse.reusedRoutineCount, 2);
+    assert.equal(shiftedParse.reusedRoutineCount, 3);
 
     await client.request('shutdown', null);
     client.send({ jsonrpc: '2.0', method: 'exit', params: null });

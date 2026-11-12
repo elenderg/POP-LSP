@@ -3,16 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildDocumentSymbols = buildDocumentSymbols;
 const node_1 = require("vscode-languageserver/node");
 const node_perf_hooks_1 = require("node:perf_hooks");
-function buildDocumentSymbols(parsed, document, analysis, measureTimings = false) {
+function buildDocumentSymbols(parsed, document, measureTimings = false) {
     const now = () => measureTimings ? node_perf_hooks_1.performance.now() : 0;
     const buildStartedAt = now();
-    const syntaxDeclarations = analysis.root.childIds.flatMap(nodeId => {
-        const node = analysis.nodes.get(nodeId);
-        return node && node.kind !== 'reference' ? [node] : [];
-    });
-    const typeDeclarations = syntaxDeclarations.flatMap(node => node.typeDeclaration ? [node.typeDeclaration] : []);
-    const globalVariableDeclarations = syntaxDeclarations.flatMap(node => node.globalVariableDeclaration ? [node.globalVariableDeclaration] : []);
-    const routineDeclarations = syntaxDeclarations.flatMap(node => node.routineDeclaration ? [node.routineDeclaration] : []);
+    const typeDeclarations = parsed.declarations;
+    const globalVariableDeclarations = parsed.globalVariables;
+    const routineDeclarations = parsed.routines;
     const toRange = (range) => ({
         start: document.positionAt(range.start),
         end: document.positionAt(range.end)

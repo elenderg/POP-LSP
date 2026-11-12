@@ -109,7 +109,6 @@ for (const entry of baseParses) {
   const { symbols, metrics: symbolMetrics } = buildDocumentSymbols(
     parsed,
     textDocument,
-    analysis,
     true
   );
   const documentSymbolsDurationMs = performance.now() - symbolsStartedAt;

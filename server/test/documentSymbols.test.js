@@ -2,11 +2,10 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { SymbolKind } = require('vscode-languageserver/node');
 const { TextDocument } = require('vscode-languageserver-textdocument');
-const { getDocumentAnalysis } = require('../out/analysisModel.js');
 const { buildDocumentSymbols } = require('../out/documentSymbols.js');
 const { parseTypeDeclarations } = require('../out/typeParser.js');
 
-test('builds ordered document symbols from the shared analysis model', () => {
+test('builds ordered document symbols directly from parsed declarations', () => {
   const source = [
     'Um caractere é um byte.',
     'Uma pessoa é uma estrutura com um byte denominado idade.',
@@ -17,11 +16,9 @@ test('builds ordered document symbols from the shared analysis model', () => {
   const uri = 'file:///project/Tipos.pop';
   const document = TextDocument.create(uri, 'portugues-puro', 1, source);
   const parsed = parseTypeDeclarations(source);
-  const analysis = getDocumentAnalysis(parsed, source.length);
   const { symbols, metrics } = buildDocumentSymbols(
     parsed,
-    document,
-    analysis
+    document
   );
 
   assert.deepEqual(symbols.map(symbol => symbol.name), [

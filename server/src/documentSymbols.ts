@@ -10,7 +10,6 @@ import {
   ParsedDocument,
   RoutineDeclaration
 } from './typeParser';
-import { DocumentAnalysis } from './analysisModel';
 import { performance } from 'node:perf_hooks';
 
 export interface DocumentSymbolBuildMetrics {
@@ -38,24 +37,13 @@ export interface DocumentSymbolBuildResult {
 export function buildDocumentSymbols(
   parsed: ParsedDocument,
   document: TextDocument,
-  analysis: DocumentAnalysis,
   measureTimings = false
 ): DocumentSymbolBuildResult {
   const now = () => measureTimings ? performance.now() : 0;
   const buildStartedAt = now();
-  const syntaxDeclarations = analysis.root.childIds.flatMap(nodeId => {
-    const node = analysis.nodes.get(nodeId);
-    return node && node.kind !== 'reference' ? [node] : [];
-  });
-  const typeDeclarations = syntaxDeclarations.flatMap(node =>
-    node.typeDeclaration ? [node.typeDeclaration] : []
-  );
-  const globalVariableDeclarations = syntaxDeclarations.flatMap(node =>
-    node.globalVariableDeclaration ? [node.globalVariableDeclaration] : []
-  );
-  const routineDeclarations = syntaxDeclarations.flatMap(node =>
-    node.routineDeclaration ? [node.routineDeclaration] : []
-  );
+  const typeDeclarations = parsed.declarations;
+  const globalVariableDeclarations = parsed.globalVariables;
+  const routineDeclarations = parsed.routines;
   const toRange = (range: { start: number; end: number }) => ({
     start: document.positionAt(range.start),
     end: document.positionAt(range.end)
