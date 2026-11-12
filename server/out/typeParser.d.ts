@@ -307,6 +307,7 @@ export interface ParserRegion {
     headerRange?: SourceRange;
     bodyRange?: SourceRange;
     fingerprint: string;
+    syntacticallyComplete: boolean;
     complete: boolean;
 }
 export interface ParserSymbolCatalog {
@@ -331,16 +332,41 @@ export interface SyntaxParseMetrics {
     syntaxStartedAt: number;
     syntaxFinishedAt: number;
     reusedDeclarationCount: number;
+    heapUsedBeforeBytes: number;
+    rssBeforeBytes: number;
 }
 export interface ParsedDocumentSyntax {
+    source: string;
     parserSource: string;
     declarations: TypeDeclaration[];
     globalVariables: GlobalVariableDeclaration[];
     routines: RoutineDeclaration[];
     commentRanges: SourceRange[];
     diagnostics: ParserDiagnostic[];
+    regions: ParserRegion[];
     lexicallyComplete: boolean;
+    syntaxDiagnostics: ParserDiagnostic[];
     metrics: SyntaxParseMetrics;
+}
+export type ParsedSyntaxRegion = {
+    kind: 'type';
+    region: ParserRegion;
+    declaration: TypeDeclaration;
+} | {
+    kind: 'global-variable';
+    region: ParserRegion;
+    declaration: GlobalVariableDeclaration;
+} | {
+    kind: 'routine';
+    region: ParserRegion;
+    declaration: RoutineDeclaration;
+};
+export interface DeclarationRegionParseMetrics {
+    kind: ParserRegion['kind'];
+    sourceCodeUnits: number;
+    lexicalMs: number;
+    syntaxMs: number;
+    totalMs: number;
 }
 export interface ParsePerformanceMetrics {
     phases: Array<{
@@ -398,7 +424,9 @@ export interface ParsedReference {
 }
 export declare function normalizeTypeName(name: string): string;
 export declare function parseTypeDeclarationSyntax(source: string, options?: Pick<ParseOptions, 'reusableDeclarationRegions'>, profile?: boolean): ParsedDocumentSyntax;
+export declare function parseTypeDeclarationRegion(source: string, region: ParserRegion, onProfile?: (metrics: DeclarationRegionParseMetrics) => void): ParsedSyntaxRegion;
 export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void, options?: ParseOptions): ParsedDocument;
+export declare function resolveTypeDeclarationSyntax(source: string, syntax: ParsedDocumentSyntax, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void, options?: ParseOptions): ParsedDocument;
 export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDocument, offset: number): RoutineDeclaration | undefined;
 export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): TypeField | undefined;
 export declare function findTypeDefinitionReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;

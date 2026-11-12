@@ -225,6 +225,14 @@ test('falls back for diagnostic snapshots and reuses unaffected clean documents'
     assert.equal(dependencySelection.affectedDocuments, 2);
     assert.equal(dependencySelection.regionAffectedDocuments, 2);
     assert.equal(dependencySelection.reusableDocuments, 1);
+    assert.ok(dependencySelection.durationMs >= 0);
+    const regionGraphProfile = client.events.slice(selectiveStartIndex).find(
+      event => event.event === 'declaration-region-graph'
+    );
+    assert.ok(regionGraphProfile);
+    assert.ok(regionGraphProfile.durationMs >= 0);
+    assert.ok(regionGraphProfile.regions > 0);
+    assert.ok(regionGraphProfile.dependencyEdges > 0);
 
     await client.request('shutdown', null);
     client.send({ jsonrpc: '2.0', method: 'exit', params: null });

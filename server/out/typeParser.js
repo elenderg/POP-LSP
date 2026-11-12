@@ -6,7 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TypeSymbolTable = exports.GlobalVariableSymbolTable = exports.RoutineSymbolTable = void 0;
 exports.normalizeTypeName = normalizeTypeName;
 exports.parseTypeDeclarationSyntax = parseTypeDeclarationSyntax;
+exports.parseTypeDeclarationRegion = parseTypeDeclarationRegion;
 exports.parseTypeDeclarations = parseTypeDeclarations;
+exports.resolveTypeDeclarationSyntax = resolveTypeDeclarationSyntax;
 exports.findRoutineDeclarationAtOffset = findRoutineDeclarationAtOffset;
 exports.findRoutineFieldAtOffset = findRoutineFieldAtOffset;
 exports.findTypeDefinitionReferenceAtOffset = findTypeDefinitionReferenceAtOffset;
@@ -586,6 +588,7 @@ function pluralizeTypeName(name) {
 }
 function parseTypeDeclarationSyntax(source, options = {}, profile = false) {
     const diagnostics = [];
+    const memoryBefore = profile ? process.memoryUsage() : undefined;
     const lexicalStartedAt = profile ? node_perf_hooks_1.performance.now() : 0;
     const commentRanges = [];
     const maskedSource = maskComments(source, diagnostics, commentRanges);
@@ -637,26 +640,124 @@ function parseTypeDeclarationSyntax(source, options = {}, profile = false) {
     }
     setRoutineBodyRanges(parserSource, routines, [...declarations, ...globalVariables].map(declaration => declaration.range));
     const syntaxFinishedAt = profile ? node_perf_hooks_1.performance.now() : 0;
+    const syntaxDiagnostics = diagnostics.map(diagnostic => ({
+        ...diagnostic,
+        range: { ...diagnostic.range }
+    }));
+    const regions = createParserRegions(source, parserSource, declarations, globalVariables, routines, syntaxDiagnostics, maskedSource.complete, syntaxDiagnostics);
     return {
+        source,
         parserSource,
         declarations,
         globalVariables,
         routines,
         commentRanges,
         diagnostics,
+        regions,
         lexicallyComplete: maskedSource.complete,
+        syntaxDiagnostics,
         metrics: {
             lexicalStartedAt,
             lexicalFinishedAt,
             syntaxStartedAt,
             syntaxFinishedAt,
-            reusedDeclarationCount
+            reusedDeclarationCount,
+            heapUsedBeforeBytes: memoryBefore?.heapUsed ?? 0,
+            rssBeforeBytes: memoryBefore?.rss ?? 0
         }
     };
 }
-function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}) {
+function parseTypeDeclarationRegion(source, region, onProfile) {
     const startedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
-    const memoryBefore = onProfile ? process.memoryUsage() : undefined;
+    if (!region.syntacticallyComplete) {
+        throw new Error('Cannot parse a syntactically incomplete declaration region.');
+    }
+    if (region.range.start < 0 ||
+        region.range.end > source.length ||
+        region.range.start >= region.range.end) {
+        throw new Error('Declaration region range is outside the source document.');
+    }
+    const regionSource = source.slice(region.range.start, region.range.end);
+    if (fingerprintRegion(region.kind, region.name, regionSource) !==
+        region.fingerprint) {
+        throw new Error('Declaration region fingerprint does not match the source.');
+    }
+    const syntax = parseTypeDeclarationSyntax(regionSource, {}, Boolean(onProfile));
+    if (syntax.diagnostics.length > 0) {
+        throw new Error('Declaration region produced syntax diagnostics.');
+    }
+    if (syntax.regions.length !== 1 ||
+        !syntax.regions[0].syntacticallyComplete) {
+        throw new Error('Declaration region did not produce one complete syntax region.');
+    }
+    const reportProfile = () => {
+        onProfile?.({
+            kind: region.kind,
+            sourceCodeUnits: regionSource.length,
+            lexicalMs: syntax.metrics.lexicalFinishedAt -
+                syntax.metrics.lexicalStartedAt,
+            syntaxMs: syntax.metrics.syntaxFinishedAt -
+                syntax.metrics.syntaxStartedAt,
+            totalMs: node_perf_hooks_1.performance.now() - startedAt
+        });
+    };
+    if (region.kind === 'type') {
+        if (syntax.declarations.length !== 1) {
+            throw new Error('Declaration region did not parse as exactly one type.');
+        }
+        const declaration = rebaseParsedRegion(syntax.declarations[0], region.range.start);
+        if (declaration.name.normalizedName !== region.name) {
+            throw new Error('Parsed type name does not match its declaration region.');
+        }
+        reportProfile();
+        return { kind: 'type', region, declaration };
+    }
+    if (region.kind === 'global-variable') {
+        if (syntax.globalVariables.length !== 1) {
+            throw new Error('Declaration region did not parse as exactly one global variable.');
+        }
+        const declaration = rebaseParsedRegion(syntax.globalVariables[0], region.range.start);
+        if (declaration.name.normalizedName !== region.name) {
+            throw new Error('Parsed variable name does not match its declaration region.');
+        }
+        reportProfile();
+        return { kind: 'global-variable', region, declaration };
+    }
+    if (syntax.routines.length !== 1) {
+        throw new Error('Declaration region did not parse as exactly one routine.');
+    }
+    const declaration = rebaseParsedRegion(syntax.routines[0], region.range.start, { from: 0, to: region.range.start });
+    if (declaration.name.normalizedName !== region.name) {
+        throw new Error('Parsed routine name does not match its declaration region.');
+    }
+    reportProfile();
+    return { kind: 'routine', region, declaration };
+}
+function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}) {
+    const syntax = parseTypeDeclarationSyntax(source, options, Boolean(onProfile));
+    return resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, false);
+}
+function resolveTypeDeclarationSyntax(source, syntax, workspaceSymbols, onProfile, options = {}) {
+    return resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, true);
+}
+function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, preserveSyntax) {
+    if (syntax.source !== source) {
+        throw new Error('Syntax snapshot does not match the source document.');
+    }
+    const hasSyntaxProfile = syntax.metrics.heapUsedBeforeBytes > 0;
+    const startedAt = onProfile
+        ? hasSyntaxProfile
+            ? syntax.metrics.lexicalStartedAt
+            : node_perf_hooks_1.performance.now()
+        : 0;
+    const memoryBefore = onProfile
+        ? hasSyntaxProfile
+            ? {
+                heapUsed: syntax.metrics.heapUsedBeforeBytes,
+                rss: syntax.metrics.rssBeforeBytes
+            }
+            : process.memoryUsage()
+        : undefined;
     const routineProfileCounters = onProfile
         ? {
             statementsVisited: 0,
@@ -670,8 +771,22 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
         }
         : undefined;
     activeRoutineResolutionProfileCounters = routineProfileCounters;
-    const syntax = parseTypeDeclarationSyntax(source, options, Boolean(onProfile));
-    const { parserSource, declarations, globalVariables, routines, commentRanges, diagnostics, lexicallyComplete, metrics: { lexicalStartedAt, lexicalFinishedAt, syntaxStartedAt, syntaxFinishedAt, reusedDeclarationCount } } = syntax;
+    const { parserSource, commentRanges, lexicallyComplete, metrics: { lexicalStartedAt, lexicalFinishedAt, syntaxStartedAt, syntaxFinishedAt, reusedDeclarationCount } } = syntax;
+    const declarations = preserveSyntax
+        ? syntax.declarations.map(declaration => rebaseParsedRegion(declaration, 0))
+        : syntax.declarations;
+    const globalVariables = preserveSyntax
+        ? syntax.globalVariables.map(declaration => rebaseParsedRegion(declaration, 0))
+        : syntax.globalVariables;
+    const routines = preserveSyntax
+        ? syntax.routines.map(routine => rebaseParsedRegion(routine, 0))
+        : syntax.routines;
+    const diagnostics = preserveSyntax
+        ? syntax.diagnostics.map(diagnostic => ({
+            ...diagnostic,
+            range: { ...diagnostic.range }
+        }))
+        : syntax.diagnostics;
     let dependencyResolutionMs = 0;
     let dependencyResolutionStartedAt = 0;
     let dependencyResolutionFinishedAt = 0;
@@ -881,7 +996,7 @@ function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}
         declarations,
         globalVariables,
         routines,
-        regions: createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, lexicallyComplete),
+        regions: createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, lexicallyComplete, syntax.syntaxDiagnostics),
         commentRanges,
         symbols,
         globalVariableSymbols,
@@ -1060,7 +1175,7 @@ function reuseRoutineRegions(source, routines, previous) {
     }
     return reused;
 }
-function createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, lexicallyComplete) {
+function createParserRegions(source, parserSource, declarations, globalVariables, routines, diagnostics, lexicallyComplete, syntaxDiagnostics = diagnostics) {
     const regions = [
         ...declarations.map(declaration => ({
             kind: 'type',
@@ -1090,7 +1205,10 @@ function createParserRegions(source, parserSource, declarations, globalVariables
         first.range.end - second.range.end);
     const sortedDiagnostics = [...diagnostics].sort((first, second) => first.range.start - second.range.start ||
         first.range.end - second.range.end);
+    const sortedSyntaxDiagnostics = [...syntaxDiagnostics].sort((first, second) => first.range.start - second.range.start ||
+        first.range.end - second.range.end);
     let diagnosticIndex = 0;
+    let syntaxDiagnosticIndex = 0;
     return regions.map(region => {
         while (diagnosticIndex < sortedDiagnostics.length &&
             sortedDiagnostics[diagnosticIndex].range.end <= region.range.start) {
@@ -1098,15 +1216,25 @@ function createParserRegions(source, parserSource, declarations, globalVariables
         }
         const hasDiagnostic = diagnosticIndex < sortedDiagnostics.length &&
             sortedDiagnostics[diagnosticIndex].range.start < region.range.end;
+        while (syntaxDiagnosticIndex < sortedSyntaxDiagnostics.length &&
+            sortedSyntaxDiagnostics[syntaxDiagnosticIndex].range.end <=
+                region.range.start) {
+            syntaxDiagnosticIndex++;
+        }
+        const hasSyntaxDiagnostic = syntaxDiagnosticIndex < sortedSyntaxDiagnostics.length &&
+            sortedSyntaxDiagnostics[syntaxDiagnosticIndex].range.start <
+                region.range.end;
         const text = source.slice(region.range.start, region.range.end);
         const hasCompleteTerminatedBody = region.kind !== 'routine' ||
             hasCompleteRoutineBody(parserSource, region.bodyRange);
+        const syntacticallyComplete = lexicallyComplete &&
+            !hasSyntaxDiagnostic &&
+            hasCompleteTerminatedBody;
         return {
             ...region,
             fingerprint: fingerprintRegion(region.kind, region.name, text),
-            complete: lexicallyComplete &&
-                !hasDiagnostic &&
-                hasCompleteTerminatedBody
+            syntacticallyComplete,
+            complete: syntacticallyComplete && !hasDiagnostic
         };
     });
 }
@@ -1163,7 +1291,7 @@ function takeReusableDeclaration(candidatesByFingerprint, kind, source, range) {
     }
     return undefined;
 }
-function rebaseParsedRegion(value, delta) {
+function rebaseParsedRegion(value, delta, scopeRebase) {
     const clone = (current, visited) => {
         if (current === null || typeof current !== 'object') {
             return current;
@@ -1189,6 +1317,11 @@ function rebaseParsedRegion(value, delta) {
                 typeof sourceObject.start === 'number' &&
                 typeof sourceObject.end === 'number') {
                 result[property] = child + delta;
+            }
+            else if (property === 'scope' &&
+                scopeRebase &&
+                child === scopeRebase.from) {
+                result[property] = scopeRebase.to;
             }
             else {
                 result[property] = clone(child, visited);

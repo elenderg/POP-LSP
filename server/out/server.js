@@ -96,8 +96,17 @@ function getWorkspaceAnalysisIndex(workspaceDocuments, requestId = 0, requestDoc
 function getWorkspaceDeclarationDependencyGraph(workspaceDocuments) {
     const cachedGraph = workspaceDeclarationDependencyGraphs.get(workspaceDocuments);
     if (cachedGraph) {
+        logProfile({
+            event: 'declaration-region-graph',
+            durationMs: 0,
+            regions: cachedGraph.nodes.length,
+            dependencyEdges: cachedGraph.edges.length,
+            unresolvedReferences: cachedGraph.unresolvedReferenceCount,
+            cacheHit: true
+        });
         return cachedGraph;
     }
+    const startedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const graph = new analysisModel_1.DeclarationDependencyGraph([...workspaceDocuments.values()].map(({ document, parsed }) => ({
         uri: document.uri,
         directory: (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri)),
@@ -105,6 +114,14 @@ function getWorkspaceDeclarationDependencyGraph(workspaceDocuments) {
         analysis: (0, analysisModel_1.getDocumentAnalysis)(parsed, document.getText().length)
     })));
     workspaceDeclarationDependencyGraphs.set(workspaceDocuments, graph);
+    logProfile({
+        event: 'declaration-region-graph',
+        durationMs: profileEnabled ? node_perf_hooks_1.performance.now() - startedAt : 0,
+        regions: graph.nodes.length,
+        dependencyEdges: graph.edges.length,
+        unresolvedReferences: graph.unresolvedReferenceCount,
+        cacheHit: false
+    });
     return graph;
 }
 function normalizeDeclarationText(source, range, commentRanges) {
@@ -249,12 +266,16 @@ function getDeclarationSurface(parsed, source) {
     return declarations;
 }
 function getSelectiveContextReuseUris(directory, current, previous, previousSources, requestId, requestDocumentUri) {
+    const selectionStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const logSelection = (metrics) => {
         logProfile({
             event: 'workspace-context-reuse-selection',
             requestId,
             requestDocumentUri,
             directory,
+            durationMs: profileEnabled
+                ? node_perf_hooks_1.performance.now() - selectionStartedAt
+                : 0,
             ...metrics
         });
     };

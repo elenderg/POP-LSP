@@ -203,8 +203,17 @@ function getWorkspaceDeclarationDependencyGraph(
     workspaceDocuments
   );
   if (cachedGraph) {
+    logProfile({
+      event: 'declaration-region-graph',
+      durationMs: 0,
+      regions: cachedGraph.nodes.length,
+      dependencyEdges: cachedGraph.edges.length,
+      unresolvedReferences: cachedGraph.unresolvedReferenceCount,
+      cacheHit: true
+    });
     return cachedGraph;
   }
+  const startedAt = profileEnabled ? performance.now() : 0;
   const graph = new DeclarationDependencyGraph(
     [...workspaceDocuments.values()].map(({ document, parsed }) => ({
       uri: document.uri,
@@ -214,6 +223,14 @@ function getWorkspaceDeclarationDependencyGraph(
     }))
   );
   workspaceDeclarationDependencyGraphs.set(workspaceDocuments, graph);
+  logProfile({
+    event: 'declaration-region-graph',
+    durationMs: profileEnabled ? performance.now() - startedAt : 0,
+    regions: graph.nodes.length,
+    dependencyEdges: graph.edges.length,
+    unresolvedReferences: graph.unresolvedReferenceCount,
+    cacheHit: false
+  });
   return graph;
 }
 
@@ -436,6 +453,7 @@ function getSelectiveContextReuseUris(
   requestId: number,
   requestDocumentUri: string
 ): Set<string> | undefined {
+  const selectionStartedAt = profileEnabled ? performance.now() : 0;
   const logSelection = (
     metrics: Record<string, number | string | boolean>
   ): void => {
@@ -444,6 +462,9 @@ function getSelectiveContextReuseUris(
       requestId,
       requestDocumentUri,
       directory,
+      durationMs: profileEnabled
+        ? performance.now() - selectionStartedAt
+        : 0,
       ...metrics
     });
   };

@@ -271,13 +271,17 @@ for every document that is not reused as a whole. Declaration-level semantic
 resolution remains disabled until region-level differential equivalence is
 established.
 
-The parser now exposes `parseTypeDeclarationSyntax` as a syntax-only phase:
-it returns parsed declaration and routine records, source-preserving masked
-text, and lexical/syntax diagnostics before semantic resolution. The existing
-`parseTypeDeclarations` path composes this phase with the unchanged full
-resolver, so callers retain the same fully resolved result. This is the first
-separation step; per-region resolution worklists and full-parse differential
-verification are still pending.
+The parser exposes `parseTypeDeclarationSyntax` as a syntax-only phase and
+`resolveTypeDeclarationSyntax` as a separate semantic phase. The regular
+`parseTypeDeclarations` API composes both, preserving the existing fully
+resolved result. `parseTypeDeclarationRegion` can parse a single fingerprint-
+verified, syntactically complete region and rebase its ranges; syntactic
+completeness is tracked separately from semantic diagnostics. These APIs are
+validated against repository fixtures, including semantic snapshots from the
+full parser. Profiling also records region-graph construction and invalidation
+selection/closure duration, alongside existing parse-phase, memory, and LSP
+request latency records. A semantic resolution worklist and its full-parse
+verifier are still pending.
 
 Routine-call resolution indexes normalized names per parse instead of
 comparing every call against every routine. Name matching normalizes each

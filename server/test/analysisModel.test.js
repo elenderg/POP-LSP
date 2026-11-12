@@ -1,4 +1,6 @@
 const assert = require('node:assert/strict');
+const { readFileSync } = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
 const { TextDocument } = require('vscode-languageserver-textdocument');
 const {
@@ -9,8 +11,10 @@ const {
 } = require('../out/analysisModel.js');
 const {
   getParsedReferences,
+  parseTypeDeclarationRegion,
   parseTypeDeclarationSyntax,
-  parseTypeDeclarations
+  parseTypeDeclarations,
+  resolveTypeDeclarationSyntax
 } = require('../out/typeParser.js');
 
 const directory = 'file:///project';
@@ -288,9 +292,29 @@ test('exposes declaration syntax before semantic resolution', () => {
     'Rotina para que se consulte:',
     '  Retorne.'
   ].join('\n');
-  const syntax = parseTypeDeclarationSyntax(source);
+  const syntax = parseTypeDeclarationSyntax(source, {}, true);
   const parsed = parseTypeDeclarations(source);
+  const syntaxSnapshot = JSON.stringify({
+    declarations: syntax.declarations,
+    globalVariables: syntax.globalVariables,
+    routines: syntax.routines,
+    diagnostics: syntax.diagnostics
+  });
+  const unresolved = resolveTypeDeclarationSyntax(source, syntax);
+  const externalType = parseTypeDeclarations(
+    'Um tipo ausente é uma estrutura.'
+  );
+  const resolvedWithWorkspace = resolveTypeDeclarationSyntax(
+    source,
+    syntax,
+    {
+      declarations: externalType.declarations,
+      globalVariables: [],
+      routines: []
+    }
+  );
 
+  assert.equal(syntax.source, source);
   assert.equal(syntax.parserSource.length, source.length);
   assert.deepEqual(syntax.diagnostics, []);
   assert.deepEqual(
@@ -318,6 +342,129 @@ test('exposes declaration syntax before semantic resolution', () => {
   assert.ok(parsed.diagnostics.some(diagnostic =>
     diagnostic.message === 'Unknown base type "tipo ausente".'
   ));
+  assert.ok(unresolved.diagnostics.some(diagnostic =>
+    diagnostic.message === 'Unknown base type "tipo ausente".'
+  ));
+  assert.equal(
+    resolvedWithWorkspace.diagnostics.some(diagnostic =>
+      diagnostic.message === 'Unknown base type "tipo ausente".'
+    ),
+    false
+  );
+  assert.equal(
+    JSON.stringify({
+      declarations: syntax.declarations,
+      globalVariables: syntax.globalVariables,
+      routines: syntax.routines,
+      diagnostics: syntax.diagnostics
+    }),
+    syntaxSnapshot
+  );
+  assert.throws(
+    () => resolveTypeDeclarationSyntax(`${source}\n`, syntax),
+    /Syntax snapshot does not match the source document/u
+  );
+});
+
+test('parses complete syntax regions from repository fixtures independently', () => {
+  const fixtures = [
+    path.join(__dirname, '../../client/testFixture/definition.pop'),
+    path.join(__dirname, '../../client/testFixture/formatting.pop')
+  ];
+  let parsedRegionCount = 0;
+  const profileSamples = [];
+
+  for (const fixture of fixtures) {
+    const source = readFileSync(fixture, 'utf8');
+    const fullParse = parseTypeDeclarations(source);
+    const syntaxSnapshot = parseTypeDeclarationSyntax(source);
+    for (const region of fullParse.regions.filter(candidate =>
+      candidate.syntacticallyComplete
+    )) {
+      const parsedRegion = parseTypeDeclarationRegion(
+        source,
+        region,
+        metrics => profileSamples.push(metrics)
+      );
+      const expected = region.kind === 'type'
+        ? syntaxSnapshot.declarations.find(declaration =>
+          declaration.range.start === region.range.start &&
+          declaration.range.end === region.range.end
+        )
+        : region.kind === 'global-variable'
+          ? syntaxSnapshot.globalVariables.find(declaration =>
+            declaration.range.start === region.range.start &&
+            declaration.range.end === region.range.end
+          )
+          : syntaxSnapshot.routines.find(routine =>
+            routine.range.start === region.range.start &&
+            routine.bodyRange.end === region.range.end
+          );
+      assert.ok(expected, `${fixture}: region should match full parse`);
+      assert.deepEqual(parsedRegion.declaration, expected);
+      parsedRegionCount++;
+    }
+
+    const syntax = parseTypeDeclarationSyntax(source);
+    const resolutionMetrics = {};
+    const resolved = resolveTypeDeclarationSyntax(
+      source,
+      syntax,
+      undefined,
+      metrics => Object.assign(resolutionMetrics, metrics)
+    );
+    const semanticSnapshot = parsed => ({
+      declarations: parsed.declarations,
+      globalVariables: parsed.globalVariables,
+      routines: parsed.routines,
+      references: getParsedReferences(parsed),
+      diagnostics: parsed.diagnostics
+    });
+    assert.deepEqual(
+      semanticSnapshot(resolved),
+      semanticSnapshot(fullParse),
+      fixture
+    );
+    assert.ok(resolutionMetrics.totalMs >= resolutionMetrics.syntaxMs);
+    assert.equal(
+      resolutionMetrics.heapUsedBeforeBytes > 0,
+      true
+    );
+    assert.equal(
+      resolutionMetrics.sourceCodeUnits,
+      source.length
+    );
+  }
+
+  assert.ok(parsedRegionCount > 0);
+  assert.equal(profileSamples.length, parsedRegionCount);
+  assert.ok(profileSamples.every(sample =>
+    sample.sourceCodeUnits > 0 &&
+    sample.lexicalMs >= 0 &&
+    sample.syntaxMs >= 0 &&
+    sample.totalMs >= sample.lexicalMs + sample.syntaxMs
+  ));
+  const incompleteSource = 'Uma pessoa é um tipo ausente.';
+  const semanticallyInvalid = parseTypeDeclarations(incompleteSource);
+  const syntacticallyCompleteRegion = semanticallyInvalid.regions[0];
+  assert.equal(syntacticallyCompleteRegion.syntacticallyComplete, true);
+  assert.equal(syntacticallyCompleteRegion.complete, false);
+  const parsedSemanticError = parseTypeDeclarationRegion(
+    incompleteSource,
+    syntacticallyCompleteRegion
+  );
+  assert.equal(parsedSemanticError.declaration.name.normalizedName, 'pessoa');
+
+  const lexicallyIncompleteSource = `${incompleteSource}\n[ comentário aberto`;
+  const syntacticallyIncompleteRegion =
+    parseTypeDeclarations(lexicallyIncompleteSource).regions[0];
+  assert.throws(
+    () => parseTypeDeclarationRegion(
+      lexicallyIncompleteSource,
+      syntacticallyIncompleteRegion
+    ),
+    /Cannot parse a syntactically incomplete declaration region/u
+  );
 });
 
 test('reuses unchanged declaration syntax and rebases all source ranges', () => {
