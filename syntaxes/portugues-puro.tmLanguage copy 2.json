@@ -1,0 +1,148 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "portugues-puro",
+  "scopeName": "source.escopo.pop",
+  "patterns": [
+    {"include": "#comment"},
+    {"include": "#strings"},
+    {"include": "#literal-constants"},
+    {"include": "#types"}
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.character.pop",
+          "match": "\\\\.*$"
+        },
+        {
+          "name": "comment.block.pop",
+          "begin": "\\[",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.pop"
+            }
+          },
+          "end": "\\]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.pop"
+            }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.pop",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.pop"
+            }
+          },
+          "end": "\"(?!\")",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.pop"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.pop",
+              "match": "\"\""
+            }
+          ]
+        }
+      ]
+    },
+    "literal-constants": {
+      "patterns": [
+        {
+          "name": "constant.numeric.integer.mixed.pop",
+          "match": "(?<![\\w$])([+-]?\\d+)\\+([+-]?\\d+)/([+-]?\\d+)(?![\\w/])"
+        },
+        {
+          "name": "constant.numeric.fraction.pop",
+          "match": "(?<![\\w$])([+-]?\\d+)/([+-]?\\d+)(?![\\w/])"
+        },
+        {
+          "name": "constant.numeric.integer.hexadecimal.pop",
+          "match": "\\$[a-fA-F0-9]+"
+        },
+        {
+          "name": "constant.numeric.integer.decimal.pop",
+          "match": "(?<![\\w$])[+-]?\\d+(?![\\w/])"
+        },
+        {
+          "name": "constant.language.boolean.pop",
+          "match": "\\b(?i:sim|não)\\b"
+        },
+        {
+          "name": "constant.language.null.pop",
+          "match": "\\b(?i:nulo|nula|nulos|nulas|inexistente|inexistentes|zerado)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "begin": "(?i)^[ \\t]*(um|uma|uns|umas|esse|essa|esses|essas)(?=[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?:é|são)[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(um|uma|uns|umas|esse|essa|esses|essas)[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*[ \\t]*(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*\\.)",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.language.article.pop"
+            }
+          },
+          "end": "\\.",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.terminator.pop"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "begin": "(?=[\\p{L}\\p{N}_])",
+              "end": "(?i)(?<![\\p{L}\\p{N}_])(é|são)(?![\\p{L}\\p{N}_])",
+              "endCaptures": {
+                "1": {
+                  "name": "meta.type.declaration.simple.pop"
+                }
+              },
+              "patterns": [
+                {
+                  "include": "#comment"
+                },
+                {
+                  "name": "entity.name.type.pop",
+                  "match": "(?i)(?<![\\p{L}\\p{N}_])(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?![\\p{L}\\p{N}_])"
+                }
+              ]
+            },
+            {
+              "begin": "(?i)(um|uma|uns|umas|esse|essa|esses|essas)",
+              "beginCaptures": {
+                "1": {
+                  "name": "storage.type.language.article.pop"
+                }
+              },
+              "end": "(?=\\.)",
+              "patterns": [
+                {
+                  "include": "#comment"
+                },
+                {
+                  "name": "support.type.pop",
+                  "match": "(?i)(?<![\\p{L}\\p{N}_])(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?![\\p{L}\\p{N}_])"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

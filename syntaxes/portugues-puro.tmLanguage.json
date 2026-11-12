@@ -87,32 +87,53 @@
     },
     "types": {
       "patterns": [
-        
         {
-          "match": "(?i)^[ \\t]*(um|uma|uns|umas|esse|essa|esses|essas)[ \\t]+((?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*)[ \\t]+(é|são)[ \\t]+(um|uma|uns|umas|esse|essa|esses|essas)[ \\t]+((?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*)(\\.)[ \\t]*$",
-          "captures": {
+          "name": "meta.type.declaration.simple.pop",
+          "begin": "(?i)^[ \\t]*(um|uma|uns|umas|esse|essa|esses|essas)[ \\t]+(?=(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são))(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?:é|são)[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?:um|uma|uns|umas|esse|essa|esses|essas)[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são))(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*)?\\.[ \\t]*$)",
+          "beginCaptures": {
             "1": {
               "name": "storage.type.language.article.pop"
-            },
-            "2": {
-              "name": "entity.name.type.pop"
-            },
-            "3": {
-              "name": "meta.type.declaration.simple.pop"
-            },
-            "4": {
-              "name": "storage.type.language.article.pop"
-            },
-            "5": {
-              "name": "support.type.pop"
-            },
-            "6": {
-              "name": "punctuation.terminator.pop"
             }
           },
-          "comment": "Color only complete single-line simple type declarations; semantic tokens cover multiline and commented cases."
-          
-
+          "end": "(?=$)",
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "name": "entity.name.type.pop",
+              "begin": "(?=\\S)(?=(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?:é|são)(?=[ \\t]))",
+              "end": "(?=[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?:é|são)(?=[ \\t]))",
+              "patterns": [
+                {
+                  "include": "#comment"
+                }
+              ]
+            },
+            {
+              "name": "meta.type.declaration.simple.pop",
+              "match": "(?i)(?:é|são)"
+            },
+            {
+              "name": "storage.type.language.article.pop",
+              "match": "(?i)(?<![\\p{L}\\p{N}_])(?:um|uma|uns|umas|esse|essa|esses|essas)(?![\\p{L}\\p{N}_])"
+            },
+            {
+              "name": "support.type.pop",
+              "begin": "(?=\\S)(?=(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*(?!(?:um|uma|uns|umas|esse|essa|esses|essas|o|os|a|as|este|esta|estes|estas|com|para|é|são)(?![\\p{L}\\p{N}_]))[\\p{L}\\p{N}_]+)*(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*)?\\.)",
+              "end": "(?=(?:[ \\t]+(?:\\[[^\\]\\r\\n]*\\][ \\t]+)*)?\\.)",
+              "patterns": [
+                {
+                  "include": "#comment"
+                }
+              ]
+            },
+            {
+              "name": "punctuation.terminator.pop",
+              "match": "\\."
+            }
+          ],
+          "comment": "Conservative same-line simple-type fallback; comments are scoped separately inside declarations."
         }
       ]
     }
