@@ -1782,7 +1782,8 @@ function resolveTypeDeclarationSyntaxCore(
   let verificationFallback: ParsedDocument | undefined;
   if (
     options.incrementalRoutineResolution &&
-    options.verifyIncrementalRoutineResolution
+    options.verifyIncrementalRoutineResolution &&
+    reusedRoutines.size > 0
   ) {
     routineVerificationStartedAt = performance.now();
     const completeParse = parseTypeDeclarations(
@@ -1965,7 +1966,7 @@ function resolveTypeDeclarationSyntaxCore(
       symbols: symbols.entries.length +
         globalVariableSymbols.entries.length +
         routineSymbols.entries.length,
-      routineResolutionStrategy: options.incrementalRoutineResolution
+      routineResolutionStrategy: reusedRoutines.size > 0
         ? 'worklist'
         : 'complete',
       routineVerificationStatus,

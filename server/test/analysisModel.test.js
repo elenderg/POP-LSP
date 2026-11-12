@@ -260,6 +260,22 @@ test('verifies routine worklists and falls back when a reused snapshot differs',
     value => Object.assign(defaultMetrics, value)
   );
   assert.equal(defaultMetrics.routineResolutionStrategy, 'complete');
+  const noReuseMetrics = {};
+  const noReuse = parseTypeDeclarations(
+    source,
+    undefined,
+    value => Object.assign(noReuseMetrics, value),
+    {
+      incrementalRoutineResolution: true,
+      verifyIncrementalRoutineResolution: true,
+      onIncrementalVerification: () => {
+        throw new Error('Verification should be skipped when nothing is reused.');
+      }
+    }
+  );
+  assert.equal(noReuseMetrics.routineResolutionStrategy, 'complete');
+  assert.equal(noReuseMetrics.routineVerificationStatus, 'not-requested');
+  assert.deepEqual(noReuse.diagnostics, previous.diagnostics);
   const metrics = {};
   const verificationResults = [];
   const incrementalOptions = {

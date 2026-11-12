@@ -1000,7 +1000,8 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
     let routineVerificationMs = 0;
     let verificationFallback;
     if (options.incrementalRoutineResolution &&
-        options.verifyIncrementalRoutineResolution) {
+        options.verifyIncrementalRoutineResolution &&
+        reusedRoutines.size > 0) {
         routineVerificationStartedAt = node_perf_hooks_1.performance.now();
         const completeParse = parseTypeDeclarations(source, workspaceSymbols, undefined, {
             ...options,
@@ -1166,7 +1167,7 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
             symbols: symbols.entries.length +
                 globalVariableSymbols.entries.length +
                 routineSymbols.entries.length,
-            routineResolutionStrategy: options.incrementalRoutineResolution
+            routineResolutionStrategy: reusedRoutines.size > 0
                 ? 'worklist'
                 : 'complete',
             routineVerificationStatus,

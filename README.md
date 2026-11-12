@@ -289,10 +289,12 @@ Conservative checkpoint reuse and selected routine resolution can be enabled
 with
 `POP_LSP_INCREMENTAL_ROUTINES=1` (disabled by default). For rollout
 verification, also set `POP_LSP_VERIFY_INCREMENTAL_ROUTINES=1`; each contextual
-result is compared with a complete parse, including declarations, symbol
-references, routines, and diagnostics. A mismatch is reported and the complete
-result is used. This verification mode deliberately incurs the cost of a second
-parse and is intended for development and differential testing.
+result that actually reuses a routine is compared with a complete parse,
+including declarations, symbol references, routines, and diagnostics. A
+mismatch is reported and the complete result is used. Contextual parses with no
+reusable routines skip the redundant verification parse. Verification mode
+deliberately incurs the cost of a second parse when used and is intended for
+development and differential testing.
 The optimization remains opt-in: synthetic runs so far show that parsing and
 snapshot-rebasing costs can offset the saved routine resolution, so gains must
 be measured on representative project documents before enabling it broadly.

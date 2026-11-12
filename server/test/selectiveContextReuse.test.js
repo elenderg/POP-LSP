@@ -790,6 +790,8 @@ test('excludes the current document base routines from contextual candidates', a
       'the contextual routine parse'
     );
     assert.equal(contextualParse.routineNameCandidateChecks, 1);
+    assert.equal(contextualParse.routineResolutionStrategy, 'complete');
+    assert.equal(contextualParse.routineVerificationStatus, 'not-requested');
     for (const [documentUri, documentSource] of [
       [uri, source],
       [libraryUri, librarySource]
