@@ -89,7 +89,7 @@
       "patterns": [        
         {
           "name": "meta.type.declaration.simple.pop",
-          "begin": "(?i)^[ \\t]*(um|uma|uns|umas)\\b(?=[^\\r\\n]*\\b(?:é|são)\\b)(?![^\\r\\n]*\\b(?:estrutura|lista)[ \\t]+com\\b)(?![^\\r\\n]*\\bponteiro[ \\t]+para\\b)(?![^\\r\\n]*\\b(?:é|são)[ \\t]+(?!um\\b|uma\\b|uns\\b|umas\\b)\\S)",
+          "begin": "(?i)^[ \\t]*\\b(um|uma|uns|umas)\\b(?=(?:(?![.,;:\\\\]|\\b(?:é|são)\\b)[\\s\\S])*(?:é|são)\\b)(?![^.,;:\\\\]*\\b(?:[^.,;:\\\\]+)[ \\t]+com\\b)(?![^.,;:\\\\]*\\bponteiro[ \\t]+para\\b)(?![^.,;:\\\\]*\\b(?:é|são)[ \\t]+(?!um\\b|uma\\b|uns\\b|umas\\b)\\S)",
           
           "beginCaptures": {
             "1": {

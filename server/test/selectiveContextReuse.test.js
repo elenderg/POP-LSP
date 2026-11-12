@@ -491,6 +491,27 @@ test('reuses unchanged routine checkpoints after a clean body-only edit', async 
       startIndex
     );
     assert.equal(baseParse.reusedDeclarationCount, 2);
+    for (const phase of [
+      'a análise léxica e o mascaramento de comentários',
+      'a análise sintática',
+      'a construção do catálogo de símbolos',
+      'a resolução de dependências entre tipos',
+      'a resolução de chamadas de rotinas'
+    ]) {
+      assert.ok(client.events.some(event =>
+        event.event === 'stage-progress' &&
+        event.documentUri === routineUri &&
+        event.phase === phase &&
+        event.state === 'start'
+      ), `missing start log for ${phase}`);
+      assert.ok(client.events.some(event =>
+        event.event === 'stage-progress' &&
+        event.documentUri === routineUri &&
+        event.phase === phase &&
+        event.state === 'finish' &&
+        typeof event.durationMs === 'number'
+      ), `missing completion log for ${phase}`);
+    }
     const refresh = await waitForEvent(
       client.events,
       event => event.event === 'workspace-refresh' &&

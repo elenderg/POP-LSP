@@ -33,6 +33,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   ParsedDocument,
   ParsedReference,
+  ParseOptions,
   ParsePerformanceMetrics,
   ParserSymbolCatalog,
   RoutineParameter,
@@ -1120,6 +1121,35 @@ function logProfile(metrics: Record<string, number | string | boolean>): void {
   }
 }
 
+function documentParseProgress(
+  requestId: number,
+  requestDocumentUri: string,
+  documentUri: string,
+  pass: 'base' | 'contextual'
+): NonNullable<ParseOptions['onProgress']> | undefined {
+  if (!profileEnabled) {
+    return undefined;
+  }
+  return (phase, state, durationMs) => {
+    const message = state === 'start'
+      ? `Iniciando ${phase}.`
+      : `Finalizado ${phase}. Esta etapa levou ${
+        (durationMs ?? 0).toFixed(2)
+      } ms.`;
+    logProfile({
+      event: 'stage-progress',
+      requestId,
+      requestDocumentUri,
+      documentUri,
+      pass,
+      phase,
+      state,
+      message,
+      ...(durationMs === undefined ? {} : { durationMs })
+    });
+  };
+}
+
 if (profileEnabled && eventLoopDelay) {
   eventLoopDelay.enable();
   let previousCpuUsage = process.cpuUsage();
@@ -1179,6 +1209,12 @@ function profileRequest<T>(
     timestampMs: startedAt,
     pendingRequests: pendingProfileRequests
   });
+  logProfile({
+    event: 'stage-progress',
+    requestId,
+    documentUri: documentUri ?? '',
+    message: `Iniciando a solicitação LSP "${name}".`
+  });
   let requestCompleted = false;
   const watchdog = setTimeout(() => {
     if (requestCompleted) {
@@ -1215,6 +1251,15 @@ function profileRequest<T>(
       durationMs,
       success,
       pendingRequests: pendingProfileRequests
+    });
+    logProfile({
+      event: 'stage-progress',
+      requestId,
+      documentUri: documentUri ?? '',
+      durationMs,
+      message: `Finalizada a solicitação LSP "${name}". Esta etapa levou ${
+        durationMs.toFixed(2)
+      } ms.`
     });
     if (durationMs >= slowProfileThresholdMs) {
       const memory = process.memoryUsage();
@@ -2389,6 +2434,18 @@ async function buildWorkspaceDocumentIndex(
     const revision = workspaceRevision;
     const startedAt = profileEnabled ? performance.now() : 0;
     const discoveryStartedAt = profileEnabled ? performance.now() : 0;
+    logProfile({
+      event: 'stage-progress',
+      requestId,
+      requestDocumentUri,
+      message: 'Iniciando a atualização do catálogo do workspace.'
+    });
+    logProfile({
+      event: 'stage-progress',
+      requestId,
+      requestDocumentUri,
+      message: 'Iniciando a descoberta dos documentos do workspace.'
+    });
     const sourceDocuments = new Map<string, {
       document: TextDocument;
       directory: string;
@@ -2440,6 +2497,15 @@ async function buildWorkspaceDocumentIndex(
     const sourceDiscoveryMs = profileEnabled
       ? performance.now() - discoveryStartedAt
       : 0;
+    logProfile({
+      event: 'stage-progress',
+      requestId,
+      requestDocumentUri,
+      durationMs: sourceDiscoveryMs,
+      message: `Finalizada a descoberta dos documentos do workspace. Esta etapa levou ${
+        sourceDiscoveryMs.toFixed(2)
+      } ms.`
+    });
 
     const parseTotals = {
       lexicalMs: 0,
@@ -2607,14 +2673,22 @@ async function buildWorkspaceDocumentIndex(
             entry.source,
             undefined,
             collectDocumentParseMetrics(entry.uri, entry.source, 'base'),
-            previousDocument && previousSource !== undefined
-              ? {
-                reusableDeclarationRegions: {
-                  source: previousSource,
-                  parsed: previousDocument.parsed
+            {
+              ...(previousDocument && previousSource !== undefined
+                ? {
+                  reusableDeclarationRegions: {
+                    source: previousSource,
+                    parsed: previousDocument.parsed
+                  }
                 }
-              }
-              : undefined
+                : {}),
+              onProgress: documentParseProgress(
+                requestId,
+                requestDocumentUri,
+                entry.uri,
+                'base'
+              )
+            }
           );
           entry.analysis.baseParsed = parsed;
           baseParseCount++;
@@ -2743,6 +2817,12 @@ async function buildWorkspaceDocumentIndex(
             verifyIncrementalRoutineResolution:
               verifyIncrementalRoutineResolution ||
               verifyIncrementalDeclarationResolution,
+            onProgress: documentParseProgress(
+              requestId,
+              requestDocumentUri,
+              entry.uri,
+              'contextual'
+            ),
             onIncrementalVerification:
               verifyIncrementalRoutineResolution ||
               verifyIncrementalDeclarationResolution
@@ -2763,14 +2843,15 @@ async function buildWorkspaceDocumentIndex(
     }
 
     if (profileEnabled) {
+      const endTimeMs = performance.now();
       logProfile({
         event: 'workspace-refresh',
         requestId,
         requestDocumentUri,
         accepted: revision === workspaceRevision,
         startTimeMs: startedAt,
-        endTimeMs: performance.now(),
-        refreshMs: performance.now() - startedAt,
+        endTimeMs,
+        refreshMs: endTimeMs - startedAt,
         sourceDiscoveryMs,
         catalogAssemblyMs,
         documents: result.size,
@@ -2809,6 +2890,15 @@ async function buildWorkspaceDocumentIndex(
           0
         ),
         ...parseTotals
+      });
+      logProfile({
+        event: 'stage-progress',
+        requestId,
+        requestDocumentUri,
+        durationMs: endTimeMs - startedAt,
+        message: `Finalizada a atualização do catálogo do workspace. Esta etapa levou ${
+          (endTimeMs - startedAt).toFixed(2)
+        } ms.`
       });
     }
     if (revision !== workspaceRevision) {

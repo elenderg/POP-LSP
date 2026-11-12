@@ -75,7 +75,7 @@ class TypeSymbolTable {
     inheritanceExitTimes = new Map();
     inheritanceDepths = new Map();
     scaleResolutionStates = new Map();
-    constructor(declarations = [], onDependencyProfile) {
+    constructor(declarations = [], onDependencyProfile, onDependencyProgress) {
         this.addPrimitive('byte', false);
         this.addPrimitive('estrutura', false);
         for (const declaration of declarations) {
@@ -105,14 +105,19 @@ class TypeSymbolTable {
         }
         this.symbolEntries = [...this.symbols.values()];
         this.buildInheritanceIndex();
-        const dependencyStartedAt = onDependencyProfile ? node_perf_hooks_1.performance.now() : 0;
+        const dependencyStartedAt = onDependencyProfile || onDependencyProgress
+            ? node_perf_hooks_1.performance.now()
+            : 0;
+        onDependencyProgress?.('start');
         for (const symbol of this.symbolEntries) {
             this.resolveScale(symbol);
         }
         this.indexResolvedTypeNames();
-        if (onDependencyProfile) {
+        if (onDependencyProfile || onDependencyProgress) {
             const dependencyFinishedAt = node_perf_hooks_1.performance.now();
-            onDependencyProfile(dependencyFinishedAt - dependencyStartedAt, dependencyStartedAt, dependencyFinishedAt);
+            const durationMs = dependencyFinishedAt - dependencyStartedAt;
+            onDependencyProfile?.(durationMs, dependencyStartedAt, dependencyFinishedAt);
+            onDependencyProgress?.('finish', durationMs);
         }
     }
     lookup(name) {
@@ -592,14 +597,19 @@ function pluralizeTypeName(name) {
         ? word
         : (0, plural_1.default)(word)).join(' ');
 }
-function parseTypeDeclarationSyntax(source, options = {}, profile = false) {
+function parseTypeDeclarationSyntax(source, options = {}, profile = false, onProgress = options.onProgress) {
     const diagnostics = [];
-    const memoryBefore = profile ? process.memoryUsage() : undefined;
-    const lexicalStartedAt = profile ? node_perf_hooks_1.performance.now() : 0;
+    const reportProgress = Boolean(onProgress);
+    const measure = profile || reportProgress;
+    const memoryBefore = measure ? process.memoryUsage() : undefined;
+    const lexicalStartedAt = measure ? node_perf_hooks_1.performance.now() : 0;
+    onProgress?.('a análise léxica e o mascaramento de comentários', 'start');
     const commentRanges = [];
     const maskedSource = maskComments(source, diagnostics, commentRanges);
     const parserSource = maskedSource.source;
-    const lexicalFinishedAt = profile ? node_perf_hooks_1.performance.now() : 0;
+    const lexicalFinishedAt = measure ? node_perf_hooks_1.performance.now() : 0;
+    onProgress?.('a análise léxica e o mascaramento de comentários', 'finish', lexicalFinishedAt - lexicalStartedAt);
+    onProgress?.('a análise sintática', 'start');
     const syntaxStartedAt = lexicalFinishedAt;
     const declarations = [];
     const globalVariables = [];
@@ -645,7 +655,8 @@ function parseTypeDeclarationSyntax(source, options = {}, profile = false) {
         periodIndex = findDeclarationPeriod(parserSource, segmentStart);
     }
     setRoutineBodyRanges(parserSource, routines, [...declarations, ...globalVariables].map(declaration => declaration.range));
-    const syntaxFinishedAt = profile ? node_perf_hooks_1.performance.now() : 0;
+    const syntaxFinishedAt = measure ? node_perf_hooks_1.performance.now() : 0;
+    onProgress?.('a análise sintática', 'finish', syntaxFinishedAt - syntaxStartedAt);
     const syntaxDiagnostics = diagnostics.map(diagnostic => ({
         ...diagnostic,
         range: { ...diagnostic.range }
@@ -867,11 +878,23 @@ function resolveRoutineSyntaxRegions(source, syntax, regions, workspaceSymbols, 
     return { routines: requestedRoutines, diagnostics };
 }
 function parseTypeDeclarations(source, workspaceSymbols, onProfile, options = {}) {
-    const syntax = parseTypeDeclarationSyntax(source, options, Boolean(onProfile));
-    return resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, false);
+    const totalStartedAt = options.onProgress ? node_perf_hooks_1.performance.now() : 0;
+    options.onProgress?.('a análise total do documento', 'start');
+    const syntax = parseTypeDeclarationSyntax(source, options, Boolean(onProfile || options.onProgress));
+    const parsed = resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, false);
+    if (options.onProgress) {
+        options.onProgress('a análise total do documento', 'finish', node_perf_hooks_1.performance.now() - totalStartedAt);
+    }
+    return parsed;
 }
 function resolveTypeDeclarationSyntax(source, syntax, workspaceSymbols, onProfile, options = {}) {
-    return resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, true);
+    const totalStartedAt = options.onProgress ? node_perf_hooks_1.performance.now() : 0;
+    options.onProgress?.('a análise total do documento', 'start');
+    const parsed = resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, true);
+    if (options.onProgress) {
+        options.onProgress('a análise total do documento', 'finish', node_perf_hooks_1.performance.now() - totalStartedAt);
+    }
+    return parsed;
 }
 function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onProfile, options, preserveSyntax) {
     if (syntax.source !== source) {
@@ -941,7 +964,10 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
     let dependencyResolutionMs = 0;
     let dependencyResolutionStartedAt = 0;
     let dependencyResolutionFinishedAt = 0;
-    const catalogStartedAt = syntaxFinishedAt;
+    const catalogStartedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : syntaxFinishedAt;
+    options.onProgress?.('a construção do catálogo de símbolos', 'start');
     const symbols = new TypeSymbolTable([
         ...declarations,
         ...(workspaceSymbols?.declarations ?? [])
@@ -951,6 +977,8 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
             dependencyResolutionStartedAt = startTimeMs;
             dependencyResolutionFinishedAt = endTimeMs;
         }
+        : undefined, options.onProgress
+        ? (state, durationMs) => options.onProgress?.('a resolução de dependências entre tipos', state, durationMs)
         : undefined);
     const globalVariableSymbols = new GlobalVariableSymbolTable([
         ...globalVariables,
@@ -959,53 +987,84 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
     const reusedRoutines = reuseRoutineRegions(source, routines, options.reusableRoutineRegions);
     const routinesToResolve = routines.filter(routine => !reusedRoutines.has(routine));
     const routineSymbols = new RoutineSymbolTable(routines);
-    const catalogFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const catalogFinishedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
+    options.onProgress?.('a construção do catálogo de símbolos', 'finish', catalogFinishedAt - catalogStartedAt);
     const catalogBuildMs = catalogFinishedAt - catalogStartedAt;
+    options.onProgress?.('a resolução de tipos simples e compostos', 'start');
     const typeResolutionStartedAt = catalogFinishedAt;
     validateBaseTypes(declarationsToResolve, symbols, diagnostics);
     resolveFields(parserSource, [...declarationsToResolve, ...globalVariablesToResolve], symbols, diagnostics);
-    const typeResolutionFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const typeResolutionFinishedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
+    options.onProgress?.('a resolução de tipos simples e compostos', 'finish', typeResolutionFinishedAt - typeResolutionStartedAt);
+    options.onProgress?.('a resolução de variáveis globais', 'start');
     const globalVariableResolutionStartedAt = typeResolutionFinishedAt;
     validateGlobalVariableTypes(globalVariablesToResolve, symbols, diagnostics);
-    const globalVariableResolutionFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const globalVariableResolutionFinishedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
+    options.onProgress?.('a resolução de variáveis globais', 'finish', globalVariableResolutionFinishedAt - globalVariableResolutionStartedAt);
+    options.onProgress?.('a validação de declarações', 'start');
     validateReservedNames(parserSource, declarations, globalVariables, diagnostics);
     validateIdentifierPunctuation(parserSource, [...declarations, ...globalVariables].map(declaration => declaration.name), diagnostics);
-    const routineResolutionStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const routineResolutionStartedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
+    options.onProgress?.('a validação de declarações', 'finish', routineResolutionStartedAt - globalVariableResolutionFinishedAt);
+    options.onProgress?.('a resolução de parâmetros de rotinas', 'start');
     const routineParameterResolutionStartedAt = routineResolutionStartedAt;
     resolveRoutineParameters(parserSource, routinesToResolve, symbols, diagnostics);
-    const routineParameterResolutionFinishedAt = onProfile
+    const routineParameterResolutionFinishedAt = onProfile || options.onProgress
         ? node_perf_hooks_1.performance.now()
         : 0;
     const routineParameterResolutionMs = onProfile
         ? routineParameterResolutionFinishedAt - routineParameterResolutionStartedAt
         : 0;
-    const computedFieldResolutionStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    options.onProgress?.('a resolução de parâmetros de rotinas', 'finish', routineParameterResolutionFinishedAt - routineParameterResolutionStartedAt);
+    const computedFieldResolutionStartedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
+    options.onProgress?.('a resolução de campos calculados', 'start');
     resolveComputedFields(routinesToResolve, symbols, diagnostics);
-    const computedFieldResolutionFinishedAt = onProfile
+    const computedFieldResolutionFinishedAt = onProfile || options.onProgress
         ? node_perf_hooks_1.performance.now()
         : 0;
     const computedFieldResolutionMs = onProfile
         ? computedFieldResolutionFinishedAt - computedFieldResolutionStartedAt
         : 0;
-    const routineCallResolutionStartedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    options.onProgress?.('a resolução de campos calculados', 'finish', computedFieldResolutionFinishedAt - computedFieldResolutionStartedAt);
+    const routineCallResolutionStartedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
+    options.onProgress?.('a resolução de chamadas de rotinas', 'start');
     if (options.resolveRoutineCalls !== false) {
         resolveRoutineCalls(parserSource, routinesToResolve, globalVariableSymbols.entries.map(symbol => symbol.declaration), symbols, diagnostics, [...routines, ...(workspaceSymbols?.routines ?? [])]);
     }
-    const routineCallResolutionFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    const routineCallResolutionFinishedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
     const routineCallResolutionMs = onProfile
         ? routineCallResolutionFinishedAt - routineCallResolutionStartedAt
         : 0;
-    const routineVariableValidationStartedAt = onProfile
+    options.onProgress?.('a resolução de chamadas de rotinas', 'finish', routineCallResolutionFinishedAt - routineCallResolutionStartedAt);
+    const routineVariableValidationStartedAt = onProfile || options.onProgress
         ? node_perf_hooks_1.performance.now()
         : 0;
+    options.onProgress?.('a validação de variáveis de rotinas', 'start');
     validateRoutineVariableNames(routinesToResolve, diagnostics);
-    const routineVariableValidationFinishedAt = onProfile
+    const routineVariableValidationFinishedAt = onProfile || options.onProgress
         ? node_perf_hooks_1.performance.now()
         : 0;
     const routineVariableValidationMs = onProfile
         ? routineVariableValidationFinishedAt - routineVariableValidationStartedAt
         : 0;
-    const routineResolutionFinishedAt = onProfile ? node_perf_hooks_1.performance.now() : 0;
+    options.onProgress?.('a validação de variáveis de rotinas', 'finish', routineVariableValidationFinishedAt - routineVariableValidationStartedAt);
+    const routineResolutionFinishedAt = onProfile || options.onProgress
+        ? node_perf_hooks_1.performance.now()
+        : 0;
     const parsedDocument = {
         declarations,
         globalVariables,
@@ -1025,11 +1084,13 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
     if (options.verifyIncrementalRoutineResolution &&
         (reusedRoutines.size > 0 || reusedSemanticRegionKeys.size > 0)) {
         routineVerificationStartedAt = node_perf_hooks_1.performance.now();
+        options.onProgress?.('a verificação diferencial incremental', 'start');
         const completeParse = parseTypeDeclarations(source, workspaceSymbols, undefined, {
             ...options,
             incrementalRoutineResolution: false,
             verifyIncrementalRoutineResolution: false,
             onIncrementalVerification: undefined,
+            onProgress: undefined,
             reusableSemanticRegions: undefined,
             reusableRoutineRegions: undefined
         });
@@ -1082,14 +1143,19 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
             verificationFallback = completeParse;
         }
     }
+    if (routineVerificationMs > 0) {
+        options.onProgress?.('a verificação diferencial incremental', 'finish', routineVerificationMs);
+    }
     if (onProfile) {
         const tokenCountingStartedAt = node_perf_hooks_1.performance.now();
+        options.onProgress?.('a contagem de tokens aproximada', 'start');
         const tokenPattern = /[\p{L}\p{N}_]+|[^\s]/gu;
         let tokenCount = 0;
         while (tokenPattern.exec(parserSource)) {
             tokenCount++;
         }
         const finishedAt = node_perf_hooks_1.performance.now();
+        options.onProgress?.('a contagem de tokens aproximada', 'finish', finishedAt - tokenCountingStartedAt);
         const memoryAfter = process.memoryUsage();
         onProfile({
             phases: [

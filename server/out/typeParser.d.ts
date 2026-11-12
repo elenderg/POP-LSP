@@ -278,7 +278,7 @@ export declare class TypeSymbolTable {
     private readonly inheritanceExitTimes;
     private readonly inheritanceDepths;
     private readonly scaleResolutionStates;
-    constructor(declarations?: TypeDeclaration[], onDependencyProfile?: (durationMs: number, startTimeMs: number, endTimeMs: number) => void);
+    constructor(declarations?: TypeDeclaration[], onDependencyProfile?: (durationMs: number, startTimeMs: number, endTimeMs: number) => void, onDependencyProgress?: (state: 'start' | 'finish', durationMs?: number) => void);
     lookup(name: string): TypeSymbol | undefined;
     getBaseTypeDistance(actualName: string, expectedName: string): number | undefined;
     get entries(): readonly TypeSymbol[];
@@ -321,6 +321,7 @@ export interface ParseOptions {
     incrementalRoutineResolution?: boolean;
     verifyIncrementalRoutineResolution?: boolean;
     onIncrementalVerification?: (matched: boolean) => void;
+    onProgress?: (phase: string, state: 'start' | 'finish', durationMs?: number) => void;
     reusableSemanticRegions?: {
         source: string;
         parsed: ParsedDocument;
@@ -457,7 +458,7 @@ export interface ParsedReference {
     declaration?: boolean;
 }
 export declare function normalizeTypeName(name: string): string;
-export declare function parseTypeDeclarationSyntax(source: string, options?: Pick<ParseOptions, 'reusableDeclarationRegions'>, profile?: boolean): ParsedDocumentSyntax;
+export declare function parseTypeDeclarationSyntax(source: string, options?: Pick<ParseOptions, 'reusableDeclarationRegions' | 'onProgress'>, profile?: boolean, onProgress?: ((phase: string, state: "start" | "finish", durationMs?: number) => void) | undefined): ParsedDocumentSyntax;
 export declare function parseTypeDeclarationRegion(source: string, region: ParserRegion, onProfile?: (metrics: DeclarationRegionParseMetrics) => void): ParsedSyntaxRegion;
 export declare function resolveRoutineSyntaxRegions(source: string, syntax: ParsedDocumentSyntax, regions: readonly ParserRegion[], workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: RoutineResolutionWorklistMetrics) => void): RoutineResolutionWorklistResult;
 export declare function parseTypeDeclarations(source: string, workspaceSymbols?: ParserSymbolCatalog, onProfile?: (metrics: ParsePerformanceMetrics) => void, options?: ParseOptions): ParsedDocument;

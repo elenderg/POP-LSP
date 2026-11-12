@@ -251,6 +251,47 @@ if it appears in a boolean function header.
 - Set `POP_LSP_CPU_PROFILE=1` before launching VS Code to capture a Node.js CPU
   profile for the language-server process. The `.cpuprofile` file is written to
   the operating system's temporary directory; profiling is disabled by default.
+- For a manual investigation on Windows, close every VS Code process first so
+  the new environment reaches the language-server process, then launch the
+  workspace from PowerShell:
+
+  ```powershell
+  $env:POP_LSP_PROFILE = '1'
+  $env:POP_LSP_CPU_PROFILE = '1'
+  code C:\POP-LSP
+  ```
+
+  Open one of the slow `.pop` files and wait for its initial symbols/diagnostics.
+  In **View > Output**, select the language-server output and filter for
+  `[POP-LSP profile]`. `stage-progress` entries print paired Portuguese
+  “Iniciando...” and “Finalizado...” messages with elapsed milliseconds.
+  Compare the `document-parse`/`parse-phase` entries for `base` and `contextual`
+  passes, then inspect `workspace-refresh` for file discovery, cache hits, and
+  catalog assembly. The `slow-operation` records identify phases exceeding
+  `POP_LSP_PROFILE_SLOW_MS`.
+
+  On shutdown, open the generated `.cpuprofile` from the operating system's
+  temporary directory in Chromium DevTools (**Performance > Load profile**) or
+  a compatible CPU-profile viewer. Use the Bottom-up view, sort by self time,
+  and inspect the call tree for the language server's `server.js` and
+  `typeParser.js`; source maps map compiled frames back to TypeScript. Self
+  time points to expensive function bodies; total time points to functions
+  whose callees dominate. Repeat the initial load at least three times with
+  the same workspace and compare medians. Keep verification flags off while
+  measuring normal behavior because differential verification intentionally
+  performs extra parsing. Disable both profiling variables for normal use.
+  To locate recent profiles from PowerShell, run:
+
+  ```powershell
+  Get-ChildItem $env:TEMP -Filter '*.cpuprofile' |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 5 FullName, LastWriteTime
+  ```
+
+  Treat the JSON phase timings as attribution between major stages, not exact
+  per-function timings. The CPU profile provides sampled function-level
+  attribution; avoid adding timers to every recursive helper until that profile
+  identifies a specific hot call path.
 
 The workspace catalog and parsed references are reused while source text is
 unchanged, regardless of LSP document-version changes. A source change or

@@ -381,6 +381,10 @@ export class TypeSymbolTable {
       durationMs: number,
       startTimeMs: number,
       endTimeMs: number
+    ) => void,
+    onDependencyProgress?: (
+      state: 'start' | 'finish',
+      durationMs?: number
     ) => void
   ) {
     this.addPrimitive('byte', false);
@@ -416,18 +420,23 @@ export class TypeSymbolTable {
     this.symbolEntries = [...this.symbols.values()];
     this.buildInheritanceIndex();
 
-    const dependencyStartedAt = onDependencyProfile ? performance.now() : 0;
+    const dependencyStartedAt = onDependencyProfile || onDependencyProgress
+      ? performance.now()
+      : 0;
+    onDependencyProgress?.('start');
     for (const symbol of this.symbolEntries) {
       this.resolveScale(symbol);
     }
     this.indexResolvedTypeNames();
-    if (onDependencyProfile) {
+    if (onDependencyProfile || onDependencyProgress) {
       const dependencyFinishedAt = performance.now();
-      onDependencyProfile(
-        dependencyFinishedAt - dependencyStartedAt,
+      const durationMs = dependencyFinishedAt - dependencyStartedAt;
+      onDependencyProfile?.(
+        durationMs,
         dependencyStartedAt,
         dependencyFinishedAt
       );
+      onDependencyProgress?.('finish', durationMs);
     }
   }
 
@@ -708,6 +717,11 @@ export interface ParseOptions {
   incrementalRoutineResolution?: boolean;
   verifyIncrementalRoutineResolution?: boolean;
   onIncrementalVerification?: (matched: boolean) => void;
+  onProgress?: (
+    phase: string,
+    state: 'start' | 'finish',
+    durationMs?: number
+  ) => void;
   reusableSemanticRegions?: {
     source: string;
     parsed: ParsedDocument;
@@ -1167,16 +1181,29 @@ function pluralizeTypeName(name: string): string {
 
 export function parseTypeDeclarationSyntax(
   source: string,
-  options: Pick<ParseOptions, 'reusableDeclarationRegions'> = {},
-  profile = false
+  options: Pick<
+    ParseOptions,
+    'reusableDeclarationRegions' | 'onProgress'
+  > = {},
+  profile = false,
+  onProgress = options.onProgress
 ): ParsedDocumentSyntax {
   const diagnostics: ParserDiagnostic[] = [];
-  const memoryBefore = profile ? process.memoryUsage() : undefined;
-  const lexicalStartedAt = profile ? performance.now() : 0;
+  const reportProgress = Boolean(onProgress);
+  const measure = profile || reportProgress;
+  const memoryBefore = measure ? process.memoryUsage() : undefined;
+  const lexicalStartedAt = measure ? performance.now() : 0;
+  onProgress?.('a análise léxica e o mascaramento de comentários', 'start');
   const commentRanges: SourceRange[] = [];
   const maskedSource = maskComments(source, diagnostics, commentRanges);
   const parserSource = maskedSource.source;
-  const lexicalFinishedAt = profile ? performance.now() : 0;
+  const lexicalFinishedAt = measure ? performance.now() : 0;
+  onProgress?.(
+    'a análise léxica e o mascaramento de comentários',
+    'finish',
+    lexicalFinishedAt - lexicalStartedAt
+  );
+  onProgress?.('a análise sintática', 'start');
   const syntaxStartedAt = lexicalFinishedAt;
   const declarations: TypeDeclaration[] = [];
   const globalVariables: GlobalVariableDeclaration[] = [];
@@ -1258,7 +1285,12 @@ export function parseTypeDeclarationSyntax(
     routines,
     [...declarations, ...globalVariables].map(declaration => declaration.range)
   );
-  const syntaxFinishedAt = profile ? performance.now() : 0;
+  const syntaxFinishedAt = measure ? performance.now() : 0;
+  onProgress?.(
+    'a análise sintática',
+    'finish',
+    syntaxFinishedAt - syntaxStartedAt
+  );
   const syntaxDiagnostics = diagnostics.map(diagnostic => ({
     ...diagnostic,
     range: { ...diagnostic.range }
@@ -1582,12 +1614,14 @@ export function parseTypeDeclarations(
   onProfile?: (metrics: ParsePerformanceMetrics) => void,
   options: ParseOptions = {}
 ): ParsedDocument {
+  const totalStartedAt = options.onProgress ? performance.now() : 0;
+  options.onProgress?.('a análise total do documento', 'start');
   const syntax = parseTypeDeclarationSyntax(
     source,
     options,
-    Boolean(onProfile)
+    Boolean(onProfile || options.onProgress)
   );
-  return resolveTypeDeclarationSyntaxCore(
+  const parsed = resolveTypeDeclarationSyntaxCore(
     source,
     syntax,
     workspaceSymbols,
@@ -1595,6 +1629,14 @@ export function parseTypeDeclarations(
     options,
     false
   );
+  if (options.onProgress) {
+    options.onProgress(
+      'a análise total do documento',
+      'finish',
+      performance.now() - totalStartedAt
+    );
+  }
+  return parsed;
 }
 
 export function resolveTypeDeclarationSyntax(
@@ -1604,7 +1646,9 @@ export function resolveTypeDeclarationSyntax(
   onProfile?: (metrics: ParsePerformanceMetrics) => void,
   options: ParseOptions = {}
 ): ParsedDocument {
-  return resolveTypeDeclarationSyntaxCore(
+  const totalStartedAt = options.onProgress ? performance.now() : 0;
+  options.onProgress?.('a análise total do documento', 'start');
+  const parsed = resolveTypeDeclarationSyntaxCore(
     source,
     syntax,
     workspaceSymbols,
@@ -1612,6 +1656,14 @@ export function resolveTypeDeclarationSyntax(
     options,
     true
   );
+  if (options.onProgress) {
+    options.onProgress(
+      'a análise total do documento',
+      'finish',
+      performance.now() - totalStartedAt
+    );
+  }
+  return parsed;
 }
 
 function resolveTypeDeclarationSyntaxCore(
@@ -1720,7 +1772,10 @@ function resolveTypeDeclarationSyntaxCore(
   let dependencyResolutionMs = 0;
   let dependencyResolutionStartedAt = 0;
   let dependencyResolutionFinishedAt = 0;
-  const catalogStartedAt = syntaxFinishedAt;
+  const catalogStartedAt = onProfile || options.onProgress
+    ? performance.now()
+    : syntaxFinishedAt;
+  options.onProgress?.('a construção do catálogo de símbolos', 'start');
   const symbols = new TypeSymbolTable([
     ...declarations,
     ...(workspaceSymbols?.declarations ?? [])
@@ -1730,6 +1785,13 @@ function resolveTypeDeclarationSyntaxCore(
       dependencyResolutionStartedAt = startTimeMs;
       dependencyResolutionFinishedAt = endTimeMs;
     }
+    : undefined,
+  options.onProgress
+    ? (state, durationMs) => options.onProgress?.(
+      'a resolução de dependências entre tipos',
+      state,
+      durationMs
+    )
     : undefined);
   const globalVariableSymbols = new GlobalVariableSymbolTable([
     ...globalVariables,
@@ -1744,8 +1806,16 @@ function resolveTypeDeclarationSyntaxCore(
     !reusedRoutines.has(routine)
   );
   const routineSymbols = new RoutineSymbolTable(routines);
-  const catalogFinishedAt = onProfile ? performance.now() : 0;
+  const catalogFinishedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
+  options.onProgress?.(
+    'a construção do catálogo de símbolos',
+    'finish',
+    catalogFinishedAt - catalogStartedAt
+  );
   const catalogBuildMs = catalogFinishedAt - catalogStartedAt;
+  options.onProgress?.('a resolução de tipos simples e compostos', 'start');
   const typeResolutionStartedAt = catalogFinishedAt;
   validateBaseTypes(declarationsToResolve, symbols, diagnostics);
   resolveFields(
@@ -1754,17 +1824,41 @@ function resolveTypeDeclarationSyntaxCore(
     symbols,
     diagnostics
   );
-  const typeResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const typeResolutionFinishedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
+  options.onProgress?.(
+    'a resolução de tipos simples e compostos',
+    'finish',
+    typeResolutionFinishedAt - typeResolutionStartedAt
+  );
+  options.onProgress?.('a resolução de variáveis globais', 'start');
   const globalVariableResolutionStartedAt = typeResolutionFinishedAt;
   validateGlobalVariableTypes(globalVariablesToResolve, symbols, diagnostics);
-  const globalVariableResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const globalVariableResolutionFinishedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
+  options.onProgress?.(
+    'a resolução de variáveis globais',
+    'finish',
+    globalVariableResolutionFinishedAt - globalVariableResolutionStartedAt
+  );
+  options.onProgress?.('a validação de declarações', 'start');
   validateReservedNames(parserSource, declarations, globalVariables, diagnostics);
   validateIdentifierPunctuation(
     parserSource,
     [...declarations, ...globalVariables].map(declaration => declaration.name),
     diagnostics
   );
-  const routineResolutionStartedAt = onProfile ? performance.now() : 0;
+  const routineResolutionStartedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
+  options.onProgress?.(
+    'a validação de declarações',
+    'finish',
+    routineResolutionStartedAt - globalVariableResolutionFinishedAt
+  );
+  options.onProgress?.('a resolução de parâmetros de rotinas', 'start');
   const routineParameterResolutionStartedAt = routineResolutionStartedAt;
   resolveRoutineParameters(
     parserSource,
@@ -1772,21 +1866,37 @@ function resolveTypeDeclarationSyntaxCore(
     symbols,
     diagnostics
   );
-  const routineParameterResolutionFinishedAt = onProfile
+  const routineParameterResolutionFinishedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
   const routineParameterResolutionMs = onProfile
     ? routineParameterResolutionFinishedAt - routineParameterResolutionStartedAt
     : 0;
-  const computedFieldResolutionStartedAt = onProfile ? performance.now() : 0;
+  options.onProgress?.(
+    'a resolução de parâmetros de rotinas',
+    'finish',
+    routineParameterResolutionFinishedAt - routineParameterResolutionStartedAt
+  );
+  const computedFieldResolutionStartedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
+  options.onProgress?.('a resolução de campos calculados', 'start');
   resolveComputedFields(routinesToResolve, symbols, diagnostics);
-  const computedFieldResolutionFinishedAt = onProfile
+  const computedFieldResolutionFinishedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
   const computedFieldResolutionMs = onProfile
     ? computedFieldResolutionFinishedAt - computedFieldResolutionStartedAt
     : 0;
-  const routineCallResolutionStartedAt = onProfile ? performance.now() : 0;
+  options.onProgress?.(
+    'a resolução de campos calculados',
+    'finish',
+    computedFieldResolutionFinishedAt - computedFieldResolutionStartedAt
+  );
+  const routineCallResolutionStartedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
+  options.onProgress?.('a resolução de chamadas de rotinas', 'start');
   if (options.resolveRoutineCalls !== false) {
     resolveRoutineCalls(
       parserSource,
@@ -1797,21 +1907,36 @@ function resolveTypeDeclarationSyntaxCore(
       [...routines, ...(workspaceSymbols?.routines ?? [])]
     );
   }
-  const routineCallResolutionFinishedAt = onProfile ? performance.now() : 0;
+  const routineCallResolutionFinishedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
   const routineCallResolutionMs = onProfile
     ? routineCallResolutionFinishedAt - routineCallResolutionStartedAt
     : 0;
-  const routineVariableValidationStartedAt = onProfile
+  options.onProgress?.(
+    'a resolução de chamadas de rotinas',
+    'finish',
+    routineCallResolutionFinishedAt - routineCallResolutionStartedAt
+  );
+  const routineVariableValidationStartedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
+  options.onProgress?.('a validação de variáveis de rotinas', 'start');
   validateRoutineVariableNames(routinesToResolve, diagnostics);
-  const routineVariableValidationFinishedAt = onProfile
+  const routineVariableValidationFinishedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
   const routineVariableValidationMs = onProfile
     ? routineVariableValidationFinishedAt - routineVariableValidationStartedAt
     : 0;
-  const routineResolutionFinishedAt = onProfile ? performance.now() : 0;
+  options.onProgress?.(
+    'a validação de variáveis de rotinas',
+    'finish',
+    routineVariableValidationFinishedAt - routineVariableValidationStartedAt
+  );
+  const routineResolutionFinishedAt = onProfile || options.onProgress
+    ? performance.now()
+    : 0;
   const parsedDocument: ParsedDocument = {
     declarations,
     globalVariables,
@@ -1846,6 +1971,10 @@ function resolveTypeDeclarationSyntaxCore(
     (reusedRoutines.size > 0 || reusedSemanticRegionKeys.size > 0)
   ) {
     routineVerificationStartedAt = performance.now();
+    options.onProgress?.(
+      'a verificação diferencial incremental',
+      'start'
+    );
     const completeParse = parseTypeDeclarations(
       source,
       workspaceSymbols,
@@ -1855,6 +1984,7 @@ function resolveTypeDeclarationSyntaxCore(
         incrementalRoutineResolution: false,
         verifyIncrementalRoutineResolution: false,
         onIncrementalVerification: undefined,
+        onProgress: undefined,
         reusableSemanticRegions: undefined,
         reusableRoutineRegions: undefined
       }
@@ -1923,14 +2053,27 @@ function resolveTypeDeclarationSyntaxCore(
       verificationFallback = completeParse;
     }
   }
+  if (routineVerificationMs > 0) {
+    options.onProgress?.(
+      'a verificação diferencial incremental',
+      'finish',
+      routineVerificationMs
+    );
+  }
   if (onProfile) {
     const tokenCountingStartedAt = performance.now();
+    options.onProgress?.('a contagem de tokens aproximada', 'start');
     const tokenPattern = /[\p{L}\p{N}_]+|[^\s]/gu;
     let tokenCount = 0;
     while (tokenPattern.exec(parserSource)) {
       tokenCount++;
     }
     const finishedAt = performance.now();
+    options.onProgress?.(
+      'a contagem de tokens aproximada',
+      'finish',
+      finishedAt - tokenCountingStartedAt
+    );
     const memoryAfter = process.memoryUsage();
     onProfile({
       phases: [

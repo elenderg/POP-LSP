@@ -726,6 +726,27 @@ function logProfile(metrics) {
         connection.console.log(`[POP-LSP profile] ${JSON.stringify(metrics)}`);
     }
 }
+function documentParseProgress(requestId, requestDocumentUri, documentUri, pass) {
+    if (!profileEnabled) {
+        return undefined;
+    }
+    return (phase, state, durationMs) => {
+        const message = state === 'start'
+            ? `Iniciando ${phase}.`
+            : `Finalizado ${phase}. Esta etapa levou ${(durationMs ?? 0).toFixed(2)} ms.`;
+        logProfile({
+            event: 'stage-progress',
+            requestId,
+            requestDocumentUri,
+            documentUri,
+            pass,
+            phase,
+            state,
+            message,
+            ...(durationMs === undefined ? {} : { durationMs })
+        });
+    };
+}
 if (profileEnabled && eventLoopDelay) {
     eventLoopDelay.enable();
     let previousCpuUsage = process.cpuUsage();
@@ -780,6 +801,12 @@ function profileRequest(name, handler, documentUri) {
         timestampMs: startedAt,
         pendingRequests: pendingProfileRequests
     });
+    logProfile({
+        event: 'stage-progress',
+        requestId,
+        documentUri: documentUri ?? '',
+        message: `Iniciando a solicitação LSP "${name}".`
+    });
     let requestCompleted = false;
     const watchdog = setTimeout(() => {
         if (requestCompleted) {
@@ -816,6 +843,13 @@ function profileRequest(name, handler, documentUri) {
             durationMs,
             success,
             pendingRequests: pendingProfileRequests
+        });
+        logProfile({
+            event: 'stage-progress',
+            requestId,
+            documentUri: documentUri ?? '',
+            durationMs,
+            message: `Finalizada a solicitação LSP "${name}". Esta etapa levou ${durationMs.toFixed(2)} ms.`
         });
         if (durationMs >= slowProfileThresholdMs) {
             const memory = process.memoryUsage();
@@ -1892,14 +1926,17 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                     const previousSource = previousIndex
                         ? workspaceDocumentSources.get(previousIndex)?.get(entry.uri)
                         : undefined;
-                    parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, undefined, collectDocumentParseMetrics(entry.uri, entry.source, 'base'), previousDocument && previousSource !== undefined
-                        ? {
-                            reusableDeclarationRegions: {
-                                source: previousSource,
-                                parsed: previousDocument.parsed
+                    parsed = (0, typeParser_1.parseTypeDeclarations)(entry.source, undefined, collectDocumentParseMetrics(entry.uri, entry.source, 'base'), {
+                        ...(previousDocument && previousSource !== undefined
+                            ? {
+                                reusableDeclarationRegions: {
+                                    source: previousSource,
+                                    parsed: previousDocument.parsed
+                                }
                             }
-                        }
-                        : undefined);
+                            : {}),
+                        onProgress: documentParseProgress(requestId, requestDocumentUri, entry.uri, 'base')
+                    });
                     entry.analysis.baseParsed = parsed;
                     baseParseCount++;
                 }
@@ -1982,6 +2019,7 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                     incrementalRoutineResolution: incrementalRoutineResolutionEnabled,
                     verifyIncrementalRoutineResolution: verifyIncrementalRoutineResolution ||
                         verifyIncrementalDeclarationResolution,
+                    onProgress: documentParseProgress(requestId, requestDocumentUri, entry.uri, 'contextual'),
                     onIncrementalVerification: verifyIncrementalRoutineResolution ||
                         verifyIncrementalDeclarationResolution
                         ? matched => {
