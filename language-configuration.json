@@ -1,6 +1,6 @@
 {
   "comments": {"lineComment": "\\","blockComment": ["[","]"]},
-  "brackets": [["{","}"],["[","]"],["(",")"],["com","."],[":","."],["Itere.","Reitere."]],
+  "brackets": [["{","}"],["[","]"],["(",")"],[":","."],["Itere.","Reitere."]],
   "autoClosingPairs": [["{","}"],["[","]"],["(",")"],["\"","\""],["'","'"],["Itere.","Reitere."]],
   "surroundingPairs": [["{","}"],["[","]"],["(",")"],["\"","\""],["'","'"],["Itere.","Reitere."]],
 }
