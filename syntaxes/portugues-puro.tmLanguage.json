@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "portugues-puro",
+  "name": "PoP",
   "scopeName": "source.escopo.pop",
   "patterns": [
     {"include": "#comentários"            },
@@ -74,7 +74,7 @@
         {"include": "#denominacao-de-campos"},
         {"include": "#operadores"           },
         {"include": "#strings-literais"     },
-        {"include":"#observações"           },   
+        {"include":"#observações"           },
         {"include":"#qualificadores"        },
         {"name": "support.type.simples.pop", "match": "[A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#\\/]+"}
       ]
@@ -93,8 +93,8 @@
         {"include": "#denominacao-de-campos"},
         {"include": "#operadores"           },
         {"include": "#strings-literais"     },
-        {"include":"#observações"           },
-        {"include":"#qualificadores"        },
+        {"include": "#observações"          },
+        {"include": "#qualificadores"       },
         {"name": "support.type.simples.pop", "match": "[A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#\\/]+"}
       ]
     },
@@ -120,7 +120,7 @@
         {"include":"#qualificadores"                                                                                 },
         {
           "name": "variable.other.pop", 
-          "match": "(?<![A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#/])(?!(?:[0-9]+(?:/[0-9]+)?)(?![A-Za-zÀ-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#]))[A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#]+(?:/(?![0-9])[A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#]+)*"
+          "match": "(?<![A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#/])(?!(?:([-+])?[0-9]+(?:/[0-9]+)?)(?![A-Za-zÀ-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#]))[A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#]+(?:/(?![0-9])[A-Za-z0-9À-ÿ_\\-'&@ƒŠŒŽœžŸ£µ#]+)*"
         }
       ]
     },
