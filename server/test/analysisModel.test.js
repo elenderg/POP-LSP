@@ -853,6 +853,244 @@ test('resolves selected routine regions equivalently to the full routine pass', 
   ));
 });
 
+test('caches repeated overload argument analysis without changing resolution', () => {
+  const source = [
+    'Um número é um byte.',
+    'O valor é um byte.',
+    'Rotina para que se some um byte:',
+    '  Retorne.',
+    'Rotina para que se some um número:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Some o valor mais 2.',
+    '  Retorne.'
+  ].join('\n');
+  let metrics;
+  let baselineMetrics;
+  const parsed = parseTypeDeclarations(
+    source,
+    undefined,
+    value => { metrics = value; }
+  );
+  const baseline = parseTypeDeclarations(
+    source,
+    undefined,
+    value => { baselineMetrics = value; },
+    { cacheRoutineArgumentTypes: false }
+  );
+  const call = parsed.routines[2].calls[0];
+  const profile = metrics.routineResolutionProfile;
+  const slowestCall = profile.slowestCalls[0];
+
+  assert.deepEqual(parsed.routines, baseline.routines);
+  assert.deepEqual(parsed.diagnostics, baseline.diagnostics);
+  assert.equal(parsed.diagnostics.length, 0);
+  assert.equal(call.target.parameters[0].type.name, 'número');
+  assert.deepEqual(
+    call.variableAccesses.map(access => access.reference.name),
+    ['valor']
+  );
+  assert.equal(profile.candidatesReachingArgumentEvaluation, 2);
+  assert.equal(profile.articleRangeCacheHits, 1);
+  assert.equal(profile.routineExpressionParseCacheHits, 1);
+  assert.equal(profile.expressionOperandResolutions, 2);
+  assert.equal(profile.expressionOperandCacheHits, 2);
+  assert.equal(profile.expressionOperandCacheMisses, 2);
+  assert.ok(profile.argumentTypeCache.hits > 0);
+  assert.ok(profile.argumentTypeCache.misses > 0);
+  assert.ok(profile.argumentTypeCache.inferenceCalls >=
+    profile.argumentTypeCache.misses);
+  assert.ok(profile.argumentTypeCache.cacheTimeMs >=
+    profile.argumentTypeCache.effectReplayMs);
+  assert.ok(
+    profile.argumentTypeCache.inferenceCalls <
+    baselineMetrics.routineResolutionProfile.helpers.resolveRoutineArgumentType.calls
+  );
+  assert.equal(profile.parameterSeparatedArgumentsCacheHits, 0);
+  assert.equal(slowestCall.candidatesExamined, 2);
+  assert.equal(slowestCall.candidatesReachingArgumentEvaluation, 2);
+  assert.equal(slowestCall.articleRangeCacheHits, 1);
+  assert.equal(slowestCall.routineExpressionParseCacheHits, 1);
+  assert.equal(slowestCall.expressionOperandResolutions, 2);
+  assert.equal(slowestCall.expressionOperandCacheHits, 2);
+  assert.equal(slowestCall.expressionOperandCacheMisses, 2);
+  assert.ok(slowestCall.argumentTypeCache.hits > 0);
+  assert.equal(slowestCall.helpers.resolveRoutineCall.calls, 1);
+  assert.equal(slowestCall.helpers.hasArticleBeforeScalarLiteral.calls, 1);
+  assert.equal(slowestCall.normalizedName, 'some');
+  assert.equal(slowestCall.slowestCandidates.length, 2);
+  assert.ok(slowestCall.slowestCandidates.every(candidate =>
+    candidate.routineName === 'some' &&
+    candidate.argumentCount === 1 &&
+    candidate.durationMs >= candidate.argumentSplittingMs
+  ));
+});
+
+test('replays cached argument effects for expressions, fields, variables, and casts', () => {
+  const source = [
+    'Uma cifra binária é um byte.',
+    'Uma cifra hexadecimal é um byte.',
+    'Uma posição é uma estrutura.',
+    'Uma localização é uma estrutura com Uma posição denominada posição X.',
+    'Um retângulo é uma estrutura com Uma posição denominada posição X1, Uma posição denominada posição X2.',
+    'Uma string é uma estrutura.',
+    'O usuário é uma string.',
+    'Rotina para que se receba um byte:',
+    '  Retorne.',
+    'Rotina para que se receba uma cifra binária:',
+    '  Retorne.',
+    'Rotina para que se receba uma cifra hexadecimal:',
+    '  Retorne.',
+    'Rotina para que se receba uma posição:',
+    '  Retorne.',
+    'Rotina para que se receba uma string:',
+    '  Retorne.',
+    'Função para que se atribua o centro dum retângulo para uma localização:',
+    '  Atribua a posição X1 deste retângulo mais a posição X2 deste retângulo à posição X desta localização.',
+    'Rotina para que se consuma uma localização:',
+    '  Retorne.',
+    'Rotina para que se teste com um retângulo e uma string:',
+    '  Receba a string tal como uma cifra binária.',
+    '  Receba a string tal qual uma cifra hexadecimal.',
+    '  Receba a string.',
+    '  Receba o usuário.',
+    '  Receba a posição X1 deste retângulo.',
+    '  Consuma o centro deste retângulo.',
+    '  Retorne.'
+  ].join('\n');
+  let cachedMetrics;
+  const cached = parseTypeDeclarations(
+    source,
+    undefined,
+    metrics => { cachedMetrics = metrics; }
+  );
+  const uncached = parseTypeDeclarations(
+    source,
+    undefined,
+    undefined,
+    { cacheRoutineArgumentTypes: false }
+  );
+  const caller = cached.routines.find(routine =>
+    routine.name.name.includes('teste')
+  );
+
+  assert.deepEqual(cached.routines, uncached.routines);
+  assert.deepEqual(cached.diagnostics, uncached.diagnostics);
+  assert.deepEqual(getParsedReferences(cached), getParsedReferences(uncached));
+  assert.ok(caller);
+  assert.equal(caller.calls.length, 6);
+  assert.ok(caller.calls.some(call => (call.fieldAccesses?.length ?? 0) > 0));
+  assert.ok(caller.calls.some(call =>
+    (call.computedFieldAccesses?.length ?? 0) > 0
+  ));
+  assert.ok(caller.calls.some(call => call.typeReferences?.some(reference =>
+    reference.name === 'cifra binária'
+  )));
+  assert.ok(caller.calls.some(call => call.variableAccesses?.some(access =>
+    access.reference.name === 'usuário'
+  )));
+  assert.ok(caller.localVariables?.some(variable =>
+    variable.name.name === 'cifra binária'
+  ));
+  assert.equal(cached.diagnostics.length, 0, JSON.stringify(cached.diagnostics));
+  assert.ok(cachedMetrics.routineResolutionProfile.argumentTypeCache.hits > 0);
+});
+
+test('preserves implicit definite article contexts across overload candidates', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um par de números é uma estrutura com',
+    '  Um número denominado número X e',
+    '  Um número denominado número Y.',
+    'Rotina para que se multiplique um par de números por um segundo par de números:',
+    '  Multiplique o número X deste par de números pelo número X deste segundo par de números.',
+    '  Multiplique o número Y deste par de números pelo número Y deste segundo par de números.',
+    'Rotina para que se multiplique um número por um segundo número:',
+    '  Decodifique $8B8508000000.',
+    '  Decodifique $8B00.',
+    '  Decodifique $8B9D0C000000.',
+    '  Decodifique $F72B.',
+    '  Decodifique $8B9D08000000.',
+    '  Decodifique $8903.'
+  ].join('\n');
+  let cachedMetrics;
+  const cached = parseTypeDeclarations(
+    source,
+    undefined,
+    metrics => { cachedMetrics = metrics; }
+  );
+  const uncached = parseTypeDeclarations(
+    source,
+    undefined,
+    undefined,
+    { cacheRoutineArgumentTypes: false }
+  );
+
+  assert.deepEqual(cached.routines, uncached.routines);
+  assert.deepEqual(cached.diagnostics, uncached.diagnostics);
+  assert.deepEqual(getParsedReferences(cached), getParsedReferences(uncached));
+  assert.equal(cached.diagnostics.length, 0);
+  assert.ok(cachedMetrics.routineResolutionProfile.argumentTypeCache.hits > 0);
+});
+
+test('replays cached undefined inference and ambiguous-field diagnostics once', () => {
+  const undefinedSource = [
+    'Um número é um byte.',
+    'Rotina para que se receba um byte:',
+    '  Retorne.',
+    'Rotina para que se receba um número:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Receba o valor ausente.',
+    '  Retorne.'
+  ].join('\n');
+  let undefinedMetrics;
+  const cachedUndefined = parseTypeDeclarations(
+    undefinedSource,
+    undefined,
+    metrics => { undefinedMetrics = metrics; }
+  );
+  const uncachedUndefined = parseTypeDeclarations(
+    undefinedSource,
+    undefined,
+    undefined,
+    { cacheRoutineArgumentTypes: false }
+  );
+  assert.deepEqual(cachedUndefined.routines, uncachedUndefined.routines);
+  assert.deepEqual(cachedUndefined.diagnostics, uncachedUndefined.diagnostics);
+  assert.ok(
+    undefinedMetrics.routineResolutionProfile.argumentTypeCache.hits > 0
+  );
+  assert.equal(cachedUndefined.routines[2].calls[0].target, undefined);
+
+  const ambiguousSource = [
+    'Uma posição é uma estrutura com um byte denominado valor.',
+    'Uma localização é uma estrutura com um byte denominado valor.',
+    'Uma caixa é uma estrutura com Uma posição denominada posição A e Uma localização denominada posição B.',
+    'A caixa global é uma caixa.',
+    'Rotina para que se receba um byte:',
+    '  Retorne.',
+    'Rotina para que se receba um número:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Receba o valor desta caixa global.',
+    '  Retorne.'
+  ].join('\n');
+  const cachedAmbiguous = parseTypeDeclarations(ambiguousSource);
+  const uncachedAmbiguous = parseTypeDeclarations(
+    ambiguousSource,
+    undefined,
+    undefined,
+    { cacheRoutineArgumentTypes: false }
+  );
+  const ambiguityDiagnostics = cachedAmbiguous.diagnostics.filter(diagnostic =>
+    diagnostic.message.startsWith('Ambiguous structure field access')
+  );
+  assert.deepEqual(cachedAmbiguous.routines, uncachedAmbiguous.routines);
+  assert.deepEqual(cachedAmbiguous.diagnostics, uncachedAmbiguous.diagnostics);
+  assert.equal(ambiguityDiagnostics.length, 1);
+});
+
 test('reuses unchanged declaration syntax and rebases all source ranges', () => {
   const source = [
     'Um caractere é um byte.',

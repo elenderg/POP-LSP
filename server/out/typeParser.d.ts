@@ -321,6 +321,7 @@ export interface ParserSymbolCatalog {
 }
 export interface ParseOptions {
     resolveRoutineCalls?: boolean;
+    cacheRoutineArgumentTypes?: boolean;
     incrementalRoutineResolution?: boolean;
     verifyIncrementalRoutineResolution?: boolean;
     onIncrementalVerification?: (matched: boolean) => void;
@@ -429,6 +430,7 @@ export interface ParsePerformanceMetrics {
     routineNameNormalizationCalls: number;
     routineNameNormalizationCacheHits: number;
     routineNameNormalizationCacheMisses: number;
+    routineResolutionProfile?: RoutineResolutionProfileMetrics;
     totalMs: number;
     sourceCodeUnits: number;
     tokenCount: number;
@@ -446,6 +448,99 @@ export interface ParsePerformanceMetrics {
     incrementalVerificationStatus?: 'not-requested' | 'matched' | 'fallback';
     incrementalVerificationMs?: number;
 }
+type RoutineResolutionProfileHelperName = 'processRoutineStatement' | 'parseConditionalBlock' | 'resolveBooleanCondition' | 'resolveRoutineCall' | 'hasArticleBeforeScalarLiteral' | 'splitRoutineArguments' | 'splitRoutineArgumentsUsingParameterSeparators' | 'splitScalarRoutineArguments' | 'getRoutineArgumentSeparatorMatch' | 'diagnoseUnresolvedRoutineCall' | 'resolveRoutineArgumentType' | 'resolveRoutineExpressionType' | 'parseRoutineExpression' | 'resolveStructureFieldAccess' | 'findStructureAccessMarkers' | 'findNestedStructureFields';
+export interface RoutineResolutionHelperMetrics {
+    calls: number;
+    totalMs: number;
+    maxMs: number;
+    recursiveCalls: number;
+    maxDepth: number;
+    maxRangeStart?: number;
+    maxRangeEnd?: number;
+}
+export interface RoutineArgumentTypeCacheMetrics {
+    inferenceCalls: number;
+    hits: number;
+    misses: number;
+    cacheTimeMs: number;
+    effectReplayMs: number;
+    replayedFieldAccesses: number;
+    replayedVariableAccesses: number;
+    replayedComputedFieldAccesses: number;
+    replayedDiagnostics: number;
+}
+export interface RoutineResolutionProfileMetrics {
+    callAttempts: number;
+    callsResolved: number;
+    callsUnresolved: number;
+    nameIndexLookups: number;
+    nameIndexCacheHits: number;
+    nameIndexCacheMisses: number;
+    nameCandidatesExamined: number;
+    maxCandidatesPerCall: number;
+    parsedArgumentsCacheHits: number;
+    parsedArgumentsCacheMisses: number;
+    returnMarkerCacheHits: number;
+    returnMarkerCacheMisses: number;
+    separatorNormalizationCacheHits: number;
+    separatorNormalizationCacheMisses: number;
+    articleRangeCacheHits: number;
+    articleRangeCacheMisses: number;
+    parameterSeparatedArgumentsCacheHits: number;
+    parameterSeparatedArgumentsCacheMisses: number;
+    routineExpressionParseCacheHits: number;
+    routineExpressionParseCacheMisses: number;
+    candidatesReachingArgumentEvaluation: number;
+    candidatesRejectedByArticleLiteral: number;
+    expressionTypeResolutions: number;
+    expressionOperandResolutions: number;
+    expressionOperandCacheHits: number;
+    expressionOperandCacheMisses: number;
+    argumentTypeCache: RoutineArgumentTypeCacheMetrics;
+    slowestCalls: RoutineCallResolutionProfile[];
+    helpers: Record<RoutineResolutionProfileHelperName, RoutineResolutionHelperMetrics>;
+}
+export interface RoutineCallResolutionProfile {
+    rangeStart: number;
+    rangeEnd: number;
+    normalizedName: string;
+    durationMs: number;
+    resolved: boolean;
+    candidatesExamined: number;
+    candidatesRejectedNoParameters: number;
+    candidatesRejectedByWhitespace: number;
+    candidatesRejectedByQualifier: number;
+    candidatesReachingArgumentEvaluation: number;
+    candidatesRejectedByArticleLiteral: number;
+    candidatesRejectedByArgumentCount: number;
+    candidatesRejectedBySeparatorMismatch: number;
+    candidatesRejectedByTypeCompatibility: number;
+    articleRangeCacheHits: number;
+    articleRangeCacheMisses: number;
+    parameterSeparatedArgumentsCacheHits: number;
+    parameterSeparatedArgumentsCacheMisses: number;
+    routineExpressionParseCacheHits: number;
+    routineExpressionParseCacheMisses: number;
+    expressionTypeResolutions: number;
+    expressionOperandResolutions: number;
+    expressionOperandCacheHits: number;
+    expressionOperandCacheMisses: number;
+    argumentTypeCache: RoutineArgumentTypeCacheMetrics;
+    slowestCandidates: RoutineCallCandidateProfile[];
+    helpers: Partial<Record<RoutineResolutionProfileHelperName, RoutineResolutionHelperMetrics>>;
+}
+export interface RoutineCallCandidateProfile {
+    candidateIndex: number;
+    routineName: string;
+    parameterTypes: string[];
+    argumentCount?: number;
+    argumentSplittingMs: number;
+    argumentTypeResolutionMs: number;
+    expressionResolutionMs: number;
+    durationMs: number;
+    rejectedAt?: RoutineCallCandidateRejectionStage;
+}
+export type RoutineCallCandidateRejectionStage = 'no-parameters' | 'whitespace' | 'qualifier' | 'article-literal' | 'argument-count' | 'separator-mismatch' | 'type-compatibility';
 export interface ParsedReferencesMetrics {
     durationMs: number;
     references: number;
@@ -471,3 +566,4 @@ export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument,
 export declare function findTypeDefinitionReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function findTypeReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function getParsedReferences(parsed: ParsedDocument, onProfile?: (metrics: ParsedReferencesMetrics) => void): ParsedReference[];
+export {};

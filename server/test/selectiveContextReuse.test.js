@@ -1142,6 +1142,28 @@ test('excludes the current document base routines from contextual candidates', a
     assert.equal(contextualParse.routineNameCandidateChecks, 1);
     assert.equal(contextualParse.routineResolutionStrategy, 'complete');
     assert.equal(contextualParse.routineVerificationStatus, 'not-requested');
+    const routineResolutionProfile =
+      contextualParse.routineResolutionProfile;
+    assert.ok(routineResolutionProfile);
+    assert.ok(routineResolutionProfile.callAttempts > 0);
+    assert.ok(
+      routineResolutionProfile.callAttempts >=
+        routineResolutionProfile.callsResolved +
+          routineResolutionProfile.callsUnresolved
+    );
+    assert.ok(
+      routineResolutionProfile.helpers.resolveRoutineCall.calls > 0
+    );
+    assert.ok(
+      routineResolutionProfile.helpers.resolveRoutineCall.maxMs > 0
+    );
+    assert.ok(
+      routineResolutionProfile.helpers.hasArticleBeforeScalarLiteral.calls > 0
+    );
+    assert.ok(routineResolutionProfile.nameIndexLookups > 0);
+    assert.ok(
+      routineResolutionProfile.helpers.resolveRoutineArgumentType.calls > 0
+    );
     const baseParse = client.events.find(event =>
       event.event === 'document-parse' &&
       event.pass === 'base' &&

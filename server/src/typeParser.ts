@@ -717,6 +717,7 @@ export interface ParserSymbolCatalog {
 
 export interface ParseOptions {
   resolveRoutineCalls?: boolean;
+  cacheRoutineArgumentTypes?: boolean;
   incrementalRoutineResolution?: boolean;
   verifyIncrementalRoutineResolution?: boolean;
   onIncrementalVerification?: (matched: boolean) => void;
@@ -839,6 +840,7 @@ export interface ParsePerformanceMetrics {
   routineNameNormalizationCalls: number;
   routineNameNormalizationCacheHits: number;
   routineNameNormalizationCacheMisses: number;
+  routineResolutionProfile?: RoutineResolutionProfileMetrics;
   totalMs: number;
   sourceCodeUnits: number;
   tokenCount: number;
@@ -857,6 +859,154 @@ export interface ParsePerformanceMetrics {
   incrementalVerificationMs?: number;
 }
 
+type RoutineResolutionProfileHelperName =
+  | 'processRoutineStatement'
+  | 'parseConditionalBlock'
+  | 'resolveBooleanCondition'
+  | 'resolveRoutineCall'
+  | 'hasArticleBeforeScalarLiteral'
+  | 'splitRoutineArguments'
+  | 'splitRoutineArgumentsUsingParameterSeparators'
+  | 'splitScalarRoutineArguments'
+  | 'getRoutineArgumentSeparatorMatch'
+  | 'diagnoseUnresolvedRoutineCall'
+  | 'resolveRoutineArgumentType'
+  | 'resolveRoutineExpressionType'
+  | 'parseRoutineExpression'
+  | 'resolveStructureFieldAccess'
+  | 'findStructureAccessMarkers'
+  | 'findNestedStructureFields';
+
+export interface RoutineResolutionHelperMetrics {
+  calls: number;
+  totalMs: number;
+  maxMs: number;
+  recursiveCalls: number;
+  maxDepth: number;
+  maxRangeStart?: number;
+  maxRangeEnd?: number;
+}
+
+export interface RoutineArgumentTypeCacheMetrics {
+  inferenceCalls: number;
+  hits: number;
+  misses: number;
+  cacheTimeMs: number;
+  effectReplayMs: number;
+  replayedFieldAccesses: number;
+  replayedVariableAccesses: number;
+  replayedComputedFieldAccesses: number;
+  replayedDiagnostics: number;
+}
+
+export interface RoutineResolutionProfileMetrics {
+  callAttempts: number;
+  callsResolved: number;
+  callsUnresolved: number;
+  nameIndexLookups: number;
+  nameIndexCacheHits: number;
+  nameIndexCacheMisses: number;
+  nameCandidatesExamined: number;
+  maxCandidatesPerCall: number;
+  parsedArgumentsCacheHits: number;
+  parsedArgumentsCacheMisses: number;
+  returnMarkerCacheHits: number;
+  returnMarkerCacheMisses: number;
+  separatorNormalizationCacheHits: number;
+  separatorNormalizationCacheMisses: number;
+  articleRangeCacheHits: number;
+  articleRangeCacheMisses: number;
+  parameterSeparatedArgumentsCacheHits: number;
+  parameterSeparatedArgumentsCacheMisses: number;
+  routineExpressionParseCacheHits: number;
+  routineExpressionParseCacheMisses: number;
+  candidatesReachingArgumentEvaluation: number;
+  candidatesRejectedByArticleLiteral: number;
+  expressionTypeResolutions: number;
+  expressionOperandResolutions: number;
+  expressionOperandCacheHits: number;
+  expressionOperandCacheMisses: number;
+  argumentTypeCache: RoutineArgumentTypeCacheMetrics;
+  slowestCalls: RoutineCallResolutionProfile[];
+  helpers: Record<
+    RoutineResolutionProfileHelperName,
+    RoutineResolutionHelperMetrics
+  >;
+}
+
+export interface RoutineCallResolutionProfile {
+  rangeStart: number;
+  rangeEnd: number;
+  normalizedName: string;
+  durationMs: number;
+  resolved: boolean;
+  candidatesExamined: number;
+  candidatesRejectedNoParameters: number;
+  candidatesRejectedByWhitespace: number;
+  candidatesRejectedByQualifier: number;
+  candidatesReachingArgumentEvaluation: number;
+  candidatesRejectedByArticleLiteral: number;
+  candidatesRejectedByArgumentCount: number;
+  candidatesRejectedBySeparatorMismatch: number;
+  candidatesRejectedByTypeCompatibility: number;
+  articleRangeCacheHits: number;
+  articleRangeCacheMisses: number;
+  parameterSeparatedArgumentsCacheHits: number;
+  parameterSeparatedArgumentsCacheMisses: number;
+  routineExpressionParseCacheHits: number;
+  routineExpressionParseCacheMisses: number;
+  expressionTypeResolutions: number;
+  expressionOperandResolutions: number;
+  expressionOperandCacheHits: number;
+  expressionOperandCacheMisses: number;
+  argumentTypeCache: RoutineArgumentTypeCacheMetrics;
+  slowestCandidates: RoutineCallCandidateProfile[];
+  helpers: Partial<
+    Record<RoutineResolutionProfileHelperName, RoutineResolutionHelperMetrics>
+  >;
+}
+
+export interface RoutineCallCandidateProfile {
+  candidateIndex: number;
+  routineName: string;
+  parameterTypes: string[];
+  argumentCount?: number;
+  argumentSplittingMs: number;
+  argumentTypeResolutionMs: number;
+  expressionResolutionMs: number;
+  durationMs: number;
+  rejectedAt?: RoutineCallCandidateRejectionStage;
+}
+
+export type RoutineCallCandidateRejectionStage =
+  | 'no-parameters'
+  | 'whitespace'
+  | 'qualifier'
+  | 'article-literal'
+  | 'argument-count'
+  | 'separator-mismatch'
+  | 'type-compatibility';
+
+interface RoutineResolutionHelperCounters
+  extends RoutineResolutionHelperMetrics {
+  depth: number;
+}
+
+interface RoutineCallResolutionHelperCounters
+  extends RoutineResolutionHelperCounters {}
+
+interface RoutineCallResolutionProfileCounters
+  extends Omit<
+    RoutineCallResolutionProfile,
+    'durationMs' | 'helpers'
+  > {
+  durationMs: number;
+  helpers: Map<
+    RoutineResolutionProfileHelperName,
+    RoutineCallResolutionHelperCounters
+  >;
+}
+
 interface RoutineResolutionProfileCounters {
   statementsVisited: number;
   nameMatchSearches: number;
@@ -866,9 +1016,470 @@ interface RoutineResolutionProfileCounters {
   nameNormalizationCalls: number;
   nameNormalizationCacheHits: number;
   nameNormalizationCacheMisses: number;
+  callAttempts: number;
+  callsResolved: number;
+  callsUnresolved: number;
+  nameIndexLookups: number;
+  nameIndexCacheHits: number;
+  nameIndexCacheMisses: number;
+  nameCandidatesExamined: number;
+  maxCandidatesPerCall: number;
+  parsedArgumentsCacheHits: number;
+  parsedArgumentsCacheMisses: number;
+  returnMarkerCacheHits: number;
+  returnMarkerCacheMisses: number;
+  separatorNormalizationCacheHits: number;
+  separatorNormalizationCacheMisses: number;
+  articleRangeCacheHits: number;
+  articleRangeCacheMisses: number;
+  parameterSeparatedArgumentsCacheHits: number;
+  parameterSeparatedArgumentsCacheMisses: number;
+  routineExpressionParseCacheHits: number;
+  routineExpressionParseCacheMisses: number;
+  candidatesReachingArgumentEvaluation: number;
+  candidatesRejectedByArticleLiteral: number;
+  expressionTypeResolutions: number;
+  expressionOperandResolutions: number;
+  expressionOperandCacheHits: number;
+  expressionOperandCacheMisses: number;
+  argumentTypeCache: RoutineArgumentTypeCacheMetrics;
+  slowestCalls: RoutineCallResolutionProfile[];
+  currentCall?: RoutineCallResolutionProfileCounters;
+  helpers: Record<
+    RoutineResolutionProfileHelperName,
+    RoutineResolutionHelperCounters
+  >;
+}
+
+interface RoutineCallResolutionCaches {
+  articleBeforeScalarLiteralByRange: Map<string, boolean>;
+}
+
+interface RoutineArgumentTypeResolution {
+  type: TypeReference | undefined;
+  fieldAccesses: RoutineFieldAccess[];
+  variableAccesses: RoutineVariableAccess[];
+  computedFieldAccesses: RoutineComputedFieldAccess[];
+  diagnostics: ParserDiagnostic[];
 }
 
 let activeRoutineResolutionProfileCounters: RoutineResolutionProfileCounters | undefined;
+let activeRoutineCallResolutionCaches: RoutineCallResolutionCaches | undefined;
+
+function createRoutineResolutionProfileCounters():
+  RoutineResolutionProfileCounters {
+  const helper = (): RoutineResolutionHelperCounters => ({
+    calls: 0,
+    totalMs: 0,
+    maxMs: 0,
+    recursiveCalls: 0,
+    maxDepth: 0,
+    depth: 0
+  });
+  return {
+    statementsVisited: 0,
+    nameMatchSearches: 0,
+    nameSpanChecks: 0,
+    nameCandidateChecks: 0,
+    nameCandidatesSkippedByQualifier: 0,
+    nameNormalizationCalls: 0,
+    nameNormalizationCacheHits: 0,
+    nameNormalizationCacheMisses: 0,
+    callAttempts: 0,
+    callsResolved: 0,
+    callsUnresolved: 0,
+    nameIndexLookups: 0,
+    nameIndexCacheHits: 0,
+    nameIndexCacheMisses: 0,
+    nameCandidatesExamined: 0,
+    maxCandidatesPerCall: 0,
+    parsedArgumentsCacheHits: 0,
+    parsedArgumentsCacheMisses: 0,
+    returnMarkerCacheHits: 0,
+    returnMarkerCacheMisses: 0,
+    separatorNormalizationCacheHits: 0,
+    separatorNormalizationCacheMisses: 0,
+    articleRangeCacheHits: 0,
+    articleRangeCacheMisses: 0,
+    parameterSeparatedArgumentsCacheHits: 0,
+    parameterSeparatedArgumentsCacheMisses: 0,
+    routineExpressionParseCacheHits: 0,
+    routineExpressionParseCacheMisses: 0,
+    candidatesReachingArgumentEvaluation: 0,
+    candidatesRejectedByArticleLiteral: 0,
+    expressionTypeResolutions: 0,
+    expressionOperandResolutions: 0,
+    expressionOperandCacheHits: 0,
+    expressionOperandCacheMisses: 0,
+    argumentTypeCache: createRoutineArgumentTypeCacheMetrics(),
+    slowestCalls: [],
+    helpers: {
+      processRoutineStatement: helper(),
+      parseConditionalBlock: helper(),
+      resolveBooleanCondition: helper(),
+      resolveRoutineCall: helper(),
+      hasArticleBeforeScalarLiteral: helper(),
+      splitRoutineArguments: helper(),
+      splitRoutineArgumentsUsingParameterSeparators: helper(),
+      splitScalarRoutineArguments: helper(),
+      getRoutineArgumentSeparatorMatch: helper(),
+      diagnoseUnresolvedRoutineCall: helper(),
+      resolveRoutineArgumentType: helper(),
+      resolveRoutineExpressionType: helper(),
+      parseRoutineExpression: helper(),
+      resolveStructureFieldAccess: helper(),
+      findStructureAccessMarkers: helper(),
+      findNestedStructureFields: helper()
+    }
+  };
+}
+
+function createRoutineArgumentTypeCacheMetrics():
+    RoutineArgumentTypeCacheMetrics {
+  return {
+      inferenceCalls: 0,
+      hits: 0,
+      misses: 0,
+      cacheTimeMs: 0,
+      effectReplayMs: 0,
+    replayedFieldAccesses: 0,
+    replayedVariableAccesses: 0,
+    replayedComputedFieldAccesses: 0,
+    replayedDiagnostics: 0
+  };
+}
+
+function startRoutineResolutionHelper(
+  name: RoutineResolutionProfileHelperName
+): number | undefined {
+  const counters = activeRoutineResolutionProfileCounters;
+  if (!counters) {
+    return undefined;
+  }
+  const helper = counters.helpers[name];
+  helper.calls++;
+  if (helper.depth > 0) {
+    helper.recursiveCalls++;
+  }
+  helper.depth++;
+  helper.maxDepth = Math.max(helper.maxDepth, helper.depth);
+  const call = counters.currentCall;
+  if (call) {
+    let callHelper = call.helpers.get(name);
+    if (!callHelper) {
+      callHelper = {
+        calls: 0,
+        totalMs: 0,
+        maxMs: 0,
+        recursiveCalls: 0,
+        maxDepth: 0,
+        depth: 0
+      };
+      call.helpers.set(name, callHelper);
+    }
+    callHelper.calls++;
+    if (callHelper.depth > 0) {
+      callHelper.recursiveCalls++;
+    }
+    callHelper.depth++;
+    callHelper.maxDepth = Math.max(callHelper.maxDepth, callHelper.depth);
+  }
+  return performance.now();
+}
+
+function finishRoutineResolutionHelper(
+  name: RoutineResolutionProfileHelperName,
+  startedAt: number | undefined,
+  range?: SourceRange
+): void {
+  if (startedAt === undefined) {
+    return;
+  }
+  const counters = activeRoutineResolutionProfileCounters;
+  if (!counters) {
+    return;
+  }
+  const helper = counters.helpers[name];
+  const durationMs = performance.now() - startedAt;
+  helper.depth--;
+  helper.totalMs += durationMs;
+  if (durationMs > helper.maxMs) {
+    helper.maxMs = durationMs;
+    helper.maxRangeStart = range?.start;
+    helper.maxRangeEnd = range?.end;
+  }
+  const call = counters.currentCall;
+  const callHelper = call?.helpers.get(name);
+  if (callHelper) {
+    callHelper.depth--;
+    callHelper.totalMs += durationMs;
+    if (durationMs > callHelper.maxMs) {
+      callHelper.maxMs = durationMs;
+    }
+  }
+}
+
+function profileRoutineResolutionHelper<T>(
+  name: RoutineResolutionProfileHelperName,
+  range: SourceRange | undefined,
+  operation: () => T
+): T {
+  const startedAt = startRoutineResolutionHelper(name);
+  try {
+    return operation();
+  } finally {
+    finishRoutineResolutionHelper(name, startedAt, range);
+  }
+}
+
+function createRoutineCallResolutionProfileCounters(
+  range: SourceRange
+): RoutineCallResolutionProfileCounters {
+  return {
+    rangeStart: range.start,
+    rangeEnd: range.end,
+    normalizedName: '',
+    durationMs: 0,
+    resolved: false,
+    candidatesExamined: 0,
+    candidatesRejectedNoParameters: 0,
+    candidatesRejectedByWhitespace: 0,
+    candidatesRejectedByQualifier: 0,
+    candidatesReachingArgumentEvaluation: 0,
+    candidatesRejectedByArticleLiteral: 0,
+    candidatesRejectedByArgumentCount: 0,
+    candidatesRejectedBySeparatorMismatch: 0,
+    candidatesRejectedByTypeCompatibility: 0,
+    articleRangeCacheHits: 0,
+    articleRangeCacheMisses: 0,
+    parameterSeparatedArgumentsCacheHits: 0,
+    parameterSeparatedArgumentsCacheMisses: 0,
+    routineExpressionParseCacheHits: 0,
+    routineExpressionParseCacheMisses: 0,
+    expressionTypeResolutions: 0,
+    expressionOperandResolutions: 0,
+    expressionOperandCacheHits: 0,
+    expressionOperandCacheMisses: 0,
+    argumentTypeCache: createRoutineArgumentTypeCacheMetrics(),
+    slowestCandidates: [],
+    helpers: new Map()
+  };
+}
+
+function summarizeRoutineResolutionHelper(
+  helper: RoutineResolutionHelperCounters
+): RoutineResolutionHelperMetrics {
+  return {
+    calls: helper.calls,
+    totalMs: helper.totalMs,
+    maxMs: helper.maxMs,
+    recursiveCalls: helper.recursiveCalls,
+    maxDepth: helper.maxDepth,
+    maxRangeStart: helper.maxRangeStart,
+    maxRangeEnd: helper.maxRangeEnd
+  };
+}
+
+function summarizeRoutineCallResolutionProfile(
+  counters: RoutineCallResolutionProfileCounters
+): RoutineCallResolutionProfile {
+  const helpers: Partial<
+    Record<RoutineResolutionProfileHelperName, RoutineResolutionHelperMetrics>
+  > = {};
+  for (const [name, helper] of counters.helpers) {
+    helpers[name] = summarizeRoutineResolutionHelper(helper);
+  }
+  return {
+    rangeStart: counters.rangeStart,
+    rangeEnd: counters.rangeEnd,
+    normalizedName: counters.normalizedName,
+    durationMs: counters.durationMs,
+    resolved: counters.resolved,
+    candidatesExamined: counters.candidatesExamined,
+    candidatesRejectedNoParameters: counters.candidatesRejectedNoParameters,
+    candidatesRejectedByWhitespace: counters.candidatesRejectedByWhitespace,
+    candidatesRejectedByQualifier: counters.candidatesRejectedByQualifier,
+    candidatesReachingArgumentEvaluation:
+      counters.candidatesReachingArgumentEvaluation,
+    candidatesRejectedByArticleLiteral:
+      counters.candidatesRejectedByArticleLiteral,
+    candidatesRejectedByArgumentCount:
+      counters.candidatesRejectedByArgumentCount,
+    candidatesRejectedBySeparatorMismatch:
+      counters.candidatesRejectedBySeparatorMismatch,
+    candidatesRejectedByTypeCompatibility:
+      counters.candidatesRejectedByTypeCompatibility,
+    articleRangeCacheHits: counters.articleRangeCacheHits,
+    articleRangeCacheMisses: counters.articleRangeCacheMisses,
+    parameterSeparatedArgumentsCacheHits:
+      counters.parameterSeparatedArgumentsCacheHits,
+    parameterSeparatedArgumentsCacheMisses:
+      counters.parameterSeparatedArgumentsCacheMisses,
+    routineExpressionParseCacheHits:
+      counters.routineExpressionParseCacheHits,
+    routineExpressionParseCacheMisses:
+      counters.routineExpressionParseCacheMisses,
+    expressionTypeResolutions: counters.expressionTypeResolutions,
+    expressionOperandResolutions: counters.expressionOperandResolutions,
+    expressionOperandCacheHits: counters.expressionOperandCacheHits,
+    expressionOperandCacheMisses: counters.expressionOperandCacheMisses,
+    argumentTypeCache: { ...counters.argumentTypeCache },
+    slowestCandidates: [...counters.slowestCandidates],
+    helpers
+  };
+}
+
+function recordSlowRoutineCandidate(
+  profile: RoutineCallResolutionProfileCounters | undefined,
+  nameMatch: RoutineNameMatch,
+  candidateIndex: number,
+  parameters: RoutineParameter[],
+  argumentCount: number | undefined,
+  argumentSplittingMs: number,
+  argumentTypeResolutionMs: number,
+  expressionResolutionMs: number,
+  durationMs: number,
+  rejectedAt?: RoutineCallCandidateRejectionStage
+): void {
+  if (
+    !profile ||
+    (
+      profile.slowestCandidates.length === 5 &&
+      durationMs <= profile.slowestCandidates[4].durationMs
+    )
+  ) {
+    return;
+  }
+  profile.slowestCandidates.push({
+    candidateIndex,
+    routineName: nameMatch.name.name,
+    parameterTypes: parameters.map(parameter => parameter.type.name),
+    argumentCount,
+    argumentSplittingMs,
+    argumentTypeResolutionMs,
+    expressionResolutionMs,
+    durationMs,
+    rejectedAt
+  });
+  profile.slowestCandidates.sort((first, second) =>
+    second.durationMs - first.durationMs
+  );
+  if (profile.slowestCandidates.length > 5) {
+    profile.slowestCandidates.pop();
+  }
+}
+
+function recordSlowRoutineCall(
+  counters: RoutineResolutionProfileCounters,
+  call: RoutineCallResolutionProfileCounters
+): void {
+  if (
+    counters.slowestCalls.length === 10 &&
+    call.durationMs <= counters.slowestCalls[9].durationMs
+  ) {
+    return;
+  }
+  counters.slowestCalls.push(summarizeRoutineCallResolutionProfile(call));
+  counters.slowestCalls.sort((first, second) =>
+    second.durationMs - first.durationMs
+  );
+  if (counters.slowestCalls.length > 10) {
+    counters.slowestCalls.pop();
+  }
+}
+
+function summarizeRoutineResolutionProfile(
+  counters: RoutineResolutionProfileCounters
+): RoutineResolutionProfileMetrics {
+  return {
+    callAttempts: counters.callAttempts,
+    callsResolved: counters.callsResolved,
+    callsUnresolved: counters.callsUnresolved,
+    nameIndexLookups: counters.nameIndexLookups,
+    nameIndexCacheHits: counters.nameIndexCacheHits,
+    nameIndexCacheMisses: counters.nameIndexCacheMisses,
+    nameCandidatesExamined: counters.nameCandidatesExamined,
+    maxCandidatesPerCall: counters.maxCandidatesPerCall,
+    parsedArgumentsCacheHits: counters.parsedArgumentsCacheHits,
+    parsedArgumentsCacheMisses: counters.parsedArgumentsCacheMisses,
+    returnMarkerCacheHits: counters.returnMarkerCacheHits,
+    returnMarkerCacheMisses: counters.returnMarkerCacheMisses,
+    separatorNormalizationCacheHits:
+      counters.separatorNormalizationCacheHits,
+    separatorNormalizationCacheMisses:
+      counters.separatorNormalizationCacheMisses,
+    articleRangeCacheHits: counters.articleRangeCacheHits,
+    articleRangeCacheMisses: counters.articleRangeCacheMisses,
+    parameterSeparatedArgumentsCacheHits:
+      counters.parameterSeparatedArgumentsCacheHits,
+    parameterSeparatedArgumentsCacheMisses:
+      counters.parameterSeparatedArgumentsCacheMisses,
+    routineExpressionParseCacheHits:
+      counters.routineExpressionParseCacheHits,
+    routineExpressionParseCacheMisses:
+      counters.routineExpressionParseCacheMisses,
+    candidatesReachingArgumentEvaluation:
+      counters.candidatesReachingArgumentEvaluation,
+    candidatesRejectedByArticleLiteral:
+      counters.candidatesRejectedByArticleLiteral,
+    expressionTypeResolutions: counters.expressionTypeResolutions,
+    expressionOperandResolutions: counters.expressionOperandResolutions,
+    expressionOperandCacheHits: counters.expressionOperandCacheHits,
+    expressionOperandCacheMisses: counters.expressionOperandCacheMisses,
+    argumentTypeCache: { ...counters.argumentTypeCache },
+    slowestCalls: [...counters.slowestCalls],
+    helpers: {
+      processRoutineStatement: summarizeRoutineResolutionHelper(
+        counters.helpers.processRoutineStatement
+      ),
+      parseConditionalBlock: summarizeRoutineResolutionHelper(
+        counters.helpers.parseConditionalBlock
+      ),
+      resolveBooleanCondition: summarizeRoutineResolutionHelper(
+        counters.helpers.resolveBooleanCondition
+      ),
+      resolveRoutineCall: summarizeRoutineResolutionHelper(
+        counters.helpers.resolveRoutineCall
+      ),
+      hasArticleBeforeScalarLiteral: summarizeRoutineResolutionHelper(
+        counters.helpers.hasArticleBeforeScalarLiteral
+      ),
+      splitRoutineArguments: summarizeRoutineResolutionHelper(
+        counters.helpers.splitRoutineArguments
+      ),
+      splitRoutineArgumentsUsingParameterSeparators: summarizeRoutineResolutionHelper(
+        counters.helpers.splitRoutineArgumentsUsingParameterSeparators
+      ),
+      splitScalarRoutineArguments: summarizeRoutineResolutionHelper(
+        counters.helpers.splitScalarRoutineArguments
+      ),
+      getRoutineArgumentSeparatorMatch: summarizeRoutineResolutionHelper(
+        counters.helpers.getRoutineArgumentSeparatorMatch
+      ),
+      diagnoseUnresolvedRoutineCall: summarizeRoutineResolutionHelper(
+        counters.helpers.diagnoseUnresolvedRoutineCall
+      ),
+      resolveRoutineArgumentType: summarizeRoutineResolutionHelper(
+        counters.helpers.resolveRoutineArgumentType
+      ),
+      resolveRoutineExpressionType: summarizeRoutineResolutionHelper(
+        counters.helpers.resolveRoutineExpressionType
+      ),
+      parseRoutineExpression: summarizeRoutineResolutionHelper(
+        counters.helpers.parseRoutineExpression
+      ),
+      resolveStructureFieldAccess: summarizeRoutineResolutionHelper(
+        counters.helpers.resolveStructureFieldAccess
+      ),
+      findStructureAccessMarkers: summarizeRoutineResolutionHelper(
+        counters.helpers.findStructureAccessMarkers
+      ),
+      findNestedStructureFields: summarizeRoutineResolutionHelper(
+        counters.helpers.findNestedStructureFields
+      )
+    }
+  };
+}
 
 export interface ParsedReferencesMetrics {
   durationMs: number;
@@ -1522,19 +2133,9 @@ export function resolveRoutineSyntaxRegions(
     ...workspaceRoutines
   ];
   const symbolSetupMs = onProfile ? performance.now() - startedAt : 0;
-  const profileCounters: RoutineResolutionProfileCounters | undefined =
-    onProfile
-      ? {
-        statementsVisited: 0,
-        nameMatchSearches: 0,
-        nameSpanChecks: 0,
-        nameCandidateChecks: 0,
-        nameCandidatesSkippedByQualifier: 0,
-        nameNormalizationCalls: 0,
-        nameNormalizationCacheHits: 0,
-        nameNormalizationCacheMisses: 0
-      }
-      : undefined;
+  const profileCounters = onProfile
+    ? createRoutineResolutionProfileCounters()
+    : undefined;
   const previousCounters = activeRoutineResolutionProfileCounters;
   activeRoutineResolutionProfileCounters = profileCounters;
   const diagnostics: ParserDiagnostic[] = [];
@@ -1695,16 +2296,7 @@ function resolveTypeDeclarationSyntaxCore(
       : process.memoryUsage()
     : undefined;
   const routineProfileCounters = onProfile
-    ? {
-      statementsVisited: 0,
-      nameMatchSearches: 0,
-      nameSpanChecks: 0,
-      nameCandidateChecks: 0,
-      nameCandidatesSkippedByQualifier: 0,
-      nameNormalizationCalls: 0,
-      nameNormalizationCacheHits: 0,
-      nameNormalizationCacheMisses: 0
-    }
+    ? createRoutineResolutionProfileCounters()
     : undefined;
   activeRoutineResolutionProfileCounters = routineProfileCounters;
   const {
@@ -1907,7 +2499,8 @@ function resolveTypeDeclarationSyntaxCore(
       globalVariableSymbols.entries.map(symbol => symbol.declaration),
       symbols,
       diagnostics,
-      [...routines, ...(workspaceSymbols?.routines ?? [])]
+      [...routines, ...(workspaceSymbols?.routines ?? [])],
+      options.cacheRoutineArgumentTypes !== false
     );
   }
   const routineCallResolutionFinishedAt = onProfile || options.onProgress
@@ -2208,6 +2801,9 @@ function resolveTypeDeclarationSyntaxCore(
         routineProfileCounters?.nameNormalizationCacheHits ?? 0,
       routineNameNormalizationCacheMisses:
         routineProfileCounters?.nameNormalizationCacheMisses ?? 0,
+      routineResolutionProfile: routineProfileCounters
+        ? summarizeRoutineResolutionProfile(routineProfileCounters)
+        : undefined,
       totalMs: finishedAt - startedAt,
       sourceCodeUnits: source.length,
       tokenCount,
@@ -2956,7 +3552,8 @@ function resolveRoutineCalls(
   globalVariables: GlobalVariableDeclaration[],
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[],
-  routineCandidates: RoutineDeclaration[] = routines
+  routineCandidates: RoutineDeclaration[] = routines,
+  cacheRoutineArgumentTypes = true
 ): void {
   const globalVariableSymbols = new GlobalVariableSymbolTable(globalVariables);
   for (const routine of routines) {
@@ -3014,7 +3611,8 @@ function resolveRoutineCalls(
                 routineCandidates,
                 globalVariableSymbols,
                 symbols,
-                diagnostics
+                diagnostics,
+                cacheRoutineArgumentTypes
               ) || hasValidBooleanReturn;
             }
           }
@@ -3031,7 +3629,8 @@ function resolveRoutineCalls(
             routineCandidates,
             globalVariableSymbols,
             symbols,
-            diagnostics
+            diagnostics,
+            cacheRoutineArgumentTypes
           ) || hasValidBooleanReturn;
         }
       }
@@ -3197,7 +3796,46 @@ function processRoutineStatement(
   routines: RoutineDeclaration[],
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
-  diagnostics: ParserDiagnostic[]
+  diagnostics: ParserDiagnostic[],
+  cacheRoutineArgumentTypes = true
+): boolean {
+  if (!activeRoutineResolutionProfileCounters) {
+    return processRoutineStatementCore(
+      source,
+      statement,
+      caller,
+      routines,
+      globalVariables,
+      symbols,
+      diagnostics,
+      cacheRoutineArgumentTypes
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'processRoutineStatement',
+    statement,
+    () => processRoutineStatementCore(
+      source,
+      statement,
+      caller,
+      routines,
+      globalVariables,
+      symbols,
+      diagnostics,
+      cacheRoutineArgumentTypes
+    )
+  );
+}
+
+function processRoutineStatementCore(
+  source: string,
+  statement: SourceRange,
+  caller: RoutineDeclaration,
+  routines: RoutineDeclaration[],
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[],
+  cacheRoutineArgumentTypes = true
 ): boolean {
   const statementDiagnosticStart = diagnostics.length;
   const statementKeyword = readWord(source, statement.start, statement.end);
@@ -3359,7 +3997,8 @@ function processRoutineStatement(
     routines,
     globalVariables,
     symbols,
-    diagnostics
+    diagnostics,
+    cacheRoutineArgumentTypes
   )) {
     return false;
   }
@@ -3389,6 +4028,9 @@ function processRoutineStatement(
   const routineNameMatches: { matches: RoutineNameMatch[] } = {
     matches: []
   };
+  if (activeRoutineResolutionProfileCounters) {
+    activeRoutineResolutionProfileCounters.callAttempts++;
+  }
   const call = resolveRoutineCall(
     source,
     statement,
@@ -3397,9 +4039,13 @@ function processRoutineStatement(
     globalVariables,
     symbols,
     diagnostics,
-    routineNameMatches
+    routineNameMatches,
+    cacheRoutineArgumentTypes
   );
   if (call) {
+    if (activeRoutineResolutionProfileCounters) {
+      activeRoutineResolutionProfileCounters.callsResolved++;
+    }
     caller.calls.push(call);
     if (call.localVariables) {
       caller.localVariables.push(...call.localVariables);
@@ -3429,6 +4075,9 @@ function processRoutineStatement(
     )) {
       return false;
     }
+    if (activeRoutineResolutionProfileCounters) {
+      activeRoutineResolutionProfileCounters.callsUnresolved++;
+    }
     diagnoseUnresolvedRoutineCall(
       source,
       statement,
@@ -3443,6 +4092,44 @@ function processRoutineStatement(
 }
 
 function parseConditionalBlock(
+  source: string,
+  statement: SourceRange,
+  blockEnd: number,
+  routines: RoutineDeclaration[],
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): { block: RoutineConditionalBlock; nestedRange?: SourceRange } | undefined {
+  if (!activeRoutineResolutionProfileCounters) {
+    return parseConditionalBlockCore(
+      source,
+      statement,
+      blockEnd,
+      routines,
+      caller,
+      globalVariables,
+      symbols,
+      diagnostics
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'parseConditionalBlock',
+    statement,
+    () => parseConditionalBlockCore(
+      source,
+      statement,
+      blockEnd,
+      routines,
+      caller,
+      globalVariables,
+      symbols,
+      diagnostics
+    )
+  );
+}
+
+function parseConditionalBlockCore(
   source: string,
   statement: SourceRange,
   blockEnd: number,
@@ -3471,6 +4158,14 @@ function parseConditionalBlock(
     symbols,
     diagnostics
   );
+  if (activeRoutineResolutionProfileCounters) {
+    activeRoutineResolutionProfileCounters.callAttempts++;
+    if (condition && 'call' in condition) {
+      activeRoutineResolutionProfileCounters.callsResolved++;
+    } else {
+      activeRoutineResolutionProfileCounters.callsUnresolved++;
+    }
+  }
   if (condition && 'diagnostic' in condition) {
     diagnostics.push(condition.diagnostic);
   } else if (!condition) {
@@ -3534,6 +4229,41 @@ function resolveBooleanCondition(
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[]
 ): { call: RoutineCall; distance: number } | { diagnostic: ParserDiagnostic } | undefined {
+  if (!activeRoutineResolutionProfileCounters) {
+    return resolveBooleanConditionCore(
+      source,
+      condition,
+      routines,
+      caller,
+      globalVariables,
+      symbols,
+      diagnostics
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'resolveBooleanCondition',
+    condition,
+    () => resolveBooleanConditionCore(
+      source,
+      condition,
+      routines,
+      caller,
+      globalVariables,
+      symbols,
+      diagnostics
+    )
+  );
+}
+
+function resolveBooleanConditionCore(
+  source: string,
+  condition: SourceRange,
+  routines: RoutineDeclaration[],
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[]
+): { call: RoutineCall; distance: number } | { diagnostic: ParserDiagnostic } | undefined {
   const conditionSource = replaceWordInRange(
     maskWordInRange(source, condition, 'não'),
     condition,
@@ -3571,12 +4301,21 @@ function resolveBooleanCondition(
     order: number;
     nameStart: number;
   }[] = [];
-  for (const nameMatch of findRoutineNameMatches(
+  const nameMatches = findRoutineNameMatches(
     conditionSource,
     condition,
     routines,
     true
-  )) {
+  );
+  if (activeRoutineResolutionProfileCounters) {
+    activeRoutineResolutionProfileCounters.nameCandidatesExamined +=
+      nameMatches.length;
+    activeRoutineResolutionProfileCounters.maxCandidatesPerCall = Math.max(
+      activeRoutineResolutionProfileCounters.maxCandidatesPerCall,
+      nameMatches.length
+    );
+  }
+  for (const nameMatch of nameMatches) {
     const { routine, nameStart, nameEnd, order, parameters } = nameMatch;
     if (!routine.isBooleanFunction) {
       continue;
@@ -3636,6 +4375,10 @@ function resolveBooleanCondition(
       ) ?? argumentsList;
     }
     if (argumentsList.length !== parameters.length) {
+      if (activeRoutineResolutionProfileCounters?.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesRejectedByArgumentCount++;
+      }
       continue;
     }
     const distances: number[] = [];
@@ -3897,6 +4640,21 @@ function parseRoutineOutput(
 }
 
 function parseRoutineExpression(
+  source: string,
+  range: SourceRange,
+  diagnostics: ParserDiagnostic[]
+): RoutineExpression | undefined {
+  if (!activeRoutineResolutionProfileCounters) {
+    return parseRoutineExpressionCore(source, range, diagnostics);
+  }
+  return profileRoutineResolutionHelper(
+    'parseRoutineExpression',
+    range,
+    () => parseRoutineExpressionCore(source, range, diagnostics)
+  );
+}
+
+function parseRoutineExpressionCore(
   source: string,
   range: SourceRange,
   diagnostics: ParserDiagnostic[]
@@ -4513,7 +5271,8 @@ function validateRoutineAddressStatement(
   routines: RoutineDeclaration[],
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
-  diagnostics: ParserDiagnostic[]
+  diagnostics: ParserDiagnostic[],
+  cacheRoutineArgumentTypes = true
 ): boolean {
   const keyword = readWord(source, statement.start, statement.end);
   const instruction = keyword?.value.toLocaleLowerCase('pt-BR');
@@ -4606,7 +5365,8 @@ function validateRoutineAddressStatement(
     globalVariables,
     symbols,
     diagnostics,
-    routineNameMatches
+    routineNameMatches,
+    cacheRoutineArgumentTypes
   );
   if (!call?.target) {
     if (routineNameMatches.matches.length === 0) {
@@ -5187,7 +5947,71 @@ function resolveRoutineCall(
   globalVariables: GlobalVariableSymbolTable,
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[],
-  nameMatchResult?: { matches: RoutineNameMatch[] }
+  nameMatchResult?: { matches: RoutineNameMatch[] },
+  cacheRoutineArgumentTypes = true
+): RoutineCall | undefined {
+  const previousCaches = activeRoutineCallResolutionCaches;
+  activeRoutineCallResolutionCaches = {
+    articleBeforeScalarLiteralByRange: new Map()
+  };
+  if (!activeRoutineResolutionProfileCounters) {
+    try {
+      return resolveRoutineCallCore(
+        source,
+        statementRange,
+        routines,
+        caller,
+        globalVariables,
+        symbols,
+        diagnostics,
+        nameMatchResult,
+        cacheRoutineArgumentTypes
+      );
+    } finally {
+      activeRoutineCallResolutionCaches = previousCaches;
+    }
+  }
+  const profileCounters = activeRoutineResolutionProfileCounters;
+  const callProfile = createRoutineCallResolutionProfileCounters(statementRange);
+  const previousCallProfile = profileCounters.currentCall;
+  const startedAt = performance.now();
+  profileCounters.currentCall = callProfile;
+  try {
+    const call = profileRoutineResolutionHelper(
+      'resolveRoutineCall',
+      statementRange,
+      () => resolveRoutineCallCore(
+        source,
+        statementRange,
+        routines,
+        caller,
+        globalVariables,
+        symbols,
+        diagnostics,
+        nameMatchResult,
+        cacheRoutineArgumentTypes
+      )
+    );
+    callProfile.resolved = call !== undefined;
+    return call;
+  } finally {
+    callProfile.durationMs = performance.now() - startedAt;
+    profileCounters.currentCall = previousCallProfile;
+    activeRoutineCallResolutionCaches = previousCaches;
+    recordSlowRoutineCall(profileCounters, callProfile);
+  }
+}
+
+function resolveRoutineCallCore(
+  source: string,
+  statementRange: SourceRange,
+  routines: RoutineDeclaration[],
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[],
+  nameMatchResult?: { matches: RoutineNameMatch[] },
+  cacheRoutineArgumentTypes = true
 ): RoutineCall | undefined {
   const statementQualifier = findTrailingParentheticalQualifier(
     source,
@@ -5205,6 +6029,9 @@ function resolveRoutineCall(
       candidate.name.qualifier === statementQualifier?.text
   );
   if (exactMatch) {
+    if (activeRoutineResolutionProfileCounters?.currentCall) {
+      activeRoutineResolutionProfileCounters.currentCall.candidatesExamined = 1;
+    }
     return {
       name: createTypeReference(source, statementRange),
       qualifierRange: statementQualifier
@@ -5226,11 +6053,47 @@ function resolveRoutineCall(
     localVariablesByArgument: Map<number, RoutineLocalVariable>;
   }>();
   const returnMarkersByNameEnd = new Map<number, SourceRange | undefined>();
+  const parameterSeparatedArgumentsByRange = new Map<
+    string,
+    Map<RoutineDeclaration, Map<string, SourceRange[] | null>>
+  >();
+  const expressionByRange = new Map<string, RoutineExpression | null>();
+  const argumentTypeResolutionCache = cacheRoutineArgumentTypes
+    ? new Map<string, RoutineArgumentTypeResolution>()
+    : undefined;
   const nameMatches = findRoutineNameMatches(source, statementRange, routines);
+  if (activeRoutineResolutionProfileCounters?.currentCall) {
+    activeRoutineResolutionProfileCounters.currentCall.normalizedName =
+      nameMatches[0]?.name.name ?? statement;
+  }
+  if (activeRoutineResolutionProfileCounters?.currentCall) {
+    activeRoutineResolutionProfileCounters.currentCall.candidatesExamined =
+      nameMatches.length;
+  }
+  if (activeRoutineResolutionProfileCounters) {
+    activeRoutineResolutionProfileCounters.nameCandidatesExamined +=
+      nameMatches.length;
+    activeRoutineResolutionProfileCounters.maxCandidatesPerCall = Math.max(
+      activeRoutineResolutionProfileCounters.maxCandidatesPerCall,
+      nameMatches.length
+    );
+  }
   if (nameMatchResult) {
     nameMatchResult.matches = nameMatches;
   }
-  for (const nameMatch of nameMatches) {
+  for (
+    let candidateIndex = 0;
+    candidateIndex < nameMatches.length;
+    candidateIndex++
+  ) {
+    const nameMatch = nameMatches[candidateIndex];
+    const candidateProfile =
+      activeRoutineResolutionProfileCounters?.currentCall;
+    const candidateStartedAt = candidateProfile ? performance.now() : 0;
+    let argumentSplittingMs = 0;
+    let argumentTypeResolutionMs = 0;
+    let expressionResolutionMs = 0;
+    let candidateArgumentCount: number | undefined;
     const {
       routine,
       name: routineName,
@@ -5240,8 +6103,14 @@ function resolveRoutineCall(
     let returnMarker: SourceRange | undefined;
     if (routine.returnParameter) {
       if (returnMarkersByNameEnd.has(nameEnd)) {
+        if (activeRoutineResolutionProfileCounters) {
+          activeRoutineResolutionProfileCounters.returnMarkerCacheHits++;
+        }
         returnMarker = returnMarkersByNameEnd.get(nameEnd);
       } else {
+        if (activeRoutineResolutionProfileCounters) {
+          activeRoutineResolutionProfileCounters.returnMarkerCacheMisses++;
+        }
         returnMarker = findWordOutsideStrings(
           source,
           nameEnd,
@@ -5255,12 +6124,44 @@ function resolveRoutineCall(
       ? [...nameMatch.parameters, routine.returnParameter]
       : nameMatch.parameters;
     if (parameters.length === 0) {
+      if (activeRoutineResolutionProfileCounters?.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesRejectedNoParameters++;
+      }
+      recordSlowRoutineCandidate(
+        candidateProfile,
+        nameMatch,
+        candidateIndex,
+        parameters,
+        candidateArgumentCount,
+        argumentSplittingMs,
+        argumentTypeResolutionMs,
+        expressionResolutionMs,
+        candidateProfile ? performance.now() - candidateStartedAt : 0,
+        'no-parameters'
+      );
       continue;
     }
     if (
       nameEnd < statementRange.end &&
       !/\s/u.test(source[nameEnd] ?? '')
     ) {
+      if (activeRoutineResolutionProfileCounters?.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesRejectedByWhitespace++;
+      }
+      recordSlowRoutineCandidate(
+        candidateProfile,
+        nameMatch,
+        candidateIndex,
+        parameters,
+        candidateArgumentCount,
+        argumentSplittingMs,
+        argumentTypeResolutionMs,
+        expressionResolutionMs,
+        candidateProfile ? performance.now() - candidateStartedAt : 0,
+        'whitespace'
+      );
       continue;
     }
     const callQualifier = findTrailingParentheticalQualifier(
@@ -5269,6 +6170,22 @@ function resolveRoutineCall(
       statementRange.end
     );
     if (routineName.qualifier !== callQualifier?.text) {
+      if (activeRoutineResolutionProfileCounters?.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesRejectedByQualifier++;
+      }
+      recordSlowRoutineCandidate(
+        candidateProfile,
+        nameMatch,
+        candidateIndex,
+        parameters,
+        candidateArgumentCount,
+        argumentSplittingMs,
+        argumentTypeResolutionMs,
+        expressionResolutionMs,
+        candidateProfile ? performance.now() - candidateStartedAt : 0,
+        'qualifier'
+      );
       continue;
     }
     const argumentEnd = trimRoutineTrailingNameSuffix(
@@ -5278,14 +6195,52 @@ function resolveRoutineCall(
       routine,
       nameMatch.parameters
     );
-    if (hasArticleBeforeScalarLiteral(source, {
+    const hasArticleBeforeLiteral = hasArticleBeforeScalarLiteral(source, {
       start: nameEnd,
       end: argumentEnd
-    })) {
+    });
+    if (hasArticleBeforeLiteral) {
+      if (activeRoutineResolutionProfileCounters) {
+        activeRoutineResolutionProfileCounters.candidatesRejectedByArticleLiteral++;
+        if (activeRoutineResolutionProfileCounters.currentCall) {
+          activeRoutineResolutionProfileCounters.currentCall
+            .candidatesRejectedByArticleLiteral++;
+        }
+      }
+      recordSlowRoutineCandidate(
+        candidateProfile,
+        nameMatch,
+        candidateIndex,
+        parameters,
+        candidateArgumentCount,
+        argumentSplittingMs,
+        argumentTypeResolutionMs,
+        expressionResolutionMs,
+        candidateProfile ? performance.now() - candidateStartedAt : 0,
+        'article-literal'
+      );
       continue;
     }
+    if (activeRoutineResolutionProfileCounters) {
+      activeRoutineResolutionProfileCounters
+        .candidatesReachingArgumentEvaluation++;
+      if (activeRoutineResolutionProfileCounters.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesReachingArgumentEvaluation++;
+      }
+    }
+    const argumentSplittingStartedAt = candidateProfile
+      ? performance.now()
+      : 0;
     const parsedArgumentsKey = `${nameEnd}:${argumentEnd}`;
     let parsedArguments = parsedArgumentsByNameEnd.get(parsedArgumentsKey);
+    if (activeRoutineResolutionProfileCounters) {
+      if (parsedArguments) {
+        activeRoutineResolutionProfileCounters.parsedArgumentsCacheHits++;
+      } else {
+        activeRoutineResolutionProfileCounters.parsedArgumentsCacheMisses++;
+      }
+    }
     if (!parsedArguments) {
       const argumentRange = trimRange(
         source,
@@ -5326,12 +6281,59 @@ function resolveRoutineCall(
     const localVariablesByArgument = new Map(
       parsedArguments.localVariablesByArgument
     );
-    const parameterSeparatedArguments = splitRoutineArgumentsUsingParameterSeparators(
-      source,
-      trimRange(source, nameEnd, argumentEnd),
-      parameters,
-      routine
+    const argumentRange = trimRange(source, nameEnd, argumentEnd);
+    const parameterSignature = parameters.map(parameter =>
+      `${parameter.name.range.start}:${parameter.name.range.end}:` +
+      `${parameter.type.range.start}:${parameter.type.range.end}`
+    ).join(',');
+    const argumentRangeKey = `${argumentRange.start}:${argumentRange.end}`;
+    let separatedByRoutine = parameterSeparatedArgumentsByRange.get(
+      argumentRangeKey
     );
+    if (!separatedByRoutine) {
+      separatedByRoutine = new Map();
+      parameterSeparatedArgumentsByRange.set(
+        argumentRangeKey,
+        separatedByRoutine
+      );
+    }
+    let separatedByParameterSignature = separatedByRoutine.get(routine);
+    if (!separatedByParameterSignature) {
+      separatedByParameterSignature = new Map();
+      separatedByRoutine.set(routine, separatedByParameterSignature);
+    }
+    let parameterSeparatedArguments: SourceRange[] | undefined;
+    if (separatedByParameterSignature.has(parameterSignature)) {
+      parameterSeparatedArguments =
+        separatedByParameterSignature.get(parameterSignature) ?? undefined;
+      if (activeRoutineResolutionProfileCounters) {
+        activeRoutineResolutionProfileCounters
+          .parameterSeparatedArgumentsCacheHits++;
+        if (activeRoutineResolutionProfileCounters.currentCall) {
+          activeRoutineResolutionProfileCounters.currentCall
+            .parameterSeparatedArgumentsCacheHits++;
+        }
+      }
+    } else {
+      parameterSeparatedArguments = splitRoutineArgumentsUsingParameterSeparators(
+        source,
+        argumentRange,
+        parameters,
+        routine
+      );
+      separatedByParameterSignature.set(
+        parameterSignature,
+        parameterSeparatedArguments ?? null
+      );
+      if (activeRoutineResolutionProfileCounters) {
+        activeRoutineResolutionProfileCounters
+          .parameterSeparatedArgumentsCacheMisses++;
+        if (activeRoutineResolutionProfileCounters.currentCall) {
+          activeRoutineResolutionProfileCounters.currentCall
+            .parameterSeparatedArgumentsCacheMisses++;
+        }
+      }
+    }
     argumentsList = parameterSeparatedArguments ?? argumentsList;
     if (
       argumentsList.length < parameters.length &&
@@ -5369,7 +6371,27 @@ function resolveRoutineCall(
         return argumentLocalVariable.name.range;
       });
     }
+    candidateArgumentCount = argumentsList.length;
+    if (candidateProfile) {
+      argumentSplittingMs = performance.now() - argumentSplittingStartedAt;
+    }
     if (argumentsList.length !== parameters.length) {
+      if (activeRoutineResolutionProfileCounters?.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesRejectedByArgumentCount++;
+      }
+      recordSlowRoutineCandidate(
+        candidateProfile,
+        nameMatch,
+        candidateIndex,
+        parameters,
+        candidateArgumentCount,
+        argumentSplittingMs,
+        argumentTypeResolutionMs,
+        expressionResolutionMs,
+        candidateProfile ? performance.now() - candidateStartedAt : 0,
+        'argument-count'
+      );
       continue;
     }
     const separatorMatch = getRoutineArgumentSeparatorMatch(
@@ -5384,6 +6406,22 @@ function resolveRoutineCall(
         isScalarRoutineLiteral(source, argument)
       )
     ) {
+      if (activeRoutineResolutionProfileCounters?.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesRejectedBySeparatorMismatch++;
+      }
+      recordSlowRoutineCandidate(
+        candidateProfile,
+        nameMatch,
+        candidateIndex,
+        parameters,
+        candidateArgumentCount,
+        argumentSplittingMs,
+        argumentTypeResolutionMs,
+        expressionResolutionMs,
+        candidateProfile ? performance.now() - candidateStartedAt : 0,
+        'separator-mismatch'
+      );
       continue;
     }
     const separatorDistance = separatorMatch?.distance ?? 0;
@@ -5396,6 +6434,9 @@ function resolveRoutineCall(
     for (let index = 0; index < argumentsList.length; index++) {
       const parameter = parameters[index];
       const localVariable = localVariablesByArgument.get(index);
+      const argumentTypeStartedAt = candidateProfile
+        ? performance.now()
+        : 0;
       const typeCast = localVariable
         ? undefined
         : parseTypeCast(source, argumentsList[index], symbols);
@@ -5412,7 +6453,7 @@ function resolveRoutineCall(
         );
       const argumentType = localVariable
         ? localVariable.type
-        : scalarArgumentType ?? resolveRoutineArgumentType(
+        : scalarArgumentType ?? resolveRoutineArgumentTypeWithCache(
           source,
           argumentsList[index],
           caller,
@@ -5426,17 +6467,57 @@ function resolveRoutineCall(
             source,
             argumentsList[index].start,
             nameEnd
-          ) || implicitDefiniteArticle,
-          diagnostics
+          ) || implicitDefiniteArticle === true,
+          diagnostics,
+          argumentTypeResolutionCache
         );
+      if (candidateProfile) {
+        argumentTypeResolutionMs +=
+          performance.now() - argumentTypeStartedAt;
+      }
       if (scalarArgumentType) {
         typeReferences.push(scalarArgumentType);
+      }
+      const expressionStartedAt = candidateProfile
+        ? performance.now()
+        : 0;
+      const expressionRange = argumentsList[index];
+      let parsedExpression: RoutineExpression | null | undefined;
+      if (!localVariable) {
+        const expressionRangeKey =
+          `${expressionRange.start}:${expressionRange.end}`;
+        if (expressionByRange.has(expressionRangeKey)) {
+          parsedExpression = expressionByRange.get(expressionRangeKey) ?? null;
+          if (activeRoutineResolutionProfileCounters) {
+            activeRoutineResolutionProfileCounters
+              .routineExpressionParseCacheHits++;
+            if (activeRoutineResolutionProfileCounters.currentCall) {
+              activeRoutineResolutionProfileCounters.currentCall
+                .routineExpressionParseCacheHits++;
+            }
+          }
+        } else {
+          parsedExpression = parseRoutineExpression(
+            source,
+            expressionRange,
+            []
+          ) ?? null;
+          expressionByRange.set(expressionRangeKey, parsedExpression);
+          if (activeRoutineResolutionProfileCounters) {
+            activeRoutineResolutionProfileCounters
+              .routineExpressionParseCacheMisses++;
+            if (activeRoutineResolutionProfileCounters.currentCall) {
+              activeRoutineResolutionProfileCounters.currentCall
+                .routineExpressionParseCacheMisses++;
+            }
+          }
+        }
       }
       const expressionType = localVariable
         ? undefined
         : resolveRoutineExpressionType(
           source,
-          argumentsList[index],
+          expressionRange,
           caller,
           globalVariables,
           symbols,
@@ -5444,8 +6525,13 @@ function resolveRoutineCall(
           routines,
           computedFieldAccesses,
           variableAccesses,
-          diagnostics
+          diagnostics,
+          parsedExpression,
+          argumentTypeResolutionCache
         );
+      if (candidateProfile) {
+        expressionResolutionMs += performance.now() - expressionStartedAt;
+      }
       const distance = argumentType
         ? getRoutineArgumentTypeDistance(
           argumentType,
@@ -5471,6 +6557,22 @@ function resolveRoutineCall(
       distances.push(compatibleDistance);
     }
     if (distances.length !== argumentsList.length) {
+      if (activeRoutineResolutionProfileCounters?.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .candidatesRejectedByTypeCompatibility++;
+      }
+      recordSlowRoutineCandidate(
+        candidateProfile,
+        nameMatch,
+        candidateIndex,
+        parameters,
+        candidateArgumentCount,
+        argumentSplittingMs,
+        argumentTypeResolutionMs,
+        expressionResolutionMs,
+        candidateProfile ? performance.now() - candidateStartedAt : 0,
+        'type-compatibility'
+      );
       continue;
     }
 
@@ -5495,6 +6597,17 @@ function resolveRoutineCall(
       nameLength: nameEnd - statementRange.start,
       separatorDistance
     });
+    recordSlowRoutineCandidate(
+      candidateProfile,
+      nameMatch,
+      candidateIndex,
+      parameters,
+      candidateArgumentCount,
+      argumentSplittingMs,
+      argumentTypeResolutionMs,
+      expressionResolutionMs,
+      candidateProfile ? performance.now() - candidateStartedAt : 0
+    );
   }
   const resolvedCall = matchingCalls.sort((first, second) =>
     second.nameLength - first.nameLength ||
@@ -5516,6 +6629,36 @@ function resolveRoutineCall(
 }
 
 function getRoutineArgumentSeparatorMatch(
+  source: string,
+  argumentsList: SourceRange[],
+  parameters: RoutineParameter[],
+  routine: RoutineDeclaration
+): { mismatch: boolean; distance: number } | undefined {
+  if (!activeRoutineResolutionProfileCounters) {
+    return getRoutineArgumentSeparatorMatchCore(
+      source,
+      argumentsList,
+      parameters,
+      routine
+    );
+  }
+  const range = {
+    start: argumentsList[0]?.start ?? 0,
+    end: argumentsList[argumentsList.length - 1]?.end ?? 0
+  };
+  return profileRoutineResolutionHelper(
+    'getRoutineArgumentSeparatorMatch',
+    range,
+    () => getRoutineArgumentSeparatorMatchCore(
+      source,
+      argumentsList,
+      parameters,
+      routine
+    )
+  );
+}
+
+function getRoutineArgumentSeparatorMatchCore(
   source: string,
   argumentsList: SourceRange[],
   parameters: RoutineParameter[],
@@ -5690,6 +6833,43 @@ function hasArticleBeforeScalarLiteral(
   source: string,
   range: SourceRange
 ): boolean {
+  const cache = activeRoutineCallResolutionCaches
+    ?.articleBeforeScalarLiteralByRange;
+  const cacheKey = `${range.start}:${range.end}`;
+  if (cache?.has(cacheKey)) {
+    if (activeRoutineResolutionProfileCounters) {
+      activeRoutineResolutionProfileCounters.articleRangeCacheHits++;
+      if (activeRoutineResolutionProfileCounters.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .articleRangeCacheHits++;
+      }
+    }
+    return cache.get(cacheKey) ?? false;
+  }
+  const result = activeRoutineResolutionProfileCounters
+    ? profileRoutineResolutionHelper(
+      'hasArticleBeforeScalarLiteral',
+      range,
+      () => hasArticleBeforeScalarLiteralCore(source, range)
+    )
+    : hasArticleBeforeScalarLiteralCore(source, range);
+  if (cache) {
+    cache.set(cacheKey, result);
+    if (activeRoutineResolutionProfileCounters) {
+      activeRoutineResolutionProfileCounters.articleRangeCacheMisses++;
+      if (activeRoutineResolutionProfileCounters.currentCall) {
+        activeRoutineResolutionProfileCounters.currentCall
+          .articleRangeCacheMisses++;
+      }
+    }
+  }
+  return result;
+}
+
+function hasArticleBeforeScalarLiteralCore(
+  source: string,
+  range: SourceRange
+): boolean {
   const words = [...source.slice(range.start, range.end).matchAll(
     /[\p{L}]+|[+-]?\d+/gu
   )];
@@ -5700,6 +6880,32 @@ function hasArticleBeforeScalarLiteral(
 }
 
 function splitRoutineArgumentsUsingParameterSeparators(
+  source: string,
+  range: SourceRange,
+  parameters: RoutineParameter[],
+  routine: RoutineDeclaration
+): SourceRange[] | undefined {
+  if (!activeRoutineResolutionProfileCounters) {
+    return splitRoutineArgumentsUsingParameterSeparatorsCore(
+      source,
+      range,
+      parameters,
+      routine
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'splitRoutineArgumentsUsingParameterSeparators',
+    range,
+    () => splitRoutineArgumentsUsingParameterSeparatorsCore(
+      source,
+      range,
+      parameters,
+      routine
+    )
+  );
+}
+
+function splitRoutineArgumentsUsingParameterSeparatorsCore(
   source: string,
   range: SourceRange,
   parameters: RoutineParameter[],
@@ -5779,7 +6985,13 @@ const routineSeparatorNormalizationCacheLimit = 512;
 function normalizeRoutineSeparatorWord(word: string): string {
   const cached = routineSeparatorNormalizationCache.get(word);
   if (cached !== undefined) {
+    if (activeRoutineResolutionProfileCounters) {
+      activeRoutineResolutionProfileCounters.separatorNormalizationCacheHits++;
+    }
     return cached;
+  }
+  if (activeRoutineResolutionProfileCounters) {
+    activeRoutineResolutionProfileCounters.separatorNormalizationCacheMisses++;
   }
   const normalized = word.toLocaleLowerCase('pt-BR');
   const expanded = getRoutineContractionFirstWord(normalized) ?? normalized;
@@ -5894,6 +7106,45 @@ function recordUnresolvedRoutineCallReferences(
 }
 
 function splitScalarRoutineArguments(
+  source: string,
+  argumentsList: SourceRange[],
+  parameters: RoutineParameter[],
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  routines: RoutineDeclaration[]
+): SourceRange[] {
+  if (!activeRoutineResolutionProfileCounters) {
+    return splitScalarRoutineArgumentsCore(
+      source,
+      argumentsList,
+      parameters,
+      caller,
+      globalVariables,
+      symbols,
+      routines
+    );
+  }
+  const range = {
+    start: argumentsList[0]?.start ?? 0,
+    end: argumentsList[argumentsList.length - 1]?.end ?? 0
+  };
+  return profileRoutineResolutionHelper(
+    'splitScalarRoutineArguments',
+    range,
+    () => splitScalarRoutineArgumentsCore(
+      source,
+      argumentsList,
+      parameters,
+      caller,
+      globalVariables,
+      symbols,
+      routines
+    )
+  );
+}
+
+function splitScalarRoutineArgumentsCore(
   source: string,
   argumentsList: SourceRange[],
   parameters: RoutineParameter[],
@@ -6110,6 +7361,42 @@ function diagnoseUnresolvedRoutineCall(
   diagnostics: ParserDiagnostic[],
   nameMatches: readonly RoutineNameMatch[]
 ): void {
+  if (!activeRoutineResolutionProfileCounters) {
+    diagnoseUnresolvedRoutineCallCore(
+      source,
+      statement,
+      caller,
+      globalVariables,
+      symbols,
+      diagnostics,
+      nameMatches
+    );
+    return;
+  }
+  profileRoutineResolutionHelper(
+    'diagnoseUnresolvedRoutineCall',
+    statement,
+    () => diagnoseUnresolvedRoutineCallCore(
+      source,
+      statement,
+      caller,
+      globalVariables,
+      symbols,
+      diagnostics,
+      nameMatches
+    )
+  );
+}
+
+function diagnoseUnresolvedRoutineCallCore(
+  source: string,
+  statement: SourceRange,
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  diagnostics: ParserDiagnostic[],
+  nameMatches: readonly RoutineNameMatch[]
+): void {
   const firstWord = readWord(source, statement.start, statement.end);
   if (!firstWord || builtInStatementStarts.has(firstWord.value.toLocaleLowerCase('pt-BR'))) {
     return;
@@ -6230,9 +7517,19 @@ const routineNameLookupIndexes = new WeakMap<
 >();
 
 function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupIndex {
+  const profileCounters = activeRoutineResolutionProfileCounters;
+  if (profileCounters) {
+    profileCounters.nameIndexLookups++;
+  }
   const cachedIndex = routineNameLookupIndexes.get(routines);
   if (cachedIndex) {
+    if (profileCounters) {
+      profileCounters.nameIndexCacheHits++;
+    }
     return cachedIndex;
+  }
+  if (profileCounters) {
+    profileCounters.nameIndexCacheMisses++;
   }
 
   const byNormalizedName = new Map<string, RoutineNameCandidate[]>();
@@ -6430,7 +7727,24 @@ function findRoutineNameMatches(
   );
 }
 
-function splitRoutineArguments(source: string, range: SourceRange): SourceRange[] {
+function splitRoutineArguments(
+  source: string,
+  range: SourceRange
+): SourceRange[] {
+  if (!activeRoutineResolutionProfileCounters) {
+    return splitRoutineArgumentsCore(source, range);
+  }
+  return profileRoutineResolutionHelper(
+    'splitRoutineArguments',
+    range,
+    () => splitRoutineArgumentsCore(source, range)
+  );
+}
+
+function splitRoutineArgumentsCore(
+  source: string,
+  range: SourceRange
+): SourceRange[] {
   const argumentsList: SourceRange[] = [];
   let argumentStart = range.start;
   const words = /\p{L}+/gu;
@@ -6581,6 +7895,236 @@ function hasContractedDefiniteArticleBefore(
 }
 
 function resolveRoutineArgumentType(
+  source: string,
+  argument: SourceRange,
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  fieldAccesses: RoutineFieldAccess[] = [],
+  routines: RoutineDeclaration[] = [],
+  computedFieldAccesses: RoutineComputedFieldAccess[] = [],
+  variableAccesses: RoutineVariableAccess[] = [],
+  implicitDefiniteArticle = false,
+  diagnostics?: ParserDiagnostic[]
+): TypeReference | undefined {
+  recordRoutineArgumentTypeCacheMetrics(metrics => {
+    metrics.inferenceCalls++;
+  });
+  if (!activeRoutineResolutionProfileCounters) {
+    return resolveRoutineArgumentTypeCore(
+      source,
+      argument,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses,
+      variableAccesses,
+      implicitDefiniteArticle,
+      diagnostics
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'resolveRoutineArgumentType',
+    argument,
+    () => resolveRoutineArgumentTypeCore(
+      source,
+      argument,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses,
+      variableAccesses,
+      implicitDefiniteArticle,
+      diagnostics
+    )
+  );
+}
+
+function recordRoutineArgumentTypeCacheMetrics(
+  update: (metrics: RoutineArgumentTypeCacheMetrics) => void
+): void {
+  const counters = activeRoutineResolutionProfileCounters;
+  if (!counters) {
+    return;
+  }
+  update(counters.argumentTypeCache);
+  if (counters.currentCall) {
+    update(counters.currentCall.argumentTypeCache);
+  }
+}
+
+function cloneCachedTypeReference(type: TypeReference): TypeReference {
+  return {
+    ...type,
+    range: { ...type.range }
+  };
+}
+
+function cloneCachedRoutineFieldAccess(
+  access: RoutineFieldAccess
+): RoutineFieldAccess {
+  return {
+    ...access,
+    reference: cloneCachedTypeReference(access.reference)
+  };
+}
+
+function cloneCachedRoutineVariableAccess(
+  access: RoutineVariableAccess
+): RoutineVariableAccess {
+  return {
+    ...access,
+    reference: cloneCachedTypeReference(access.reference),
+    type: cloneCachedTypeReference(access.type)
+  };
+}
+
+function cloneCachedRoutineComputedFieldAccess(
+  access: RoutineComputedFieldAccess
+): RoutineComputedFieldAccess {
+  return {
+    ...access,
+    reference: cloneCachedTypeReference(access.reference)
+  };
+}
+
+function cloneCachedDiagnostic(diagnostic: ParserDiagnostic): ParserDiagnostic {
+  return {
+    ...diagnostic,
+    range: { ...diagnostic.range }
+  };
+}
+
+function resolveRoutineArgumentTypeWithCache(
+  source: string,
+  argument: SourceRange,
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  fieldAccesses: RoutineFieldAccess[],
+  routines: RoutineDeclaration[],
+  computedFieldAccesses: RoutineComputedFieldAccess[],
+  variableAccesses: RoutineVariableAccess[],
+  implicitDefiniteArticle: boolean,
+  diagnostics: ParserDiagnostic[] | undefined,
+  cache: Map<string, RoutineArgumentTypeResolution> | undefined
+): TypeReference | undefined {
+  const profiling = Boolean(activeRoutineResolutionProfileCounters);
+  const cacheStartedAt = cache && profiling ? performance.now() : 0;
+  const cacheKey =
+    `${argument.start}:${argument.end}:${implicitDefiniteArticle ? 1 : 0}`;
+  let lookupMs = 0;
+  if (cache) {
+    const hasCachedResolution = cache.has(cacheKey);
+    const cachedResolution = hasCachedResolution
+      ? cache.get(cacheKey)
+      : undefined;
+    lookupMs = profiling ? performance.now() - cacheStartedAt : 0;
+    if (hasCachedResolution) {
+      if (!cachedResolution) {
+        throw new Error('Routine argument type cache entry is missing.');
+      }
+      recordRoutineArgumentTypeCacheMetrics(metrics => {
+        metrics.hits++;
+      });
+      const replayStartedAt = profiling ? performance.now() : 0;
+      fieldAccesses.push(
+        ...cachedResolution.fieldAccesses.map(cloneCachedRoutineFieldAccess)
+      );
+      variableAccesses.push(
+        ...cachedResolution.variableAccesses.map(
+          cloneCachedRoutineVariableAccess
+        )
+      );
+      computedFieldAccesses.push(
+        ...cachedResolution.computedFieldAccesses.map(
+          cloneCachedRoutineComputedFieldAccess
+        )
+      );
+      let replayedDiagnostics = 0;
+      if (diagnostics) {
+        for (const diagnostic of cachedResolution.diagnostics) {
+          if (!diagnostics.some(existing =>
+            existing.message === diagnostic.message &&
+            existing.range.start === diagnostic.range.start &&
+            existing.range.end === diagnostic.range.end
+          )) {
+            diagnostics.push(cloneCachedDiagnostic(diagnostic));
+            replayedDiagnostics++;
+          }
+        }
+      }
+      const replayMs = profiling ? performance.now() - replayStartedAt : 0;
+      if (profiling) {
+        recordRoutineArgumentTypeCacheMetrics(metrics => {
+          metrics.cacheTimeMs += lookupMs + replayMs;
+          metrics.effectReplayMs += replayMs;
+          metrics.replayedFieldAccesses +=
+            cachedResolution.fieldAccesses.length;
+          metrics.replayedVariableAccesses +=
+            cachedResolution.variableAccesses.length;
+          metrics.replayedComputedFieldAccesses +=
+            cachedResolution.computedFieldAccesses.length;
+          metrics.replayedDiagnostics += replayedDiagnostics;
+        });
+      }
+      return cachedResolution.type
+        ? cloneCachedTypeReference(cachedResolution.type)
+        : undefined;
+    }
+    recordRoutineArgumentTypeCacheMetrics(metrics => {
+      metrics.misses++;
+    });
+  }
+
+  const fieldAccessCount = fieldAccesses.length;
+  const variableAccessCount = variableAccesses.length;
+  const computedFieldAccessCount = computedFieldAccesses.length;
+  const diagnosticCount = diagnostics?.length ?? 0;
+  const type = resolveRoutineArgumentType(
+    source,
+    argument,
+    caller,
+    globalVariables,
+    symbols,
+    fieldAccesses,
+    routines,
+    computedFieldAccesses,
+    variableAccesses,
+    implicitDefiniteArticle,
+    diagnostics
+  );
+  if (cache) {
+    const storeStartedAt = profiling ? performance.now() : 0;
+    cache.set(cacheKey, {
+      type: type ? cloneCachedTypeReference(type) : undefined,
+      fieldAccesses: fieldAccesses
+        .slice(fieldAccessCount)
+        .map(cloneCachedRoutineFieldAccess),
+      variableAccesses: variableAccesses
+        .slice(variableAccessCount)
+        .map(cloneCachedRoutineVariableAccess),
+      computedFieldAccesses: computedFieldAccesses
+        .slice(computedFieldAccessCount)
+        .map(cloneCachedRoutineComputedFieldAccess),
+      diagnostics: diagnostics?.slice(diagnosticCount)
+        .map(cloneCachedDiagnostic) ?? []
+    });
+    if (profiling) {
+      recordRoutineArgumentTypeCacheMetrics(metrics => {
+        metrics.cacheTimeMs +=
+          lookupMs + performance.now() - storeStartedAt;
+      });
+    }
+  }
+  return type;
+}
+
+function resolveRoutineArgumentTypeCore(
   source: string,
   argument: SourceRange,
   caller: RoutineDeclaration,
@@ -6825,6 +8369,53 @@ function trimTypeCastNameAtPreposition(
 }
 
 function resolveStructureFieldAccess(
+  source: string,
+  argument: SourceRange,
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  fieldAccesses: RoutineFieldAccess[],
+  routines: RoutineDeclaration[],
+  computedFieldAccesses: RoutineComputedFieldAccess[],
+  variableAccesses: RoutineVariableAccess[] = [],
+  implicitDefiniteArticle = false,
+  diagnostics?: ParserDiagnostic[]
+): TypeReference | undefined {
+  if (!activeRoutineResolutionProfileCounters) {
+    return resolveStructureFieldAccessCore(
+      source,
+      argument,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses,
+      variableAccesses,
+      implicitDefiniteArticle,
+      diagnostics
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'resolveStructureFieldAccess',
+    argument,
+    () => resolveStructureFieldAccessCore(
+      source,
+      argument,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses,
+      variableAccesses,
+      implicitDefiniteArticle,
+      diagnostics
+    )
+  );
+}
+
+function resolveStructureFieldAccessCore(
   source: string,
   argument: SourceRange,
   caller: RoutineDeclaration,
@@ -7248,6 +8839,20 @@ function findStructureAccessMarkers(
   source: string,
   range: SourceRange
 ): SourceRange[] {
+  if (!activeRoutineResolutionProfileCounters) {
+    return findStructureAccessMarkersCore(source, range);
+  }
+  return profileRoutineResolutionHelper(
+    'findStructureAccessMarkers',
+    range,
+    () => findStructureAccessMarkersCore(source, range)
+  );
+}
+
+function findStructureAccessMarkersCore(
+  source: string,
+  range: SourceRange
+): SourceRange[] {
   const markers: SourceRange[] = [];
   const words = /\p{L}+/gu;
   words.lastIndex = range.start;
@@ -7298,6 +8903,32 @@ function findGlobalVariableField(
 }
 
 function findNestedStructureFields(
+  typeName: string,
+  fieldName: string,
+  symbols: TypeSymbolTable,
+  ancestors: Set<string> = new Set()
+): NamedTypeField[] {
+  if (!activeRoutineResolutionProfileCounters) {
+    return findNestedStructureFieldsCore(
+      typeName,
+      fieldName,
+      symbols,
+      ancestors
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'findNestedStructureFields',
+    undefined,
+    () => findNestedStructureFieldsCore(
+      typeName,
+      fieldName,
+      symbols,
+      ancestors
+    )
+  );
+}
+
+function findNestedStructureFieldsCore(
   typeName: string,
   fieldName: string,
   symbols: TypeSymbolTable,
@@ -7491,9 +9122,70 @@ function resolveRoutineExpressionType(
   routines: RoutineDeclaration[],
   computedFieldAccesses: RoutineComputedFieldAccess[],
   variableAccesses: RoutineVariableAccess[],
-  diagnostics?: ParserDiagnostic[]
+  diagnostics?: ParserDiagnostic[],
+  parsedExpression?: RoutineExpression | null,
+  argumentTypeResolutionCache?: Map<string, RoutineArgumentTypeResolution>
 ): TypeReference | undefined {
-  const expression = parseRoutineExpression(source, argument, []);
+  if (activeRoutineResolutionProfileCounters) {
+    activeRoutineResolutionProfileCounters.expressionTypeResolutions++;
+    if (activeRoutineResolutionProfileCounters.currentCall) {
+      activeRoutineResolutionProfileCounters.currentCall
+        .expressionTypeResolutions++;
+    }
+  }
+  if (!activeRoutineResolutionProfileCounters) {
+    return resolveRoutineExpressionTypeCore(
+      source,
+      argument,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses,
+      variableAccesses,
+      diagnostics,
+      parsedExpression,
+      argumentTypeResolutionCache
+    );
+  }
+  return profileRoutineResolutionHelper(
+    'resolveRoutineExpressionType',
+    argument,
+    () => resolveRoutineExpressionTypeCore(
+      source,
+      argument,
+      caller,
+      globalVariables,
+      symbols,
+      fieldAccesses,
+      routines,
+      computedFieldAccesses,
+      variableAccesses,
+      diagnostics,
+      parsedExpression,
+      argumentTypeResolutionCache
+    )
+  );
+}
+
+function resolveRoutineExpressionTypeCore(
+  source: string,
+  argument: SourceRange,
+  caller: RoutineDeclaration,
+  globalVariables: GlobalVariableSymbolTable,
+  symbols: TypeSymbolTable,
+  fieldAccesses: RoutineFieldAccess[],
+  routines: RoutineDeclaration[],
+  computedFieldAccesses: RoutineComputedFieldAccess[],
+  variableAccesses: RoutineVariableAccess[],
+  diagnostics?: ParserDiagnostic[],
+  parsedExpression?: RoutineExpression | null,
+  argumentTypeResolutionCache?: Map<string, RoutineArgumentTypeResolution>
+): TypeReference | undefined {
+  const expression = parsedExpression === null
+    ? undefined
+    : parsedExpression ?? parseRoutineExpression(source, argument, []);
   if (!expression || expression.kind === 'operand') {
     return undefined;
   }
@@ -7503,7 +9195,34 @@ function resolveRoutineExpressionType(
       return resolveType(node.operand);
     }
     if (node.kind === 'operand') {
-      return resolveRoutineArgumentType(
+      const implicitDefiniteArticle =
+        node.implicitDefiniteArticle ?? false;
+      const cacheKey =
+        `${node.range.start}:${node.range.end}:${implicitDefiniteArticle ? 1 : 0}`;
+      const cacheHit = Boolean(
+        argumentTypeResolutionCache?.has(cacheKey)
+      );
+      if (cacheHit) {
+        if (activeRoutineResolutionProfileCounters) {
+          activeRoutineResolutionProfileCounters.expressionOperandCacheHits++;
+          if (activeRoutineResolutionProfileCounters.currentCall) {
+            activeRoutineResolutionProfileCounters.currentCall
+              .expressionOperandCacheHits++;
+          }
+        }
+      }
+      if (
+        argumentTypeResolutionCache &&
+        !cacheHit &&
+        activeRoutineResolutionProfileCounters
+      ) {
+        activeRoutineResolutionProfileCounters.expressionOperandCacheMisses++;
+        if (activeRoutineResolutionProfileCounters.currentCall) {
+          activeRoutineResolutionProfileCounters.currentCall
+            .expressionOperandCacheMisses++;
+        }
+      }
+      const type = resolveRoutineArgumentTypeWithCache(
         source,
         node.range,
         caller,
@@ -7513,9 +9232,18 @@ function resolveRoutineExpressionType(
         routines,
         computedFieldAccesses,
         variableAccesses,
-        node.implicitDefiniteArticle ?? false,
-        diagnostics
+        implicitDefiniteArticle,
+        diagnostics,
+        argumentTypeResolutionCache
       );
+      if (!cacheHit && activeRoutineResolutionProfileCounters) {
+        activeRoutineResolutionProfileCounters.expressionOperandResolutions++;
+        if (activeRoutineResolutionProfileCounters.currentCall) {
+          activeRoutineResolutionProfileCounters.currentCall
+            .expressionOperandResolutions++;
+        }
+      }
+      return type;
     }
     if (![
       'mais',

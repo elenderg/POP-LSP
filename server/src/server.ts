@@ -1255,7 +1255,7 @@ function getWorkspaceCompletions(
   return items;
 }
 
-function logProfile(metrics: Record<string, number | string | boolean>): void {
+function logProfile(metrics: Record<string, unknown>): void {
   if (profileEnabled) {
     console.log(`[POP-LSP profile] ${JSON.stringify(metrics)}`);
   }
