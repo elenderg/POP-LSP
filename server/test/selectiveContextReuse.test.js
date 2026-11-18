@@ -931,6 +931,7 @@ test('excludes the current document base routines from contextual candidates', a
   const filePath = path.join(workspace, 'routines.pop');
   const libraryPath = path.join(workspace, 'library.pop');
   const uri = pathToFileURL(filePath).toString();
+  const openedUri = uri.replace(/^file:\/\/\/([A-Za-z]):/u, 'file:///$1%3A');
   const libraryUri = pathToFileURL(libraryPath).toString();
   const workspaceFolder = {
     uri: pathToFileURL(workspace).toString(),
@@ -1141,8 +1142,16 @@ test('excludes the current document base routines from contextual candidates', a
     assert.equal(contextualParse.routineNameCandidateChecks, 1);
     assert.equal(contextualParse.routineResolutionStrategy, 'complete');
     assert.equal(contextualParse.routineVerificationStatus, 'not-requested');
+    const baseParse = client.events.find(event =>
+      event.event === 'document-parse' &&
+      event.pass === 'base' &&
+      event.documentUri === uri
+    );
+    assert.ok(baseParse);
+    assert.equal(baseParse.routineStatementsVisited, 0);
+    const aliasRefreshStartIndex = client.events.length;
     for (const [documentUri, documentSource] of [
-      [uri, source],
+      [openedUri, source],
       [libraryUri, librarySource]
     ]) {
       client.send({
@@ -1160,17 +1169,24 @@ test('excludes the current document base routines from contextual candidates', a
     }
 
     const symbols = await client.request('textDocument/documentSymbol', {
-      textDocument: { uri }
+      textDocument: { uri: openedUri }
     });
     assert.equal(symbols.error, undefined);
     assert.equal(symbols.result.length, 2);
+    const aliasRefresh = await waitForEvent(
+      client.events,
+      event => event.event === 'workspace-refresh',
+      'the workspace refresh for an equivalent file URI',
+      aliasRefreshStartIndex
+    );
+    assert.equal(aliasRefresh.documents, 2);
     const callOffset = source.indexOf('Bar.');
     const position = {
       line: source.slice(0, callOffset).split('\n').length - 1,
       character: callOffset - source.lastIndexOf('\n', callOffset) - 1
     };
     const definitions = await client.request('textDocument/definition', {
-      textDocument: { uri },
+      textDocument: { uri: openedUri },
       position
     });
     const definitionLocations = Array.isArray(definitions.result)

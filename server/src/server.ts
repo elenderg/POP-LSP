@@ -30,7 +30,7 @@ import {
   PerformanceObserver,
   performance
 } from 'node:perf_hooks';
-import { dirname, extname, join } from 'node:path';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   ParsedDocument,
@@ -141,6 +141,134 @@ const workspaceCompletionItems = new WeakMap<
 let documentSymbolsUpdatePromise: Promise<void> | undefined;
 let documentSymbolsUpdatePending = false;
 let workspaceInvalidationPending = false;
+
+
+// início
+import * as inspector from 'node:inspector';
+import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join as juntar }  from 'node:path';
+
+const cpuProfileEnabled = process.env.POP_LSP_CPU_PROFILE === '1';
+
+let cpuProfilerSession: inspector.Session | undefined;
+let cpuProfilerStarted = false;
+let cpuProfilerStopPromise: Promise<void> | undefined;
+
+function postInspector<T>(
+    session: inspector.Session,
+    method: string
+): Promise<T> {
+    return new Promise((resolve, reject) => {
+        session.post(method, (error, parameters) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            resolve(parameters as T);
+        });
+    });
+}
+
+async function startCpuProfiler(): Promise<void> {
+    if (!cpuProfileEnabled) {
+        return;
+    }
+
+    const session = new inspector.Session();
+
+    try {
+        session.connect();
+
+        await postInspector(session, 'Profiler.enable');
+        await postInspector(session, 'Profiler.start');
+
+        cpuProfilerSession = session;
+        cpuProfilerStarted = true;
+
+        console.log(
+            '[POP-LSP CPU PROF] Captura iniciada.'
+        );
+    } catch (error) {
+        session.disconnect();
+
+        console.error(
+            `[POP-LSP CPU PROF] Falha ao iniciar: ${String(error)}`
+        );
+    }
+}
+
+async function stopCpuProfiler(): Promise<void> {
+    if (cpuProfilerStopPromise) {
+        return cpuProfilerStopPromise;
+    }
+
+    if (!cpuProfilerSession || !cpuProfilerStarted) {
+        return;
+    }
+
+    cpuProfilerStopPromise = (async () => {
+        const session = cpuProfilerSession!;
+
+        cpuProfilerStarted = false;
+
+        try {
+            const result = await postInspector<{
+                profile: object;
+            }>(session, 'Profiler.stop');
+
+            const filename = juntar(
+                tmpdir(),
+                `pop-lsp-${process.pid}-${Date.now()}.cpuprofile`
+            );
+
+            writeFileSync(
+                filename,
+                JSON.stringify(result.profile)
+            );
+
+            console.log(
+                `[POP-LSP CPU PROF] Perfil salvo: ${filename}`
+            );
+        } catch (error) {
+            console.error(
+                `[POP-LSP CPU PROF] Falha ao salvar: ${String(error)}`
+            );
+        } finally {
+            session.disconnect();
+            cpuProfilerSession = undefined;
+        }
+    })();
+
+    return cpuProfilerStopPromise;
+}
+
+
+console.error('[POP-LSP startup]', JSON.stringify({
+    execPath: process.execPath,
+    execArgv: process.execArgv,
+    electronRunAsNode: process.env.ELECTRON_RUN_AS_NODE,
+    cpuProfSupported: process.allowedNodeEnvironmentFlags.has('--cpu-prof'),
+    argv: process.argv,
+    versions: process.versions
+}, null, 2));
+
+process.on('beforeExit', (code) => {
+    console.error('[POP-LSP CPU PROF] beforeExit:', code);
+});
+
+process.on('exit', (code) => {
+    console.error('[POP-LSP CPU PROF] exit:', code);
+});
+
+process.on('uncaughtExceptionMonitor', (error, origin) => {
+    console.error('[POP-LSP CPU PROF] uncaughtException:', origin, error);
+});
+
+// fim
+
+
 
 function documentAnalysisProfiler(
   requestId: number,
@@ -1129,7 +1257,7 @@ function getWorkspaceCompletions(
 
 function logProfile(metrics: Record<string, number | string | boolean>): void {
   if (profileEnabled) {
-    connection.console.log(`[POP-LSP profile] ${JSON.stringify(metrics)}`);
+    console.log(`[POP-LSP profile] ${JSON.stringify(metrics)}`);
   }
 }
 
@@ -2605,6 +2733,13 @@ async function refreshWorkspaceDocuments(
   }
 }
 
+function getWorkspacePathKey(filePath: string): string {
+  const absolutePath = resolve(filePath);
+  return process.platform === 'win32'
+    ? absolutePath.toLowerCase()
+    : absolutePath;
+}
+
 async function buildWorkspaceDocumentIndex(
   requestId = 0,
   requestDocumentUri = ''
@@ -2631,24 +2766,33 @@ async function buildWorkspaceDocumentIndex(
       document: TextDocument;
       directory: string;
     }>();
+    const sourceUrisByPath = new Map<string, string>();
     const sourceByteLengths = new Map<string, number>();
-    const directories = new Set<string>();
+    const directories = new Map<string, string>();
+    const addDirectory = (directory: string): void => {
+      const key = getWorkspacePathKey(directory);
+      if (!directories.has(key)) {
+        directories.set(key, directory);
+      }
+    };
     for (const document of documents.all()) {
-      const directory = dirname(fileURLToPath(document.uri));
-      directories.add(directory);
+      const filePath = fileURLToPath(document.uri);
+      const directory = dirname(filePath);
+      addDirectory(directory);
       sourceDocuments.set(document.uri, { document, directory });
+      sourceUrisByPath.set(getWorkspacePathKey(filePath), document.uri);
     }
 
     const folders = await connection.workspace.getWorkspaceFolders();
     for (const folder of folders ?? []) {
-      directories.add(fileURLToPath(folder.uri));
+      addDirectory(fileURLToPath(folder.uri));
     }
 
     const directorySnapshots = new Map<string, {
       modificationTime: number;
       changeTime: number;
     }>();
-    for (const directory of directories) {
+    for (const directory of directories.values()) {
       const directoryStats = await stat(directory);
       directorySnapshots.set(directory, {
         modificationTime: directoryStats.mtimeMs,
@@ -2661,9 +2805,11 @@ async function buildWorkspaceDocumentIndex(
         }
 
         const filePath = join(directory, entry.name);
+        const pathKey = getWorkspacePathKey(filePath);
         const uri = pathToFileURL(filePath).toString();
-        if (sourceDocuments.has(uri)) {
-          sourceByteLengths.set(uri, (await stat(filePath)).size);
+        const existingUri = sourceUrisByPath.get(pathKey);
+        if (existingUri) {
+          sourceByteLengths.set(existingUri, (await stat(filePath)).size);
           continue;
         }
         const contentBytes = await readFile(filePath);
@@ -2673,6 +2819,7 @@ async function buildWorkspaceDocumentIndex(
           document: TextDocument.create(uri, 'portugues-puro', 0, content),
           directory
         });
+        sourceUrisByPath.set(pathKey, uri);
       }
     }
     const sourceDiscoveryMs = profileEnabled
@@ -2801,9 +2948,10 @@ async function buildWorkspaceDocumentIndex(
         sourceAnalysisCache.set(uri, analysis);
       }
 
-      const group = groups.get(directory) ?? [];
+      const groupKey = getWorkspacePathKey(directory);
+      const group = groups.get(groupKey) ?? [];
       group.push({ uri, document, source, analysis });
-      groups.set(directory, group);
+      groups.set(groupKey, group);
     }
 
     for (const uri of sourceAnalysisCache.keys()) {
@@ -2868,7 +3016,8 @@ async function buildWorkspaceDocumentIndex(
                 requestDocumentUri,
                 entry.uri,
                 'base'
-              )
+              ),
+              resolveRoutineCalls: false
             }
           );
           entry.analysis.baseParsed = parsed;
@@ -3098,5 +3247,20 @@ async function buildWorkspaceDocumentIndex(
   }
 }
 
+connection.onShutdown(async () => {
+    await stopCpuProfiler();
+});
+
 documents.listen(connection);
-connection.listen();
+/*connection.listen();*/
+void startCpuProfiler().finally(() => {
+    connection.listen();
+});
+
+connection.onRequest('pop/profile/stop', async () => {
+    await stopCpuProfiler();
+
+    return {
+        success: true
+    };
+});

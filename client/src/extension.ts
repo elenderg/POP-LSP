@@ -8,61 +8,83 @@ import { tmpdir } from 'node:os';
 import { workspace, ExtensionContext } from 'vscode';
 
 import {
-	LanguageClient,
-	LanguageClientOptions,
-	ServerOptions,
-	TransportKind
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind
 } from 'vscode-languageclient/node';
+
+import * as vscode from 'vscode';
+//import context from 'vscode';
 
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-	// The server is implemented in node
-	const serverModule = context.asAbsolutePath(
-		path.join('server', 'out', 'server.js')
-	);
-	const cpuProfileOptions = process.env.POP_LSP_CPU_PROFILE === '1'
-		? { execArgv: ['--cpu-prof', `--cpu-prof-dir=${tmpdir()}`] }
-		: undefined;
+  // The server is implemented in node
+  const serverModule = context.asAbsolutePath(
+    path.join('server', 'out', 'server.js')
+  );/*
+  const cpuProfileOptions = process.env.POP_LSP_CPU_PROFILE === '1'
+    ? { execArgv: ['--cpu-prof', `--cpu-prof-dir=${tmpdir()}`] }
+    : undefined;
+*/
+  // If the extension is launched in debug mode then the debug server options are used
+  // Otherwise the run options are used
+  const serverOptions: ServerOptions = {
+    run: {
+      module: serverModule,
+      transport: TransportKind.ipc
+      /*,
+      ...(cpuProfileOptions ? { options: cpuProfileOptions } : {})*/
+    },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc
+      /*,
+      ...(cpuProfileOptions ? { options: cpuProfileOptions } : {})*/
+    }
+  };
 
-	// If the extension is launched in debug mode then the debug server options are used
-	// Otherwise the run options are used
-	const serverOptions: ServerOptions = {
-		run: {
-			module: serverModule,
-			transport: TransportKind.ipc,
-			...(cpuProfileOptions ? { options: cpuProfileOptions } : {})
-		},
-		debug: {
-			module: serverModule,
-			transport: TransportKind.ipc,
-			...(cpuProfileOptions ? { options: cpuProfileOptions } : {})
-		}
-	};
+  // Options to control the language client
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [{ scheme: 'file', language: 'portugues-puro' }],
+    synchronize: {
+      fileEvents: workspace.createFileSystemWatcher('**/*.pop')
+    }
+  };
 
-	// Options to control the language client
-	const clientOptions: LanguageClientOptions = {
-		documentSelector: [{ scheme: 'file', language: 'portugues-puro' }],
-		synchronize: {
-			fileEvents: workspace.createFileSystemWatcher('**/*.pop')
-		}
-	};
+  // Create the language client and start the client.
+  client = new LanguageClient(
+    'servidorDeLinguagemPortuguesPuro',
+    'Servidor de Linguagem Português Puro',
+    serverOptions,
+    clientOptions
+  );
 
-	// Create the language client and start the client.
-	client = new LanguageClient(
-		'languageServerExample',
-		'Language Server Example',
-		serverOptions,
-		clientOptions
-	);
-
-	// Start the client. This will also launch the server
-	client.start();
+  // Start the client. This will also launch the server
+  client.start();
+  context.subscriptions.push(stopProfileCommand);
 }
 
+const stopProfileCommand = vscode.commands.registerCommand(
+    'portugues-puro.stopCpuProfile',
+    async () => {
+        if (!client) {
+            return;
+        }
+
+        await client.sendRequest('pop/profile/stop');
+
+        vscode.window.showInformationMessage(
+            'Captura de CPU encerrada. Verifique a saída do servidor de linguagem para localizar o arquivo.'
+        );
+    }
+);
+
+
 export function deactivate(): Thenable<void> | undefined {
-	if (!client) {
-		return undefined;
-	}
-	return client.stop();
+  if (!client) {
+    return undefined;
+  }
+  return client.stop();
 }

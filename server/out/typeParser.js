@@ -2407,11 +2407,18 @@ function parseRoutineExpression(source, range, diagnostics) {
     const words = /\p{L}+/gu;
     words.lastIndex = range.start;
     const quotedRanges = findQuotedRanges(source, range);
+    let quotedRangeIndex = 0;
     const operators = [];
     let match;
     while ((match = words.exec(source)) && match.index < range.end) {
         const wordStart = match.index;
-        if (quotedRanges.some(quoted => wordStart >= quoted.start && wordStart < quoted.end)) {
+        while (quotedRangeIndex < quotedRanges.length &&
+            quotedRanges[quotedRangeIndex].end <= wordStart) {
+            quotedRangeIndex++;
+        }
+        const quotedRange = quotedRanges[quotedRangeIndex];
+        if (quotedRange && wordStart >= quotedRange.start && wordStart < quotedRange.end) {
+            words.lastIndex = quotedRange.end;
             continue;
         }
         const word = match[0].toLocaleLowerCase('pt-BR');
@@ -2463,9 +2470,18 @@ function parseRoutineExpression(source, range, diagnostics) {
             });
         }
     }
+    quotedRangeIndex = 0;
     for (let index = range.start; index < range.end; index++) {
-        if (source[index] === '/' &&
-            !quotedRanges.some(quoted => index >= quoted.start && index < quoted.end)) {
+        while (quotedRangeIndex < quotedRanges.length &&
+            quotedRanges[quotedRangeIndex].end <= index) {
+            quotedRangeIndex++;
+        }
+        const quotedRange = quotedRanges[quotedRangeIndex];
+        if (quotedRange && index >= quotedRange.start && index < quotedRange.end) {
+            index = quotedRange.end - 1;
+            continue;
+        }
+        if (source[index] === '/') {
             operators.push({
                 operator: '/',
                 range: { start: index, end: index + 1 }
@@ -3327,13 +3343,23 @@ function resolveRoutineCall(source, statementRange, routines, caller, globalVari
     }
     const matchingCalls = [];
     const parsedArgumentsByNameEnd = new Map();
+    const returnMarkersByNameEnd = new Map();
     const nameMatches = findRoutineNameMatches(source, statementRange, routines);
     if (nameMatchResult) {
         nameMatchResult.matches = nameMatches;
     }
     for (const nameMatch of nameMatches) {
         const { routine, name: routineName, nameEnd, implicitDefiniteArticle } = nameMatch;
-        const returnMarker = findWordOutsideStrings(source, nameEnd, statementRange.end, 'retornando');
+        let returnMarker;
+        if (routine.returnParameter) {
+            if (returnMarkersByNameEnd.has(nameEnd)) {
+                returnMarker = returnMarkersByNameEnd.get(nameEnd);
+            }
+            else {
+                returnMarker = findWordOutsideStrings(source, nameEnd, statementRange.end, 'retornando');
+                returnMarkersByNameEnd.set(nameEnd, returnMarker);
+            }
+        }
         const parameters = returnMarker && routine.returnParameter
             ? [...nameMatch.parameters, routine.returnParameter]
             : nameMatch.parameters;
@@ -3487,10 +3513,16 @@ function getRoutineArgumentSeparatorMatch(source, argumentsList, parameters, rou
     }
     let distance = 0;
     let mismatch = false;
+    const wordPattern = /\p{L}+/gu;
     for (let index = 0; index < argumentsList.length - 1; index++) {
-        const gap = source.slice(argumentsList[index].end, argumentsList[index + 1].start);
-        const gapWords = [...gap.matchAll(/[\p{L}]+/gu)]
-            .map(match => match[0].toLocaleLowerCase('pt-BR'));
+        const gapStart = argumentsList[index].end;
+        const gapEnd = argumentsList[index + 1].start;
+        const gapWords = [];
+        wordPattern.lastIndex = gapStart;
+        let wordMatch;
+        while ((wordMatch = wordPattern.exec(source)) && wordMatch.index < gapEnd) {
+            gapWords.push(wordMatch[0].toLocaleLowerCase('pt-BR'));
+        }
         const actualSeparators = getRoutineParameterSeparatorWords(gapWords);
         const expected = expectedSeparators[index] ?? [];
         if (actualSeparators.length !== expected.length) {
@@ -3548,11 +3580,16 @@ function getRoutineParameterSeparators(source, parameters, routine) {
     return getHeaderRoutineParameterSeparators(source, parameters);
 }
 function getHeaderRoutineParameterSeparators(source, parameters) {
+    const wordPattern = /\p{L}+/gu;
     return parameters.slice(0, -1).map((parameter, index) => {
         const nextParameter = parameters[index + 1];
-        const gap = source.slice(parameter.type.range.end, nextParameter.type.range.start);
-        const words = [...gap.matchAll(/[\p{L}]+/gu)]
-            .map(match => match[0].toLocaleLowerCase('pt-BR'));
+        const words = [];
+        wordPattern.lastIndex = parameter.type.range.end;
+        let match;
+        while ((match = wordPattern.exec(source)) &&
+            match.index < nextParameter.type.range.start) {
+            words.push(match[0].toLocaleLowerCase('pt-BR'));
+        }
         let nextParameterArticleIndex = -1;
         for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
             if (indefiniteArticles.has(words[wordIndex])) {
@@ -3593,11 +3630,18 @@ function splitRoutineArgumentsUsingParameterSeparators(source, range, parameters
         expectedSeparators.some(separators => separators.length === 0)) {
         return undefined;
     }
-    const words = [...source.slice(range.start, range.end).matchAll(/\p{L}+/gu)];
+    const words = [];
+    const wordPattern = /\p{L}+/gu;
+    wordPattern.lastIndex = range.start;
+    let wordMatch;
+    while ((wordMatch = wordPattern.exec(source)) && wordMatch.index < range.end) {
+        words.push(wordMatch);
+    }
+    const normalizedExpectedSeparators = expectedSeparators.map(separators => separators.map(normalizeRoutineSeparatorWord));
     const argumentsList = [];
     let argumentStart = range.start;
     let wordIndex = 0;
-    for (const separators of expectedSeparators) {
+    for (const separators of normalizedExpectedSeparators) {
         let firstSeparator;
         let lastSeparator;
         for (const separator of separators) {
@@ -3605,7 +3649,7 @@ function splitRoutineArgumentsUsingParameterSeparators(source, range, parameters
             while (wordIndex < words.length) {
                 const word = words[wordIndex++];
                 if (normalizeRoutineSeparatorWord(word[0]) ===
-                    normalizeRoutineSeparatorWord(separator)) {
+                    separator) {
                     matchedSeparator = word;
                     break;
                 }
@@ -3622,8 +3666,8 @@ function splitRoutineArgumentsUsingParameterSeparators(source, range, parameters
             lastSeparator.index === undefined) {
             return undefined;
         }
-        const firstSeparatorStart = range.start + firstSeparator.index;
-        const lastSeparatorEnd = range.start + lastSeparator.index + lastSeparator[0].length;
+        const firstSeparatorStart = firstSeparator.index;
+        const lastSeparatorEnd = lastSeparator.index + lastSeparator[0].length;
         argumentsList.push(trimRange(source, argumentStart, firstSeparatorStart));
         argumentStart = skipWhitespace(source, lastSeparatorEnd, range.end);
     }
@@ -3632,10 +3676,47 @@ function splitRoutineArgumentsUsingParameterSeparators(source, range, parameters
         ? argumentsList
         : undefined;
 }
+const routineSeparatorNormalizationCache = new Map();
+const routineSeparatorNormalizationCacheLimit = 512;
 function normalizeRoutineSeparatorWord(word) {
+    const cached = routineSeparatorNormalizationCache.get(word);
+    if (cached !== undefined) {
+        return cached;
+    }
     const normalized = word.toLocaleLowerCase('pt-BR');
-    const expanded = routineContractions.get(normalized)?.split(' ')[0] ?? normalized;
-    return routineWordReplacements.get(expanded) ?? expanded;
+    const expanded = getRoutineContractionFirstWord(normalized) ?? normalized;
+    const result = routineWordReplacements.get(expanded) ?? expanded;
+    if (routineSeparatorNormalizationCache.size >= routineSeparatorNormalizationCacheLimit) {
+        const oldestWord = routineSeparatorNormalizationCache.keys().next().value;
+        if (oldestWord !== undefined) {
+            routineSeparatorNormalizationCache.delete(oldestWord);
+        }
+    }
+    routineSeparatorNormalizationCache.set(word, result);
+    return result;
+}
+function getRoutineContractionFirstWord(word) {
+    const contraction = routineContractions.get(word);
+    if (!contraction) {
+        return undefined;
+    }
+    const separator = contraction.indexOf(' ');
+    return separator === -1 ? contraction : contraction.slice(0, separator);
+}
+function isRoutineArgumentLiteralStart(source, index) {
+    const character = source[index];
+    if (character === '"') {
+        return true;
+    }
+    if (character === '$') {
+        const next = source[index + 1]?.toLocaleLowerCase('pt-BR');
+        return Boolean(next && /[a-f\d]/u.test(next));
+    }
+    const digitStart = character === '+' || character === '-'
+        ? index + 1
+        : index;
+    const digit = source.charCodeAt(digitStart);
+    return digit >= 48 && digit <= 57;
 }
 function recordUnresolvedRoutineCallReferences(source, statement, routines, caller, globalVariables, symbols, nameMatches) {
     const nameMatch = nameMatches
@@ -3678,8 +3759,30 @@ function splitScalarRoutineArguments(source, argumentsList, parameters, caller, 
     const result = [...argumentsList];
     for (let index = 0; index < result.length && result.length < parameters.length; index++) {
         const argument = result[index];
-        for (let literalStart = argument.start + 1; literalStart < argument.end; literalStart++) {
-            if (!/\s/u.test(source[literalStart - 1])) {
+        const quotedRanges = findQuotedRanges(source, argument);
+        let quotedRangeIndex = 0;
+        let parenthesisDepth = 0;
+        for (let literalStart = argument.start; literalStart < argument.end; literalStart++) {
+            while (quotedRangeIndex < quotedRanges.length &&
+                quotedRanges[quotedRangeIndex].end <= literalStart) {
+                quotedRangeIndex++;
+            }
+            const quotedRange = quotedRanges[quotedRangeIndex];
+            if (quotedRange && literalStart >= quotedRange.start && literalStart < quotedRange.end) {
+                literalStart = quotedRange.end - 1;
+                continue;
+            }
+            if (source[literalStart] === '(') {
+                parenthesisDepth++;
+                continue;
+            }
+            if (source[literalStart] === ')') {
+                parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+                continue;
+            }
+            if (literalStart === argument.start ||
+                parenthesisDepth !== 0 ||
+                !/\s/u.test(source[literalStart - 1])) {
                 continue;
             }
             const nextParameterType = parameters[index + 1]?.type;
@@ -3721,12 +3824,16 @@ function splitScalarRoutineArguments(source, argumentsList, parameters, caller, 
     }
     return result;
 }
+const scalarRoutineNumberPrefix = /([+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?)(\s+)/uy;
+const scalarRoutineTypePatterns = new WeakMap();
 function findScalarRoutineLiteral(source, start, end, expectedType, symbols) {
     if (!expectedType) {
         return undefined;
     }
-    const numberPrefix = /^([+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?)(\s+)/u.exec(source.slice(start, end));
-    if (!numberPrefix) {
+    scalarRoutineNumberPrefix.lastIndex = start;
+    const numberPrefix = scalarRoutineNumberPrefix.exec(source);
+    if (!numberPrefix ||
+        numberPrefix.index + numberPrefix[0].length > end) {
         return undefined;
     }
     const numberRange = {
@@ -3737,18 +3844,28 @@ function findScalarRoutineLiteral(source, start, end, expectedType, symbols) {
         return undefined;
     }
     const typeStart = start + numberPrefix[0].length;
-    for (const typeName of symbols.scalarNames) {
-        const escapedTypeName = typeName
-            .replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
-            .replace(/\s+/gu, '\\s+');
-        const typePattern = new RegExp(`^${escapedTypeName}(?=$|\\s)`, 'iu');
-        const typeMatch = typePattern.exec(source.slice(typeStart, end));
-        if (!typeMatch) {
+    let typePatterns = scalarRoutineTypePatterns.get(symbols);
+    if (!typePatterns) {
+        typePatterns = symbols.scalarNames.map(typeName => {
+            const escapedTypeName = typeName
+                .replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+                .replace(/\s+/gu, '\\s+');
+            return new RegExp(escapedTypeName, 'iyu');
+        });
+        scalarRoutineTypePatterns.set(symbols, typePatterns);
+    }
+    for (const typePattern of typePatterns) {
+        typePattern.lastIndex = typeStart;
+        const typeMatch = typePattern.exec(source);
+        if (!typeMatch ||
+            typeMatch.index + typeMatch[0].length > end ||
+            typeMatch.index + typeMatch[0].length < end &&
+                !/\s/u.test(source[typeMatch.index + typeMatch[0].length])) {
             continue;
         }
         const literalRange = {
             start,
-            end: typeStart + typeMatch[0].length
+            end: typeMatch.index + typeMatch[0].length
         };
         if (resolveScalarRoutineArgumentType(source, literalRange, expectedType, symbols)) {
             return literalRange;
@@ -3770,6 +3887,7 @@ function diagnoseUnresolvedRoutineCall(source, statement, caller, globalVariable
     if (!looksLikeCall) {
         return;
     }
+    const argumentsByNameEnd = new Map();
     for (const { name, nameEnd, parameters } of nameMatches) {
         if (!parameters.length) {
             continue;
@@ -3777,8 +3895,12 @@ function diagnoseUnresolvedRoutineCall(source, statement, caller, globalVariable
         if (nameEnd >= statement.end || !/\s/u.test(source[nameEnd] ?? '')) {
             continue;
         }
-        const argumentsRange = trimRange(source, nameEnd, statement.end);
-        const argumentsList = splitRoutineArguments(source, argumentsRange);
+        let argumentsList = argumentsByNameEnd.get(nameEnd);
+        if (!argumentsList) {
+            const argumentsRange = trimRange(source, nameEnd, statement.end);
+            argumentsList = splitRoutineArguments(source, argumentsRange);
+            argumentsByNameEnd.set(nameEnd, argumentsList);
+        }
         if (argumentsList.length !== parameters.length) {
             continue;
         }
@@ -3977,54 +4099,112 @@ function splitRoutineArguments(source, range) {
     let argumentStart = range.start;
     const words = /\p{L}+/gu;
     const quotedRanges = findQuotedRanges(source, range);
+    let quotedRangeIndex = 0;
+    let scopeQuoteIndex = 0;
+    let scopeScanIndex = range.start;
+    let parenthesisDepth = 0;
+    let previousWord = '';
+    let previousWordEnd = range.start;
+    let followsTypeCast = false;
     words.lastIndex = range.start;
     let match;
     while ((match = words.exec(source)) && match.index < range.end) {
-        if (quotedRanges.some(quoted => match.index >= quoted.start && match.index < quoted.end)) {
+        while (scopeScanIndex < match.index) {
+            while (scopeQuoteIndex < quotedRanges.length &&
+                quotedRanges[scopeQuoteIndex].end <= scopeScanIndex) {
+                scopeQuoteIndex++;
+            }
+            const scopeQuote = quotedRanges[scopeQuoteIndex];
+            if (scopeQuote && scopeScanIndex >= scopeQuote.start) {
+                scopeScanIndex = scopeQuote.end;
+                scopeQuoteIndex++;
+                continue;
+            }
+            if (source[scopeScanIndex] === '(') {
+                parenthesisDepth++;
+            }
+            else if (source[scopeScanIndex] === ')' && parenthesisDepth > 0) {
+                parenthesisDepth--;
+            }
+            scopeScanIndex++;
+        }
+        while (quotedRangeIndex < quotedRanges.length &&
+            quotedRanges[quotedRangeIndex].end <= match.index) {
+            quotedRangeIndex++;
+        }
+        const quotedRange = quotedRanges[quotedRangeIndex];
+        if (quotedRange && match.index >= quotedRange.start && match.index < quotedRange.end) {
+            words.lastIndex = quotedRange.end;
             continue;
         }
         const wordEnd = match.index + match[0].length;
-        const word = match[0].toLocaleLowerCase('pt-BR');
-        const followsTypeCast = /\btal\s+(?:como|qual)\b/iu.test(source.slice(range.start, match.index));
-        const contractionPreposition = routineContractions.get(word)?.split(' ')[0];
-        if (followsTypeCast &&
-            (word === 'em' || contractionPreposition === 'em')) {
+        if (parenthesisDepth !== 0) {
+            previousWord = '';
+            previousWordEnd = wordEnd;
             continue;
         }
-        const previousWord = /([\p{L}]+)\s*$/u.exec(source.slice(range.start, match.index))?.[1].toLocaleLowerCase('pt-BR');
-        if (word === 'de' && previousWord === 'seguido' ||
-            word === 'com' && previousWord === 'junto') {
+        const word = match[0].toLocaleLowerCase('pt-BR');
+        let separatedByWhitespace = previousWordEnd < match.index;
+        for (let index = previousWordEnd; separatedByWhitespace && index < match.index; index++) {
+            separatedByWhitespace = /\s/u.test(source[index]);
+        }
+        if (separatedByWhitespace &&
+            previousWord === 'tal' &&
+            (word === 'como' || word === 'qual')) {
+            followsTypeCast = true;
+        }
+        const contractionPreposition = getRoutineContractionFirstWord(word);
+        if (followsTypeCast &&
+            (word === 'em' || contractionPreposition === 'em')) {
+            previousWord = word;
+            previousWordEnd = wordEnd;
+            continue;
+        }
+        if (separatedByWhitespace &&
+            (word === 'de' && previousWord === 'seguido' ||
+                word === 'com' && previousWord === 'junto')) {
             continue;
         }
         const isArgumentSeparator = reservedIdentifierWords.has(word);
         if (!isArgumentSeparator ||
             isWordCharacter(match.index > range.start ? source[match.index - 1] : '') ||
             isWordCharacter(wordEnd < range.end ? source[wordEnd] : '') ||
-            ['como', 'qual'].includes(word) &&
-                /\btal\s*$/iu.test(source.slice(range.start, match.index))) {
+            (word === 'como' || word === 'qual') &&
+                separatedByWhitespace &&
+                previousWord === 'tal') {
+            previousWord = word;
+            previousWordEnd = wordEnd;
             continue;
         }
         const nextStart = skipWhitespace(source, wordEnd, range.end);
         if (nextStart >= range.end) {
+            previousWord = word;
+            previousWordEnd = wordEnd;
             continue;
         }
         if (!conjunctions.has(word)) {
             const nextArticle = readWord(source, nextStart, range.end);
-            const nextArgumentStartsWithLiteral = /^(?:[+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?|\$[a-f\d]+|")/iu
-                .test(source.slice(nextStart, range.end));
-            const contractionExpansion = routineContractions.get(word)?.split(' ');
-            const hasContractedDefiniteArticle = Boolean(contractionExpansion &&
-                ['o', 'a', 'os', 'as'].includes(contractionExpansion[contractionExpansion.length - 1]));
+            const nextArgumentStartsWithLiteral = isRoutineArgumentLiteralStart(source, nextStart);
+            const contraction = routineContractions.get(word);
+            const contractionExpansionLastWord = contraction
+                ? contraction.slice(contraction.lastIndexOf(' ') + 1)
+                : undefined;
+            const hasContractedDefiniteArticle = Boolean(contractionExpansionLastWord &&
+                ['o', 'a', 'os', 'as'].includes(contractionExpansionLastWord));
             if ((!nextArticle ||
                 !definiteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR')) &&
                     !indefiniteArticles.has(nextArticle.value.toLocaleLowerCase('pt-BR')) &&
                     !hasContractedDefiniteArticle) &&
                 !nextArgumentStartsWithLiteral) {
+                previousWord = word;
+                previousWordEnd = wordEnd;
                 continue;
             }
         }
         argumentsList.push(trimRange(source, argumentStart, match.index));
         argumentStart = nextStart;
+        previousWord = word;
+        previousWordEnd = wordEnd;
     }
     argumentsList.push(trimRange(source, argumentStart, range.end));
     return argumentsList.filter(argument => argument.start < argument.end);
@@ -4177,7 +4357,7 @@ function trimTypeCastNameAtPreposition(source, typeName) {
     let match;
     while ((match = words.exec(source)) && match.index < typeName.end) {
         const word = match[0].toLocaleLowerCase('pt-BR');
-        const contractionPreposition = routineContractions.get(word)?.split(' ')[0];
+        const contractionPreposition = getRoutineContractionFirstWord(word);
         if (word === 'em' || contractionPreposition === 'em') {
             return trimRange(source, typeName.start, match.index);
         }
@@ -4716,7 +4896,33 @@ function getRoutineExpressionTypeDistance(expressionType, expectedName, symbols)
         ? -Math.min(...pluralDistances)
         : undefined;
 }
+const routineLocalVariableParseCaches = new WeakMap();
+const routineLocalVariableParseCacheLimit = 256;
 function parseLocalVariableDeclaration(source, argumentsRange, symbols) {
+    let cache = routineLocalVariableParseCaches.get(symbols);
+    if (!cache) {
+        cache = { source, declarations: new Map() };
+        routineLocalVariableParseCaches.set(symbols, cache);
+    }
+    else if (cache.source !== source) {
+        cache.source = source;
+        cache.declarations.clear();
+    }
+    const cacheKey = `${argumentsRange.start}:${argumentsRange.end}`;
+    if (cache.declarations.has(cacheKey)) {
+        return cache.declarations.get(cacheKey) ?? undefined;
+    }
+    const declaration = parseLocalVariableDeclarationUncached(source, argumentsRange, symbols);
+    if (cache.declarations.size >= routineLocalVariableParseCacheLimit) {
+        const oldest = cache.declarations.keys().next().value;
+        if (oldest !== undefined) {
+            cache.declarations.delete(oldest);
+        }
+    }
+    cache.declarations.set(cacheKey, declaration ?? null);
+    return declaration;
+}
+function parseLocalVariableDeclarationUncached(source, argumentsRange, symbols) {
     const castMatch = /\btal\s+(?:como|qual)\b/iu.exec(source.slice(argumentsRange.start, argumentsRange.end));
     const declarationEnd = castMatch
         ? argumentsRange.start + castMatch.index
@@ -4754,15 +4960,21 @@ function parseLocalVariableDeclaration(source, argumentsRange, symbols) {
         if (typeRange.start === typeRange.end) {
             continue;
         }
-        const typeWords = [...source.slice(typeRange.start, typeRange.end).matchAll(/\S+/gu)];
+        const typeWords = [];
+        const typeWordPattern = /\S+/gu;
+        typeWordPattern.lastIndex = typeRange.start;
+        let typeWordMatch;
+        while ((typeWordMatch = typeWordPattern.exec(source)) &&
+            typeWordMatch.index < typeRange.end) {
+            typeWords.push(typeWordMatch);
+        }
         let resolvedType;
         for (let firstWord = 0; firstWord < typeWords.length; firstWord++) {
-            const candidateName = typeWords.slice(firstWord).map(word => word[0]).join(' ');
-            const type = symbols.lookup(candidateName);
+            const type = symbols.lookup(source.slice(typeWords[firstWord].index, typeRange.end));
             if (!type) {
                 continue;
             }
-            const typeStart = typeRange.start + typeWords[firstWord].index;
+            const typeStart = typeWords[firstWord].index;
             resolvedType = createSyntheticTypeReference(type.name, {
                 start: typeStart,
                 end: typeRange.end
@@ -6625,12 +6837,19 @@ function findWord(source, start, end, expectedWord) {
 }
 function findWordOutsideStrings(source, start, end, expectedWord) {
     const quotedRanges = findQuotedRanges(source, { start, end });
+    let quotedRangeIndex = 0;
     const words = /\p{L}+/gu;
     words.lastIndex = start;
     let match;
     while ((match = words.exec(source)) && match.index < end) {
         const wordStart = match.index;
-        if (quotedRanges.some(quoted => wordStart >= quoted.start && wordStart < quoted.end)) {
+        while (quotedRangeIndex < quotedRanges.length &&
+            quotedRanges[quotedRangeIndex].end <= wordStart) {
+            quotedRangeIndex++;
+        }
+        const quotedRange = quotedRanges[quotedRangeIndex];
+        if (quotedRange && wordStart >= quotedRange.start && wordStart < quotedRange.end) {
+            words.lastIndex = quotedRange.end;
             continue;
         }
         const wordEnd = match.index + match[0].length;
@@ -6642,15 +6861,16 @@ function findWordOutsideStrings(source, start, end, expectedWord) {
     }
     return undefined;
 }
+const emptyQuotedRanges = [];
 function findQuotedRanges(source, range) {
-    const quotedRanges = [];
+    let quotedRanges;
     let index = range.start;
     while (index < range.end) {
-        if (source[index] !== '"') {
-            index++;
-            continue;
+        const quoteStart = source.indexOf('"', index);
+        if (quoteStart === -1 || quoteStart >= range.end) {
+            break;
         }
-        const quoteStart = index++;
+        index = quoteStart + 1;
         while (index < range.end) {
             if (source[index] !== '"') {
                 index++;
@@ -6663,9 +6883,10 @@ function findQuotedRanges(source, range) {
             index++;
             break;
         }
+        quotedRanges ??= [];
         quotedRanges.push({ start: quoteStart, end: index });
     }
-    return quotedRanges;
+    return quotedRanges ?? emptyQuotedRanges;
 }
 function readWord(source, start, end) {
     let wordStart = start;

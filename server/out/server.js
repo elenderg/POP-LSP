@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
@@ -58,6 +91,88 @@ const workspaceCompletionItems = new WeakMap();
 let documentSymbolsUpdatePromise;
 let documentSymbolsUpdatePending = false;
 let workspaceInvalidationPending = false;
+// início
+const inspector = __importStar(require("node:inspector"));
+const node_fs_1 = require("node:fs");
+const node_os_1 = require("node:os");
+const node_path_2 = require("node:path");
+const cpuProfileEnabled = process.env.POP_LSP_CPU_PROFILE === '1';
+let cpuProfilerSession;
+let cpuProfilerStarted = false;
+let cpuProfilerStopPromise;
+function postInspector(session, method) {
+    return new Promise((resolve, reject) => {
+        session.post(method, (error, parameters) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(parameters);
+        });
+    });
+}
+async function startCpuProfiler() {
+    if (!cpuProfileEnabled) {
+        return;
+    }
+    const session = new inspector.Session();
+    try {
+        session.connect();
+        await postInspector(session, 'Profiler.enable');
+        await postInspector(session, 'Profiler.start');
+        cpuProfilerSession = session;
+        cpuProfilerStarted = true;
+        console.log('[POP-LSP CPU PROF] Captura iniciada.');
+    }
+    catch (error) {
+        session.disconnect();
+        console.error(`[POP-LSP CPU PROF] Falha ao iniciar: ${String(error)}`);
+    }
+}
+async function stopCpuProfiler() {
+    if (cpuProfilerStopPromise) {
+        return cpuProfilerStopPromise;
+    }
+    if (!cpuProfilerSession || !cpuProfilerStarted) {
+        return;
+    }
+    cpuProfilerStopPromise = (async () => {
+        const session = cpuProfilerSession;
+        cpuProfilerStarted = false;
+        try {
+            const result = await postInspector(session, 'Profiler.stop');
+            const filename = (0, node_path_2.join)((0, node_os_1.tmpdir)(), `pop-lsp-${process.pid}-${Date.now()}.cpuprofile`);
+            (0, node_fs_1.writeFileSync)(filename, JSON.stringify(result.profile));
+            console.log(`[POP-LSP CPU PROF] Perfil salvo: ${filename}`);
+        }
+        catch (error) {
+            console.error(`[POP-LSP CPU PROF] Falha ao salvar: ${String(error)}`);
+        }
+        finally {
+            session.disconnect();
+            cpuProfilerSession = undefined;
+        }
+    })();
+    return cpuProfilerStopPromise;
+}
+console.error('[POP-LSP startup]', JSON.stringify({
+    execPath: process.execPath,
+    execArgv: process.execArgv,
+    electronRunAsNode: process.env.ELECTRON_RUN_AS_NODE,
+    cpuProfSupported: process.allowedNodeEnvironmentFlags.has('--cpu-prof'),
+    argv: process.argv,
+    versions: process.versions
+}, null, 2));
+process.on('beforeExit', (code) => {
+    console.error('[POP-LSP CPU PROF] beforeExit:', code);
+});
+process.on('exit', (code) => {
+    console.error('[POP-LSP CPU PROF] exit:', code);
+});
+process.on('uncaughtExceptionMonitor', (error, origin) => {
+    console.error('[POP-LSP CPU PROF] uncaughtException:', origin, error);
+});
+// fim
 function documentAnalysisProfiler(requestId, requestDocumentUri, documentUri = requestDocumentUri) {
     if (!profileEnabled) {
         return undefined;
@@ -731,7 +846,7 @@ function getWorkspaceCompletions(workspaceDocuments, directory) {
 }
 function logProfile(metrics) {
     if (profileEnabled) {
-        connection.console.log(`[POP-LSP profile] ${JSON.stringify(metrics)}`);
+        console.log(`[POP-LSP profile] ${JSON.stringify(metrics)}`);
     }
 }
 function documentParseProgress(requestId, requestDocumentUri, documentUri, pass) {
@@ -1857,6 +1972,12 @@ async function refreshWorkspaceDocuments(requestId = 0, requestDocumentUri = '')
         }
     }
 }
+function getWorkspacePathKey(filePath) {
+    const absolutePath = (0, node_path_1.resolve)(filePath);
+    return process.platform === 'win32'
+        ? absolutePath.toLowerCase()
+        : absolutePath;
+}
 async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '') {
     while (true) {
         const revision = workspaceRevision;
@@ -1875,19 +1996,28 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
             message: 'Iniciando a descoberta dos documentos do workspace.'
         });
         const sourceDocuments = new Map();
+        const sourceUrisByPath = new Map();
         const sourceByteLengths = new Map();
-        const directories = new Set();
+        const directories = new Map();
+        const addDirectory = (directory) => {
+            const key = getWorkspacePathKey(directory);
+            if (!directories.has(key)) {
+                directories.set(key, directory);
+            }
+        };
         for (const document of documents.all()) {
-            const directory = (0, node_path_1.dirname)((0, node_url_1.fileURLToPath)(document.uri));
-            directories.add(directory);
+            const filePath = (0, node_url_1.fileURLToPath)(document.uri);
+            const directory = (0, node_path_1.dirname)(filePath);
+            addDirectory(directory);
             sourceDocuments.set(document.uri, { document, directory });
+            sourceUrisByPath.set(getWorkspacePathKey(filePath), document.uri);
         }
         const folders = await connection.workspace.getWorkspaceFolders();
         for (const folder of folders ?? []) {
-            directories.add((0, node_url_1.fileURLToPath)(folder.uri));
+            addDirectory((0, node_url_1.fileURLToPath)(folder.uri));
         }
         const directorySnapshots = new Map();
-        for (const directory of directories) {
+        for (const directory of directories.values()) {
             const directoryStats = await (0, promises_1.stat)(directory);
             directorySnapshots.set(directory, {
                 modificationTime: directoryStats.mtimeMs,
@@ -1899,9 +2029,11 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                     continue;
                 }
                 const filePath = (0, node_path_1.join)(directory, entry.name);
+                const pathKey = getWorkspacePathKey(filePath);
                 const uri = (0, node_url_1.pathToFileURL)(filePath).toString();
-                if (sourceDocuments.has(uri)) {
-                    sourceByteLengths.set(uri, (await (0, promises_1.stat)(filePath)).size);
+                const existingUri = sourceUrisByPath.get(pathKey);
+                if (existingUri) {
+                    sourceByteLengths.set(existingUri, (await (0, promises_1.stat)(filePath)).size);
                     continue;
                 }
                 const contentBytes = await (0, promises_1.readFile)(filePath);
@@ -1911,6 +2043,7 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                     document: vscode_languageserver_textdocument_1.TextDocument.create(uri, 'portugues-puro', 0, content),
                     directory
                 });
+                sourceUrisByPath.set(pathKey, uri);
             }
         }
         const sourceDiscoveryMs = profileEnabled
@@ -2026,9 +2159,10 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                 };
                 sourceAnalysisCache.set(uri, analysis);
             }
-            const group = groups.get(directory) ?? [];
+            const groupKey = getWorkspacePathKey(directory);
+            const group = groups.get(groupKey) ?? [];
             group.push({ uri, document, source, analysis });
-            groups.set(directory, group);
+            groups.set(groupKey, group);
         }
         for (const uri of sourceAnalysisCache.keys()) {
             if (!activeUris.has(uri)) {
@@ -2080,7 +2214,8 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                                 }
                             }
                             : {}),
-                        onProgress: documentParseProgress(requestId, requestDocumentUri, entry.uri, 'base')
+                        onProgress: documentParseProgress(requestId, requestDocumentUri, entry.uri, 'base'),
+                        resolveRoutineCalls: false
                     });
                     entry.analysis.baseParsed = parsed;
                     baseParseCount++;
@@ -2228,6 +2363,18 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
         return result;
     }
 }
+connection.onShutdown(async () => {
+    await stopCpuProfiler();
+});
 documents.listen(connection);
-connection.listen();
+/*connection.listen();*/
+void startCpuProfiler().finally(() => {
+    connection.listen();
+});
+connection.onRequest('pop/profile/stop', async () => {
+    await stopCpuProfiler();
+    return {
+        success: true
+    };
+});
 //# sourceMappingURL=server.js.map

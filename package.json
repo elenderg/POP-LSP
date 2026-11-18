@@ -1,14 +1,14 @@
 {
   "name": "lsp-sample",
-  "description": "A language server example",
-  "author": "Microsoft Corporation",
+  "description": "Servidor de Linguagem Português Puro",
+  "author": "Elender Góis Gallas",
   "license": "MIT",
   "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/vscode-extension-samples"
+    "url": "https://github.com/elenderg/Pop-lsp"
   },
-  "publisher": "vscode-samples",
+  "publisher": "Elender",
   "categories": [],
   "keywords": [
     "multi-root ready"
@@ -107,5 +107,8 @@
     "typescript-eslint": "^8.39.0",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"
+  },
+  "dependencies": {
+    "lodash": "^4.18.1"
   }
 }
