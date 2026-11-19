@@ -1,378 +1,185 @@
 # Português Puro Language Server
 
-The VS Code extension recognizes Português Puro source files with the `.pop`
-extension. The workspace configures `windows1252` for the `portugues-puro`
-language ID in `.vscode/settings.json`; the extension also contributes this
-language-specific default.
+\<p align="center">
+&#x20; \<a href="logo.png">
+&#x20;   \<img src="logo.png" width="500" alt="Português Puro Language Server" />
+&#x20; \</a>
+\</p>
 
-## Functionality
+\<p align="center">
+&#x20; \<strong>Complete language support for Português Puro in Visual Studio Code.\</strong>
+\</p>
 
-- Go to Definition for declared types, including multi-word names and
-  declarations in other open `.pop` documents, as well as both the base type
-  and pointed-to type in pointer declarations.
-- Document Symbols for type declarations, global variables, routines,
-  parameters, local variables, and structure fields.
-- Workspace Symbol search across `.pop` files in configured workspace folders,
-  including files that are not currently open.
-- Find All References for types, routines, fields, and variables, with optional
-  declaration inclusion and workspace-wide lookup for non-local symbols.
-- Rename Symbol creates workspace edits for every parsed occurrence of types,
-  routines, fields, and variables across open and closed `.pop` files.
-- Format Document applies two-space indentation to structure fields, routine
-  statements, conditional and loop blocks, and wraps supported expression
-  operators and `retornando` clauses while preserving strings and comments.
-- Each open document's symbol table is refreshed when the document opens,
-  changes, or is saved, and discarded when it closes.
-- Initial parser and type symbol table in `server/src/typeParser.ts`, recognizing
-  dot-terminated type declarations, including `ponteiro para um tipo`,
-  structures with named fields, and union fields using `sob o/a/os/as`. The
-  primitive type names are `byte`/`bytes` and `estrutura`/`estruturas`.
-  `número` is a declared structure type, not a primitive.
-- Structure fields may include an unnamed contiguous byte array, such as
-  `4 bytes.`. Other array element types are reported as errors.
-- A field may omit `denominado/a/os/as` to infer its name from the field type.
-  Multi-word aliases such as `primeiro byte` and `coordenada X` are resolved
-  by matching a known type suffix or prefix; unresolved aliases and duplicate
-  field names are reported as errors.
-- Structure fields may end with `(referência)` to mark that the field stores a
-  reference to its type. The marker is excluded from the field name and is not
-  treated as a type reference for navigation.
-- Scalar declarations can use integer multipliers (for example,
-  `Uma dezena são 10 unidades.`). Type lookup accepts generated plural names,
-  pluralizing every word in compound names except `de` and the words after it
-  (for example, `casa do pato` becomes `casas dos patos`, while `escova de
-  dente` becomes `escovas de dente`). Scalar types store their reduced scale
-  as a fraction relative to the declared type `número`.
-- Type names are case-insensitive for lookup, and runs of whitespace (including
-  line breaks and tabs) are normalized.
-- Unknown base types are reported as errors on the type name, including names
-  that differ from a declared type only by missing or incorrect accents.
-- Global variables use the definite articles `o`, `os`, `a`, and `as` and are
-  stored in a symbol catalog separate from types. Their declared types are
-  checked against the type catalog.
-- Global variables declared as structures may contain fields, using the same
-  named, inferred, aliased, union, byte-array, and reference-marker rules as
-  structure types.
-- Global variables may be initialized with signed 32-bit integers, fractions,
-  mixed numbers, hexadecimal values, null literals, or quoted strings. String
-  literals support doubled quotes as escapes and reject control characters.
-- Global variable types may be inferred from abbreviated literal initializers:
-  integers infer `número`, fractions and mixed numbers infer `fração`,
-  hexadecimal values infer `texto hexadecimal`, and strings infer `string`.
-- Comments are ignored by the parser: `\` starts a line comment, while `[ ... ]`
-  delimits a block comment. Comment contents do not affect declarations or
-  source locations. Non-printable control characters in comments are diagnosed,
-  except CR/LF that terminate line comments.
-- Routine and function headers use `para que se`, optionally preceded by
-  `Rotina` or `Função`. Semicolon-terminated alternate names are associated
-  with the following colon-terminated header. Headers may declare parameters
-  after `usando` (or its equivalents `desde`, `dado/a(s)`, `com`, and
-  `contendo`) and a return value after `retornando`; parameter and return types
-  are resolved against the type catalog. Routine-name matching normalizes the
-  specified verb forms (for example, `for` to `é`), prepositions (`sob` to
-  `sobre`, `em` to `para`), and Portuguese contractions (for example, `ao`
-  to `a o`, then `a` before an article to `para`). The routine body begins
-  after the header colon and ends at the next top-level type declaration,
-  global variable declaration, or routine header; no block delimiter is
-  required.
-- Parenthesized groups at the end of routine headers and calls distinguish
-  otherwise similar routine names, for example
-  `para que se centralize uma caixa (horizontalmente)` and
-  `para que se centralize uma caixa (verticalmente)`. Their contents are
-  literal name qualifiers, not syntax: keywords and articles inside them do
-  not define statements or parameters, and line breaks are allowed.
-- Alternate headers that repeat the primary name and parameter types are
-  diagnosed as semantically equivalent. A colon-terminated header immediately
-  followed by another routine header receives a hint to use `;` for the
-  alternate header.
-- Statements in routine bodies end with a period. Routine calls are resolved
-  against declared names and aliases, matching calls without parameters first;
-  definite or demonstrative articles in arguments can identify passed
-  parameters. Calls resolve to the matching routine definition, and an empty
-  routine body receives a hint diagnostic.
-- The `Decodifique` instruction accepts a hexadecimal literal (for example,
-  `Decodifique $8B8508000000.`). A diagnostic is reported when it is followed
-  by another value or no value; routine names beginning with `Decodifique`
-  therefore cannot be invoked as normal calls.
-- The `Empilhe` instruction accepts a numeric literal or a variable introduced
-  by a definite article (for example, `Empilhe 123.` or `Empilhe o byte.`).
-  Variables must have type `byte`, `word`, or `número`, or derive from one of
-  those types. The keyword is reserved and cannot be used in a routine name.
-- `Aloque memória para` accepts a variable or type based on `lista` (for
-  example, `Aloque memória para a imagem.`).
-- `Direcione`, `Aponte`, and `Redirecione` accept a type based on `ponteiro`
-  followed by `para a rotina` and the name of a routine declared with
-  `compativelmente` (for example,
-  `Direcione um ponteiro para a rotina faça alguma coisa.`). The routine name
-  is resolved as a reference to its declaration.
-- The `Processe` instruction invokes an internal function pointer or an
-  external function identified by library and function string literals.
-  Optional arguments follow `com` and are separated by `e`; each argument is
-  a literal or definite-article variable. An optional `retornando` clause
-  declares a local variable from the return type, with an optional name after
-  `denominado/a/os/as`. The keyword is reserved and cannot be used in a routine
-  name.
-- The `Retorne` statement returns control to the caller and must appear without
-  a value or variable (for example, `Retorne.`). The keyword is reserved and
-  cannot be used in a routine name.
-- Loops use `Itere.` to begin a loop, `Pare.` to leave the loop, and `Reitere.`
-  to restart it. A loop beginning at the start of a routine may omit `Itere`;
-  `Reitere` inside a condition also continues from the loop start, while
-  `Retorne` still returns from the routine. These instructions do not create a
-  separate variable scope: locals declared in conditional or loop statements
-  remain visible throughout the routine.
-- Routine parameters are passed by reference, so a routine can modify the
-  arguments supplied by its caller without returning a replacement value.
-- Routine calls accept compatible literal values or variables/parameters of the
-  expected type. An indefinite article in a call argument declares a local
-  variable of the following type, optionally named with `denominado/a/os/as`
-  (for example, `bar um número denominado contagem.`). Without an explicit
-  name, the type phrase supplies the variable name and may be reduced to find
-  its base type. A variable can then be passed to later calls using a definite
-  article, as in `baz a contagem.`. Declarations can also be initialized in
-  the call, for example `Atribua 123 para um número denominado valor.`.
-- Structure fields can be accessed in routine arguments with `deste`, `desta`,
-  `destes`, or `destas`. For example, `Bar o nome deste cliente.` accesses
-  `nome` on `cliente`; chains such as
-  `Bar o logradouro deste endereço deste cliente.` access nested fields.
-  Field access resolves the final field type for routine argument matching,
-  supports inherited structure fields, and navigates to the field definition.
-- A type derived from `lista` is also treated as a pointer for routine argument
-  compatibility. List types support implicit fields: `primeiro/primeira`,
-  `último/última`, and `próximo/próxima` followed by the element type name,
-  plus the list type name followed by `anterior` or `precedente`. For example,
-  `o primeiro vértice deste polígono`, `o próximo vértice deste vértice`, and
-  `o fragmento anterior deste fragmento` resolve to their respective list
-  element types. These implicit fields can be chained with physical fields.
-- Computed structure fields are declared by functions named
-  `para que se atribua <artigo definido> <campo> dum/duma/duns/dumas
-  <estrutura> para <artigo indefinido> <tipo de resultado>`. For example,
-  `Função para que se atribua o centro dum retângulo para uma localização:`
-  defines `centro` as a computed field of `retângulo`, with result type
-  `localização`. The owner must be a defined structure type, and the result
-  type is declared as the function's single parameter. Computed fields are
-  resolved as fallback after physical fields, including when matching routine
-  arguments; an unresolved access is diagnosed. Unlike physical fields,
-  computed fields do not navigate to a definition.
-- The type operators `endereçamento`, `magnitude`, and `conteúdo` can be used
-  before a type or field access. `endereçamento deste caractere` represents the
-  address of the value, `a magnitude desta string` represents its size in bytes,
-  and `o conteúdo deste ponteiro` represents the pointed-to value. `conteúdo`
-  can follow a physical or computed field in a chained access. These operators
-  do not require a matching structure member or computed-field function. Their
-  words remain valid in ordinary identifiers, such as a variable named
-  `conteúdo`.
-- Local variables take precedence over global variables with the same
-  normalized name throughout the containing routine. Thus, declaring a local
-  `nome` shadows a global `nome` when resolving later arguments and references.
-- Routine calls that have no matching declared routine produce a diagnostic.
-  When a parameter call passes an unresolved variable name (for example,
-  `Baz a string.` for a routine expecting a `string`), the parser reports the
-  missing variable. A matching global variable or a local declaration such as
-  `Baz uma string.` resolves the argument instead.
-- A routine parameter accepts values of its declared type and any derived
-  subtype. When multiple overloads match, the parser selects the closest
-  declared parameter type first, following the derived type's base chain; it
-  falls back to more general overloads only when no closer match exists.
-- Routine arguments may use `tal como` or `tal qual` followed by an indefinite
-  article and a type to match the value as that type (for example,
-  `Foo a cifra binária tal como um byte.`). This only affects argument
-  compatibility for that call; it does not convert or change the variable's
-  declared type.
-- `Preserve` creates a local copy of a routine parameter. The copy keeps the
-  parameter's original name, while the received argument is renamed by adding
-  `original` (for example, preserving `valor` creates `valor` as the copy and
-  `valor original` as the original argument). It must be followed by a definite
-  article and a parameter name, and cannot be used in a routine name.
-- Arithmetic assignment expressions support `mais`, `menos`, `vezes`, and
-  `dividido por`. They are evaluated strictly from left to right with no
-  precedence rules; for example, `Atribua o número mais 2 menos 1 vezes o
-  número dividido por 2 para o segundo número.` is grouped as sequential
-  left-associated operations.
-- Numeric expressions also accept unary `-` and `+` before an operand, as in
-  `Atribua - o número para o número negativo.` and
-  `Atribua + o número para o número inalterado.`. The `/` operator forms a
-  fraction from variable or literal numerator and denominator values, for
-  example `Atribua o numerador / 123 para uma fração.`.
-- Null literals are `nulo`, `nula`, `nulos`, `nulas`, `inexistente`,
-  `inexistentes`, `zerado`, and `nil`. They are accepted as assignment values
-  and routine arguments and match routine parameters as null pointer values.
-  In conditions, they are resolved as arguments to ordinary boolean function
-  signatures; for example, `Se o ponteiro for inexistente,` matches a function
-  declared as `para que se determine se um ponteiro é um segundo ponteiro`.
-- String expressions support the equivalent concatenation operators `junto
-  com` and `seguido de`. They may be mixed in one expression and are evaluated
-  left to right, for example: `Escreva "Olá, " junto com o nome junto com o
-  sobrenome seguido de "!" para StdOut.`
-- Boolean functions use the `para que se determine se` header and must contain
-  a `Diga sim.` or `Diga não.` statement. `Diga` accepts only these boolean
-  literals and cannot be used in ordinary routines or routine names.
-- Conditional blocks use `Se <condition>,` and end at the final period.
-  Intermediate statements are separated with semicolons; the last statement
-  ends the block. Conditions resolve to boolean functions, including functions
-with parameters. For example, `Se o número for 2,` resolves to a boolean
-function declared with parameters for a number and a second number; `for` is
-normalized to `é` when matching the predicate. Argument types may match
-through the type inheritance chain. Else/elseif clauses and nested
-conditionals are not supported.
-The word `não` may negate a condition and is ignored when matching its
-boolean function; it is not part of the function signature and is diagnosed
-if it appears in a boolean function header.
-- A period terminates type and global-variable declarations and statements;
-  it also terminates conditional blocks. A colon is used for the end of a
-  routine header and start of its body. Semicolons separate statements in
-  conditional blocks, with alternate routine headers as the existing syntax
-  exception. These punctuation marks are diagnosed when used in type or
-  global-variable names.
-- Reserved grammar words are diagnosed when used in type or global-variable
-  identifiers.
-- End-to-end coverage for Go to Definition.
+## Description
+
+The Português Puro Language Server extends Visual Studio Code with intelligent language features for the [Português Puro](https://github.com/ElenderG/Portugues-Puro) programming language.
+
+Unlike a simple syntax highlighter, the language server analyzes source code, understands declarations and relationships between symbols, and provides intelligent navigation, diagnostics, symbol search, references, renaming, and automatic formatting.
+
+\<p align="center">   \<a href="GoToDefinition.png">     \<img src="GoToDefinition.png" width="800" alt="Go to Definition in Visual Studio Code" />   \</a> \</p>
+
+\<p align="center">   \<a href="Diagnostics.png">     \<img src="Diagnostics.png" width="800" alt="Language diagnostics in Visual Studio Code" />   \</a> \</p>
+
+\<p align="center">   \<a href="DocumentSymbols.png">     \<img src="DocumentSymbols.png" width="800" alt="Document symbols in Visual Studio Code" />   \</a> \</p>
+
+Português Puro is a general-purpose programming language designed to prioritize readability and comprehensibility. It was created by [Elender Gallas](https://www.linkedin.com/in/elender/) and [Élisson Gallas](https://www.linkedin.com/in/elissongois/).
+
+For more information about the language, visit the [official documentation](https://portugues-puro.gitbook.io/documentacao).
+
+## Features
+
+### Code Navigation
+
+- **Go to Definition** — Navigate to types, routines, variables, and structure fields, including declarations in other files.
+- **Find All References** — Find every reference to a symbol throughout the workspace.
+- **Rename Symbol** — Rename types, routines, fields, and variables across multiple files.
+- **Workspace Symbols** — Search for declarations across workspace folders.
+
+### Code Intelligence
+
+- **Document Symbols** — Browse types, global variables, routines, parameters, local variables, and structure fields.
+- **Diagnostics** — Identify syntax errors, unresolved references, invalid declarations, incompatible arguments, and other semantic problems.
+- **Semantic Analysis** — Understand type inheritance, pointers, structures, computed fields, and overloaded routines.
+
+### Code Formatting
+
+- Consistent two-space indentation.
+- Automatic indentation of structure fields and routine bodies.
+- Formatting of conditional and loop blocks.
+- Automatic line wrapping for supported expressions.
+- Preservation of strings and comments.
+
+### Types and Variables
+
+- Primitive types: byte and estrutura.
+- Derived types and type aliases.
+- Scalar types with integer multipliers.
+- Pointer types and structure declarations.
+- Structure fields, including unions, references, and byte arrays.
+- Global variables and inferred types from literal initializers.
+- Case-insensitive type and identifier resolution.
+
+Example:
+
+```text
+Um caractere é um byte.
+Uma quantidade é um número.
+Uma pessoa é uma estrutura com
+    Uma string denominada nome,
+    Um número denominado idade.
+```
+
+### Routines and Functions
+
+- Routine and function declarations.
+- Parameters and return types.
+- Alternate routine names.
+- Routine overloading.
+- Parameter compatibility through type inheritance.
+- Local variable declarations and parameter preservation.
+- Boolean functions and predicates.
+
+Example:
+
+```text
+Rotina para que se apresente uma pessoa
+    usando uma pessoa
+    retornando uma string:
+
+    Escreva o nome da pessoa para StdOut.
+```
+
+### Statements and Expressions
+
+- Conditional statements.
+- Loop control with `Itere`, `Pare`, and `Reitere`.
+- Early returns.
+- Arithmetic and string expressions.
+- Null values and pointer operations.
+- Structure field access, including chained access.
+- Computed structure fields.
+- Type operators such as `endereçamento`, `magnitude`, and `conteúdo`.
+
+### Built-in Instructions
+
+The language server recognizes and validates special instructions, including:
+
+- `Decodifique`
+- `Empilhe`
+- `Aloque memória para`
+- `Direcione`, `Aponte`, and `Redirecione`
+- `Processe`
+- `Retorne`
+- `Preserve`
+- `Diga`
+
+### Comments and Literals
+
+The parser recognizes:
+
+- Line comments beginning with `\`.
+- Block comments delimited by `[ ... ]`.
+- Quoted strings with doubled-quote escaping.
+- Decimal integers, fractions, mixed numbers, and hexadecimal values.
+- Boolean and null literals.
+
+### Language Understanding
+
+- Type declarations and inheritance.
+- Structures, unions, pointers, and references.
+- Global and local variables.
+- Routine and function declarations.
+- Routine overloading and parameter resolution.
+- Conditional statements and loops.
+- Arithmetic and string expressions.
+- Built-in instructions and special language constructs.
+
+## Requirements
+
+- Visual Studio Code.
+- Português Puro source files (`.pop`).
+
+The extension uses Windows-1252 (`windows1252`) as the default encoding for Português Puro files.
+
+## Installation
+
+Install the extension directly from the Visual Studio Code Marketplace or search for **Português Puro Language Server** in the Extensions view (`Ctrl+Shift+X`).
+
+After installation, open any `.pop` file to activate the language server.
+
+## Related Projects
+
+- [Português Puro](https://github.com/ElenderG/Portugues-Puro) — The programming language, compiler, and documentation.
 
 ## Development
 
-- Run `npm install` in this folder to install the client and server dependencies.
-- Open this folder in VS Code and press Ctrl+Shift+B to compile in watch mode.
-- Press F5 and open a `.pop` file in the Extension Development Host to test the
-  language server.
-- Simple type declarations also receive parser-backed semantic tokens for both
-  articles, the derived type name, assignment operator, and final period.
-  Tokens are cached with the parsed-document snapshot and naturally replaced
-  when that snapshot changes. The TextMate grammar remains registered as the
-  immediate highlighting fallback before semantic tokens are available.
-- Run `npm test` to compile and execute the VS Code end-to-end tests against
-  this workspace, including the language-specific encoding setting.
-- Set `POP_LSP_PROFILE=1` in the environment before launching VS Code to emit
-  optional `[POP-LSP profile]` timing and catalog-size records, including
-  correlated request timings, per-document parse phases, cache activity,
-  catalog sizes, memory, CPU, event-loop lag, and garbage collection, to the
-  language server output. Requests still pending after 5 seconds emit a
-  watchdog record; slow completed phases also report their stage and available
-  counters. Set `POP_LSP_PROFILE_SLOW_MS` to change the threshold. A synchronous
-  phase can delay the watchdog until control returns to the event loop, whose
-  lag is measured separately. Profiling is diagnostic only and never interrupts
-  an operation. The parser has no token stream; lexical comment masking and
-  syntax parsing are measured separately. Comment-free documents reuse their
-  original source string instead of allocating and rebuilding a masked copy.
-- Set `POP_LSP_CPU_PROFILE=1` before launching VS Code to capture a Node.js CPU
-  profile for the language-server process. The `.cpuprofile` file is written to
-  the operating system's temporary directory; profiling is disabled by default.
-- For a manual investigation on Windows, close every VS Code process first so
-  the new environment reaches the language-server process, then launch the
-  workspace from PowerShell:
+To build and test the extension locally:
 
-  ```powershell
-  $env:POP_LSP_PROFILE = '1'
-  $env:POP_LSP_CPU_PROFILE = '1'
-  code C:\POP-LSP
-  ```
+1. Clone the repository.
+2. Install dependencies:
 
-  Open one of the slow `.pop` files and wait for its initial symbols/diagnostics.
-  In **View > Output**, select the language-server output and filter for
-  `[POP-LSP profile]`. `stage-progress` entries print paired Portuguese
-  “Iniciando...” and “Finalizado...” messages with elapsed milliseconds.
-  Compare the `document-parse`/`parse-phase` entries for `base` and `contextual`
-  passes, then inspect `workspace-refresh` for file discovery, cache hits, and
-  catalog assembly. The `slow-operation` records identify phases exceeding
-  `POP_LSP_PROFILE_SLOW_MS`.
+```bash
+npm install
+```
 
-  On shutdown, open the generated `.cpuprofile` from the operating system's
-  temporary directory in Chromium DevTools (**Performance > Load profile**) or
-  a compatible CPU-profile viewer. Use the Bottom-up view, sort by self time,
-  and inspect the call tree for the language server's `server.js` and
-  `typeParser.js`; source maps map compiled frames back to TypeScript. Self
-  time points to expensive function bodies; total time points to functions
-  whose callees dominate. Repeat the initial load at least three times with
-  the same workspace and compare medians. Keep verification flags off while
-  measuring normal behavior because differential verification intentionally
-  performs extra parsing. Disable both profiling variables for normal use.
-  To locate recent profiles from PowerShell, run:
+3. Open the project folder in Visual Studio Code.
+4. Press `Ctrl+Shift+B` to compile in watch mode.
+5. Press `F5` to launch an Extension Development Host.
 
-  ```powershell
-  Get-ChildItem $env:TEMP -Filter '*.cpuprofile' |
-    Sort-Object LastWriteTime -Descending |
-    Select-Object -First 5 FullName, LastWriteTime
-  ```
+Run the test suite with:
 
-  Treat the JSON phase timings as attribution between major stages, not exact
-  per-function timings. The CPU profile provides sampled function-level
-  attribution; avoid adding timers to every recursive helper until that profile
-  identifies a specific hot call path.
+```bash
+npm test
+```
 
-The workspace catalog and parsed references are reused while source text is
-unchanged, regardless of LSP document-version changes. A source change or
-watched `.pop` file update rebuilds context-sensitive results for documents in
-the same directory. The parser records fingerprinted declaration/routine
-regions and distinguishes syntactic completeness from semantic diagnostics.
-An opt-in declaration worklist can reuse unchanged, complete type and
-global-variable semantic snapshots outside the affected dependency closure,
-rebasing their source ranges before building the current document's catalog.
-The region graph tracks resolved and unresolved type, variable, routine, and
-field references. Ambiguous aliases, unresolved names, and routine accesses
-that cannot be mapped precisely conservatively widen invalidation.
+## Related Projects
 
-The dependency graph is cross-checked against the document-level dependency
-index during selective workspace reuse. Invalidation is widened with affected
-regions, and the server falls back to a full directory refresh if the region
-graph misses a document affected by the existing index. Semantic declaration
-reuse requires a clean previous snapshot and a matching set of workspace
-documents; incomplete or diagnosed snapshots are not reused. Enable the
-declaration worklist with `POP_LSP_INCREMENTAL_DECLARATIONS=1` (disabled by
-default). For differential rollout, also set
-`POP_LSP_VERIFY_INCREMENTAL_DECLARATIONS=1`. Each contextual parse that reuses
-a declaration is compared with a complete parse, including declarations,
-global variables, routines, references, and diagnostics. A mismatch is
-reported and the complete result is used. Verification skips the extra parse
-when no declaration was reused.
+- [Português Puro](https://github.com/elenderg/Portugues-Puro) — The programming language, compiler, and documentation.
 
-The parser exposes `parseTypeDeclarationSyntax` as a syntax-only phase and
-`resolveTypeDeclarationSyntax` as a separate semantic phase. The regular
-`parseTypeDeclarations` API composes both, preserving the existing fully
-resolved result. `parseTypeDeclarationRegion` can parse a single fingerprint-
-verified, syntactically complete region and rebase its ranges; syntactic
-completeness is tracked separately from semantic diagnostics. These APIs are
-validated against repository fixtures, including semantic snapshots from the
-full parser. `resolveRoutineSyntaxRegions` adds an explicit routine-resolution
-worklist over selected routine regions, using the full local/workspace symbol
-catalog and resolving parameters, computed fields, calls, and local variables
-only for those routines. Its output is differentially tested against the full
-routine pass. The language server's default incremental path uses the shared
-full-parse catalog and resolves only routines that could not reuse safe
-checkpoints; it does not call this standalone API, which would rebuild a second
-catalog.
-Conservative routine checkpoint reuse and selected routine resolution are
-enabled by default; set `POP_LSP_INCREMENTAL_ROUTINES=0` to disable them. On
-the 918 KB `Rotinas.pop` fixture, a body edit reused 259 routines, reduced
-routine-resolution time from 22.0 s to 20.1 s (about 9%), and visited 6.5%
-fewer routine statements. The edited result matched a complete parse,
-including declarations, symbol references, routines, and diagnostics.
-For differential verification on other workspaces, set
-`POP_LSP_VERIFY_INCREMENTAL_ROUTINES=1`; each contextual result that reuses a
-routine is compared with a complete parse, and a mismatch is reported and
-replaced by the complete result. Verification deliberately incurs the extra
-parse cost and is intended for development and differential testing.
+## Support and Feedback
 
-Type and global-variable resolution still runs over complete local catalogs.
-The worklist avoids repeating selected per-declaration type and variable
-resolution, but the server still lexes and parses each contextual document and
-builds the full symbol/type catalogs and indexes. It is not incremental
-lexing, parsing, or catalog construction. Routine-call and field dependencies
-are conservatively tracked, while workspace-wide catalog construction remains
-a full pass. Declaration worklists remain opt-in. Routine checkpoint reuse
-remains conservative: regions with incomplete syntax/diagnostics, resolved
-field targets, or type references outside their own source region are not
-reused. The server remaps cached routine targets to the current catalog and
-falls back to complete resolution whenever verification detects a mismatch.
-Profiling also records worklist mode, verification status and duration
-alongside phase timings and counts, region-graph construction, invalidation
-selection/closure duration, memory, and LSP request latency.
+For bug reports, suggestions, or feature requests, visit the [GitHub Issues](https://github.com/ElenderG/Portugues-Puro/issues) page.
 
-Routine-call resolution indexes normalized names per parse instead of
-comparing every call against every routine. Name matching normalizes each
-candidate word once, bounds lookahead by the longest declared routine name,
-and uses a bounded cache for repeated normalized names. Workspace updates
-coalesce concurrent open/change notifications and avoid invalidating cached
-analysis when the source text is unchanged. Routine parsing also tracks
-parenthesis depth in one pass, and searches for cast markers are bounded to
-their argument ranges to avoid rescanning the rest of large documents. Type
-name normalization uses a bounded string cache, and computed-field routine
-lookup indexes candidates by field name.
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of changes and improvements.

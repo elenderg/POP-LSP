@@ -748,7 +748,7 @@ const articles = new Set([
     ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
-    'atribua', 'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
+    'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
     'processe', 'itere', 'pare', 'reitere',
     'aloque', 'aponte', 'direcione', 'redirecione'
 ]);
