@@ -13,13 +13,19 @@ The Português Puro Language Server extends Visual Studio Code with intelligent 
 
 Unlike a simple syntax highlighter, the language server analyzes source code, understands declarations and relationships between symbols, and provides intelligent navigation, diagnostics, symbol search, references, renaming, and automatic formatting.
 
-\<p align="center">   \<a href="./funcionalidades/GoToDefinition.png">     \<img src="./funcionalidades/GoToDefinition.png" width="800" alt="Go to Definition in Visual Studio Code" />   \</a> \</p>
+Hover
+[<img src="./funcionalidades/hover0.png" width="500" alt="Hover information in Visual Studio Code"/>](./funcionalidades/hover0.png)
+[<img src="./funcionalidades/hover1.png" width="500" alt="Hover information in Visual Studio Code"/>](./funcionalidades/hover1.png)
+[<img src="./funcionalidades/hover2.png" width="500" alt="Hover information in Visual Studio Code"/>](./funcionalidades/hover2.png)
+[<img src="./funcionalidades/hover3.png" width="500" alt="Hover information in Visual Studio Code"/>](./funcionalidades/hover3.png)
+[<img src="./funcionalidades/hover4.png" width="500" alt="Hover information in Visual Studio Code"/>](./funcionalidades/hover4.png)
 
-\<p align="center">   \<a href="./funcionalidades/Diagnostics.png">     \<img src="./funcionalidades/Diagnostics.png" width="800" alt="Language diagnostics in Visual Studio Code" />   \</a> \</p>
+Language diagnostics
+[<img src="./funcionalidades/problemas.png" width="500" alt="Language diagnostics in Visual Studio Code"/>](./funcionalidades/problemas.png)
 
-
+Document symbols
 [<img src="./funcionalidades/estrutura.png" width="500" alt="Document symbols in Visual Studio Code"/>](./funcionalidades/estrutura.png)
-\<p align="center">   \<a href="./funcionalidades/estrutura.png">     \<img src="./funcionalidades/estrutura.png.png" width="800" alt="Document symbols in Visual Studio Code" />   \</a> \</p>
+
 
 Português Puro is a general-purpose programming language designed to prioritize readability and comprehensibility. It was created by [Elender Gallas](https://www.linkedin.com/in/elender/) and [Élisson Gallas](https://www.linkedin.com/in/elissongois/).
 
