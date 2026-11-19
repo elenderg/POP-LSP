@@ -64,7 +64,7 @@ For more information about the language, visit the [official documentation](http
 
 Example:
 
-```text
+```pop
 Um caractere é um byte.
 Uma quantidade é um número.
 Uma pessoa é uma estrutura com
@@ -84,7 +84,7 @@ Uma pessoa é uma estrutura com
 
 Example:
 
-```text
+```pop
 Rotina para que se apresente uma pessoa
     usando uma pessoa
     retornando uma string:
