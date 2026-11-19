@@ -1739,6 +1739,26 @@ test('tracks unresolved routine, variable, and field names for additions', () =>
   }
 });
 
+test('diagnoses missing routines with multiword and hyphenated names', () => {
+  const parsed = parseTypeDeclarations([
+    'para que se execute o programa:',
+    '  foo.',
+    '  foo bar.',
+    '  f-o-o.',
+    '  really long function name call with spaces.'
+  ].join('\n'));
+
+  assert.deepEqual(
+    parsed.diagnostics.map(diagnostic => diagnostic.message),
+    [
+      'No compatible routine found for "foo".',
+      'No compatible routine found for "foo bar".',
+      'No compatible routine found for "f-o-o".',
+      'No compatible routine found for "really long function name call with spaces".'
+    ]
+  );
+});
+
 test('keeps cyclic base-type dependencies finite and queryable', () => {
   const { documents, index } = createWorkspace([
     { name: 'first.pop', text: 'Um primeiro é um segundo.' },

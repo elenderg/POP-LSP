@@ -1608,6 +1608,9 @@ const articles = new Set([
   ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
+  /*
+  'atribua', // atribua não é um built-in statement.
+  */
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere',
   'aloque', 'aponte', 'direcione', 'redirecione'
@@ -7399,18 +7402,6 @@ function diagnoseUnresolvedRoutineCallCore(
 ): void {
   const firstWord = readWord(source, statement.start, statement.end);
   if (!firstWord || builtInStatementStarts.has(firstWord.value.toLocaleLowerCase('pt-BR'))) {
-    return;
-  }
-
-  const rest = trimRange(source, firstWord.end, statement.end);
-  const definiteArticle = findAnyWord(source, rest.start, rest.end, definiteArticles);
-  const matchesDeclaredRoutineName = nameMatches.some(({ nameEnd }) =>
-    /\s/u.test(source[nameEnd] ?? '') &&
-    trimRange(source, nameEnd, statement.end).start < statement.end
-  );
-  const looksLikeCall = rest.start === rest.end ||
-    Boolean(definiteArticle || parseGlobalVariableLiteral(source, rest) || matchesDeclaredRoutineName);
-  if (!looksLikeCall) {
     return;
   }
 
