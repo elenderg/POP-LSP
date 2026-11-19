@@ -3,9 +3,7 @@
 
 [<img src="logo.png" width="500" alt="Português Puro Language Server"/>](logo.png)
 
-\<p align="center">
-&#x20; \<strong>Complete language support for Português Puro in Visual Studio Code.\</strong>
-\</p>
+Complete language support for Português Puro in Visual Studio Code.
 
 ## Description
 
