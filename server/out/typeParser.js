@@ -702,7 +702,11 @@ const routineWordReplacements = new Map([
     ['com', 'usando'],
     ['usando', 'usando'],
     ['contendo', 'usando'],
-    ['sob', 'sobre'],
+    ['embaixo', 'sob'],
+    ['debaixo de', 'sob'],
+    ['sob', 'sob'],
+    ['em cima de', 'sobre'],
+    ['acima de', 'sobre'],
     ['sobre', 'sobre'],
     ['em', 'para']
 ]);
@@ -748,9 +752,7 @@ const articles = new Set([
     ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
-    /*
     'atribua', // atribua não é um built-in statement.
-    */
     'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
     'processe', 'itere', 'pare', 'reitere',
     'aloque', 'aponte', 'direcione', 'redirecione'
@@ -2293,53 +2295,29 @@ function processRoutineStatementCore(source, statement, caller, routines, global
     const statementKeyword = readWord(source, statement.start, statement.end);
     for (const localVariable of parseRoutineStatementLocalVariables(source, statement, symbols)) {
         caller.localVariables.push(localVariable);
-    } /*
-    if (
-      statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua'
-    ) {
-      const destinationMarker = findWordOutsideStrings(
-        source,
-        statementKeyword.end,
-        statement.end,
-        'para'
-      );
-      if (destinationMarker) {
-        const targetRange = trimRange(source, destinationMarker.end, statement.end);
-        const targetArticle = readWord(source, targetRange.start, targetRange.end);
-        if (
-          targetArticle &&
-          indefiniteArticles.has(targetArticle.value.toLocaleLowerCase('pt-BR'))
-        ) {
-          const localVariable = parseLocalVariableDeclaration(
-            source,
-            targetRange,
-            symbols
-          );
-          if (localVariable) {
-            caller.localVariables.push(localVariable);
-          }
+    } //
+    if (statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua') {
+        const destinationMarker = findWordOutsideStrings(source, statementKeyword.end, statement.end, 'para');
+        if (destinationMarker) {
+            const targetRange = trimRange(source, destinationMarker.end, statement.end);
+            const targetArticle = readWord(source, targetRange.start, targetRange.end);
+            if (targetArticle &&
+                indefiniteArticles.has(targetArticle.value.toLocaleLowerCase('pt-BR'))) {
+                const localVariable = parseLocalVariableDeclaration(source, targetRange, symbols);
+                if (localVariable) {
+                    caller.localVariables.push(localVariable);
+                }
+            }
         }
-      }
     }
-    if (
-      statementKeyword &&
-      ['atribua', 'escreva'].includes(statementKeyword.value.toLocaleLowerCase('pt-BR'))
-    ) {
-      const destinationMarker =
-        findWordOutsideStrings(source, statementKeyword.end, statement.end, 'para') ??
-        findWordOutsideStrings(source, statementKeyword.end, statement.end, 'à');
-      if (destinationMarker) {
-        resolveFieldAccessRange(
-          source,
-          trimRange(source, statementKeyword.end, destinationMarker.start),
-          caller,
-          routines,
-          globalVariables,
-          symbols,
-          diagnostics
-        );
-      }
-    }*/
+    if (statementKeyword &&
+        ['atribua', 'escreva'].includes(statementKeyword.value.toLocaleLowerCase('pt-BR'))) {
+        const destinationMarker = findWordOutsideStrings(source, statementKeyword.end, statement.end, 'para') ??
+            findWordOutsideStrings(source, statementKeyword.end, statement.end, 'à');
+        if (destinationMarker) {
+            resolveFieldAccessRange(source, trimRange(source, statementKeyword.end, destinationMarker.start), caller, routines, globalVariables, symbols, diagnostics);
+        }
+    }
     const statementKind = statementKeyword?.value.toLocaleLowerCase('pt-BR');
     if (statementKind === 'diga' || statementKind === 'retorne') {
         caller.returnStatements.push({

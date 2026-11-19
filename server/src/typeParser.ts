@@ -1562,7 +1562,11 @@ const routineWordReplacements = new Map([
   ['com', 'usando'],
   ['usando', 'usando'],
   ['contendo', 'usando'],
-  ['sob', 'sobre'],
+  ['embaixo', 'sob'],
+  ['debaixo de', 'sob'],
+  ['sob', 'sob'],
+  ['em cima de', 'sobre'],
+  ['acima de', 'sobre'],
   ['sobre', 'sobre'],
   ['em', 'para']
 ]);
@@ -1608,9 +1612,9 @@ const articles = new Set([
   ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
-  /*
+  
   'atribua', // atribua não é um built-in statement.
-  */
+  
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere',
   'aloque', 'aponte', 'direcione', 'redirecione'
@@ -3848,7 +3852,7 @@ function processRoutineStatementCore(
     symbols
   )) {
     caller.localVariables.push(localVariable);
-  }/*
+  }//
   if (
     statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua'
   ) {
@@ -3894,7 +3898,7 @@ function processRoutineStatementCore(
         diagnostics
       );
     }
-  }*/
+  }//
   const statementKind = statementKeyword?.value.toLocaleLowerCase('pt-BR');
   if (statementKind === 'diga' || statementKind === 'retorne') {
     caller.returnStatements.push({
