@@ -3848,7 +3848,7 @@ function processRoutineStatementCore(
     symbols
   )) {
     caller.localVariables.push(localVariable);
-  }
+  }/*
   if (
     statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua'
   ) {
@@ -3894,7 +3894,7 @@ function processRoutineStatementCore(
         diagnostics
       );
     }
-  }
+  }*/
   const statementKind = statementKeyword?.value.toLocaleLowerCase('pt-BR');
   if (statementKind === 'diga' || statementKind === 'retorne') {
     caller.returnStatements.push({

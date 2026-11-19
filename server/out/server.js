@@ -75,6 +75,7 @@ let previousWorkspaceDocumentIndex;
 const workspaceDocumentSources = new WeakMap();
 let workspaceRefreshPromise;
 let workspaceRevision = 0;
+let startupWorkspaceFolders = [];
 let workspaceDirectorySnapshots = new Map();
 const documentSymbolsCache = new WeakMap();
 const semanticTokensCache = new WeakMap();
@@ -1025,28 +1026,42 @@ function logDocumentSymbolStage(requestId, documentUri, stage, startTimeMs, metr
         ...metrics
     });
 }
-connection.onInitialize(() => ({
-    capabilities: {
-        textDocumentSync: node_1.TextDocumentSyncKind.Incremental,
-        definitionProvider: true,
-        typeDefinitionProvider: true,
-        hoverProvider: true,
-        documentSymbolProvider: true,
-        workspaceSymbolProvider: true,
-        referencesProvider: true,
-        renameProvider: { prepareProvider: true },
-        implementationProvider: true,
-        completionProvider: { triggerCharacters: [' '] },
-        documentFormattingProvider: true,
-        semanticTokensProvider: {
-            legend: {
-                tokenTypes: [...semanticTokenTypes],
-                tokenModifiers: []
+connection.onInitialize((params) => {
+    const workspaceFoldersCapability = params.capabilities.workspace?.workspaceFolders;
+    const workspaceFoldersSupported = workspaceFoldersCapability === true;
+    startupWorkspaceFolders = params.workspaceFolders?.map(folder => ({ uri: folder.uri })) ??
+        (params.rootUri ? [{ uri: params.rootUri }] : []);
+    return {
+        capabilities: {
+            textDocumentSync: node_1.TextDocumentSyncKind.Incremental,
+            definitionProvider: true,
+            typeDefinitionProvider: true,
+            hoverProvider: true,
+            documentSymbolProvider: true,
+            workspaceSymbolProvider: true,
+            referencesProvider: true,
+            renameProvider: { prepareProvider: true },
+            implementationProvider: true,
+            completionProvider: { triggerCharacters: [' '] },
+            documentFormattingProvider: true,
+            semanticTokensProvider: {
+                legend: {
+                    tokenTypes: [...semanticTokenTypes],
+                    tokenModifiers: []
+                },
+                full: true
             },
-            full: true
+            workspace: workspaceFoldersSupported
+                ? {
+                    workspaceFolders: {
+                        supported: true,
+                        changeNotifications: true
+                    }
+                }
+                : undefined
         }
-    }
-}));
+    };
+});
 connection.languages.semanticTokens.on(params => profileRequest('semantic-tokens', async (requestId) => {
     const document = documents.get(params.textDocument.uri);
     if (!document) {
@@ -1559,9 +1574,20 @@ documents.onDidClose(({ document }) => {
 connection.onDidChangeWatchedFiles(() => {
     void updateDocumentSymbols(true);
 });
+connection.onNotification('workspace/didChangeWorkspaceFolders', () => {
+    void updateDocumentSymbols(true);
+});
 connection.onInitialized(async () => {
     const initializationStartedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
-    await updateDocumentSymbols(true);
+    invalidateWorkspaceDocuments();
+    const workspaceDocuments = await getWorkspaceDocuments();
+    for (const document of documents.all()) {
+        const indexedDocument = workspaceDocuments.get(document.uri);
+        if (indexedDocument) {
+            parsedDocuments.set(document.uri, indexedDocument.parsed);
+        }
+    }
+    await publishOpenDocumentDiagnostics();
     logProfile({
         event: 'workspace-initialization',
         startTimeMs: initializationStartedAt,
@@ -2013,7 +2039,8 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
             sourceUrisByPath.set(getWorkspacePathKey(filePath), document.uri);
         }
         const folders = await connection.workspace.getWorkspaceFolders();
-        for (const folder of folders ?? []) {
+        const workspaceFolders = folders ?? startupWorkspaceFolders;
+        for (const folder of workspaceFolders) {
             addDirectory((0, node_url_1.fileURLToPath)(folder.uri));
         }
         const directorySnapshots = new Map();
