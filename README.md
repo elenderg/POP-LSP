@@ -13,11 +13,11 @@ The Português Puro Language Server extends Visual Studio Code with intelligent 
 
 Unlike a simple syntax highlighter, the language server analyzes source code, understands declarations and relationships between symbols, and provides intelligent navigation, diagnostics, symbol search, references, renaming, and automatic formatting.
 
-\<p align="center">   \<a href="funcionalidades/GoToDefinition.png">     \<img src="funcionalidades/GoToDefinition.png" width="800" alt="Go to Definition in Visual Studio Code" />   \</a> \</p>
+\<p align="center">   \<a href="./funcionalidades/GoToDefinition.png">     \<img src="./funcionalidades/GoToDefinition.png" width="800" alt="Go to Definition in Visual Studio Code" />   \</a> \</p>
 
-\<p align="center">   \<a href="funcionalidades/Diagnostics.png">     \<img src="funcionalidades/Diagnostics.png" width="800" alt="Language diagnostics in Visual Studio Code" />   \</a> \</p>
+\<p align="center">   \<a href="./funcionalidades/Diagnostics.png">     \<img src="./funcionalidades/Diagnostics.png" width="800" alt="Language diagnostics in Visual Studio Code" />   \</a> \</p>
 
-\<p align="center">   \<a href="funcionalidades/estrutura.png">     \<img src="funcionalidades/estrutura.png.png" width="800" alt="Document symbols in Visual Studio Code" />   \</a> \</p>
+\<p align="center">   \<a href="./funcionalidades/estrutura.png">     \<img src="./funcionalidades/estrutura.png.png" width="800" alt="Document symbols in Visual Studio Code" />   \</a> \</p>
 
 Português Puro is a general-purpose programming language designed to prioritize readability and comprehensibility. It was created by [Elender Gallas](https://www.linkedin.com/in/elender/) and [Élisson Gallas](https://www.linkedin.com/in/elissongois/).
 
