@@ -8585,7 +8585,7 @@ function resolveStructureFieldAccessCore(
       const member = findStructureField(currentType.name, memberName, symbols);
       if (!member) {
         const computedField = findComputedFieldRoutine(
-          currentType.name,
+          currentType,
           memberName,
           routines,
           symbols
@@ -8641,7 +8641,7 @@ function resolveStructureFieldAccessCore(
     }
     if (!field) {
       const computedField = findComputedFieldRoutine(
-        currentType.name,
+        currentType,
         fieldName,
         routines,
         symbols
@@ -8814,7 +8814,7 @@ function resolveRoutineCandidateTypes(
 }
 
 function findComputedFieldRoutine(
-  structureType: string,
+  structureType: TypeReference,
   fieldName: string,
   routines: RoutineDeclaration[],
   symbols: TypeSymbolTable
@@ -8832,9 +8832,10 @@ function findComputedFieldRoutine(
     if (!computedField) {
       continue;
     }
-    const typeDistance = symbols.getBaseTypeDistance(
+    const typeDistance = getRoutineArgumentTypeDistance(
       structureType,
-      computedField.structureType.name
+      computedField.structureType.name,
+      symbols
     );
     if (typeDistance === undefined) {
       continue;

@@ -1644,6 +1644,66 @@ test('resolves workspace computed fields against the current type catalog', () =
   assert.deepEqual(incremental.diagnostics, []);
 });
 
+test('resolves computed fields on a list when its plural is also a type name', () => {
+  const types = parseTypeDeclarations([
+    'Uma lista é uma estrutura.',
+    'Uma string é uma estrutura.',
+    'Umas listas são uma estrutura.',
+    'Um elemento da stack é uma lista com uma string.',
+    'Um número é uma estrutura.',
+    'Uma contagem é um número.'
+  ].join('\n'));
+  const variables = parseTypeDeclarations(
+    'A stack é uns elementos das stacks.'
+  );
+  const source = [
+    'Função para que se determine se um número é um segundo número:',
+    '  Diga sim.',
+    'Função para que se determine se a stack possui just one coisa sobre it:',
+    '  Se a contagem desta stack for 1, diga sim.',
+    '  Diga não.',
+    'Rotina para que se atribua a contagem dumas listas para uma contagem:',
+    '  Retorne.'
+  ].join('\n');
+  const catalog = {
+    declarations: types.declarations,
+    globalVariables: variables.globalVariables,
+    routines: []
+  };
+  const parsed = parseTypeDeclarations(source, catalog);
+  const syntax = parseTypeDeclarationSyntax(source);
+  const conditionRegion = syntax.regions.find(region =>
+    region.kind === 'routine' &&
+    source.slice(region.range.start, region.range.end)
+      .includes('contagem desta stack')
+  );
+  assert.ok(conditionRegion);
+  const incremental = resolveRoutineSyntaxRegions(
+    source,
+    syntax,
+    [conditionRegion],
+    catalog
+  );
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'possui just one coisa sobre it'
+  );
+  assert.ok(caller);
+
+  assert.deepEqual(
+    parsed.diagnostics.filter(diagnostic =>
+      diagnostic.message.startsWith('No boolean function found')
+    ),
+    []
+  );
+  assert.deepEqual(incremental.diagnostics, []);
+  assert.deepEqual(
+    caller.calls[0].computedFieldAccesses.map(access =>
+      access.reference.name
+    ),
+    ['contagem']
+  );
+});
+
 test('keeps routine-local dependency edges within their document', () => {
   const source = [
     'Um byte é um byte.',

@@ -5267,7 +5267,7 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
             const memberName = normalizeTypeName(operator[2]);
             const member = findStructureField(currentType.name, memberName, symbols);
             if (!member) {
-                const computedField = findComputedFieldRoutine(currentType.name, memberName, routines, symbols);
+                const computedField = findComputedFieldRoutine(currentType, memberName, routines, symbols);
                 if (!computedField) {
                     return undefined;
                 }
@@ -5308,7 +5308,7 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
             field = nestedFields[0];
         }
         if (!field) {
-            const computedField = findComputedFieldRoutine(currentType.name, fieldName, routines, symbols);
+            const computedField = findComputedFieldRoutine(currentType, fieldName, routines, symbols);
             if (!computedField) {
                 const listElementType = resolveListSpecialField(source, currentType, fieldRange, symbols, caller);
                 if (listElementType) {
@@ -5446,7 +5446,7 @@ function findComputedFieldRoutine(structureType, fieldName, routines, symbols) {
         if (!computedField) {
             continue;
         }
-        const typeDistance = symbols.getBaseTypeDistance(structureType, computedField.structureType.name);
+        const typeDistance = getRoutineArgumentTypeDistance(structureType, computedField.structureType.name, symbols);
         if (typeDistance === undefined) {
             continue;
         }
