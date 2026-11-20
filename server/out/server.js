@@ -92,6 +92,8 @@ const workspaceCompletionItems = new WeakMap();
 let documentSymbolsUpdatePromise;
 let documentSymbolsUpdatePending = false;
 let workspaceInvalidationPending = false;
+const utf8EncodingPromptsSent = new Set();
+const windows1252EncodedFiles = new Set();
 // início
 const inspector = __importStar(require("node:inspector"));
 const node_fs_1 = require("node:fs");
@@ -1029,8 +1031,11 @@ function logDocumentSymbolStage(requestId, documentUri, stage, startTimeMs, metr
 connection.onInitialize((params) => {
     const workspaceFoldersCapability = params.capabilities.workspace?.workspaceFolders;
     const workspaceFoldersSupported = workspaceFoldersCapability === true;
-    startupWorkspaceFolders = params.workspaceFolders?.map(folder => ({ uri: folder.uri })) ??
-        (params.rootUri ? [{ uri: params.rootUri }] : []);
+    startupWorkspaceFolders = params.workspaceFolders?.length
+        ? params.workspaceFolders.map(folder => ({ uri: folder.uri }))
+        : params.rootUri
+            ? [{ uri: params.rootUri }]
+            : [];
     return {
         capabilities: {
             textDocumentSync: node_1.TextDocumentSyncKind.Incremental,
@@ -1431,6 +1436,43 @@ function finishDocumentSymbolsUpdate(updatePromise) {
         void updateDocumentSymbols();
     }
 }
+function decodePopSource(contentBytes, forceWindows1252 = false) {
+    if (forceWindows1252) {
+        return {
+            source: new TextDecoder('windows-1252').decode(contentBytes),
+            requiresWindows1252Conversion: false
+        };
+    }
+    try {
+        const source = new TextDecoder('utf-8', { fatal: true }).decode(contentBytes);
+        const hasUtf8Bom = contentBytes[0] === 0xef &&
+            contentBytes[1] === 0xbb &&
+            contentBytes[2] === 0xbf;
+        return {
+            source,
+            requiresWindows1252Conversion: hasUtf8Bom || /[^\u0000-\u007f]/u.test(source)
+        };
+    }
+    catch (error) {
+        if (!(error instanceof TypeError)) {
+            throw error;
+        }
+        return {
+            source: new TextDecoder('windows-1252').decode(contentBytes),
+            requiresWindows1252Conversion: false
+        };
+    }
+}
+function promptForWindows1252Conversion(uri) {
+    if (utf8EncodingPromptsSent.has(uri)) {
+        return;
+    }
+    utf8EncodingPromptsSent.add(uri);
+    void connection.sendNotification('pop/utf8FileDetected', { uri }).catch(error => {
+        utf8EncodingPromptsSent.delete(uri);
+        connection.console.error(`Could not ask the client to convert "${uri}" to Windows-1252: ${error instanceof Error ? error.message : String(error)}`);
+    });
+}
 async function publishOpenDocumentDiagnostics() {
     const startedAt = profileEnabled ? node_perf_hooks_1.performance.now() : 0;
     const openDocuments = documents.all();
@@ -1554,6 +1596,10 @@ documents.onDidSave(({ document }) => {
             sourceBytes: Buffer.byteLength(source, 'utf8')
         });
     }
+    const uri = document.uri.toString();
+    if (windows1252EncodedFiles.delete(uri)) {
+        utf8EncodingPromptsSent.delete(uri);
+    }
     void updateDocumentSymbols();
 });
 documents.onDidClose(({ document }) => {
@@ -1574,7 +1620,19 @@ documents.onDidClose(({ document }) => {
 connection.onDidChangeWatchedFiles(() => {
     void updateDocumentSymbols(true);
 });
-connection.onNotification('workspace/didChangeWorkspaceFolders', () => {
+connection.onNotification('pop/encodingConverted', (params) => {
+    windows1252EncodedFiles.add(params.uri);
+    void updateDocumentSymbols(true);
+});
+connection.onNotification('workspace/didChangeWorkspaceFolders', (params) => {
+    const workspaceFolders = new Map(startupWorkspaceFolders.map(folder => [folder.uri, folder]));
+    for (const folder of params.event.removed) {
+        workspaceFolders.delete(folder.uri);
+    }
+    for (const folder of params.event.added) {
+        workspaceFolders.set(folder.uri, { uri: folder.uri });
+    }
+    startupWorkspaceFolders = [...workspaceFolders.values()];
     void updateDocumentSymbols(true);
 });
 connection.onInitialized(async () => {
@@ -2039,7 +2097,9 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
             sourceUrisByPath.set(getWorkspacePathKey(filePath), document.uri);
         }
         const folders = await connection.workspace.getWorkspaceFolders();
-        const workspaceFolders = folders ?? startupWorkspaceFolders;
+        const workspaceFolders = folders?.length
+            ? folders
+            : startupWorkspaceFolders;
         for (const folder of workspaceFolders) {
             addDirectory((0, node_url_1.fileURLToPath)(folder.uri));
         }
@@ -2060,14 +2120,22 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                 const uri = (0, node_url_1.pathToFileURL)(filePath).toString();
                 const existingUri = sourceUrisByPath.get(pathKey);
                 if (existingUri) {
-                    sourceByteLengths.set(existingUri, (await (0, promises_1.stat)(filePath)).size);
+                    const contentBytes = await (0, promises_1.readFile)(filePath);
+                    sourceByteLengths.set(existingUri, contentBytes.byteLength);
+                    const decoded = decodePopSource(contentBytes, windows1252EncodedFiles.has(existingUri));
+                    if (decoded.requiresWindows1252Conversion) {
+                        promptForWindows1252Conversion(existingUri);
+                    }
                     continue;
                 }
                 const contentBytes = await (0, promises_1.readFile)(filePath);
                 sourceByteLengths.set(uri, contentBytes.byteLength);
-                const content = new TextDecoder('windows-1252').decode(contentBytes);
+                const decoded = decodePopSource(contentBytes, windows1252EncodedFiles.has(uri));
+                if (decoded.requiresWindows1252Conversion) {
+                    promptForWindows1252Conversion(uri);
+                }
                 sourceDocuments.set(uri, {
-                    document: vscode_languageserver_textdocument_1.TextDocument.create(uri, 'portugues-puro', 0, content),
+                    document: vscode_languageserver_textdocument_1.TextDocument.create(uri, 'portugues-puro', 0, decoded.source),
                     directory
                 });
                 sourceUrisByPath.set(pathKey, uri);

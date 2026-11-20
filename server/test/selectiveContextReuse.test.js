@@ -7,7 +7,11 @@ const path = require('node:path');
 const test = require('node:test');
 const { pathToFileURL } = require('node:url');
 
-function createLspClient(child, workspaceFolder) {
+function createLspClient(
+  child,
+  workspaceFolder,
+  reportedWorkspaceFolders = [workspaceFolder]
+) {
   let buffer = Buffer.alloc(0);
   let nextRequestId = 0;
   const pendingRequests = new Map();
@@ -57,7 +61,11 @@ function createLspClient(child, workspaceFolder) {
         pendingRequests.get(message.id)(message);
       }
       if (message.method === 'workspace/workspaceFolders') {
-        send({ jsonrpc: '2.0', id: message.id, result: [workspaceFolder] });
+        send({
+          jsonrpc: '2.0',
+          id: message.id,
+          result: reportedWorkspaceFolders
+        });
       }
       if (
         message.method === 'window/logMessage' &&
@@ -95,6 +103,73 @@ async function waitForEvent(
 function writeWindows1252(filePath, contents) {
   fs.writeFileSync(filePath, Buffer.from(contents, 'latin1'));
 }
+
+test('indexes root POP files at startup when the client reports no workspace folders', async () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-startup-index-'));
+  const sourcePath = path.join(workspace, 'types.pop');
+  const sourceUri = pathToFileURL(sourcePath).toString();
+  const workspaceFolder = {
+    uri: pathToFileURL(workspace).toString(),
+    name: 'startup-index-test'
+  };
+  fs.writeFileSync(sourcePath, 'Uma localização é uma estrutura.', 'utf8');
+
+  const child = spawn(
+    process.execPath,
+    [path.resolve(__dirname, '../out/server.js'), '--stdio'],
+    {
+      env: { ...process.env, POP_LSP_PROFILE: '1' },
+      stdio: ['pipe', 'pipe', 'pipe']
+    }
+  );
+  const client = createLspClient(child, workspaceFolder, []);
+  let stderr = '';
+  child.stderr.on('data', data => {
+    stderr += data.toString();
+  });
+
+  try {
+    const initialize = await client.request('initialize', {
+      processId: process.pid,
+      rootUri: workspaceFolder.uri,
+      workspaceFolders: [],
+      capabilities: {
+        workspace: { workspaceFolders: true }
+      }
+    });
+    assert.ok(initialize.result);
+    client.send({ jsonrpc: '2.0', method: 'initialized', params: {} });
+
+    await waitForEvent(
+      client.events,
+      event => event.event === 'workspace-refresh' && event.documents === 1,
+      'the startup index of the unopened POP file'
+    );
+    const symbols = await client.request('workspace/symbol', {
+      query: 'localização'
+    });
+    assert.ok(
+      symbols.result.some(symbol =>
+        symbol.name === 'localização' && symbol.location.uri === sourceUri
+      )
+    );
+
+    await client.request('shutdown', null);
+    client.send({ jsonrpc: '2.0', method: 'exit', params: null });
+    await once(child, 'close');
+  } catch (error) {
+    child.stdin.end();
+    if (child.exitCode === null) {
+      child.kill();
+      await once(child, 'close');
+    }
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)}\n${stderr}`
+    );
+  } finally {
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});
 
 test('reuses dependency-independent documents despite unrelated diagnostics', async () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-context-'));

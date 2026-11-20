@@ -12,6 +12,9 @@ All notable changes to the Português Puro Language Server are documented in thi
 - Improved analysis of large source files and complex routine definitions.
 - Improved consistency when resolving references across documents.
 - Preserved explicit type names ahead of generated plural aliases while retaining generated plurals as compatibility fallbacks. Computed-field lookup now uses the same argument-type compatibility as routine calls, so a field declared for `listas` can resolve on a type derived from `lista` without changing exact-name precedence.
+- Ensured startup workspace indexing falls back to the initialized project root when the client reports no workspace folders, so unopened root-level `.pop` files are cataloged immediately.
+- Decoded unopened `.pop` files as UTF-8 when valid, falling back to Windows-1252, so accented symbols remain resolvable in the workspace catalog.
+- Warned when UTF-8 `.pop` files are detected and added confirmed client-side conversion to Windows-1252, with explicit choices to remove or replace unrepresentable characters or keep UTF-8.
 
 ## [2026-11-17]
 
