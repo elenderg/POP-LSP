@@ -3974,11 +3974,11 @@ function resolveRoutineCallCore(source, statementRange, routines, caller, global
             if (typeCast) {
                 typeReferences.push(typeCast.type);
             }
-            const typeMagnitude = localVariable
+            const typeOperatorArgument = localVariable
                 ? undefined
-                : resolveTypeMagnitudeArgument(source, argumentsList[index], symbols);
-            if (typeMagnitude) {
-                typeReferences.push(typeMagnitude.operandType);
+                : resolveTypeOperatorArgument(source, argumentsList[index], symbols);
+            if (typeOperatorArgument) {
+                typeReferences.push(typeOperatorArgument.operandType);
             }
             const scalarArgumentType = localVariable
                 ? undefined
@@ -3986,7 +3986,7 @@ function resolveRoutineCallCore(source, statementRange, routines, caller, global
             const argumentType = localVariable
                 ? localVariable.type
                 : scalarArgumentType ??
-                    typeMagnitude?.valueType ??
+                    typeOperatorArgument?.valueType ??
                     resolveRoutineArgumentTypeWithCache(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd) || implicitDefiniteArticle === true, diagnostics, argumentTypeResolutionCache);
             if (candidateProfile) {
                 argumentTypeResolutionMs +=
@@ -5010,9 +5010,9 @@ function resolveRoutineArgumentTypeCore(source, argument, caller, globalVariable
         const originalType = resolveRoutineArgumentType(source, cast.valueRange, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle, diagnostics);
         return originalType ? cast.type : undefined;
     }
-    const typeMagnitude = resolveTypeMagnitudeArgument(source, argument, symbols);
-    if (typeMagnitude) {
-        return typeMagnitude.valueType;
+    const typeOperatorArgument = resolveTypeOperatorArgument(source, argument, symbols);
+    if (typeOperatorArgument) {
+        return typeOperatorArgument.valueType;
     }
     const fieldAccessType = resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle, diagnostics);
     if (fieldAccessType) {
@@ -5084,14 +5084,17 @@ function resolveIndefiniteTypeArgument(source, argument, symbols) {
         ? createSyntheticTypeReference(type.name, typeRange)
         : undefined;
 }
-function resolveTypeMagnitudeArgument(source, argument, symbols) {
+function resolveTypeOperatorArgument(source, argument, symbols) {
     const firstWord = readWord(source, argument.start, argument.end);
     const operatorStart = firstWord &&
         definiteArticles.has(firstWord.value.toLocaleLowerCase('pt-BR'))
         ? firstWord.end
         : argument.start;
     const operator = readWord(source, operatorStart, argument.end);
-    if (operator?.value.toLocaleLowerCase('pt-BR') !== 'magnitude') {
+    const operatorName = operator?.value.toLocaleLowerCase('pt-BR');
+    if (!operator ||
+        !operatorName ||
+        !['magnitude', 'endereçamento', 'conteúdo'].includes(operatorName)) {
         return undefined;
     }
     const separator = readWord(source, skipWhitespace(source, operator.end, argument.end), argument.end);
@@ -5119,7 +5122,7 @@ function resolveTypeMagnitudeArgument(source, argument, symbols) {
         return undefined;
     }
     const operandType = createTypeReference(source, typeRange);
-    const valueType = resolveTypeOperator('magnitude', operandType, symbols);
+    const valueType = resolveTypeOperator(operatorName, operandType, symbols);
     return valueType ? { operandType, valueType } : undefined;
 }
 function resolveScalarRoutineArgumentType(source, argument, expectedType, symbols) {

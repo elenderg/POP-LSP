@@ -6462,15 +6462,15 @@ function resolveRoutineCallCore(
       if (typeCast) {
         typeReferences.push(typeCast.type);
       }
-      const typeMagnitude = localVariable
+      const typeOperatorArgument = localVariable
         ? undefined
-        : resolveTypeMagnitudeArgument(
+        : resolveTypeOperatorArgument(
           source,
           argumentsList[index],
           symbols
         );
-      if (typeMagnitude) {
-        typeReferences.push(typeMagnitude.operandType);
+      if (typeOperatorArgument) {
+        typeReferences.push(typeOperatorArgument.operandType);
       }
       const scalarArgumentType = localVariable
         ? undefined
@@ -6483,7 +6483,7 @@ function resolveRoutineCallCore(
       const argumentType = localVariable
         ? localVariable.type
         : scalarArgumentType ??
-          typeMagnitude?.valueType ??
+          typeOperatorArgument?.valueType ??
           resolveRoutineArgumentTypeWithCache(
             source,
             argumentsList[index],
@@ -8174,13 +8174,13 @@ function resolveRoutineArgumentTypeCore(
     return originalType ? cast.type : undefined;
   }
 
-  const typeMagnitude = resolveTypeMagnitudeArgument(
+  const typeOperatorArgument = resolveTypeOperatorArgument(
     source,
     argument,
     symbols
   );
-  if (typeMagnitude) {
-    return typeMagnitude.valueType;
+  if (typeOperatorArgument) {
+    return typeOperatorArgument.valueType;
   }
 
   const fieldAccessType = resolveStructureFieldAccess(
@@ -8287,7 +8287,7 @@ function resolveIndefiniteTypeArgument(
     : undefined;
 }
 
-function resolveTypeMagnitudeArgument(
+function resolveTypeOperatorArgument(
   source: string,
   argument: SourceRange,
   symbols: TypeSymbolTable
@@ -8298,7 +8298,12 @@ function resolveTypeMagnitudeArgument(
     ? firstWord.end
     : argument.start;
   const operator = readWord(source, operatorStart, argument.end);
-  if (operator?.value.toLocaleLowerCase('pt-BR') !== 'magnitude') {
+  const operatorName = operator?.value.toLocaleLowerCase('pt-BR');
+  if (
+    !operator ||
+    !operatorName ||
+    !['magnitude', 'endereçamento', 'conteúdo'].includes(operatorName)
+  ) {
     return undefined;
   }
 
@@ -8331,7 +8336,7 @@ function resolveTypeMagnitudeArgument(
   }
 
   const operandType = createTypeReference(source, typeRange);
-  const valueType = resolveTypeOperator('magnitude', operandType, symbols);
+  const valueType = resolveTypeOperator(operatorName, operandType, symbols);
   return valueType ? { operandType, valueType } : undefined;
 }
 

@@ -888,6 +888,43 @@ test('resolves a type magnitude used as a routine argument', () => {
   );
 });
 
+test('resolves contracted address and content operators in routine arguments', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um ponteiro é um ponteiro para um número.',
+    'Um pbyte é um ponteiro para um byte.',
+    'Rotina para que se adicione um pbyte denominado endereço para um número denominado total:',
+    '  Retorne.',
+    'Rotina para que se adicione um número denominado valor para um número denominado total:',
+    '  Retorne.',
+    'Rotina para que se use um pbyte:',
+    '  Retorne.',
+    'Rotina para que se use um byte:',
+    '  Retorne.',
+    'Rotina para que se use um número:',
+    '  Retorne.',
+    'Rotina para que se faça algo com um número:',
+    '  Adicione o endereçamento dum byte para o número.',
+    '  Adicione o conteúdo dum ponteiro para o número.',
+    '  Use o conteúdo dum pbyte.',
+    '  Use a magnitude duma estrutura.',
+    '  Use a magnitude duns bytes.',
+    '  Use a magnitude dumas estruturas.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine => routine.calls.length === 6);
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.deepEqual(
+    caller?.calls.map(call => call.target?.parameters[0].type.name),
+    ['pbyte', 'número', 'byte', 'número', 'número', 'número']
+  );
+  assert.deepEqual(
+    caller?.calls.map(call => call.typeReferences?.[0].name),
+    ['byte', 'ponteiro', 'pbyte', 'estrutura', 'bytes', 'estruturas']
+  );
+});
+
 test('caches repeated overload argument analysis without changing resolution', () => {
   const source = [
     'Um número é um byte.',
