@@ -752,10 +752,10 @@ const articles = new Set([
     ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
-    'atribua', // atribua não é um built-in statement.
+    //'atribua', // atribua não é um built-in statement.
     'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
     'processe', 'itere', 'pare', 'reitere',
-    'aloque', 'aponte', 'direcione', 'redirecione'
+    'aloque', 'desaloque', 'aponte', 'direcione', 'redirecione'
 ]);
 const reservedStatementKeywordDisplayNames = new Map([
     ['retorne', 'Retorne'],
@@ -767,6 +767,7 @@ const reservedStatementKeywordDisplayNames = new Map([
     ['pare', 'Pare'],
     ['reitere', 'Reitere'],
     ['aloque', 'Aloque'],
+    ['desaloque', 'Desaloque'],
     ['aponte', 'Aponte'],
     ['direcione', 'Direcione'],
     ['redirecione', 'Redirecione']
@@ -3213,6 +3214,9 @@ function validateMemoryDeallocationStatement(source, statement, routine, routine
     if (keyword?.value.toLocaleLowerCase('pt-BR') !== 'destrua') {
         return false;
     }
+    if (keyword?.value.toLocaleLowerCase('pt-BR') !== 'desaloque') {
+        return false;
+    }
     const targetRange = trimRange(source, keyword.end, statement.end);
     const article = readWord(source, targetRange.start, targetRange.end);
     if (!article) {
@@ -5220,38 +5224,6 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
     }
     let currentType = rootType;
     const resolvedAccesses = [];
-    if (fieldRanges.length === 1) {
-        const fieldRange = fieldRanges[0];
-        const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
-        const globalField = findGlobalVariableField(globalVariable, fieldName, symbols);
-        if (globalField) {
-            fieldAccesses.push({
-                reference: createTypeReference(source, fieldRange),
-                target: globalField
-            });
-            return globalField.kind === 'named'
-                ? globalField.type
-                : globalField.elementType;
-        }
-        const matches = findNestedStructureFields(currentType.name, fieldName, symbols);
-        if (matches.length > 1) {
-            const message = `Ambiguous structure field access "${source.slice(fieldRange.start, fieldRange.end).trim()}".`;
-            if (!diagnostics?.some(diagnostic => diagnostic.message === message &&
-                diagnostic.range.start === fieldRange.start &&
-                diagnostic.range.end === fieldRange.end)) {
-                diagnostics?.push({ message, range: fieldRange });
-            }
-            return undefined;
-        }
-        if (matches.length === 1) {
-            const field = matches[0];
-            fieldAccesses.push({
-                reference: createTypeReference(source, fieldRange),
-                target: field
-            });
-            return field.type;
-        }
-    }
     for (let index = 0; index < fieldRanges.length; index++) {
         const fieldRange = fieldRanges[index];
         const fieldName = normalizeTypeName(source.slice(fieldRange.start, fieldRange.end));
@@ -5290,39 +5262,67 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
             }
             continue;
         }
+        let lookupType = currentType;
         let field = index === 0
-            ? findGlobalVariableField(globalVariable, fieldName, symbols) ??
-                findStructureField(currentType.name, fieldName, symbols)
-            : findStructureField(currentType.name, fieldName, symbols);
-        if (!field) {
-            const nestedFields = findNestedStructureFields(currentType.name, fieldName, symbols);
-            if (nestedFields.length > 1) {
-                const message = `Ambiguous structure field access "${source.slice(fieldRange.start, fieldRange.end).trim()}".`;
-                if (!diagnostics?.some(diagnostic => diagnostic.message === message &&
-                    diagnostic.range.start === fieldRange.start &&
-                    diagnostic.range.end === fieldRange.end)) {
-                    diagnostics?.push({ message, range: fieldRange });
-                }
-                return undefined;
+            ? findGlobalVariableField(globalVariable, fieldName, symbols)
+            : undefined;
+        let nestedFields = [];
+        let computedField;
+        let listElementType;
+        const visitedPointerTypes = new Set();
+        while (!field && nestedFields.length === 0 && !computedField && !listElementType) {
+            const normalizedTypeName = normalizeTypeName(lookupType.name);
+            if (visitedPointerTypes.has(normalizedTypeName)) {
+                break;
             }
-            field = nestedFields[0];
+            visitedPointerTypes.add(normalizedTypeName);
+            field = findStructureField(lookupType.name, fieldName, symbols);
+            if (field) {
+                break;
+            }
+            nestedFields = findNestedStructureFields(lookupType.name, fieldName, symbols);
+            if (nestedFields.length > 0) {
+                break;
+            }
+            computedField = findComputedFieldRoutine(lookupType, fieldName, routines, symbols);
+            if (computedField) {
+                break;
+            }
+            listElementType = resolveListSpecialField(source, lookupType, fieldRange, symbols, caller);
+            if (listElementType) {
+                break;
+            }
+            const pointedType = resolveTypeOperator('conteúdo', lookupType, symbols);
+            if (!pointedType ||
+                visitedPointerTypes.has(normalizeTypeName(pointedType.name))) {
+                break;
+            }
+            lookupType = pointedType;
         }
-        if (!field) {
-            const computedField = findComputedFieldRoutine(currentType, fieldName, routines, symbols);
-            if (!computedField) {
-                const listElementType = resolveListSpecialField(source, currentType, fieldRange, symbols, caller);
-                if (listElementType) {
-                    currentType = listElementType;
-                    continue;
-                }
-                return undefined;
+        if (nestedFields.length > 1) {
+            const message = `Ambiguous structure field access "${source.slice(fieldRange.start, fieldRange.end).trim()}".`;
+            if (!diagnostics?.some(diagnostic => diagnostic.message === message &&
+                diagnostic.range.start === fieldRange.start &&
+                diagnostic.range.end === fieldRange.end)) {
+                diagnostics?.push({ message, range: fieldRange });
             }
+            return undefined;
+        }
+        field = field ?? nestedFields[0];
+        if (!field && computedField) {
             computedFieldAccesses.push({
                 reference: createTypeReference(source, fieldRange),
                 target: computedField.routine
             });
             currentType = computedField.valueType;
             continue;
+        }
+        if (!field && listElementType) {
+            currentType = listElementType;
+            continue;
+        }
+        if (!field) {
+            return undefined;
         }
         resolvedAccesses.push({
             reference: createTypeReference(source, fieldRange),

@@ -1969,6 +1969,27 @@ test('projects allocation, deallocation, and external process operations', () =>
   }
 });
 
+test('resolves internal function pointers through nested pointer fields', () => {
+  const source = [
+    'Um ponteiro é uma estrutura com 4 bytes.',
+    'Rotina para que se finalize um sintetizador de voz:',
+    '  Processe o Release desta VTable deste sintetizador de voz com o sintetizador de voz.',
+    'Um sintetizador de voz é um ponteiro para um objeto sintetizador de voz.',
+    'Um objeto sintetizador de voz é uma estrutura com um identificador VTable denominado VTable.',
+    'Um identificador VTable é um ponteiro para um sintetizador de voz VTable.',
+    'Um sintetizador de voz VTable é uma estrutura com um ponteiro denominado Release.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const process = parsed.routines.flatMap(routine => routine.processes)[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(process?.kind, 'internal');
+  assert.deepEqual(
+    process?.fieldAccesses.map(access => access.target.name.name),
+    ['VTable', 'Release']
+  );
+});
+
 test('projects decoded-literal and push instructions as typed statements', () => {
   const source = [
     'Um byte não assinado é um byte.',
