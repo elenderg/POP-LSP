@@ -11,6 +11,7 @@ All notable changes to the Português Puro Language Server are documented in thi
 - Improved handling of routine declarations, parameters, aliases, and overloaded names.
 - Improved analysis of large source files and complex routine definitions.
 - Improved consistency when resolving references across documents.
+- Preserved explicit type names ahead of generated plural aliases while retaining generated plurals as compatibility fallbacks. Computed-field lookup now uses the same argument-type compatibility as routine calls, so a field declared for `listas` can resolve on a type derived from `lista` without changing exact-name precedence.
 
 ## [2026-11-17]
 
