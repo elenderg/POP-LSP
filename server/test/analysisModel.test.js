@@ -1585,6 +1585,65 @@ test('indexes cross-document type, variable, routine, and field dependencies', (
   assert.ok(affectedRegions.has(consumerRoutineRegion.id));
 });
 
+test('resolves workspace computed fields against the current type catalog', () => {
+  const types = parseTypeDeclarations([
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Uma quantidade de caracteres é uns twips.',
+    'Uma string é uma estrutura com',
+    '  Um caractere inicial e',
+    '  Um caractere final.',
+    'Um caractere inicial é um ponteiro para um byte.',
+    'Um caractere final é um ponteiro para um byte.',
+    'Um ponteiro é uma estrutura com 4 bytes.'
+  ].join('\n'));
+  const computedField = parseTypeDeclarations([
+    'Função para que se determine se um número é um segundo número:',
+    '  Diga sim.',
+    'Rotina para que se ponha um número em um segundo número:',
+    '  Retorne.',
+    'Rotina para que se atribua a quantidade de caracteres duma string para uma quantidade de caracteres:',
+    '  Retorne.'
+  ].join('\n'));
+  const declaration = computedField.routines.find(routine =>
+    routine.computedField?.name.normalizedName === 'quantidade de caracteres'
+  );
+  assert.ok(declaration);
+  assert.equal(declaration.computedField.valueType, undefined);
+
+  const callerSource = [
+    'para que se limpe uma string:',
+    '  Se a quantidade de caracteres desta string for 0, retorne.',
+    '  Ponha 0 na quantidade de caracteres desta string.'
+  ].join('\n');
+  const catalog = {
+    declarations: types.declarations,
+    globalVariables: [],
+    routines: computedField.routines
+  };
+  const parsed = parseTypeDeclarations(callerSource, catalog);
+  const syntax = parseTypeDeclarationSyntax(callerSource);
+  const routineRegion = syntax.regions.find(region =>
+    region.kind === 'routine' && region.name === 'limpe'
+  );
+  assert.ok(routineRegion);
+  const incremental = resolveRoutineSyntaxRegions(
+    callerSource,
+    syntax,
+    [routineRegion],
+    catalog
+  );
+
+  assert.deepEqual(
+    parsed.diagnostics.filter(diagnostic =>
+      diagnostic.message.startsWith('No boolean function found') ||
+      diagnostic.message.startsWith('No compatible routine found')
+    ),
+    []
+  );
+  assert.deepEqual(incremental.diagnostics, []);
+});
+
 test('keeps routine-local dependency edges within their document', () => {
   const source = [
     'Um byte é um byte.',

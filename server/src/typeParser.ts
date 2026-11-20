@@ -2125,19 +2125,22 @@ export function resolveRoutineSyntaxRegions(
         region
       ])
   );
+  const localRoutineCandidates = syntax.routines.map(routine => {
+    const region = routineRegionsByRange.get(
+      `${routine.range.start}:${routine.bodyRange.end}`
+    );
+    const requested = region
+      ? requestedByRegion.get(
+        `${region.range.start}:${region.range.end}:${region.fingerprint}`
+      )
+      : undefined;
+    return requested ?? rebaseParsedRegion(routine, 0);
+  });
   const routineCandidates = [
-    ...syntax.routines.map(routine => {
-      const region = routineRegionsByRange.get(
-        `${routine.range.start}:${routine.bodyRange.end}`
-      );
-      const requested = region
-        ? requestedByRegion.get(
-          `${region.range.start}:${region.range.end}:${region.fingerprint}`
-        )
-        : undefined;
-      return requested ?? rebaseParsedRegion(routine, 0);
-    }),
-    ...workspaceRoutines
+    ...localRoutineCandidates,
+    ...workspaceRoutines.map(routine =>
+      resolveRoutineCandidateTypes(routine, symbols)
+    )
   ];
   const symbolSetupMs = onProfile ? performance.now() - startedAt : 0;
   const profileCounters = onProfile
@@ -2155,7 +2158,7 @@ export function resolveRoutineSyntaxRegions(
     const candidateDiagnostics: ParserDiagnostic[] = [];
     resolveRoutineParameters(
       source,
-      routineCandidates,
+      localRoutineCandidates,
       symbols,
       candidateDiagnostics
     );
@@ -2170,7 +2173,7 @@ export function resolveRoutineSyntaxRegions(
       : 0;
     phaseStartedAt = onProfile ? performance.now() : 0;
     candidateDiagnostics.length = 0;
-    resolveComputedFields(routineCandidates, symbols, candidateDiagnostics);
+    resolveComputedFields(localRoutineCandidates, symbols, candidateDiagnostics);
     diagnostics.push(...candidateDiagnostics.filter(diagnostic =>
       regions.some(region =>
         diagnostic.range.start >= region.range.start &&
@@ -2408,6 +2411,12 @@ function resolveTypeDeclarationSyntaxCore(
     !reusedRoutines.has(routine)
   );
   const routineSymbols = new RoutineSymbolTable(routines);
+  const routineCandidates = [
+    ...routines,
+    ...(workspaceSymbols?.routines ?? []).map(routine =>
+      resolveRoutineCandidateTypes(routine, symbols)
+    )
+  ];
   const catalogFinishedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
@@ -2506,7 +2515,7 @@ function resolveTypeDeclarationSyntaxCore(
       globalVariableSymbols.entries.map(symbol => symbol.declaration),
       symbols,
       diagnostics,
-      [...routines, ...(workspaceSymbols?.routines ?? [])],
+      routineCandidates,
       options.cacheRoutineArgumentTypes !== false
     );
   }
@@ -8581,14 +8590,14 @@ function resolveStructureFieldAccessCore(
           routines,
           symbols
         );
-        if (!computedField?.computedField?.valueType) {
+        if (!computedField) {
           return undefined;
         }
         computedFieldAccesses.push({
           reference: createTypeReference(source, fieldRange),
-          target: computedField
+          target: computedField.routine
         });
-        currentType = computedField.computedField.valueType;
+        currentType = computedField.valueType;
       } else {
         resolvedAccesses.push({
           reference: createTypeReference(source, fieldRange),
@@ -8637,7 +8646,7 @@ function resolveStructureFieldAccessCore(
         routines,
         symbols
       );
-      if (!computedField?.computedField?.valueType) {
+      if (!computedField) {
         const listElementType = resolveListSpecialField(
           source,
           currentType,
@@ -8653,9 +8662,9 @@ function resolveStructureFieldAccessCore(
       }
       computedFieldAccesses.push({
         reference: createTypeReference(source, fieldRange),
-        target: computedField
+        target: computedField.routine
       });
-      currentType = computedField.computedField.valueType;
+      currentType = computedField.valueType;
       continue;
     }
     resolvedAccesses.push({
@@ -8777,31 +8786,92 @@ function createSyntheticTypeReference(name: string, range: SourceRange): TypeRef
   };
 }
 
+function resolveRoutineCandidateTypes(
+  routine: RoutineDeclaration,
+  symbols: TypeSymbolTable
+): RoutineDeclaration {
+  const resolveParameters = (parameters: RoutineParameter[]) =>
+    parameters.map(parameter => {
+      const type = resolveRoutineParameterTypeReference(parameter, symbols);
+      return type ? { ...parameter, type } : parameter;
+    });
+  const parameters = resolveParameters(routine.parameters);
+  const computedField = routine.computedField
+    ? {
+      ...routine.computedField,
+      valueType: parameters[0]?.type ?? routine.computedField.valueType
+    }
+    : undefined;
+  return {
+    ...routine,
+    parameters,
+    alternateParameters: routine.alternateParameters.map(resolveParameters),
+    returnParameter: routine.returnParameter
+      ? resolveParameters([routine.returnParameter])[0]
+      : undefined,
+    computedField
+  };
+}
+
 function findComputedFieldRoutine(
   structureType: string,
   fieldName: string,
   routines: RoutineDeclaration[],
   symbols: TypeSymbolTable
-): RoutineDeclaration | undefined {
+): { routine: RoutineDeclaration; valueType: TypeReference } | undefined {
   const candidates = getComputedFieldRoutineIndex(routines).get(fieldName) ?? [];
-  return candidates
-    .filter(routine =>
-      routine.computedField &&
-      symbols.getBaseTypeDistance(
-        structureType,
-        routine.computedField.structureType.name
-      ) !== undefined
-    )
-    .sort((first, second) =>
-      (symbols.getBaseTypeDistance(
-        structureType,
-        first.computedField!.structureType.name
-      ) ?? Number.MAX_SAFE_INTEGER) -
-      (symbols.getBaseTypeDistance(
-        structureType,
-        second.computedField!.structureType.name
-      ) ?? Number.MAX_SAFE_INTEGER)
-    )[0];
+  let bestMatch:
+    | {
+      routine: RoutineDeclaration;
+      valueType: TypeReference;
+      typeDistance: number;
+    }
+    | undefined;
+  for (const routine of candidates) {
+    const computedField = routine.computedField;
+    if (!computedField) {
+      continue;
+    }
+    const typeDistance = symbols.getBaseTypeDistance(
+      structureType,
+      computedField.structureType.name
+    );
+    if (typeDistance === undefined) {
+      continue;
+    }
+    const valueType = computedField.valueType ??
+      resolveRoutineParameterTypeReference(routine.parameters[0], symbols);
+    if (
+      !valueType ||
+      bestMatch && typeDistance >= bestMatch.typeDistance
+    ) {
+      continue;
+    }
+    bestMatch = { routine, valueType, typeDistance };
+  }
+  return bestMatch
+    ? { routine: bestMatch.routine, valueType: bestMatch.valueType }
+    : undefined;
+}
+
+function resolveRoutineParameterTypeReference(
+  parameter: RoutineParameter | undefined,
+  symbols: TypeSymbolTable
+): TypeReference | undefined {
+  if (!parameter) {
+    return undefined;
+  }
+  const words = [...parameter.type.name.matchAll(/\S+/gu)];
+  for (let firstWord = 0; firstWord < words.length; firstWord++) {
+    const candidateName = words.slice(firstWord).map(word => word[0]).join(' ');
+    if (!symbols.lookup(candidateName)) {
+      continue;
+    }
+    return candidateName === parameter.type.name
+      ? parameter.type
+      : createSyntheticTypeReference(candidateName, parameter.type.range);
+  }
+  return undefined;
 }
 
 const computedFieldRoutineIndexes = new WeakMap<
