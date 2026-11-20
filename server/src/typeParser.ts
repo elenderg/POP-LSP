@@ -1613,7 +1613,7 @@ const articles = new Set([
 ]);
 const builtInStatementStarts = new Set([
   
-  'atribua', // atribua não é um built-in statement.
+  //'atribua', // atribua não é um built-in statement.
   
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere', 
@@ -1637,13 +1637,9 @@ const reservedStatementKeywordDisplayNames = new Map<string, string>([
 const routineNameDelimiters = new Set([
   'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
   'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
-  'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante',
-  , 'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parde', 'parecida', 'parecido',
-  'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão',
-  'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob',
-  'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada',
-  'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',
-  'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
+  'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante'
+  , 'em', 'enquanto', 'entre', 'então', 'menores', 'para',  'parecida', 'parecido',
+  'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão', 'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob', 'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada', 'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',  'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
   'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
   'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
   'limitando-o', 'igual', 'while', 'ultrapassou', 'usando',
@@ -3890,9 +3886,48 @@ function processRoutineStatementCore(
       }
     }
   }
+  const statementKind = statementKeyword?.value.toLocaleLowerCase('pt-BR');
+  if (statementKind === 'diga' || statementKind === 'retorne') {
+    caller.returnStatements.push({
+      kind: statementKind === 'diga' ? 'boolean-return' : 'return',
+      range: statement
+    });
+  }
+  if (validatePreserveStatement(source, statement, caller, diagnostics)) {
+    return false;
+  }
+  if (
+    statementKind === 'atribua' &&
+    findRoutineNameMatches(source, statement, routines).length > 0
+  ) {
+    const callDiagnosticStart = diagnostics.length;
+    const call = resolveRoutineCall(
+      source,
+      statement,
+      routines,
+      caller,
+      globalVariables,
+      symbols,
+      diagnostics,
+      undefined,
+      cacheRoutineArgumentTypes
+    );
+    if (call) {
+      if (activeRoutineResolutionProfileCounters) {
+        activeRoutineResolutionProfileCounters.callAttempts++;
+        activeRoutineResolutionProfileCounters.callsResolved++;
+      }
+      caller.calls.push(call);
+      if (call.localVariables) {
+        caller.localVariables.push(...call.localVariables);
+      }
+      return false;
+    }
+    diagnostics.length = callDiagnosticStart;
+  }
   if (
     statementKeyword &&
-    ['atribua', 'escreva'].includes(statementKeyword.value.toLocaleLowerCase('pt-BR'))
+    ['atribua', 'escreva'].includes(statementKind ?? '')
   ) {
     const destinationMarker =
       findWordOutsideStrings(source, statementKeyword.end, statement.end, 'para') ??
@@ -3908,16 +3943,6 @@ function processRoutineStatementCore(
         diagnostics
       );
     }
-  }//
-  const statementKind = statementKeyword?.value.toLocaleLowerCase('pt-BR');
-  if (statementKind === 'diga' || statementKind === 'retorne') {
-    caller.returnStatements.push({
-      kind: statementKind === 'diga' ? 'boolean-return' : 'return',
-      range: statement
-    });
-  }
-  if (validatePreserveStatement(source, statement, caller, diagnostics)) {
-    return false;
   }
   const assignment = parseRoutineAssignment(source, statement, diagnostics);
   if (assignment) {
@@ -10093,12 +10118,20 @@ function parseRoutineDeclarations(
         routineNameStart,
         headerEnd
       );
-      const firstParameterArticle = findAnyWord(
-        headerSyntaxSource,
-        routineNameStart,
-        signatureEnd,
-        indefiniteArticles
-      );
+      const firstParameterArticle: ReturnType<
+        typeof findAnyRoutineParameterArticle
+      > = computedField
+        ? findAnyWord(
+          headerSyntaxSource,
+          computedField.returnMarker.end,
+          signatureEnd,
+          indefiniteArticles
+        )
+        : findAnyRoutineParameterArticle(
+          headerSyntaxSource,
+          routineNameStart,
+          signatureEnd
+        );
       const parameterArticle = firstParameterArticle;
       const predicateMarker = isBooleanFunction
         ? findAnyWord(
@@ -10136,7 +10169,11 @@ function parseRoutineDeclarations(
         : undefined;
       const parameterStart = parameterArticle?.start;
       const nameEnd = Math.min(
-        parameterArticle?.start ?? headerEnd,
+        parameterArticle
+          ? parameterArticle.contractedPreposition
+            ? parameterArticle.end
+            : parameterArticle.start
+          : headerEnd,
         returningMarker?.start ?? headerEnd,
         qualifier?.start ?? headerEnd
       );
@@ -10156,6 +10193,18 @@ function parseRoutineDeclarations(
         headerPattern.lastIndex = headerEnd + 1;
         continue;
       }
+      const contractedParameterName = parameterArticle?.contractedPreposition &&
+        !computedField &&
+        !predicateMarker
+        ? `${headerSyntaxSource.slice(routineNameStart, parameterArticle.start).trim()} ${parameterArticle.contractedPreposition}`
+        : undefined;
+      const routineNameReference = contractedParameterName
+        ? {
+          ...createTypeReference(headerSyntaxSource, nameRange),
+          name: contractedParameterName,
+          normalizedName: normalizeRoutineName(contractedParameterName)
+        }
+        : createTypeReference(headerSyntaxSource, nameRange);
       for (const [reservedKeyword, displayName] of reservedStatementKeywordDisplayNames) {
         const reservedWord = findWord(headerSyntaxSource, nameRange.start, nameRange.end, reservedKeyword);
         if (!reservedWord) {
@@ -10212,7 +10261,7 @@ function parseRoutineDeclarations(
 
       headers.push({
         name: {
-          ...createTypeReference(headerSyntaxSource, nameRange),
+          ...routineNameReference,
           qualifier: qualifier?.text
         },
         qualifier: qualifier?.text,
@@ -10415,7 +10464,13 @@ function parseRoutineParameter(
 ): RoutineParameter | undefined {
     const parameterStart = skipWhitespace(source, start, end);
     const article = readWord(source, parameterStart, end);
-    if (!article || !indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
+    const articleWord = article?.value.toLocaleLowerCase('pt-BR');
+    if (
+      !article ||
+      !articleWord ||
+      !indefiniteArticles.has(articleWord) &&
+        !getContractedRoutineParameterArticle(articleWord)
+    ) {
       return undefined;
     }
 
@@ -10454,6 +10509,10 @@ function findRoutineParameterSeparator(
       const wordEnd = match.index + match[0].length;
       const word = match[0].toLocaleLowerCase('pt-BR');
       const isIndefiniteArticle = indefiniteArticles.has(word);
+      const contractedArticle = getContractedRoutineParameterArticle(word);
+      if (match.index === start && contractedArticle) {
+        continue;
+      }
       const nextWordStart = skipWhitespace(source, wordEnd, end);
       const nextWord = readWord(source, nextWordStart, end);
       const isDeNameEnder = word === 'de' &&
@@ -10485,11 +10544,15 @@ function findRoutineParameterSeparator(
         separator = { start: match.index, nextStart: match.index };
         break;
       }
+      if (contractedArticle && match.index > start) {
+        separator = { start: match.index, nextStart: match.index };
+        break;
+      }
       if (isDeNameEnder) {
         separator = { start: match.index, nextStart: nextWordStart };
         break;
       }
-      const nextParameter = findAnyWord(source, wordEnd, end, indefiniteArticles);
+      const nextParameter = findAnyRoutineParameterArticle(source, wordEnd, end);
       if (nextParameter) {
         separator = { start: match.index, nextStart: nextParameter.start };
         break;
@@ -10512,12 +10575,18 @@ function findTrailingRoutineNameSuffix(
   let match: RegExpExecArray | null;
   while ((match = words.exec(source)) && match.index < end) {
     const word = match[0].toLocaleLowerCase('pt-BR');
+    if (
+      match.index === start &&
+      getContractedRoutineParameterArticle(word)
+    ) {
+      continue;
+    }
     if (!routineNameDelimiters.has(word)) {
       continue;
     }
 
     const wordEnd = match.index + match[0].length;
-    const nextArticle = findAnyWord(source, wordEnd, end, indefiniteArticles);
+    const nextArticle = findAnyRoutineParameterArticle(source, wordEnd, end);
     if (!nextArticle) {
       return { start: match.index, end };
     }
@@ -11817,6 +11886,61 @@ function findAnyWord(
     }
   }
   return undefined;
+}
+
+function findAnyRoutineParameterArticle(
+  source: string,
+  start: number,
+  end: number
+): {
+  start: number;
+  end: number;
+  value: string;
+  contractedPreposition?: string;
+} | undefined {
+  const words = /\p{L}+/gu;
+  words.lastIndex = start;
+  let match: RegExpExecArray | null;
+  while ((match = words.exec(source)) && match.index < end) {
+    const wordEnd = match.index + match[0].length;
+    if (
+      isWordCharacter(match.index > start ? source[match.index - 1] : '') ||
+      isIdentifierJoiner(match.index > start ? source[match.index - 1] : '') ||
+      isWordCharacter(wordEnd < end ? source[wordEnd] : '') ||
+      isIdentifierJoiner(wordEnd < end ? source[wordEnd] : '')
+    ) {
+      continue;
+    }
+
+    const word = match[0].toLocaleLowerCase('pt-BR');
+    if (indefiniteArticles.has(word)) {
+      return { start: match.index, end: wordEnd, value: word };
+    }
+    const contractedArticle = getContractedRoutineParameterArticle(word);
+    if (contractedArticle) {
+      return {
+        start: match.index,
+        end: wordEnd,
+        value: contractedArticle.article,
+        contractedPreposition: contractedArticle.preposition
+      };
+    }
+  }
+  return undefined;
+}
+
+function getContractedRoutineParameterArticle(
+  word: string
+): { preposition: string; article: string } | undefined {
+  const expansion = routineContractions.get(word)?.split(' ');
+  if (
+    !expansion ||
+    expansion.length !== 2 ||
+    !indefiniteArticles.has(expansion[1])
+  ) {
+    return undefined;
+  }
+  return { preposition: expansion[0], article: expansion[1] };
 }
 
 function findFieldSeparator(

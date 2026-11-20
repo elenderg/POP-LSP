@@ -1702,6 +1702,45 @@ test('resolves workspace computed fields against the current type catalog', () =
   assert.deepEqual(incremental.diagnostics, []);
 });
 
+test('resolves explicit atribua routine calls before assignment syntax', () => {
+  const source = [
+    'Um par de números é uma estrutura.',
+    'Uma caixa é uma estrutura com',
+    '  Uma coordenada denominada coordenada X1,',
+    '  Uma coordenada denominada coordenada Y1,',
+    '  Uma coordenada denominada coordenada X2 e',
+    '  Uma coordenada denominada coordenada Y2.',
+    'Uma localização é um par de números com',
+    '  Uma coordenada denominada coordenada X e',
+    '  Uma coordenada denominada coordenada Y.',
+    'Uma coordenada é uns twips.',
+    'Um twip é um número.',
+    'Um número é uma estrutura.',
+    'para que se faça algo com uma coordenada e uma segunda coordenada para uma localização:',
+    '  retorne.',
+    'para que se foo o centro duma caixa e uma localização:',
+    '  faça algo com a coordenada x1 desta caixa e a coordenada x2 desta caixa para a localização.',
+    'Rotina para que se atribua uma coordenada e uma segunda coordenada para uma localização:',
+    '  retorne.',
+    'Rotina para que se atribua a linha de baixo duma caixa para uma localização:',
+    '  Atribua a coordenada X1 desta caixa e a coordenada Y2 desta caixa para a localização.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.name.startsWith('foo')
+  );
+  const computedField = parsed.routines.find(routine => routine.computedField);
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(caller?.name.normalizedName, 'foo o centro de');
+  assert.deepEqual(
+    caller?.parameters.map(parameter => parameter.type.normalizedName),
+    ['caixa', 'localização']
+  );
+  assert.equal(caller?.calls[0].target?.name.name, 'faça algo com');
+  assert.equal(computedField?.calls[0].target?.name.name, 'atribua');
+});
+
 test('resolves computed fields on a list when its plural is also a type name', () => {
   const types = parseTypeDeclarations([
     'Uma lista é uma estrutura.',
