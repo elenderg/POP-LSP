@@ -2317,7 +2317,7 @@ function processRoutineStatementCore(source, statement, caller, routines, global
         if (destinationMarker) {
             resolveFieldAccessRange(source, trimRange(source, statementKeyword.end, destinationMarker.start), caller, routines, globalVariables, symbols, diagnostics);
         }
-    }
+    } //
     const statementKind = statementKeyword?.value.toLocaleLowerCase('pt-BR');
     if (statementKind === 'diga' || statementKind === 'retorne') {
         caller.returnStatements.push({
@@ -6240,6 +6240,7 @@ function parseRoutineDeclarations(source, diagnostics) {
             },
             qualifier: qualifier?.text,
             parameters,
+            trailingNameSuffix: trailingRoutineNameSuffix,
             computedField: computedField
                 ? {
                     name: computedField.name,
@@ -6341,10 +6342,17 @@ function parseRoutineDeclarations(source, diagnostics) {
     return declarations;
 }
 function hasEquivalentRoutineSignature(source, alternate, primary) {
+    const alternateSuffix = alternate.trailingNameSuffix
+        ? source.slice(alternate.trailingNameSuffix.start, alternate.trailingNameSuffix.end)
+        : '';
+    const primarySuffix = primary.trailingNameSuffix
+        ? source.slice(primary.trailingNameSuffix.start, primary.trailingNameSuffix.end)
+        : '';
     return normalizeRoutineName(alternate.name.name) === normalizeRoutineName(primary.name.name) &&
         alternate.qualifier === primary.qualifier &&
         alternate.parameters.length === primary.parameters.length &&
         alternate.parameters.every((parameter, index) => parameter.type.normalizedName === primary.parameters[index].type.normalizedName) &&
+        normalizeRoutineName(alternateSuffix) === normalizeRoutineName(primarySuffix) &&
         areEquivalentRoutineParameterSeparators(getHeaderRoutineParameterSeparators(source, alternate.parameters), getHeaderRoutineParameterSeparators(source, primary.parameters));
 }
 function areEquivalentRoutineParameterSeparators(first, second) {

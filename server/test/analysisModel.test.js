@@ -547,6 +547,20 @@ test('marks only lexically and syntactically complete regions as reusable', () =
   assert.equal(incompleteRoutine.regions[0].complete, false);
 });
 
+test('keeps trailing predicate phrases significant in alternate routine headers', () => {
+  const parsed = parseTypeDeclarations([
+    'Um número é uma estrutura.',
+    'Rotina para que se arredonde um número para cima usando a potência imediata de dois;',
+    'Rotina para que se arredonde um número para cima usando a próxima potência de dois;',
+    'Rotina para que se arredonde um número para cima usando a potência de dois:',
+    '  Retorne.'
+  ].join('\n'));
+
+  assert.equal(parsed.diagnostics.filter(diagnostic =>
+    diagnostic.message.includes('semantically equivalent')
+  ).length, 0);
+});
+
 test('exposes declaration syntax before semantic resolution', () => {
   const source = [
     'Uma pessoa é um tipo ausente.',

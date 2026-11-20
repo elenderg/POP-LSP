@@ -9715,6 +9715,7 @@ interface ParsedRoutineHeader {
   name: TypeReference;
   qualifier?: string;
   parameters: RoutineParameter[];
+  trailingNameSuffix?: SourceRange;
   computedField?: RoutineComputedField;
   returnParameter?: RoutineParameter;
   annotation?: 'rotina' | 'função';
@@ -10077,6 +10078,7 @@ function parseRoutineDeclarations(
         },
         qualifier: qualifier?.text,
         parameters,
+        trailingNameSuffix: trailingRoutineNameSuffix,
         computedField: computedField
           ? {
             name: computedField.name,
@@ -10191,12 +10193,25 @@ function hasEquivalentRoutineSignature(
   alternate: ParsedRoutineHeader,
   primary: ParsedRoutineHeader
 ): boolean {
+  const alternateSuffix = alternate.trailingNameSuffix
+    ? source.slice(
+      alternate.trailingNameSuffix.start,
+      alternate.trailingNameSuffix.end
+    )
+    : '';
+  const primarySuffix = primary.trailingNameSuffix
+    ? source.slice(
+      primary.trailingNameSuffix.start,
+      primary.trailingNameSuffix.end
+    )
+    : '';
   return normalizeRoutineName(alternate.name.name) === normalizeRoutineName(primary.name.name) &&
     alternate.qualifier === primary.qualifier &&
     alternate.parameters.length === primary.parameters.length &&
     alternate.parameters.every((parameter, index) =>
       parameter.type.normalizedName === primary.parameters[index].type.normalizedName
     ) &&
+    normalizeRoutineName(alternateSuffix) === normalizeRoutineName(primarySuffix) &&
     areEquivalentRoutineParameterSeparators(
       getHeaderRoutineParameterSeparators(source, alternate.parameters),
       getHeaderRoutineParameterSeparators(source, primary.parameters)
