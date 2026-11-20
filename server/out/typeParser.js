@@ -752,7 +752,7 @@ const articles = new Set([
     ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
-    //'atribua', // atribua não é um built-in statement.
+    'atribua', // atribua não é um built-in statement.
     'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
     'processe', 'itere', 'pare', 'reitere',
     'aloque', 'desaloque', 'aponte', 'direcione', 'redirecione'
@@ -3974,12 +3974,20 @@ function resolveRoutineCallCore(source, statementRange, routines, caller, global
             if (typeCast) {
                 typeReferences.push(typeCast.type);
             }
+            const typeMagnitude = localVariable
+                ? undefined
+                : resolveTypeMagnitudeArgument(source, argumentsList[index], symbols);
+            if (typeMagnitude) {
+                typeReferences.push(typeMagnitude.operandType);
+            }
             const scalarArgumentType = localVariable
                 ? undefined
                 : resolveScalarRoutineArgumentType(source, argumentsList[index], parameter.type, symbols);
             const argumentType = localVariable
                 ? localVariable.type
-                : scalarArgumentType ?? resolveRoutineArgumentTypeWithCache(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd) || implicitDefiniteArticle === true, diagnostics, argumentTypeResolutionCache);
+                : scalarArgumentType ??
+                    typeMagnitude?.valueType ??
+                    resolveRoutineArgumentTypeWithCache(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd) || implicitDefiniteArticle === true, diagnostics, argumentTypeResolutionCache);
             if (candidateProfile) {
                 argumentTypeResolutionMs +=
                     node_perf_hooks_1.performance.now() - argumentTypeStartedAt;
@@ -5002,6 +5010,10 @@ function resolveRoutineArgumentTypeCore(source, argument, caller, globalVariable
         const originalType = resolveRoutineArgumentType(source, cast.valueRange, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle, diagnostics);
         return originalType ? cast.type : undefined;
     }
+    const typeMagnitude = resolveTypeMagnitudeArgument(source, argument, symbols);
+    if (typeMagnitude) {
+        return typeMagnitude.valueType;
+    }
     const fieldAccessType = resolveStructureFieldAccess(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, implicitDefiniteArticle, diagnostics);
     if (fieldAccessType) {
         return fieldAccessType;
@@ -5071,6 +5083,44 @@ function resolveIndefiniteTypeArgument(source, argument, symbols) {
     return type
         ? createSyntheticTypeReference(type.name, typeRange)
         : undefined;
+}
+function resolveTypeMagnitudeArgument(source, argument, symbols) {
+    const firstWord = readWord(source, argument.start, argument.end);
+    const operatorStart = firstWord &&
+        definiteArticles.has(firstWord.value.toLocaleLowerCase('pt-BR'))
+        ? firstWord.end
+        : argument.start;
+    const operator = readWord(source, operatorStart, argument.end);
+    if (operator?.value.toLocaleLowerCase('pt-BR') !== 'magnitude') {
+        return undefined;
+    }
+    const separator = readWord(source, skipWhitespace(source, operator.end, argument.end), argument.end);
+    if (!separator) {
+        return undefined;
+    }
+    const separatorName = separator.value.toLocaleLowerCase('pt-BR');
+    let typeStart;
+    if (getRoutineContractionFirstWord(separatorName) === 'de') {
+        typeStart = separator.end;
+    }
+    else if (separatorName === 'de') {
+        const article = readWord(source, separator.end, argument.end);
+        typeStart = article &&
+            articles.has(article.value.toLocaleLowerCase('pt-BR'))
+            ? article.end
+            : separator.end;
+    }
+    else {
+        return undefined;
+    }
+    const typeRange = trimRange(source, typeStart, argument.end);
+    const type = symbols.lookup(source.slice(typeRange.start, typeRange.end));
+    if (!type) {
+        return undefined;
+    }
+    const operandType = createTypeReference(source, typeRange);
+    const valueType = resolveTypeOperator('magnitude', operandType, symbols);
+    return valueType ? { operandType, valueType } : undefined;
 }
 function resolveScalarRoutineArgumentType(source, argument, expectedType, symbols) {
     const expectedSymbol = symbols.lookup(expectedType.name);

@@ -867,6 +867,27 @@ test('resolves selected routine regions equivalently to the full routine pass', 
   ));
 });
 
+test('resolves a type magnitude used as a routine argument', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Rotina para que se adicione um número denominado parcela para um número denominado total:',
+    '  Retorne.',
+    'Rotina para que se faça algo com um número:',
+    '  Adicione a magnitude dum byte para o número.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine => routine.calls.length > 0);
+  const call = caller?.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call?.target?.name.name, 'adicione');
+  assert.equal(call?.arguments[0].name, 'a magnitude dum byte');
+  assert.deepEqual(
+    call?.typeReferences?.map(reference => reference.name),
+    ['byte']
+  );
+});
+
 test('caches repeated overload argument analysis without changing resolution', () => {
   const source = [
     'Um número é um byte.',

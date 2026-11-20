@@ -1613,7 +1613,7 @@ const articles = new Set([
 ]);
 const builtInStatementStarts = new Set([
   
-  //'atribua', // atribua não é um built-in statement.
+  'atribua', // atribua não é um built-in statement.
   
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere', 
@@ -6462,6 +6462,16 @@ function resolveRoutineCallCore(
       if (typeCast) {
         typeReferences.push(typeCast.type);
       }
+      const typeMagnitude = localVariable
+        ? undefined
+        : resolveTypeMagnitudeArgument(
+          source,
+          argumentsList[index],
+          symbols
+        );
+      if (typeMagnitude) {
+        typeReferences.push(typeMagnitude.operandType);
+      }
       const scalarArgumentType = localVariable
         ? undefined
         : resolveScalarRoutineArgumentType(
@@ -6472,24 +6482,26 @@ function resolveRoutineCallCore(
         );
       const argumentType = localVariable
         ? localVariable.type
-        : scalarArgumentType ?? resolveRoutineArgumentTypeWithCache(
-          source,
-          argumentsList[index],
-          caller,
-          globalVariables,
-          symbols,
-          fieldAccesses,
-          routines,
-          computedFieldAccesses,
-          variableAccesses,
-          hasContractedDefiniteArticleBefore(
+        : scalarArgumentType ??
+          typeMagnitude?.valueType ??
+          resolveRoutineArgumentTypeWithCache(
             source,
-            argumentsList[index].start,
-            nameEnd
-          ) || implicitDefiniteArticle === true,
-          diagnostics,
-          argumentTypeResolutionCache
-        );
+            argumentsList[index],
+            caller,
+            globalVariables,
+            symbols,
+            fieldAccesses,
+            routines,
+            computedFieldAccesses,
+            variableAccesses,
+            hasContractedDefiniteArticleBefore(
+              source,
+              argumentsList[index].start,
+              nameEnd
+            ) || implicitDefiniteArticle === true,
+            diagnostics,
+            argumentTypeResolutionCache
+          );
       if (candidateProfile) {
         argumentTypeResolutionMs +=
           performance.now() - argumentTypeStartedAt;
@@ -8162,6 +8174,15 @@ function resolveRoutineArgumentTypeCore(
     return originalType ? cast.type : undefined;
   }
 
+  const typeMagnitude = resolveTypeMagnitudeArgument(
+    source,
+    argument,
+    symbols
+  );
+  if (typeMagnitude) {
+    return typeMagnitude.valueType;
+  }
+
   const fieldAccessType = resolveStructureFieldAccess(
     source,
     argument,
@@ -8264,6 +8285,54 @@ function resolveIndefiniteTypeArgument(
   return type
     ? createSyntheticTypeReference(type.name, typeRange)
     : undefined;
+}
+
+function resolveTypeMagnitudeArgument(
+  source: string,
+  argument: SourceRange,
+  symbols: TypeSymbolTable
+): { operandType: TypeReference; valueType: TypeReference } | undefined {
+  const firstWord = readWord(source, argument.start, argument.end);
+  const operatorStart = firstWord &&
+    definiteArticles.has(firstWord.value.toLocaleLowerCase('pt-BR'))
+    ? firstWord.end
+    : argument.start;
+  const operator = readWord(source, operatorStart, argument.end);
+  if (operator?.value.toLocaleLowerCase('pt-BR') !== 'magnitude') {
+    return undefined;
+  }
+
+  const separator = readWord(
+    source,
+    skipWhitespace(source, operator.end, argument.end),
+    argument.end
+  );
+  if (!separator) {
+    return undefined;
+  }
+  const separatorName = separator.value.toLocaleLowerCase('pt-BR');
+  let typeStart: number;
+  if (getRoutineContractionFirstWord(separatorName) === 'de') {
+    typeStart = separator.end;
+  } else if (separatorName === 'de') {
+    const article = readWord(source, separator.end, argument.end);
+    typeStart = article &&
+      articles.has(article.value.toLocaleLowerCase('pt-BR'))
+      ? article.end
+      : separator.end;
+  } else {
+    return undefined;
+  }
+
+  const typeRange = trimRange(source, typeStart, argument.end);
+  const type = symbols.lookup(source.slice(typeRange.start, typeRange.end));
+  if (!type) {
+    return undefined;
+  }
+
+  const operandType = createTypeReference(source, typeRange);
+  const valueType = resolveTypeOperator('magnitude', operandType, symbols);
+  return valueType ? { operandType, valueType } : undefined;
 }
 
 function resolveScalarRoutineArgumentType(
