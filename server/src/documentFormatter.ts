@@ -16,7 +16,8 @@ interface Edit {
 
 interface Statement {
   range: SourceRange;
-  delimiter: '.' | ';';
+  delimiter?: '.' | ';';
+  comment?: boolean;
 }
 
 interface WordToken {
@@ -73,6 +74,40 @@ export function formatDocument(
       text: formatRoutineBody(source, masked, routine, eol)
     });
   }
+  const topLevelBlocks = [
+    ...parsed.declarations
+      .filter(declaration => declaration.fields?.length)
+      .map(declaration => ({
+        start: declaration.range.start,
+        end: declaration.range.end,
+        kind: 'fields' as const
+      })),
+    ...parsed.globalVariables
+      .filter(declaration => declaration.fields?.length)
+      .map(declaration => ({
+        start: declaration.range.start,
+        end: declaration.range.end,
+        kind: 'fields' as const
+      })),
+    ...parsed.routines.map(routine => ({
+      start: routine.range.start,
+      kind: 'routine' as const
+    }))
+  ].sort((first, second) => first.start - second.start);
+  for (let index = 0; index < topLevelBlocks.length - 1; index++) {
+    const block = topLevelBlocks[index];
+    const nextBlock = topLevelBlocks[index + 1];
+    if (block.kind !== 'fields' || nextBlock.start < block.end) {
+      continue;
+    }
+    const gap = source.slice(block.end, nextBlock.start);
+    if (/^\s*$/u.test(gap)) {
+      edits.push({
+        range: { start: block.end, end: nextBlock.start },
+        text: `${eol}${eol}`
+      });
+    }
+  }
 
   let formatted = source;
   for (const edit of edits.sort((first, second) => second.range.start - first.range.start)) {
@@ -117,9 +152,9 @@ function findFieldSeparatorText(gap: string): string {
     separatorStart = comma;
     separatorEnd = comma + 1;
   } else {
-    const conjunction = /\be\b/iu.exec(masked);
+    const conjunction = /\b(e|ou)\b/iu.exec(masked);
     if (conjunction) {
-      separator = ' e';
+      separator = ` ${conjunction[1].toLocaleLowerCase('pt-BR')}`;
       separatorStart = conjunction.index;
       separatorEnd = conjunction.index + conjunction[0].length;
     }
@@ -139,26 +174,33 @@ function formatRoutineBody(
   const range = routine.bodyRange;
   const statements: string[] = [];
   let cursor = range.start;
-  let loopDepth = 1;
+  let hasSeenStatement = false;
+  const hasImplicitLoop = routine.loopBlocks.some(loop =>
+    loop.kind === 'implicit'
+  );
+  let loopDepth = hasImplicitLoop ? 2 : 1;
   const endedWithNewline = source.slice(range.start, range.end).endsWith('\n') ||
     source.slice(range.start, range.end).endsWith('\r');
 
   while (cursor < range.end) {
-    cursor = skipWhitespace(masked, cursor, range.end);
+    cursor = skipWhitespace(source, cursor, range.end);
     if (cursor >= range.end) {
       break;
     }
     const leadingComment = readComment(source, masked, cursor, range.end);
     if (leadingComment) {
+      const commentIndent = hasImplicitLoop && !hasSeenStatement
+        ? loopDepth - 1
+        : loopDepth;
       statements.push(
-        ...leadingComment.text.split(/\r?\n/u).map(line => `${spaces(loopDepth)}${line}`)
+        ...leadingComment.text.split(/\r?\n/u).map(line => `${spaces(commentIndent)}${line}`)
       );
       cursor = leadingComment.end;
       continue;
     }
     const conditional = routine.conditionals.find(block =>
       block.range.start >= cursor &&
-      block.range.start === skipWhitespace(masked, block.range.start, range.end)
+      block.range.start === skipWhitespace(source, cursor, range.end)
     );
     if (conditional && conditional.range.end <= range.end) {
       const comma = findConditionalComma(masked, conditional.range);
@@ -166,36 +208,55 @@ function formatRoutineBody(
         const baseIndent = Math.max(0, loopDepth);
         const conditionText = source.slice(conditional.range.start, comma).trim();
         statements.push(`${spaces(baseIndent)}${conditionText},`);
+        hasSeenStatement = true;
         const bodyRange = {
           start: comma + 1,
           end: conditional.range.end - 1
         };
-        const children = splitStatements(masked, bodyRange);
+        const children = splitStatements(source, masked, bodyRange);
         for (let index = 0; index < children.length; index++) {
           const child = children[index];
+          if (child.comment) {
+            const commentText = source.slice(child.range.start, child.range.end).trim();
+            statements.push(
+              ...commentText.split(/\r?\n/u).map(line => `${spaces(baseIndent + 1)}${replaceIndentTabs(line)}`)
+            );
+            continue;
+          }
           let raw = source.slice(child.range.start, child.range.end);
           if (index === children.length - 1 && child.delimiter === '.') {
             raw = `${raw.trimEnd()}.`;
           }
           const text = raw.trim();
           const firstWord = firstWordToken(masked, child.range);
-          let childIndent = baseIndent + 1;
-          if (firstWord === 'reitere') {
-            loopDepth = Math.max(0, loopDepth - 1);
-            childIndent = Math.max(0, loopDepth);
-          }
-          statements.push(...formatStatement(
+          const childIndent = baseIndent + 1;
+          const formattedStatement = formatStatement(
             raw,
             text,
             childIndent,
             child.range.start,
             getStatementSyntax(routine, child.range, masked)
-          ));
+          );
+          if (formattedStatement.length > 0) {
+            formattedStatement[0] = capitalizeStatementStart(formattedStatement[0]);
+          }
+          statements.push(...formattedStatement);
           if (firstWord === 'itere') {
             loopDepth++;
           }
         }
-        cursor = conditional.range.end;
+        const trailingComment = readTrailingComment(
+          source,
+          masked,
+          conditional.range.end,
+          range.end
+        );
+        if (trailingComment && statements.length > 0) {
+          statements[statements.length - 1] += ` ${trailingComment.text}`;
+          cursor = trailingComment.end;
+        } else {
+          cursor = conditional.range.end;
+        }
         continue;
       }
     }
@@ -205,6 +266,7 @@ function formatRoutineBody(
       const remainder = source.slice(cursor, range.end).trim();
       if (remainder) {
         statements.push(`${spaces(loopDepth)}${remainder}`);
+        hasSeenStatement = true;
       }
       break;
     }
@@ -227,6 +289,7 @@ function formatRoutineBody(
       formattedStatement[formattedStatement.length - 1] += ` ${trailingComment.text}`;
     }
     statements.push(...formattedStatement);
+    hasSeenStatement = true;
     if (firstWord === 'itere') {
       loopDepth++;
     }
@@ -234,17 +297,37 @@ function formatRoutineBody(
   }
 
   if (statements.length === 0) {
+    if (range.end < source.length) {
+      return eol + eol;
+    }
     return endedWithNewline ? eol : '';
   }
   const result = eol + statements.join(eol);
+  if (range.end < source.length) {
+    return result + eol + eol;
+  }
   return endedWithNewline ? result + eol : result;
 }
 
-function splitStatements(source: string, range: SourceRange): Statement[] {
+function splitStatements(
+  source: string,
+  masked: string,
+  range: SourceRange
+): Statement[] {
   const statements: Statement[] = [];
   let start = skipWhitespace(source, range.start, range.end);
   while (start < range.end) {
-    const statement = nextStatement(source, start, range.end);
+    const comment = readComment(source, masked, start, range.end);
+    if (comment) {
+      statements.push({
+        range: { start, end: comment.end },
+        comment: true
+      });
+      start = skipWhitespace(source, comment.end, range.end);
+      continue;
+    }
+
+    const statement = nextStatement(masked, start, range.end);
     if (!statement) {
       const finalRange = trimRange(source, start, range.end);
       if (finalRange.start < finalRange.end) {
@@ -252,8 +335,22 @@ function splitStatements(source: string, range: SourceRange): Statement[] {
       }
       break;
     }
-    statements.push(statement);
-    start = skipWhitespace(source, statement.range.end, range.end);
+    const trailingComment = readTrailingComment(
+      source,
+      masked,
+      statement.range.end,
+      range.end
+    );
+    if (trailingComment) {
+      statements.push({
+        range: { start: statement.range.start, end: trailingComment.end },
+        delimiter: statement.delimiter
+      });
+      start = skipWhitespace(source, trailingComment.end, range.end);
+    } else {
+      statements.push(statement);
+      start = skipWhitespace(source, statement.range.end, range.end);
+    }
   }
   return statements;
 }
@@ -374,16 +471,6 @@ function formatStatement(
     if (returningToken && syntax.returning === undefined) {
       syntax.returning = textOffset + returningToken.start;
     }
-    const withIndex = tokens.findIndex(token => token.text === 'com');
-    const returningIndex = tokens.findIndex(token => token.text === 'retornando');
-    if (withIndex !== -1) {
-      const endIndex = returningIndex === -1 ? tokens.length : returningIndex;
-      for (let index = withIndex + 1; index < endIndex - 1; index++) {
-        if (tokens[index].text === 'e') {
-          syntax.breaks.push(textOffset + tokens[index + 1].start);
-        }
-      }
-    }
   }
   if (syntax.returning !== undefined) {
     const returningStart = syntax.returning - textOffset;
@@ -398,7 +485,7 @@ function formatStatement(
         textOffset
       )
       : [];
-    lines.push(`${spaces(indent)}retornando`);
+    lines.push(`${spaces(indent)}Retornando`);
     if (after) {
       lines.push(...wrapExpression(
         after,
@@ -408,12 +495,80 @@ function formatStatement(
           trimmed.slice(returningEnd).trimStart().length)
       ));
     }
-    return lines;
+    return moveLeadingConjunctions(lines);
   }
   if (containsComment(raw)) {
-    return [spaces(indent) + replaceIndentTabs(trimmed)];
+    const lines = [spaces(indent) + replaceIndentTabs(trimmed)];
+    return moveLeadingConjunctions(lines);
   }
-  return wrapExpression(trimmed, indent, syntax.breaks, textOffset);
+  const lines = wrapExpression(trimmed, indent, syntax.breaks, textOffset);
+  return moveLeadingConjunctions(lines);
+}
+
+function moveLeadingConjunctions(lines: string[]): string[] {
+  const result: string[] = [];
+  for (const line of lines.flatMap(value => value.split(/\r?\n/u))) {
+    const conjunction = /^(\s*)e(?=\s|$)/iu.exec(line);
+    if (!conjunction) {
+      result.push(line);
+      continue;
+    }
+
+    let previousIndex = result.length - 1;
+    while (previousIndex >= 0 && !result[previousIndex].trim()) {
+      previousIndex--;
+    }
+    if (
+      previousIndex < 0 ||
+      /^[\s\\[]/u.test(result[previousIndex].trimStart())
+    ) {
+      result.push(line);
+      continue;
+    }
+
+    const previousLine = result[previousIndex];
+    const lineCommentStart = findLineCommentStart(previousLine);
+    const previousCode = (lineCommentStart === -1
+      ? previousLine
+      : previousLine.slice(0, lineCommentStart)
+    ).trimEnd();
+    const lineComment = lineCommentStart === -1
+      ? ''
+      : ` ${previousLine.slice(lineCommentStart).trimStart()}`;
+    result[previousIndex] = `${previousCode} e${lineComment}`;
+    const argument = line.slice(conjunction[0].length).trimStart();
+    if (argument) {
+      result.push(`${conjunction[1]}${argument}`);
+    }
+  }
+  return result;
+}
+
+function findLineCommentStart(line: string): number {
+  let inString = false;
+  for (let index = 0; index < line.length; index++) {
+    const character = line[index];
+    if (inString) {
+      if (character === '"' && line[index + 1] === '"') {
+        index++;
+      } else if (character === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (character === '"') {
+      inString = true;
+    } else if (character === '[') {
+      const commentEnd = line.indexOf(']', index + 1);
+      if (commentEnd === -1) {
+        return -1;
+      }
+      index = commentEnd;
+    } else if (character === '\\') {
+      return index;
+    }
+  }
+  return -1;
 }
 
 function wrapExpression(
@@ -440,6 +595,17 @@ function wrapExpression(
     lines.push(`${spaces(start === 0 ? indent : indent + 1)}${finalSegment}`);
   }
   return lines.length ? lines : [`${spaces(indent)}${replaceIndentTabs(text)}`];
+}
+
+function capitalizeStatementStart(line: string): string {
+  const token = wordTokens(maskProtectedText(line))[0];
+  if (!token || token.text === 'e' || token.text === 'ou') {
+    return line;
+  }
+  const character = Array.from(line.slice(token.start))[0];
+  return line.slice(0, token.start) +
+    character.toLocaleUpperCase('pt-BR') +
+    line.slice(token.start + character.length);
 }
 
 function firstWordToken(source: string, range: SourceRange): string | undefined {
@@ -538,6 +704,9 @@ function addArgumentBreaks(
   masked: string,
   breaks: number[]
 ): void {
+  if (argumentsList.length > 1) {
+    breaks.push(argumentsList[0].range.start);
+  }
   for (let index = 0; index < argumentsList.length - 1; index++) {
     const first = argumentsList[index];
     const next = argumentsList[index + 1];
@@ -579,6 +748,7 @@ function maskProtectedText(source: string): string {
     const next = source[index + 1];
     if (inBlockComment) {
       if (character === ']') {
+        characters[index] = ' ';
         inBlockComment = false;
       } else if (character !== '\n' && character !== '\r') {
         characters[index] = ' ';

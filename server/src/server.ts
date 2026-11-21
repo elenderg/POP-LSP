@@ -1840,8 +1840,8 @@ connection.onHover(params => profileRequest('hover', async requestId => {
       const routine = owner?.routineDeclaration;
       if (routine) {
         const routineKind = routine.annotation === 'função'
-          ? 'Função'
-          : 'Rotina';
+          ? 'Função para que se'
+          : 'Rotina para que se';
         const parameters = routine.parameters.map(parameter =>
           `${parameter.type.name} ${parameter.name.name}`
         );

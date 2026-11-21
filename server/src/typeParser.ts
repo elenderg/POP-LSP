@@ -1613,7 +1613,7 @@ const articles = new Set([
 ]);
 const builtInStatementStarts = new Set([
   
-  //'atribua', // atribua não é um built-in statement.
+  'atribua', // atribua não é um built-in statement.
   
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere', 
@@ -11968,7 +11968,7 @@ function findFieldSeparator(
   while ((match = words.exec(source)) && match.index < end) {
     const wordEnd = match.index + match[0].length;
     if (
-      match[0].toLocaleLowerCase('pt-BR') !== 'e' ||
+      !['e', 'ou'].includes(match[0].toLocaleLowerCase('pt-BR')) ||
       isWordCharacter(match.index > start ? source[match.index - 1] : '') ||
       isWordCharacter(wordEnd < end ? source[wordEnd] : '')
     ) {
