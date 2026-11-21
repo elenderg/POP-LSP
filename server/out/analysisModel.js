@@ -966,8 +966,9 @@ function addExpressionNodes(parent, expression, referenceIndex, addNode) {
                 if (reference.range.end > current.expression.range.end) {
                     continue;
                 }
-                if (reference.range.start < cursor)
+                if (reference.range.start < cursor) {
                     continue;
+                }
                 if (cursor < reference.range.start) {
                     parts.push({
                         kind: 'text',
@@ -1363,8 +1364,7 @@ function getDocumentAnalysis(parsed, sourceLength = getDocumentSourceEnd(parsed)
         const structuralContainerIds = new Set(structuralContainers.map(container => container.node.id));
         const structuralChildIndexes = new Map();
         const structuralNodes = [routineBodyNode];
-        for (let position = 0; position < structuralNodes.length; position++) {
-            const parent = structuralNodes[position];
+        for (const parent of structuralNodes) {
             const children = parent.childIds
                 .map(childId => nodes.get(childId))
                 .filter(child => child.kind === 'conditional' ||

@@ -39,8 +39,10 @@ suite('Português Puro document formatting', () => {
       'Uma string é uma estrutura com',
       '  um caractere inicial e',
       '  um caractere final.',
+      '',
       'Uma caixa é uma estrutura com',
       '  um byte.',
+      '',
       'Rotina para que se exemplifique:',
       '  Se válido,',
       '    Faça y;',
@@ -89,10 +91,11 @@ suite('Português Puro document formatting', () => {
       'A variável Y é um byte.',
       'A variável Z é um byte.',
       'Rotina para que se exemplifique:',
-      '  Processe "NomeBiblioteca" "NomeDaFunção" com a variável X e',
+      '  Processe "NomeBiblioteca" "NomeDaFunção" com',
+      '    a variável X e',
       '    a variável Y e',
       '    a variável Z',
-      '  retornando',
+      '  Retornando',
       '    um byte denominado resultado. [Comentário e mais]',
       '  Escreva "mais e menos vezes junto com retornando".'
     ].join('\n'));
@@ -114,6 +117,7 @@ suite('Português Puro document formatting', () => {
       'Uma caixa é uma estrutura com',
       '  Um byte denominado primeiro,',
       '  Um byte denominado segundo.',
+      '',
       'Rotina para que se faça algo:',
       '  Retorne.'
     ].join('\n'));

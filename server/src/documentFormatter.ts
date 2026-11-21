@@ -631,14 +631,14 @@ function getStatementSyntax(
   }
   for (const call of routine.calls) {
     if (isWithin(call.name.range.start, statement)) {
-      addArgumentBreaks(call.arguments, masked, breaks);
+      addArgumentBreaks(call.arguments, breaks);
     }
   }
   for (const process of routine.processes) {
     if (!containsRange(statement, process.range)) {
       continue;
     }
-    addArgumentBreaks(process.arguments, masked, breaks);
+    addArgumentBreaks(process.arguments, breaks);
     if (process.returnVariable) {
       returning = wordTokens(masked.slice(process.range.start, process.range.end))
         .find(token => token.text === 'retornando')
@@ -701,19 +701,14 @@ function findOperator(
 
 function addArgumentBreaks(
   argumentsList: { range: SourceRange }[],
-  masked: string,
   breaks: number[]
 ): void {
   if (argumentsList.length > 1) {
     breaks.push(argumentsList[0].range.start);
   }
   for (let index = 0; index < argumentsList.length - 1; index++) {
-    const first = argumentsList[index];
     const next = argumentsList[index + 1];
-    const gapTokens = wordTokens(masked.slice(first.range.end, next.range.start));
-    if (gapTokens.some(token => token.text === 'e')) {
-      breaks.push(next.range.start);
-    }
+    breaks.push(next.range.start);
   }
 }
 

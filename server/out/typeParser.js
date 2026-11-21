@@ -3223,10 +3223,11 @@ function validateMemoryAllocationStatement(source, statement, routine, globalVar
 }
 function validateMemoryDeallocationStatement(source, statement, routine, routines, globalVariables, symbols) {
     const keyword = readWord(source, statement.start, statement.end);
-    if (keyword?.value.toLocaleLowerCase('pt-BR') !== 'destrua') {
+    const keywordName = keyword?.value.toLocaleLowerCase('pt-BR');
+    if (keywordName !== 'destrua' && keywordName !== 'desaloque') {
         return false;
     }
-    if (keyword?.value.toLocaleLowerCase('pt-BR') !== 'desaloque') {
+    if (!keyword) {
         return false;
     }
     const targetRange = trimRange(source, keyword.end, statement.end);
@@ -5342,8 +5343,10 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
                 break;
             }
             visitedPointerTypes.add(normalizedTypeName);
-            field = findStructureField(lookupType.name, fieldName, symbols);
-            if (field) {
+            const directField = findStructureField(lookupType.name, fieldName, symbols);
+            if (directField) {
+                nestedFields = findNestedStructureFields(lookupType.name, fieldName, symbols);
+                field = directField;
                 break;
             }
             nestedFields = findNestedStructureFields(lookupType.name, fieldName, symbols);

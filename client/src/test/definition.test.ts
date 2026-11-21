@@ -112,7 +112,7 @@ suite('Português Puro definitions', () => {
     const routineHoverText = routineHover?.[0]?.contents.map(content =>
       typeof content === 'string' ? content : content.value
     ).join('\n') ?? '';
-    assert.match(routineHoverText, /Rotina centralize/u);
+    assert.match(routineHoverText, /Rotina para que se centralize/u);
     assert.match(routineHoverText, /caixa caixa/u);
 
     const localHover = await vscode.commands.executeCommand<vscode.Hover[]>(
@@ -1957,7 +1957,7 @@ suite('Português Puro definitions', () => {
       'para que se Baz;',
       'para que se Bar;',
       'para que se Foo:',
-      '  alguma instrução.'
+      '  Retorne.'
     ].join('\n'));
     await diagnosticsUpdated;
 

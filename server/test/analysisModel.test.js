@@ -1163,6 +1163,31 @@ test('replays cached undefined inference and ambiguous-field diagnostics once', 
   assert.equal(ambiguityDiagnostics.length, 1);
 });
 
+test('reports ambiguity between direct and nested structure fields', () => {
+  const source = [
+    'Uma string é uma estrutura.',
+    'Uma pessoa é uma estrutura com',
+    '  Uma string denominada nome e',
+    '  Um pai.',
+    'Um pai é uma estrutura com',
+    '  Uma string denominada nome.',
+    'O cliente é uma pessoa.',
+    'para que se faça algo:',
+    '  Atribua "joão" para o nome deste cliente.',
+    'para que se atribua uma string para uma segunda string: retorne.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+
+  assert.deepEqual(
+    parsed.diagnostics
+      .filter(diagnostic =>
+        diagnostic.message.startsWith('Ambiguous structure field access')
+      )
+      .map(diagnostic => diagnostic.message),
+    ['Ambiguous structure field access "nome".']
+  );
+});
+
 test('reuses unchanged declaration syntax and rebases all source ranges', () => {
   const source = [
     'Um caractere é um byte.',

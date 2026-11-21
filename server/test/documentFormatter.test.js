@@ -79,6 +79,22 @@ test('capitalizes conditional statements and wraps argument lists before the fir
   assert.equal(formatDocument(formatted), formatted);
 });
 
+test('wraps arguments separated by a routine preposition', () => {
+  const source = [
+    'Rotina para que se mova uma linha reta para a direita uns twips:',
+    '  Mova a linha reta usando os twips e 0.'
+  ].join('\r\n');
+
+  const formatted = formatDocument(source);
+  assert.ok(formatted.includes([
+    '  Mova',
+    '    a linha reta usando',
+    '    os twips e',
+    '    0.'
+  ].join('\r\n')), formatted);
+  assert.equal(formatDocument(formatted), formatted);
+});
+
 test('preserves block comments after statements inside conditionals', () => {
   const source = [
     'Rotina para que se desmanche algumas mensagens:',

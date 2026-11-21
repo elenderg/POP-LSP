@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
 const path = require("path");
+//import { tmpdir } from 'node:os';
 const vscode_1 = require("vscode");
 const node_1 = require("vscode-languageclient/node");
 const windows1252_1 = require("./windows1252");

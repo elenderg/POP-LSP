@@ -65,7 +65,7 @@ suite('Português Puro definitions', () => {
         assert.match(document.getText(implementationResults[0].range), /Retorne\./u);
         const routineHover = await vscode.commands.executeCommand('vscode.executeHoverProvider', docUri, document.positionAt(document.getText().indexOf('centralize') + 1));
         const routineHoverText = routineHover?.[0]?.contents.map(content => typeof content === 'string' ? content : content.value).join('\n') ?? '';
-        assert.match(routineHoverText, /Rotina centralize/u);
+        assert.match(routineHoverText, /Rotina para que se centralize/u);
         assert.match(routineHoverText, /caixa caixa/u);
         const localHover = await vscode.commands.executeCommand('vscode.executeHoverProvider', docUri, document.positionAt(document.getText().indexOf('total') + 1));
         const localHoverText = localHover?.[0]?.contents.map(content => typeof content === 'string' ? content : content.value).join('\n') ?? '';
@@ -1365,7 +1365,7 @@ suite('Português Puro definitions', () => {
             'para que se Baz;',
             'para que se Bar;',
             'para que se Foo:',
-            '  alguma instrução.'
+            '  Retorne.'
         ].join('\n'));
         await diagnosticsUpdated;
         assert.deepEqual(vscode.languages.getDiagnostics(docUri), []);
@@ -2676,7 +2676,7 @@ suite('Português Puro definitions', () => {
         assert.deepEqual(await updateContent(lines), []);
         let document = await vscode.workspace.openTextDocument(docUri);
         let text = document.getText();
-        let callOffset = text.indexOf('Faça a folha') + 1;
+        const callOffset = text.indexOf('Faça a folha') + 1;
         let definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', docUri, document.positionAt(callOffset));
         assert.ok(definition);
         assert.equal(definition.length, 1);
