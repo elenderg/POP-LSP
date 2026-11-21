@@ -1,12 +1,14 @@
+
 /**
  * ESLint configuration for the project.
- * 
+ *
  * See https://eslint.style and https://typescript-eslint.io for additional linting options.
  */
 // @ts-check
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import stylistic from '@stylistic/eslint-plugin';
+import globals from 'globals';
 
 export default tseslint.config(
 	{
@@ -39,6 +41,28 @@ export default tseslint.config(
 					'argsIgnorePattern': '^_'
 				}
 			]
+		}
+	},
+	{
+		files: ['server/benchmark/**/*.js'],
+		languageOptions: {
+			globals: {
+				...globals.node
+			}
+		},
+		rules: {
+			'@typescript-eslint/no-require-imports': 'off'
+		}
+	},
+	{
+		files: ['server/test/**/*.js'],
+		languageOptions: {
+			globals: {
+				...globals.node
+			}
+		},
+		rules: {
+			'@typescript-eslint/no-require-imports': 'off'
 		}
 	}
 );

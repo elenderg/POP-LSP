@@ -759,7 +759,7 @@ export function getWorkspaceDuplicateDeclarations(
           'field',
           computedField.name.name,
           `field:${computedField.structureType.normalizedName}:` +
-            computedField.name.normalizedName,
+          computedField.name.normalizedName,
           computedField.name.range
         );
       }
@@ -1525,7 +1525,7 @@ function findContainingNode(
       candidate.range.end >= range.end &&
       (!selected ||
         candidate.range.end - candidate.range.start <
-          selected.range.end - selected.range.start)
+        selected.range.end - selected.range.start)
     ) {
       selected = candidate;
     }
@@ -1575,11 +1575,11 @@ function findReference(
     if (
       candidatePriority < selectedPriority ||
       candidatePriority === selectedPriority &&
-        !Number.isNaN(declarationDifference) &&
-        declarationDifference > 0 ||
+      !Number.isNaN(declarationDifference) &&
+      declarationDifference > 0 ||
       candidatePriority === selectedPriority &&
-        (Number.isNaN(declarationDifference) || declarationDifference === 0) &&
-        position < selectedOrder
+      (Number.isNaN(declarationDifference) || declarationDifference === 0) &&
+      position < selectedOrder
     ) {
       selected = candidate;
       selectedPriority = candidatePriority;
@@ -1633,7 +1633,7 @@ function findTypeDefinitionTarget(
       selected && (
         candidate.priority > selected.priority ||
         candidate.priority === selected.priority &&
-          candidate.order > selected.order
+        candidate.order > selected.order
       )
     ) {
       continue;
@@ -1734,7 +1734,7 @@ function addExpressionNodes(
         if (reference.range.end > current.expression.range.end) {
           continue;
         }
-        if (reference.range.start < cursor) continue;
+        if (reference.range.start < cursor) { continue; }
         if (cursor < reference.range.start) {
           parts.push({
             kind: 'text',
@@ -2223,12 +2223,12 @@ export function getDocumentAnalysis(
       parameter: RoutineParameter,
       parent: SyntaxNode
     ) => addNode(
-        'parameter-declaration',
-        parameter.name.range,
-        parent,
-        symbolIdFor('variable', parameter.name.range),
-        { parameterDeclaration: parameter }
-      );
+      'parameter-declaration',
+      parameter.name.range,
+      parent,
+      symbolIdFor('variable', parameter.name.range),
+      { parameterDeclaration: parameter }
+    );
     for (const parameter of routine.parameters) {
       addParameter(parameter, node);
     }
@@ -2370,19 +2370,21 @@ export function getDocumentAnalysis(
       { values: SyntaxNode[]; prefixMaxEnd: number[] }
     >();
     const structuralNodes = [routineBodyNode];
-    for (let position = 0; position < structuralNodes.length; position++) {
-      const parent = structuralNodes[position];
+    for (const parent of structuralNodes) {
       const children = parent.childIds
         .map(childId => nodes.get(childId)!)
         .filter(child => child.kind === 'conditional' ||
           structuralContainerIds.has(child.id));
+
       if (children.length === 0) {
         continue;
       }
+
       structuralChildIndexes.set(
         parent.id,
         buildIntervalIndex(children)
       );
+
       structuralNodes.push(...children);
     }
     const statementParentForRange = (range: SourceRange): SyntaxNode => {
@@ -2784,22 +2786,22 @@ export function getDocumentAnalysis(
     ? performance.now() - positionPhaseStartedAt
     : 0;
   const buildChildIntervalIndexes = () => {
-      const indexes = new Map<number, {
-        values: SyntaxNode[];
-        prefixMaxEnd: number[];
-      }>();
-      for (const node of nodes.values()) {
-        if (node.childIds.length === 0) {
-          continue;
-        }
-        indexes.set(
-          node.id,
-          buildIntervalIndex(
-            node.childIds.map(childId => nodes.get(childId)!)
-          )
-        );
+    const indexes = new Map<number, {
+      values: SyntaxNode[];
+      prefixMaxEnd: number[];
+    }>();
+    for (const node of nodes.values()) {
+      if (node.childIds.length === 0) {
+        continue;
       }
-      return indexes;
+      indexes.set(
+        node.id,
+        buildIntervalIndex(
+          node.childIds.map(childId => nodes.get(childId)!)
+        )
+      );
+    }
+    return indexes;
   };
   positionPhaseStartedAt = onProfile ? performance.now() : 0;
   const syntaxChildIndexes = buildChildIntervalIndexes();
@@ -2839,19 +2841,19 @@ export function getDocumentAnalysis(
     }
   }
   for (const reference of referenceNodesByPosition) {
-      let parent = findContainingNode(topLevelIntervalIndex, reference.range) ?? root;
-      while (true) {
-        const index = syntaxChildIndexes.get(parent.id);
-        const child = index && findContainingNode(index, reference.range);
-        if (!child) {
-          break;
-        }
-        parent = child;
+    let parent = findContainingNode(topLevelIntervalIndex, reference.range) ?? root;
+    while (true) {
+      const index = syntaxChildIndexes.get(parent.id);
+      const child = index && findContainingNode(index, reference.range);
+      if (!child) {
+        break;
       }
+      parent = child;
+    }
     addNode(
       reference.kind === 'type'
         ? typeReferenceKinds.get(`${reference.range.start}:${reference.range.end}`) ??
-          'type-reference'
+        'type-reference'
         : 'reference',
       reference.range,
       parent,

@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
-import { tmpdir } from 'node:os';
+//import { tmpdir } from 'node:os';
 import { workspace, ExtensionContext } from 'vscode';
 
 import {

@@ -152,7 +152,7 @@ const windows1252EncodedFiles = new Set<string>();
 import * as inspector from 'node:inspector';
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join as juntar }  from 'node:path';
+import { join as juntar } from 'node:path';
 
 const cpuProfileEnabled = process.env.POP_LSP_CPU_PROFILE === '1';
 
@@ -161,114 +161,114 @@ let cpuProfilerStarted = false;
 let cpuProfilerStopPromise: Promise<void> | undefined;
 
 function postInspector<T>(
-    session: inspector.Session,
-    method: string
+  session: inspector.Session,
+  method: string
 ): Promise<T> {
-    return new Promise((resolve, reject) => {
-        session.post(method, (error, parameters) => {
-            if (error) {
-                reject(error);
-                return;
-            }
+  return new Promise((resolve, reject) => {
+    session.post(method, (error, parameters) => {
+      if (error) {
+        reject(error);
+        return;
+      }
 
-            resolve(parameters as T);
-        });
+      resolve(parameters as T);
     });
+  });
 }
 
 async function startCpuProfiler(): Promise<void> {
-    if (!cpuProfileEnabled) {
-        return;
-    }
+  if (!cpuProfileEnabled) {
+    return;
+  }
 
-    const session = new inspector.Session();
+  const session = new inspector.Session();
 
-    try {
-        session.connect();
+  try {
+    session.connect();
 
-        await postInspector(session, 'Profiler.enable');
-        await postInspector(session, 'Profiler.start');
+    await postInspector(session, 'Profiler.enable');
+    await postInspector(session, 'Profiler.start');
 
-        cpuProfilerSession = session;
-        cpuProfilerStarted = true;
+    cpuProfilerSession = session;
+    cpuProfilerStarted = true;
 
-        console.log(
-            '[POP-LSP CPU PROF] Captura iniciada.'
-        );
-    } catch (error) {
-        session.disconnect();
+    console.log(
+      '[POP-LSP CPU PROF] Captura iniciada.'
+    );
+  } catch (error) {
+    session.disconnect();
 
-        console.error(
-            `[POP-LSP CPU PROF] Falha ao iniciar: ${String(error)}`
-        );
-    }
+    console.error(
+      `[POP-LSP CPU PROF] Falha ao iniciar: ${String(error)}`
+    );
+  }
 }
 
 async function stopCpuProfiler(): Promise<void> {
-    if (cpuProfilerStopPromise) {
-        return cpuProfilerStopPromise;
-    }
-
-    if (!cpuProfilerSession || !cpuProfilerStarted) {
-        return;
-    }
-
-    cpuProfilerStopPromise = (async () => {
-        const session = cpuProfilerSession!;
-
-        cpuProfilerStarted = false;
-
-        try {
-            const result = await postInspector<{
-                profile: object;
-            }>(session, 'Profiler.stop');
-
-            const filename = juntar(
-                tmpdir(),
-                `pop-lsp-${process.pid}-${Date.now()}.cpuprofile`
-            );
-
-            writeFileSync(
-                filename,
-                JSON.stringify(result.profile)
-            );
-
-            console.log(
-                `[POP-LSP CPU PROF] Perfil salvo: ${filename}`
-            );
-        } catch (error) {
-            console.error(
-                `[POP-LSP CPU PROF] Falha ao salvar: ${String(error)}`
-            );
-        } finally {
-            session.disconnect();
-            cpuProfilerSession = undefined;
-        }
-    })();
-
+  if (cpuProfilerStopPromise) {
     return cpuProfilerStopPromise;
+  }
+
+  if (!cpuProfilerSession || !cpuProfilerStarted) {
+    return;
+  }
+
+  cpuProfilerStopPromise = (async () => {
+    const session = cpuProfilerSession!;
+
+    cpuProfilerStarted = false;
+
+    try {
+      const result = await postInspector<{
+        profile: object;
+      }>(session, 'Profiler.stop');
+
+      const filename = juntar(
+        tmpdir(),
+        `pop-lsp-${process.pid}-${Date.now()}.cpuprofile`
+      );
+
+      writeFileSync(
+        filename,
+        JSON.stringify(result.profile)
+      );
+
+      console.log(
+        `[POP-LSP CPU PROF] Perfil salvo: ${filename}`
+      );
+    } catch (error) {
+      console.error(
+        `[POP-LSP CPU PROF] Falha ao salvar: ${String(error)}`
+      );
+    } finally {
+      session.disconnect();
+      cpuProfilerSession = undefined;
+    }
+  })();
+
+  return cpuProfilerStopPromise;
 }
 
 
 console.error('[POP-LSP startup]', JSON.stringify({
-    execPath: process.execPath,
-    execArgv: process.execArgv,
-    electronRunAsNode: process.env.ELECTRON_RUN_AS_NODE,
-    cpuProfSupported: process.allowedNodeEnvironmentFlags.has('--cpu-prof'),
-    argv: process.argv,
-    versions: process.versions
+  execPath: process.execPath,
+  execArgv: process.execArgv,
+  electronRunAsNode: process.env.ELECTRON_RUN_AS_NODE,
+  cpuProfSupported: process.allowedNodeEnvironmentFlags.has('--cpu-prof'),
+  argv: process.argv,
+  versions: process.versions
 }, null, 2));
 
 process.on('beforeExit', (code) => {
-    console.error('[POP-LSP CPU PROF] beforeExit:', code);
+  console.error('[POP-LSP CPU PROF] beforeExit:', code);
 });
 
 process.on('exit', (code) => {
-    console.error('[POP-LSP CPU PROF] exit:', code);
+  console.error('[POP-LSP CPU PROF] exit:', code);
 });
 
 process.on('uncaughtExceptionMonitor', (error, origin) => {
-    console.error('[POP-LSP CPU PROF] uncaughtException:', origin, error);
+  console.error('[POP-LSP CPU PROF] uncaughtException:', origin, error);
 });
 
 // fim
@@ -697,7 +697,7 @@ function getSelectiveContextReuseUris(
         previousDeclaration &&
         currentDeclaration &&
         JSON.stringify(previousDeclaration.fingerprints) ===
-          JSON.stringify(currentDeclaration.fingerprints)
+        JSON.stringify(currentDeclaration.fingerprints)
       ) {
         continue;
       }
@@ -858,7 +858,7 @@ function getReusableRoutineRegionSnapshots(
         oldDeclaration &&
         newDeclaration &&
         JSON.stringify(oldDeclaration.fingerprints) ===
-          JSON.stringify(newDeclaration.fingerprints)
+        JSON.stringify(newDeclaration.fingerprints)
       ) {
         continue;
       }
@@ -939,7 +939,7 @@ function getReusableRoutineRegionSnapshots(
           previousRegion.range.start,
           previousRegion.range.end
         ).trimEnd() !==
-          entry.source.slice(region.range.start, region.range.end).trimEnd()
+        entry.source.slice(region.range.start, region.range.end).trimEnd()
       ) {
         continue;
       }
@@ -1023,7 +1023,7 @@ function getReusableSemanticRegionSnapshots(
         oldDeclaration &&
         newDeclaration &&
         JSON.stringify(oldDeclaration.fingerprints) ===
-          JSON.stringify(newDeclaration.fingerprints)
+        JSON.stringify(newDeclaration.fingerprints)
       ) {
         continue;
       }
@@ -1278,8 +1278,7 @@ function documentParseProgress(
   return (phase, state, durationMs) => {
     const message = state === 'start'
       ? `Iniciando ${phase}.`
-      : `Finalizado ${phase}. Esta etapa levou ${
-        (durationMs ?? 0).toFixed(2)
+      : `Finalizado ${phase}. Esta etapa levou ${(durationMs ?? 0).toFixed(2)
       } ms.`;
     logProfile({
       event: 'stage-progress',
@@ -1402,9 +1401,8 @@ function profileRequest<T>(
       requestId,
       documentUri: documentUri ?? '',
       durationMs,
-      message: `Finalizada a solicitação LSP "${name}". Esta etapa levou ${
-        durationMs.toFixed(2)
-      } ms.`
+      message: `Finalizada a solicitação LSP "${name}". Esta etapa levou ${durationMs.toFixed(2)
+        } ms.`
     });
     if (durationMs >= slowProfileThresholdMs) {
       const memory = process.memoryUsage();
@@ -1555,11 +1553,11 @@ connection.languages.semanticTokens.on(params =>
         return cachedTokens;
       }
 
-      const tokenRanges: Array<{
+      const tokenRanges: {
         start: number;
         end: number;
         type: typeof semanticTokenTypes[number];
-      }> = [];
+      }[] = [];
       const addNameTokens = (
         range: { start: number; end: number },
         type: typeof semanticTokenTypes[number]
@@ -1992,19 +1990,25 @@ function decodePopSource(
 
   try {
     const source = new TextDecoder('utf-8', { fatal: true }).decode(contentBytes);
+
     const hasUtf8Bom =
       contentBytes[0] === 0xef &&
       contentBytes[1] === 0xbb &&
       contentBytes[2] === 0xbf;
+
+    const hasNonAscii = [...source].some(
+      (char) => char.codePointAt(0)! > 0x7f
+    );
+
     return {
       source,
-      requiresWindows1252Conversion:
-        hasUtf8Bom || /[^\u0000-\u007f]/u.test(source)
+      requiresWindows1252Conversion: hasUtf8Bom || hasNonAscii
     };
   } catch (error) {
     if (!(error instanceof TypeError)) {
       throw error;
     }
+
     return {
       source: new TextDecoder('windows-1252').decode(contentBytes),
       requiresWindows1252Conversion: false
@@ -2020,8 +2024,7 @@ function promptForWindows1252Conversion(uri: string): void {
   void connection.sendNotification('pop/utf8FileDetected', { uri }).catch(error => {
     utf8EncodingPromptsSent.delete(uri);
     connection.console.error(
-      `Could not ask the client to convert "${uri}" to Windows-1252: ${
-        error instanceof Error ? error.message : String(error)
+      `Could not ask the client to convert "${uri}" to Windows-1252: ${error instanceof Error ? error.message : String(error)
       }`
     );
   });
@@ -2965,9 +2968,8 @@ async function buildWorkspaceDocumentIndex(
       requestId,
       requestDocumentUri,
       durationMs: sourceDiscoveryMs,
-      message: `Finalizada a descoberta dos documentos do workspace. Esta etapa levou ${
-        sourceDiscoveryMs.toFixed(2)
-      } ms.`
+      message: `Finalizada a descoberta dos documentos do workspace. Esta etapa levou ${sourceDiscoveryMs.toFixed(2)
+        } ms.`
     });
 
     const parseTotals = {
@@ -3010,52 +3012,52 @@ async function buildWorkspaceDocumentIndex(
       source: string,
       pass: 'base' | 'contextual'
     ) => profileEnabled
-      ? (metrics: ParsePerformanceMetrics): void => {
-        collectParseMetrics?.(metrics);
-        const { phases, ...parseMetrics } = metrics;
-        logProfile({
-          event: 'document-parse',
-          requestId,
-          requestDocumentUri,
-          documentUri: uri,
-          pass,
-          ...parseMetrics,
-          sourceCodeUnits: source.length,
-          sourceBytes: sourceByteLengths.get(uri) ??
-            Buffer.byteLength(source, 'utf8')
-        });
-        for (const phase of phases) {
+        ? (metrics: ParsePerformanceMetrics): void => {
+          collectParseMetrics?.(metrics);
+          const { phases, ...parseMetrics } = metrics;
           logProfile({
-            event: 'parse-phase',
+            event: 'document-parse',
             requestId,
             requestDocumentUri,
             documentUri: uri,
             pass,
-            ...phase
+            ...parseMetrics,
+            sourceCodeUnits: source.length,
+            sourceBytes: sourceByteLengths.get(uri) ??
+              Buffer.byteLength(source, 'utf8')
           });
-          if (phase.durationMs >= slowProfileThresholdMs) {
+          for (const phase of phases) {
             logProfile({
-              event: 'slow-operation',
+              event: 'parse-phase',
               requestId,
-              stage: phase.name,
+              requestDocumentUri,
               documentUri: uri,
               pass,
-              startTimeMs: phase.startTimeMs,
-              endTimeMs: phase.endTimeMs,
-              elapsedMs: phase.durationMs,
-              statementsVisited: metrics.routineStatementsVisited,
-              nameMatchSearches: metrics.routineNameMatchSearches,
-              nameSpanChecks: metrics.routineNameSpanChecks,
-              nameCandidateChecks: metrics.routineNameCandidateChecks,
-              heapUsedBeforeBytes: metrics.heapUsedBeforeBytes,
-              heapUsedAfterBytes: metrics.heapUsedAfterBytes,
-              rssBeforeBytes: metrics.rssBeforeBytes,
-              rssAfterBytes: metrics.rssAfterBytes
+              ...phase
             });
+            if (phase.durationMs >= slowProfileThresholdMs) {
+              logProfile({
+                event: 'slow-operation',
+                requestId,
+                stage: phase.name,
+                documentUri: uri,
+                pass,
+                startTimeMs: phase.startTimeMs,
+                endTimeMs: phase.endTimeMs,
+                elapsedMs: phase.durationMs,
+                statementsVisited: metrics.routineStatementsVisited,
+                nameMatchSearches: metrics.routineNameMatchSearches,
+                nameSpanChecks: metrics.routineNameSpanChecks,
+                nameCandidateChecks: metrics.routineNameCandidateChecks,
+                heapUsedBeforeBytes: metrics.heapUsedBeforeBytes,
+                heapUsedAfterBytes: metrics.heapUsedAfterBytes,
+                rssBeforeBytes: metrics.rssBeforeBytes,
+                rssAfterBytes: metrics.rssAfterBytes
+              });
+            }
           }
         }
-      }
-      : undefined;
+        : undefined;
     let sourceCacheHits = 0;
     let sourceChanges = 0;
     const groups = new Map<string, {
@@ -3290,15 +3292,15 @@ async function buildWorkspaceDocumentIndex(
             ),
             onIncrementalVerification:
               verifyIncrementalRoutineResolution ||
-              verifyIncrementalDeclarationResolution
-              ? matched => {
-                if (!matched) {
-                  connection.console.warn(
-                    `Incremental semantic verification failed for ${entry.uri}; using complete parse.`
-                  );
+                verifyIncrementalDeclarationResolution
+                ? matched => {
+                  if (!matched) {
+                    connection.console.warn(
+                      `Incremental semantic verification failed for ${entry.uri}; using complete parse.`
+                    );
+                  }
                 }
-              }
-              : undefined
+                : undefined
           }
         );
         entry.analysis.parsed = parsed;
@@ -3361,9 +3363,8 @@ async function buildWorkspaceDocumentIndex(
         requestId,
         requestDocumentUri,
         durationMs: endTimeMs - startedAt,
-        message: `Finalizada a atualização do catálogo do workspace. Esta etapa levou ${
-          (endTimeMs - startedAt).toFixed(2)
-        } ms.`
+        message: `Finalizada a atualização do catálogo do workspace. Esta etapa levou ${(endTimeMs - startedAt).toFixed(2)
+          } ms.`
       });
     }
     if (revision !== workspaceRevision) {
@@ -3383,19 +3384,19 @@ async function buildWorkspaceDocumentIndex(
 }
 
 connection.onShutdown(async () => {
-    await stopCpuProfiler();
+  await stopCpuProfiler();
 });
 
 documents.listen(connection);
 /*connection.listen();*/
 void startCpuProfiler().finally(() => {
-    connection.listen();
+  connection.listen();
 });
 
 connection.onRequest('pop/profile/stop', async () => {
-    await stopCpuProfiler();
+  await stopCpuProfiler();
 
-    return {
-        success: true
-    };
+  return {
+    success: true
+  };
 });

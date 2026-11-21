@@ -401,12 +401,12 @@ export interface RoutineResolutionWorklistResult {
     diagnostics: ParserDiagnostic[];
 }
 export interface ParsePerformanceMetrics {
-    phases: Array<{
+    phases: {
         name: string;
         startTimeMs: number;
         endTimeMs: number;
         durationMs: number;
-    }>;
+    }[];
     heapUsedBeforeBytes: number;
     heapUsedAfterBytes: number;
     rssBeforeBytes: number;

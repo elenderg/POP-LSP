@@ -106,7 +106,7 @@ for (const entry of baseParses) {
   );
   const heapBeforeSymbolsBytes = process.memoryUsage().heapUsed;
   const symbolsStartedAt = performance.now();
-  const { symbols, metrics: symbolMetrics } = buildDocumentSymbols(
+  const { metrics: symbolMetrics } = buildDocumentSymbols(
     parsed,
     textDocument,
     true

@@ -811,12 +811,12 @@ export interface RoutineResolutionWorklistResult {
 }
 
 export interface ParsePerformanceMetrics {
-  phases: Array<{
+  phases: {
     name: string;
     startTimeMs: number;
     endTimeMs: number;
     durationMs: number;
-  }>;
+  }[];
   heapUsedBeforeBytes: number;
   heapUsedAfterBytes: number;
   rssBeforeBytes: number;
@@ -992,8 +992,8 @@ interface RoutineResolutionHelperCounters
   depth: number;
 }
 
-interface RoutineCallResolutionHelperCounters
-  extends RoutineResolutionHelperCounters {}
+type RoutineCallResolutionHelperCounters =
+  RoutineResolutionHelperCounters;
 
 interface RoutineCallResolutionProfileCounters
   extends Omit<
@@ -1135,13 +1135,13 @@ function createRoutineResolutionProfileCounters():
 }
 
 function createRoutineArgumentTypeCacheMetrics():
-    RoutineArgumentTypeCacheMetrics {
+  RoutineArgumentTypeCacheMetrics {
   return {
-      inferenceCalls: 0,
-      hits: 0,
-      misses: 0,
-      cacheTimeMs: 0,
-      effectReplayMs: 0,
+    inferenceCalls: 0,
+    hits: 0,
+    misses: 0,
+    cacheTimeMs: 0,
+    effectReplayMs: 0,
     replayedFieldAccesses: 0,
     replayedVariableAccesses: 0,
     replayedComputedFieldAccesses: 0,
@@ -1612,11 +1612,11 @@ const articles = new Set([
   ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
-  
+
   'atribua', // atribua não é um built-in statement.
-  
+
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
-  'processe', 'itere', 'pare', 'reitere', 
+  'processe', 'itere', 'pare', 'reitere',
   'aloque', 'desaloque', 'aponte', 'direcione', 'redirecione'
 ]);
 const reservedStatementKeywordDisplayNames = new Map<string, string>([
@@ -1638,8 +1638,8 @@ const routineNameDelimiters = new Set([
   'abaixo', 'acerca', 'acima', 'acordo', 'algum', 'ante', 'antes', 'aproximadamente',
   'após', 'através', 'até', 'cerca', 'com', 'começando', 'como', 'comprida', 'comprido',
   'dada', 'dado', 'dando', 'debaixo', 'dentre', 'dentro', 'depois', 'desde', 'durante'
-  , 'em', 'enquanto', 'entre', 'então', 'menores', 'para',  'parecida', 'parecido',
-  'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão', 'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob', 'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada', 'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está',  'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
+  , 'em', 'enquanto', 'entre', 'então', 'menores', 'para', 'parecida', 'parecido',
+  'partindo', 'partir', 'perante', 'perto', 'por', 'próximo', 'qual', 'quanto', 'quão', 'regressivamente', 'relativa', 'resultando', 'sem', 'semelhante', 'similar', 'sob', 'sobre', 'somente', 'só', 'tal', 'tanto', 'tão', 'usando', 'versus', 'via', 'voltada', 'voltado', 'contendo', 'embaixo', 'por', 'retornando', 'é', 'está', 'estiver', 'for', 'forem', 'são', 'estão', 'estiverem', 'ser', 'serem', 'estar',
   'poder', 'puder', 'foi', 'estamos', 'há', 'pode', 'existe', 'existir', 'contém',
   'contiver', 'possui', 'possuir', 'dum', 'duma', 'duns', 'dumas',
   'limitando-o', 'igual', 'while', 'ultrapassou', 'usando',
@@ -2388,13 +2388,13 @@ function resolveTypeDeclarationSyntaxCore(
       dependencyResolutionFinishedAt = endTimeMs;
     }
     : undefined,
-  options.onProgress
-    ? (state, durationMs) => options.onProgress?.(
-      'a resolução de dependências entre tipos',
-      state,
-      durationMs
-    )
-    : undefined);
+    options.onProgress
+      ? (state, durationMs) => options.onProgress?.(
+        'a resolução de dependências entre tipos',
+        state,
+        durationMs
+      )
+      : undefined);
   const globalVariableSymbols = new GlobalVariableSymbolTable([
     ...globalVariables,
     ...(workspaceSymbols?.globalVariables ?? [])
@@ -3075,8 +3075,8 @@ function reuseRoutineRegions(
       oldToCurrent.set(oldRoutine, currentRoutine);
     }
   }
-  for (let index = 0; index < routines.length; index++) {
-    const current = routines[index];
+  for (const current of routines) {
+    //const current = routines[index];
     const key = `${getRoutineRegionKey(current)}\n${getRegionText(
       source,
       current
@@ -3174,30 +3174,30 @@ function createParserRegions(
     ParserRegion,
     'fingerprint' | 'syntacticallyComplete' | 'complete'
   >[] = [
-    ...declarations.map(declaration => ({
-      kind: 'type' as const,
-      name: declaration.name.normalizedName,
-      range: { ...declaration.range }
-    })),
-    ...globalVariables.map(declaration => ({
-      kind: 'global-variable' as const,
-      name: declaration.name.normalizedName,
-      range: { ...declaration.range }
-    })),
-    ...routines.map(routine => ({
-      kind: 'routine' as const,
-      name: routine.name.normalizedName,
-      range: {
-        start: routine.range.start,
-        end: routine.bodyRange.end
-      },
-      headerRange: {
-        start: routine.range.start,
-        end: routine.bodyRange.start
-      },
-      bodyRange: { ...routine.bodyRange }
-    }))
-  ];
+      ...declarations.map(declaration => ({
+        kind: 'type' as const,
+        name: declaration.name.normalizedName,
+        range: { ...declaration.range }
+      })),
+      ...globalVariables.map(declaration => ({
+        kind: 'global-variable' as const,
+        name: declaration.name.normalizedName,
+        range: { ...declaration.range }
+      })),
+      ...routines.map(routine => ({
+        kind: 'routine' as const,
+        name: routine.name.normalizedName,
+        range: {
+          start: routine.range.start,
+          end: routine.bodyRange.end
+        },
+        headerRange: {
+          start: routine.range.start,
+          end: routine.bodyRange.start
+        },
+        bodyRange: { ...routine.bodyRange }
+      }))
+    ];
   regions.sort((first, second) =>
     first.range.start - second.range.start ||
     first.range.end - second.range.end
@@ -3224,14 +3224,14 @@ function createParserRegions(
     while (
       syntaxDiagnosticIndex < sortedSyntaxDiagnostics.length &&
       sortedSyntaxDiagnostics[syntaxDiagnosticIndex].range.end <=
-        region.range.start
+      region.range.start
     ) {
       syntaxDiagnosticIndex++;
     }
     const hasSyntaxDiagnostic =
       syntaxDiagnosticIndex < sortedSyntaxDiagnostics.length &&
       sortedSyntaxDiagnostics[syntaxDiagnosticIndex].range.start <
-        region.range.end;
+      region.range.end;
     const text = source.slice(region.range.start, region.range.end);
     const hasCompleteTerminatedBody = region.kind !== 'routine' ||
       hasCompleteRoutineBody(parserSource, region.bodyRange!);
@@ -4453,11 +4453,11 @@ function resolveBooleanConditionCore(
         variableAccesses,
         (index === argumentsList.length - 1 &&
           nameMatch.implicitDefiniteArticle === true) ||
-          hasContractedDefiniteArticleBefore(
-            source,
-            argumentsList[index].start,
-            condition.start
-          ),
+        hasContractedDefiniteArticleBefore(
+          source,
+          argumentsList[index].start,
+          condition.start
+        ),
         diagnostics
       ) ?? resolveIndefiniteTypeArgument(
         conditionSource,
@@ -4748,7 +4748,7 @@ function parseRoutineExpressionCore(
       if (
         !nextWord ||
         nextWordValue !== 'por' &&
-          !implicitDefiniteArticle
+        !implicitDefiniteArticle
       ) {
         continue;
       }
@@ -5492,9 +5492,9 @@ function parseRoutineProcess(
     const isExternalTarget = first.start === targetRange.start &&
       second !== undefined &&
       trimRange(source, first.end, second.start).start ===
-        trimRange(source, first.end, second.start).end &&
+      trimRange(source, first.end, second.start).end &&
       trimRange(source, second.end, targetRange.end).start ===
-        trimRange(source, second.end, targetRange.end).end &&
+      trimRange(source, second.end, targetRange.end).end &&
       isValidStringLiteral(source.slice(first.start, first.end)) &&
       isValidStringLiteral(source.slice(second.start, second.end));
     if (!isExternalTarget) {
@@ -6138,6 +6138,7 @@ function resolveRoutineCallCore(
     let argumentTypeResolutionMs = 0;
     let expressionResolutionMs = 0;
     let candidateArgumentCount: number | undefined;
+    candidateArgumentCount = 0;
     const {
       routine,
       name: routineName,
@@ -6508,25 +6509,25 @@ function resolveRoutineCallCore(
       const argumentType = localVariable
         ? localVariable.type
         : scalarArgumentType ??
-          typeOperatorArgument?.valueType ??
-          resolveRoutineArgumentTypeWithCache(
+        typeOperatorArgument?.valueType ??
+        resolveRoutineArgumentTypeWithCache(
+          source,
+          argumentsList[index],
+          caller,
+          globalVariables,
+          symbols,
+          fieldAccesses,
+          routines,
+          computedFieldAccesses,
+          variableAccesses,
+          hasContractedDefiniteArticleBefore(
             source,
-            argumentsList[index],
-            caller,
-            globalVariables,
-            symbols,
-            fieldAccesses,
-            routines,
-            computedFieldAccesses,
-            variableAccesses,
-            hasContractedDefiniteArticleBefore(
-              source,
-              argumentsList[index].start,
-              nameEnd
-            ) || implicitDefiniteArticle === true,
-            diagnostics,
-            argumentTypeResolutionCache
-          );
+            argumentsList[index].start,
+            nameEnd
+          ) || implicitDefiniteArticle === true,
+          diagnostics,
+          argumentTypeResolutionCache
+        );
       if (candidateProfile) {
         argumentTypeResolutionMs +=
           performance.now() - argumentTypeStartedAt;
@@ -6827,7 +6828,7 @@ function getRoutineParameterSeparators(
     routine.range.end > source.length ||
     routine.name.range.end > source.length ||
     normalizeRoutineName(source.slice(routine.name.range.start, routine.name.range.end)) !==
-      normalizeRoutineName(routine.name.name)
+    normalizeRoutineName(routine.name.name)
   ) {
     return undefined;
   }
@@ -7386,7 +7387,7 @@ function findScalarRoutineLiteral(
       !typeMatch ||
       typeMatch.index + typeMatch[0].length > end ||
       typeMatch.index + typeMatch[0].length < end &&
-        !/\s/u.test(source[typeMatch.index + typeMatch[0].length])
+      !/\s/u.test(source[typeMatch.index + typeMatch[0].length])
     ) {
       continue;
     }
@@ -7874,8 +7875,8 @@ function splitRoutineArgumentsCore(
       isWordCharacter(match.index > range.start ? source[match.index - 1] : '') ||
       isWordCharacter(wordEnd < range.end ? source[wordEnd] : '') ||
       (word === 'como' || word === 'qual') &&
-        separatedByWhitespace &&
-        previousWord === 'tal'
+      separatedByWhitespace &&
+      previousWord === 'tal'
     ) {
       previousWord = word;
       previousWordEnd = wordEnd;
@@ -8603,11 +8604,11 @@ function resolveStructureFieldAccessCore(
     globalVariables,
     rootName
   ) ?? (
-    caller.computedField &&
-      normalizeTypeName(caller.computedField.structureType.name) === rootName
-      ? caller.computedField.structureType
-      : undefined
-  );
+      caller.computedField &&
+        normalizeTypeName(caller.computedField.structureType.name) === rootName
+        ? caller.computedField.structureType
+        : undefined
+    );
   if (!rootType && fieldRanges.length === 1) {
     const operatorName = normalizeTypeName(
       source.slice(fieldRanges[0].start, fieldRanges[0].end)
@@ -9065,7 +9066,7 @@ function findNestedStructureFields(
   typeName: string,
   fieldName: string,
   symbols: TypeSymbolTable,
-  ancestors: Set<string> = new Set()
+  ancestors = new Set<string>()
 ): NamedTypeField[] {
   if (!activeRoutineResolutionProfileCounters) {
     return findNestedStructureFieldsCore(
@@ -9091,7 +9092,7 @@ function findNestedStructureFieldsCore(
   typeName: string,
   fieldName: string,
   symbols: TypeSymbolTable,
-  ancestors: Set<string> = new Set()
+  ancestors = new Set<string>()
 ): NamedTypeField[] {
   const symbol = symbols.lookup(typeName);
   if (!symbol || ancestors.has(symbol.normalizedName)) {
@@ -9613,18 +9614,20 @@ function parseLocalVariableDeclarationUncached(
       typeWords.push(typeWordMatch);
     }
     let resolvedType: TypeReference | undefined;
-    for (let firstWord = 0; firstWord < typeWords.length; firstWord++) {
+    for (const { index } of typeWords) {
       const type = symbols.lookup(
-        source.slice(typeWords[firstWord].index, typeRange.end)
+        source.slice(index, typeRange.end)
       );
+
       if (!type) {
         continue;
       }
-      const typeStart = typeWords[firstWord].index;
+
       resolvedType = createSyntheticTypeReference(type.name, {
-        start: typeStart,
+        start: index,
         end: typeRange.end
       });
+
       break;
     }
     if (!resolvedType) {
@@ -10045,82 +10048,82 @@ function parseRoutineDeclarations(
   source: string,
   diagnostics: ParserDiagnostic[]
 ): RoutineDeclaration[] {
-    const headerPattern = /(?:(rotina|função)\s+)?para\s+que\s+se(?:\s+(determine)\s+(se))?/giu;
-    const headers: ParsedRoutineHeader[] = [];
-    let match: RegExpExecArray | null;
-    let parenthesisScanOffset = 0;
-    let parenthesisDepth = 0;
+  const headerPattern = /(?:(rotina|função)\s+)?para\s+que\s+se(?:\s+(determine)\s+(se))?/giu;
+  const headers: ParsedRoutineHeader[] = [];
+  let match: RegExpExecArray | null;
+  let parenthesisScanOffset = 0;
+  let parenthesisDepth = 0;
 
-    while ((match = headerPattern.exec(source))) {
-      parenthesisDepth = getParenthesisDepth(
-        source,
-        parenthesisScanOffset,
-        match.index,
-        parenthesisDepth
-      );
-      parenthesisScanOffset = match.index;
-      if (parenthesisDepth > 0) {
-        continue;
-      }
-      const headerEnd = findHeaderTerminator(source, headerPattern.lastIndex);
-      if (headerEnd === -1) {
-        continue;
-      }
-      const qualifier = findTrailingParentheticalQualifier(
-        source,
-        headerPattern.lastIndex,
-        headerEnd
-      );
-      const syntaxSource = maskParenthesizedGroups(
-        source,
-        headerPattern.lastIndex,
-        headerEnd
-      );
-      const isBooleanFunction = Boolean(match[2]);
-      const negativeHeaderWord = isBooleanFunction
-        ? findWord(syntaxSource, headerPattern.lastIndex, headerEnd, 'não')
-        : undefined;
-      if (negativeHeaderWord) {
-        diagnostics.push({
-          message: '"não" cannot be part of a boolean function header.',
-          range: negativeHeaderWord
-        });
-      }
-      const headerSyntaxSource = isBooleanFunction
-        ? maskWordInRange(
-          syntaxSource,
-          { start: headerPattern.lastIndex, end: headerEnd },
-          'não'
-        )
-        : syntaxSource;
-      const firstHeaderWordStart = skipWhitespace(
-        headerSyntaxSource,
-        headerPattern.lastIndex,
-        headerEnd
-      );
-      const firstHeaderWord = readWord(
-        headerSyntaxSource,
-        firstHeaderWordStart,
-        headerEnd
-      );
-      const isCompatible = firstHeaderWord?.value.toLocaleLowerCase('pt-BR') ===
-        'compativelmente';
-      const routineNameStart = isCompatible
-        ? firstHeaderWord.end
-        : headerPattern.lastIndex;
-      const returningMarker = findWord(headerSyntaxSource, headerPattern.lastIndex, headerEnd, 'retornando');
-      const signatureEnd = Math.min(
-        returningMarker?.start ?? headerEnd,
-        qualifier?.start ?? headerEnd
-      );
-      const computedField = parseComputedFieldHeader(
-        headerSyntaxSource,
-        routineNameStart,
-        headerEnd
-      );
-      const firstParameterArticle: ReturnType<
-        typeof findAnyRoutineParameterArticle
-      > = computedField
+  while ((match = headerPattern.exec(source))) {
+    parenthesisDepth = getParenthesisDepth(
+      source,
+      parenthesisScanOffset,
+      match.index,
+      parenthesisDepth
+    );
+    parenthesisScanOffset = match.index;
+    if (parenthesisDepth > 0) {
+      continue;
+    }
+    const headerEnd = findHeaderTerminator(source, headerPattern.lastIndex);
+    if (headerEnd === -1) {
+      continue;
+    }
+    const qualifier = findTrailingParentheticalQualifier(
+      source,
+      headerPattern.lastIndex,
+      headerEnd
+    );
+    const syntaxSource = maskParenthesizedGroups(
+      source,
+      headerPattern.lastIndex,
+      headerEnd
+    );
+    const isBooleanFunction = Boolean(match[2]);
+    const negativeHeaderWord = isBooleanFunction
+      ? findWord(syntaxSource, headerPattern.lastIndex, headerEnd, 'não')
+      : undefined;
+    if (negativeHeaderWord) {
+      diagnostics.push({
+        message: '"não" cannot be part of a boolean function header.',
+        range: negativeHeaderWord
+      });
+    }
+    const headerSyntaxSource = isBooleanFunction
+      ? maskWordInRange(
+        syntaxSource,
+        { start: headerPattern.lastIndex, end: headerEnd },
+        'não'
+      )
+      : syntaxSource;
+    const firstHeaderWordStart = skipWhitespace(
+      headerSyntaxSource,
+      headerPattern.lastIndex,
+      headerEnd
+    );
+    const firstHeaderWord = readWord(
+      headerSyntaxSource,
+      firstHeaderWordStart,
+      headerEnd
+    );
+    const isCompatible = firstHeaderWord?.value.toLocaleLowerCase('pt-BR') ===
+      'compativelmente';
+    const routineNameStart = isCompatible
+      ? firstHeaderWord.end
+      : headerPattern.lastIndex;
+    const returningMarker = findWord(headerSyntaxSource, headerPattern.lastIndex, headerEnd, 'retornando');
+    const signatureEnd = Math.min(
+      returningMarker?.start ?? headerEnd,
+      qualifier?.start ?? headerEnd
+    );
+    const computedField = parseComputedFieldHeader(
+      headerSyntaxSource,
+      routineNameStart,
+      headerEnd
+    );
+    const firstParameterArticle: ReturnType<
+      typeof findAnyRoutineParameterArticle
+    > = computedField
         ? findAnyWord(
           headerSyntaxSource,
           computedField.returnMarker.end,
@@ -10132,249 +10135,249 @@ function parseRoutineDeclarations(
           routineNameStart,
           signatureEnd
         );
-      const parameterArticle = firstParameterArticle;
-      const predicateMarker = isBooleanFunction
-        ? findAnyWord(
+    const parameterArticle = firstParameterArticle;
+    const predicateMarker = isBooleanFunction
+      ? findAnyWord(
+        headerSyntaxSource,
+        parameterArticle?.end ?? routineNameStart,
+        signatureEnd,
+        routinePredicateWords
+      )
+      : undefined;
+    const predicateTailArticle = predicateMarker
+      ? findAnyWord(
+        headerSyntaxSource,
+        predicateMarker.end,
+        signatureEnd,
+        indefiniteArticles
+      )
+      : undefined;
+    const predicateParameters = predicateMarker && parameterArticle
+      ? [
+        ...parseRoutineParameters(
           headerSyntaxSource,
-          parameterArticle?.end ?? routineNameStart,
-          signatureEnd,
-          routinePredicateWords
-        )
-        : undefined;
-      const predicateTailArticle = predicateMarker
-        ? findAnyWord(
-          headerSyntaxSource,
-          predicateMarker.end,
-          signatureEnd,
-          indefiniteArticles
-        )
-        : undefined;
-      const predicateParameters = predicateMarker && parameterArticle
-        ? [
-          ...parseRoutineParameters(
+          parameterArticle.start,
+          predicateMarker.start,
+          diagnostics
+        ),
+        ...(predicateTailArticle
+          ? parseRoutineParameters(
             headerSyntaxSource,
-            parameterArticle.start,
-            predicateMarker.start,
+            predicateTailArticle.start,
+            signatureEnd,
             diagnostics
-          ),
-          ...(predicateTailArticle
-            ? parseRoutineParameters(
-              headerSyntaxSource,
-              predicateTailArticle.start,
-              signatureEnd,
-              diagnostics
-            )
-            : [])
-        ]
-        : undefined;
-      const parameterStart = parameterArticle?.start;
-      const nameEnd = Math.min(
-        parameterArticle
-          ? parameterArticle.contractedPreposition
-            ? parameterArticle.end
-            : parameterArticle.start
-          : headerEnd,
-        returningMarker?.start ?? headerEnd,
-        qualifier?.start ?? headerEnd
-      );
-      const nameRange = predicateMarker
-        ? {
-          start: predicateMarker.start,
-          end: predicateTailArticle?.start ?? signatureEnd
-        }
-        : computedField
+          )
+          : [])
+      ]
+      : undefined;
+    const parameterStart = parameterArticle?.start;
+    const nameEnd = Math.min(
+      parameterArticle
+        ? parameterArticle.contractedPreposition
+          ? parameterArticle.end
+          : parameterArticle.start
+        : headerEnd,
+      returningMarker?.start ?? headerEnd,
+      qualifier?.start ?? headerEnd
+    );
+    const nameRange = predicateMarker
+      ? {
+        start: predicateMarker.start,
+        end: predicateTailArticle?.start ?? signatureEnd
+      }
+      : computedField
         ? trimRange(source, routineNameStart, computedField.returnMarker.start)
         : trimRange(source, routineNameStart, nameEnd);
-      if (nameRange.start === nameRange.end) {
-        diagnostics.push({
-          message: 'Routine name is required.',
-          range: { start: match.index, end: headerEnd }
-        });
-        headerPattern.lastIndex = headerEnd + 1;
-        continue;
-      }
-      const contractedParameterName = parameterArticle?.contractedPreposition &&
-        !computedField &&
-        !predicateMarker
-        ? `${headerSyntaxSource.slice(routineNameStart, parameterArticle.start).trim()} ${parameterArticle.contractedPreposition}`
-        : undefined;
-      const routineNameReference = contractedParameterName
-        ? {
-          ...createTypeReference(headerSyntaxSource, nameRange),
-          name: contractedParameterName,
-          normalizedName: normalizeRoutineName(contractedParameterName)
-        }
-        : createTypeReference(headerSyntaxSource, nameRange);
-      for (const [reservedKeyword, displayName] of reservedStatementKeywordDisplayNames) {
-        const reservedWord = findWord(headerSyntaxSource, nameRange.start, nameRange.end, reservedKeyword);
-        if (!reservedWord) {
-          continue;
-        }
-        diagnostics.push({
-          message: `"${displayName}" is a reserved statement keyword and cannot be used in a routine name.`,
-          range: reservedWord
-        });
-      }
-
-      const parametersEnd = returningMarker?.start ?? headerEnd;
-      const parameterEnd = Math.min(
-        parametersEnd,
-        qualifier?.start ?? headerEnd
-      );
-      const trailingRoutineNameSuffix = parameterStart === undefined
-        ? undefined
-        : findTrailingRoutineNameSuffix(
-          headerSyntaxSource,
-          parameterStart,
-          parameterEnd
-        );
-      const parameters = predicateParameters ?? (parameterStart !== undefined
-        ? parseRoutineHeaderParameters(
-          headerSyntaxSource,
-          parameterStart,
-          trailingRoutineNameSuffix?.start ?? parameterEnd,
-          diagnostics
-        )
-        : []);
-      if (parameterStart !== undefined && parameters.length === 0) {
-        const parameterArticleMarker = parameterArticle;
-        diagnostics.push({
-          message: 'At least one parameter is required in the routine header.',
-          range: parameterArticleMarker
-            ? { start: parameterArticleMarker.start, end: parameterArticleMarker.end }
-            : { start: parameterStart, end: parametersEnd }
-        });
-      }
-      const returnParameter = returningMarker
-        ? parseRoutineParameter(
-          headerSyntaxSource,
-          returningMarker.end,
-          Math.min(headerEnd, qualifier?.start ?? headerEnd)
-        )
-        : undefined;
-      if (returningMarker && !returnParameter) {
-        diagnostics.push({
-          message: 'A return type is required after "retornando".',
-          range: { start: returningMarker.start, end: headerEnd }
-        });
-      }
-
-      headers.push({
-        name: {
-          ...routineNameReference,
-          qualifier: qualifier?.text
-        },
-        qualifier: qualifier?.text,
-        parameters,
-        trailingNameSuffix: trailingRoutineNameSuffix,
-        computedField: computedField
-          ? {
-            name: computedField.name,
-            structureType: computedField.structureType
-          }
-          : undefined,
-        returnParameter,
-        annotation: match[1]?.toLocaleLowerCase('pt-BR') as 'rotina' | 'função' | undefined,
-        isBooleanFunction,
-        isCompatible,
-        isPrimary: source[headerEnd] === ':',
-        range: { start: match.index, end: headerEnd + 1 }
+    if (nameRange.start === nameRange.end) {
+      diagnostics.push({
+        message: 'Routine name is required.',
+        range: { start: match.index, end: headerEnd }
       });
       headerPattern.lastIndex = headerEnd + 1;
+      continue;
     }
-
-    const declarations: RoutineDeclaration[] = [];
-    let alternateHeaders: ParsedRoutineHeader[] = [];
-    let previousEnd: number | undefined;
-    for (const header of headers) {
-      if (
-        previousEnd !== undefined &&
-        source.slice(previousEnd, header.range.start).trim().length > 0
-      ) {
-        alternateHeaders = [];
+    const contractedParameterName = parameterArticle?.contractedPreposition &&
+      !computedField &&
+      !predicateMarker
+      ? `${headerSyntaxSource.slice(routineNameStart, parameterArticle.start).trim()} ${parameterArticle.contractedPreposition}`
+      : undefined;
+    const routineNameReference = contractedParameterName
+      ? {
+        ...createTypeReference(headerSyntaxSource, nameRange),
+        name: contractedParameterName,
+        normalizedName: normalizeRoutineName(contractedParameterName)
       }
-      previousEnd = header.range.end;
-      if (!header.isPrimary) {
-        alternateHeaders.push(header);
+      : createTypeReference(headerSyntaxSource, nameRange);
+    for (const [reservedKeyword, displayName] of reservedStatementKeywordDisplayNames) {
+      const reservedWord = findWord(headerSyntaxSource, nameRange.start, nameRange.end, reservedKeyword);
+      if (!reservedWord) {
         continue;
       }
-      for (const alternate of alternateHeaders) {
-        if (hasEquivalentRoutineSignature(source, alternate, header)) {
-          diagnostics.push({
-            message: 'Alternate routine header is semantically equivalent to the primary header.',
-            range: alternate.name.range
-          });
-        }
-      }
-      declarations.push({
-        bindingId: `routine:${normalizeTypeName(
-          source.slice(header.range.start, header.range.end)
-        )}`,
-        name: header.name,
-        qualifier: header.qualifier,
-        alternateNames: alternateHeaders.map(alternate => ({
-          ...alternate.name,
-          qualifier: alternate.qualifier
-        })),
-        alternateParameters: alternateHeaders.map(alternate => alternate.parameters),
-        parameters: header.parameters,
-        preservedParameters: [],
-        assignments: [],
-        outputs: [],
-        returnStatements: [],
-        simpleInstructions: [],
-        localVariables: [],
-        conditionals: [],
-        loopBlocks: [],
-        statements: [],
-        processes: [],
-        loopInstructions: [],
-        computedFieldAccesses: [],
-        listSpecialFieldAccesses: [],
-        computedField: header.computedField,
-        returnParameter: header.returnParameter,
-        calls: [],
-        memoryAllocations: [],
-        memoryDeallocations: [],
-        annotation: header.annotation,
-        isBooleanFunction: header.isBooleanFunction,
-        isCompatible: header.isCompatible ||
-          alternateHeaders.some(alternate => alternate.isCompatible),
-        range: {
-          start: alternateHeaders[0]?.range.start ?? header.range.start,
-          end: header.range.end
-        },
-        bodyRange: { start: header.range.end, end: source.length }
+      diagnostics.push({
+        message: `"${displayName}" is a reserved statement keyword and cannot be used in a routine name.`,
+        range: reservedWord
       });
+    }
+
+    const parametersEnd = returningMarker?.start ?? headerEnd;
+    const parameterEnd = Math.min(
+      parametersEnd,
+      qualifier?.start ?? headerEnd
+    );
+    const trailingRoutineNameSuffix = parameterStart === undefined
+      ? undefined
+      : findTrailingRoutineNameSuffix(
+        headerSyntaxSource,
+        parameterStart,
+        parameterEnd
+      );
+    const parameters = predicateParameters ?? (parameterStart !== undefined
+      ? parseRoutineHeaderParameters(
+        headerSyntaxSource,
+        parameterStart,
+        trailingRoutineNameSuffix?.start ?? parameterEnd,
+        diagnostics
+      )
+      : []);
+    if (parameterStart !== undefined && parameters.length === 0) {
+      const parameterArticleMarker = parameterArticle;
+      diagnostics.push({
+        message: 'At least one parameter is required in the routine header.',
+        range: parameterArticleMarker
+          ? { start: parameterArticleMarker.start, end: parameterArticleMarker.end }
+          : { start: parameterStart, end: parametersEnd }
+      });
+    }
+    const returnParameter = returningMarker
+      ? parseRoutineParameter(
+        headerSyntaxSource,
+        returningMarker.end,
+        Math.min(headerEnd, qualifier?.start ?? headerEnd)
+      )
+      : undefined;
+    if (returningMarker && !returnParameter) {
+      diagnostics.push({
+        message: 'A return type is required after "retornando".',
+        range: { start: returningMarker.start, end: headerEnd }
+      });
+    }
+
+    headers.push({
+      name: {
+        ...routineNameReference,
+        qualifier: qualifier?.text
+      },
+      qualifier: qualifier?.text,
+      parameters,
+      trailingNameSuffix: trailingRoutineNameSuffix,
+      computedField: computedField
+        ? {
+          name: computedField.name,
+          structureType: computedField.structureType
+        }
+        : undefined,
+      returnParameter,
+      annotation: match[1]?.toLocaleLowerCase('pt-BR') as 'rotina' | 'função' | undefined,
+      isBooleanFunction,
+      isCompatible,
+      isPrimary: source[headerEnd] === ':',
+      range: { start: match.index, end: headerEnd + 1 }
+    });
+    headerPattern.lastIndex = headerEnd + 1;
+  }
+
+  const declarations: RoutineDeclaration[] = [];
+  let alternateHeaders: ParsedRoutineHeader[] = [];
+  let previousEnd: number | undefined;
+  for (const header of headers) {
+    if (
+      previousEnd !== undefined &&
+      source.slice(previousEnd, header.range.start).trim().length > 0
+    ) {
       alternateHeaders = [];
     }
-
-    for (let index = 0; index < headers.length - 1; index++) {
-      const header = headers[index];
-      const nextHeader = headers[index + 1];
-      const headersAreAdjacent =
-        source.slice(header.range.end, nextHeader.range.start).trim().length === 0;
-      if (!header.isPrimary || !headersAreAdjacent) {
-        continue;
-      }
-
-      if (nextHeader.isPrimary) {
+    previousEnd = header.range.end;
+    if (!header.isPrimary) {
+      alternateHeaders.push(header);
+      continue;
+    }
+    for (const alternate of alternateHeaders) {
+      if (hasEquivalentRoutineSignature(source, alternate, header)) {
         diagnostics.push({
-          message: 'Consecutive primary routine headers may leave the preceding routine without a body.',
-          range: { start: header.range.end - 1, end: header.range.end },
-          severity: 'hint'
-        });
-      } else {
-        diagnostics.push({
-          message: 'Alternate routine headers must end with ";"; use ":" only on the primary header.',
-          range: { start: header.range.end - 1, end: header.range.end },
-          severity: 'hint'
+          message: 'Alternate routine header is semantically equivalent to the primary header.',
+          range: alternate.name.range
         });
       }
     }
-
-    return declarations;
+    declarations.push({
+      bindingId: `routine:${normalizeTypeName(
+        source.slice(header.range.start, header.range.end)
+      )}`,
+      name: header.name,
+      qualifier: header.qualifier,
+      alternateNames: alternateHeaders.map(alternate => ({
+        ...alternate.name,
+        qualifier: alternate.qualifier
+      })),
+      alternateParameters: alternateHeaders.map(alternate => alternate.parameters),
+      parameters: header.parameters,
+      preservedParameters: [],
+      assignments: [],
+      outputs: [],
+      returnStatements: [],
+      simpleInstructions: [],
+      localVariables: [],
+      conditionals: [],
+      loopBlocks: [],
+      statements: [],
+      processes: [],
+      loopInstructions: [],
+      computedFieldAccesses: [],
+      listSpecialFieldAccesses: [],
+      computedField: header.computedField,
+      returnParameter: header.returnParameter,
+      calls: [],
+      memoryAllocations: [],
+      memoryDeallocations: [],
+      annotation: header.annotation,
+      isBooleanFunction: header.isBooleanFunction,
+      isCompatible: header.isCompatible ||
+        alternateHeaders.some(alternate => alternate.isCompatible),
+      range: {
+        start: alternateHeaders[0]?.range.start ?? header.range.start,
+        end: header.range.end
+      },
+      bodyRange: { start: header.range.end, end: source.length }
+    });
+    alternateHeaders = [];
   }
+
+  for (let index = 0; index < headers.length - 1; index++) {
+    const header = headers[index];
+    const nextHeader = headers[index + 1];
+    const headersAreAdjacent =
+      source.slice(header.range.end, nextHeader.range.start).trim().length === 0;
+    if (!header.isPrimary || !headersAreAdjacent) {
+      continue;
+    }
+
+    if (nextHeader.isPrimary) {
+      diagnostics.push({
+        message: 'Consecutive primary routine headers may leave the preceding routine without a body.',
+        range: { start: header.range.end - 1, end: header.range.end },
+        severity: 'hint'
+      });
+    } else {
+      diagnostics.push({
+        message: 'Alternate routine headers must end with ";"; use ":" only on the primary header.',
+        range: { start: header.range.end - 1, end: header.range.end },
+        severity: 'hint'
+      });
+    }
+  }
+
+  return declarations;
+}
 
 function hasEquivalentRoutineSignature(
   source: string,
@@ -10426,27 +10429,27 @@ function parseRoutineParameters(
   end: number,
   diagnostics: ParserDiagnostic[]
 ): RoutineParameter[] {
-    const parameters: RoutineParameter[] = [];
-    let parameterStart = skipWhitespace(source, start, end);
-    while (parameterStart < end) {
-      const separator = findRoutineParameterSeparator(source, parameterStart, end);
-      const parameterEnd = separator?.start ?? end;
-      const parameter = parseRoutineParameter(source, parameterStart, parameterEnd);
-      if (!parameter) {
-        diagnostics.push({
-          message: 'Invalid routine parameter declaration.',
-          range: trimRange(source, parameterStart, parameterEnd)
-        });
-      } else {
-        parameters.push(parameter);
-      }
-      if (!separator) {
-        break;
-      }
-      parameterStart = separator.nextStart;
+  const parameters: RoutineParameter[] = [];
+  let parameterStart = skipWhitespace(source, start, end);
+  while (parameterStart < end) {
+    const separator = findRoutineParameterSeparator(source, parameterStart, end);
+    const parameterEnd = separator?.start ?? end;
+    const parameter = parseRoutineParameter(source, parameterStart, parameterEnd);
+    if (!parameter) {
+      diagnostics.push({
+        message: 'Invalid routine parameter declaration.',
+        range: trimRange(source, parameterStart, parameterEnd)
+      });
+    } else {
+      parameters.push(parameter);
     }
-    return parameters;
+    if (!separator) {
+      break;
+    }
+    parameterStart = separator.nextStart;
   }
+  return parameters;
+}
 
 function parseRoutineHeaderParameters(
   source: string,
@@ -10462,108 +10465,108 @@ function parseRoutineParameter(
   start: number,
   end: number
 ): RoutineParameter | undefined {
-    const parameterStart = skipWhitespace(source, start, end);
-    const article = readWord(source, parameterStart, end);
-    const articleWord = article?.value.toLocaleLowerCase('pt-BR');
-    if (
-      !article ||
-      !articleWord ||
-      !indefiniteArticles.has(articleWord) &&
-        !getContractedRoutineParameterArticle(articleWord)
-    ) {
-      return undefined;
-    }
-
-    const markers = new Set([
-      'denominado', 'denominada', 'denominados', 'denominadas',
-      'chamado', 'chamada', 'chamados', 'chamadas'
-    ]);
-    const marker = findAnyWord(source, article.end, end, markers);
-    const typeRange = trimRange(source, article.end, marker?.start ?? end);
-    const nameRange = marker
-      ? trimRange(source, marker.end, end)
-      : typeRange;
-    if (typeRange.start === typeRange.end || nameRange.start === nameRange.end) {
-      return undefined;
-    }
-
-    return {
-      name: createTypeReference(source, nameRange),
-      type: createTypeReference(source, typeRange)
-    };
+  const parameterStart = skipWhitespace(source, start, end);
+  const article = readWord(source, parameterStart, end);
+  const articleWord = article?.value.toLocaleLowerCase('pt-BR');
+  if (
+    !article ||
+    !articleWord ||
+    !indefiniteArticles.has(articleWord) &&
+    !getContractedRoutineParameterArticle(articleWord)
+  ) {
+    return undefined;
   }
+
+  const markers = new Set([
+    'denominado', 'denominada', 'denominados', 'denominadas',
+    'chamado', 'chamada', 'chamados', 'chamadas'
+  ]);
+  const marker = findAnyWord(source, article.end, end, markers);
+  const typeRange = trimRange(source, article.end, marker?.start ?? end);
+  const nameRange = marker
+    ? trimRange(source, marker.end, end)
+    : typeRange;
+  if (typeRange.start === typeRange.end || nameRange.start === nameRange.end) {
+    return undefined;
+  }
+
+  return {
+    name: createTypeReference(source, nameRange),
+    type: createTypeReference(source, typeRange)
+  };
+}
 
 function findRoutineParameterSeparator(
   source: string,
   start: number,
   end: number
 ): { start: number; nextStart: number } | undefined {
-    const commaIndex = source.indexOf(',', start);
-    let separator = commaIndex !== -1 && commaIndex < end
-      ? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
-      : undefined;
-    const words = /[\p{L}\p{N}_]+(?:-[\p{L}\p{N}_]+)*/gu;
-    words.lastIndex = start;
-    let match: RegExpExecArray | null;
-    while ((match = words.exec(source)) && match.index < end) {
-      const wordEnd = match.index + match[0].length;
-      const word = match[0].toLocaleLowerCase('pt-BR');
-      const isIndefiniteArticle = indefiniteArticles.has(word);
-      const contractedArticle = getContractedRoutineParameterArticle(word);
-      if (match.index === start && contractedArticle) {
-        continue;
-      }
-      const nextWordStart = skipWhitespace(source, wordEnd, end);
-      const nextWord = readWord(source, nextWordStart, end);
-      const isDeNameEnder = word === 'de' &&
-        nextWord !== undefined &&
-        (indefiniteArticles.has(nextWord.value.toLocaleLowerCase('pt-BR')) ||
-          definiteArticles.has(nextWord.value.toLocaleLowerCase('pt-BR')));
-      const previousWord = source.slice(start, match.index).match(/\p{L}+\s*$/u)?.[0]
-        .trim()
-        .toLocaleLowerCase('pt-BR');
-      const isParameterStart = isIndefiniteArticle &&
-        match.index > start &&
-        !reservedIdentifierWords.has(previousWord ?? '');
-      if (
-        (!routineNameDelimiters.has(word) &&
-          !conjunctions.has(word) &&
-          !isParameterStart &&
-          !isDeNameEnder) ||
-        isWordCharacter(match.index > start ? source[match.index - 1] : '') ||
-        isWordCharacter(wordEnd < end ? source[wordEnd] : '') ||
-        ['como', 'qual'].includes(word) &&
-          /\btal\s*$/iu.test(source.slice(start, match.index))
-      ) {
-        continue;
-      }
-      if (separator && separator.start < match.index) {
-        break;
-      }
-      if (isIndefiniteArticle) {
-        separator = { start: match.index, nextStart: match.index };
-        break;
-      }
-      if (contractedArticle && match.index > start) {
-        separator = { start: match.index, nextStart: match.index };
-        break;
-      }
-      if (isDeNameEnder) {
-        separator = { start: match.index, nextStart: nextWordStart };
-        break;
-      }
-      const nextParameter = findAnyRoutineParameterArticle(source, wordEnd, end);
-      if (nextParameter) {
-        separator = { start: match.index, nextStart: nextParameter.start };
-        break;
-      }
-      if (word === 'ou') {
-        separator = { start: match.index, nextStart: end };
-        break;
-      }
+  const commaIndex = source.indexOf(',', start);
+  let separator = commaIndex !== -1 && commaIndex < end
+    ? { start: commaIndex, nextStart: skipWhitespace(source, commaIndex + 1, end) }
+    : undefined;
+  const words = /[\p{L}\p{N}_]+(?:-[\p{L}\p{N}_]+)*/gu;
+  words.lastIndex = start;
+  let match: RegExpExecArray | null;
+  while ((match = words.exec(source)) && match.index < end) {
+    const wordEnd = match.index + match[0].length;
+    const word = match[0].toLocaleLowerCase('pt-BR');
+    const isIndefiniteArticle = indefiniteArticles.has(word);
+    const contractedArticle = getContractedRoutineParameterArticle(word);
+    if (match.index === start && contractedArticle) {
+      continue;
     }
-    return separator;
+    const nextWordStart = skipWhitespace(source, wordEnd, end);
+    const nextWord = readWord(source, nextWordStart, end);
+    const isDeNameEnder = word === 'de' &&
+      nextWord !== undefined &&
+      (indefiniteArticles.has(nextWord.value.toLocaleLowerCase('pt-BR')) ||
+        definiteArticles.has(nextWord.value.toLocaleLowerCase('pt-BR')));
+    const previousWord = source.slice(start, match.index).match(/\p{L}+\s*$/u)?.[0]
+      .trim()
+      .toLocaleLowerCase('pt-BR');
+    const isParameterStart = isIndefiniteArticle &&
+      match.index > start &&
+      !reservedIdentifierWords.has(previousWord ?? '');
+    if (
+      (!routineNameDelimiters.has(word) &&
+        !conjunctions.has(word) &&
+        !isParameterStart &&
+        !isDeNameEnder) ||
+      isWordCharacter(match.index > start ? source[match.index - 1] : '') ||
+      isWordCharacter(wordEnd < end ? source[wordEnd] : '') ||
+      ['como', 'qual'].includes(word) &&
+      /\btal\s*$/iu.test(source.slice(start, match.index))
+    ) {
+      continue;
+    }
+    if (separator && separator.start < match.index) {
+      break;
+    }
+    if (isIndefiniteArticle) {
+      separator = { start: match.index, nextStart: match.index };
+      break;
+    }
+    if (contractedArticle && match.index > start) {
+      separator = { start: match.index, nextStart: match.index };
+      break;
+    }
+    if (isDeNameEnder) {
+      separator = { start: match.index, nextStart: nextWordStart };
+      break;
+    }
+    const nextParameter = findAnyRoutineParameterArticle(source, wordEnd, end);
+    if (nextParameter) {
+      separator = { start: match.index, nextStart: nextParameter.start };
+      break;
+    }
+    if (word === 'ou') {
+      separator = { start: match.index, nextStart: end };
+      break;
+    }
   }
+  return separator;
+}
 
 function findTrailingRoutineNameSuffix(
   source: string,
@@ -10600,35 +10603,35 @@ function resolveRoutineParameters(
   symbols: TypeSymbolTable,
   diagnostics: ParserDiagnostic[]
 ): void {
-    for (const routine of routines) {
-      const parameters = [
-        ...routine.parameters,
-        ...routine.alternateParameters.flat(),
-        ...(routine.returnParameter ? [routine.returnParameter] : [])
-      ];
-      for (const parameter of parameters) {
-        const typeText = source.slice(parameter.type.range.start, parameter.type.range.end);
-        const words = [...typeText.matchAll(/\S+/gu)];
-        let resolvedType: TypeReference | undefined;
-        for (let firstWord = 0; firstWord < words.length; firstWord++) {
-          const candidateName = words.slice(firstWord).map(word => word[0]).join(' ');
-          if (!symbols.lookup(candidateName)) {
-            continue;
-          }
-          resolvedType = createTypeReference(source, {
-            start: parameter.type.range.start + words[firstWord].index!,
-            end: parameter.type.range.end
-          });
-          break;
-        }
-        if (!resolvedType) {
-          diagnostics.push({
-            message: `Unknown routine parameter type "${parameter.type.name}".`,
-            range: parameter.type.range
-          });
+  for (const routine of routines) {
+    const parameters = [
+      ...routine.parameters,
+      ...routine.alternateParameters.flat(),
+      ...(routine.returnParameter ? [routine.returnParameter] : [])
+    ];
+    for (const parameter of parameters) {
+      const typeText = source.slice(parameter.type.range.start, parameter.type.range.end);
+      const words = [...typeText.matchAll(/\S+/gu)];
+      let resolvedType: TypeReference | undefined;
+      for (let firstWord = 0; firstWord < words.length; firstWord++) {
+        const candidateName = words.slice(firstWord).map(word => word[0]).join(' ');
+        if (!symbols.lookup(candidateName)) {
           continue;
         }
-        parameter.type = resolvedType;
+        resolvedType = createTypeReference(source, {
+          start: parameter.type.range.start + words[firstWord].index!,
+          end: parameter.type.range.end
+        });
+        break;
+      }
+      if (!resolvedType) {
+        diagnostics.push({
+          message: `Unknown routine parameter type "${parameter.type.name}".`,
+          range: parameter.type.range
+        });
+        continue;
+      }
+      parameter.type = resolvedType;
     }
   }
 }

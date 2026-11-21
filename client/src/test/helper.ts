@@ -82,38 +82,44 @@ export function waitForDiagnosticsUpdate(
 }
 
 function waitForDiagnostic(
-	uri: vscode.Uri,
-	predicate?: (diagnostics: readonly vscode.Diagnostic[]) => boolean
+    uri: vscode.Uri,
+    predicate?: (diagnostics: readonly vscode.Diagnostic[]) => boolean
 ): Promise<void> {
-	return new Promise((resolve, reject) => {
-		let settled = false;
-		let listener: vscode.Disposable;
-		const timeout = setTimeout(() => {
-			finish(new Error(`Timed out waiting for diagnostics for ${uri.toString()}.`));
-		}, 15000);
-		const finish = (error?: Error) => {
-			if (settled) {
-				return;
-			}
-			settled = true;
-			clearTimeout(timeout);
-			listener.dispose();
-			if (error) {
-				reject(error);
-			} else {
-				resolve();
-			}
-		};
-		listener = vscode.languages.onDidChangeDiagnostics(event => {
-			if (!event.uris.some(changedUri => changedUri.toString() === uri.toString())) {
-				return;
-			}
-			if (!predicate || predicate(vscode.languages.getDiagnostics(uri))) {
-				finish();
-			}
-		});
-		if (predicate && predicate(vscode.languages.getDiagnostics(uri))) {
-			finish();
-		}
-	});
+    return new Promise((resolve, reject) => {
+        let settled = false;
+
+        const timeout = setTimeout(() => {
+            finish(new Error(`Timed out waiting for diagnostics for ${uri.toString()}.`));
+        }, 15000);
+
+        const finish = (error?: Error) => {
+            if (settled) {
+                return;
+            }
+
+            settled = true;
+            clearTimeout(timeout);
+            listener.dispose();
+
+            if (error) {
+                reject(error);
+            } else {
+                resolve();
+            }
+        };
+
+        const listener = vscode.languages.onDidChangeDiagnostics(event => {
+            if (!event.uris.some(changedUri => changedUri.toString() === uri.toString())) {
+                return;
+            }
+
+            if (!predicate || predicate(vscode.languages.getDiagnostics(uri))) {
+                finish();
+            }
+        });
+
+        if (predicate && predicate(vscode.languages.getDiagnostics(uri))) {
+            finish();
+        }
+    });
 }

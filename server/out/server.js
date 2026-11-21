@@ -1448,9 +1448,10 @@ function decodePopSource(contentBytes, forceWindows1252 = false) {
         const hasUtf8Bom = contentBytes[0] === 0xef &&
             contentBytes[1] === 0xbb &&
             contentBytes[2] === 0xbf;
+        const hasNonAscii = [...source].some((char) => char.codePointAt(0) > 0x7f);
         return {
             source,
-            requiresWindows1252Conversion: hasUtf8Bom || /[^\u0000-\u007f]/u.test(source)
+            requiresWindows1252Conversion: hasUtf8Bom || hasNonAscii
         };
     }
     catch (error) {

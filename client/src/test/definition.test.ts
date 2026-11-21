@@ -3599,7 +3599,7 @@ suite('Português Puro definitions', () => {
     assert.deepEqual(await updateContent(lines), []);
     let document = await vscode.workspace.openTextDocument(docUri);
     let text = document.getText();
-    let callOffset = text.indexOf('Faça a folha') + 1;
+    const callOffset = text.indexOf('Faça a folha') + 1;
     let definition = await vscode.commands.executeCommand<vscode.Location[]>(
       'vscode.executeDefinitionProvider',
       docUri,

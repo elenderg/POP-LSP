@@ -1780,8 +1780,8 @@ function reuseRoutineRegions(source, routines, previous) {
             oldToCurrent.set(oldRoutine, currentRoutine);
         }
     }
-    for (let index = 0; index < routines.length; index++) {
-        const current = routines[index];
+    for (const current of routines) {
+        //const current = routines[index];
         const key = `${getRoutineRegionKey(current)}\n${getRegionText(source, current)}`;
         const previousRoutine = previousByRegion.get(key)?.shift();
         if (!previousRoutine ||
@@ -3781,6 +3781,7 @@ function resolveRoutineCallCore(source, statementRange, routines, caller, global
         let argumentTypeResolutionMs = 0;
         let expressionResolutionMs = 0;
         let candidateArgumentCount;
+        candidateArgumentCount = 0;
         const { routine, name: routineName, nameEnd, implicitDefiniteArticle } = nameMatch;
         let returnMarker;
         if (routine.returnParameter) {
@@ -5924,14 +5925,13 @@ function parseLocalVariableDeclarationUncached(source, argumentsRange, symbols) 
             typeWords.push(typeWordMatch);
         }
         let resolvedType;
-        for (let firstWord = 0; firstWord < typeWords.length; firstWord++) {
-            const type = symbols.lookup(source.slice(typeWords[firstWord].index, typeRange.end));
+        for (const { index } of typeWords) {
+            const type = symbols.lookup(source.slice(index, typeRange.end));
             if (!type) {
                 continue;
             }
-            const typeStart = typeWords[firstWord].index;
             resolvedType = createSyntheticTypeReference(type.name, {
-                start: typeStart,
+                start: index,
                 end: typeRange.end
             });
             break;
