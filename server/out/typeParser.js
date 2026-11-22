@@ -14,6 +14,7 @@ exports.resolveTypeDeclarationSyntax = resolveTypeDeclarationSyntax;
 exports.findRoutineDeclarationAtOffset = findRoutineDeclarationAtOffset;
 exports.findRoutineFieldAtOffset = findRoutineFieldAtOffset;
 exports.findTypeDefinitionReferenceAtOffset = findTypeDefinitionReferenceAtOffset;
+exports.findTypeDeclarationBaseAtOffset = findTypeDeclarationBaseAtOffset;
 exports.findTypeReferenceAtOffset = findTypeReferenceAtOffset;
 exports.getParsedReferences = getParsedReferences;
 const plural_1 = __importDefault(require("./plural"));
@@ -6149,6 +6150,10 @@ function findTypeDefinitionReferenceAtOffset(parsedDocument, offset) {
         }
     }
     return findTypeReferenceAtOffset(parsedDocument, offset);
+}
+function findTypeDeclarationBaseAtOffset(parsedDocument, offset) {
+    return parsedDocument.declarations.find(declaration => offset >= declaration.name.range.start &&
+        offset < declaration.name.range.end)?.baseType;
 }
 function validateReservedNames(source, declarations, globalVariables, diagnostics) {
     for (const identifier of [

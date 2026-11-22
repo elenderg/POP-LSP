@@ -12,6 +12,7 @@ const {
 const {
   getParsedReferences,
   getParserRegionKey,
+  findTypeDeclarationBaseAtOffset,
   parseTypeDeclarationRegion,
   parseTypeDeclarationSyntax,
   parseTypeDeclarations,
@@ -604,6 +605,41 @@ test('keeps trailing predicate phrases significant in alternate routine headers'
   assert.equal(parsed.diagnostics.filter(diagnostic =>
     diagnostic.message.includes('semantically equivalent')
   ).length, 0);
+});
+
+test('navigates derived type names to their base type declaration', () => {
+  const { documents, index } = createWorkspace([
+    {
+      name: 'Tipos.pop',
+      text: [
+        'Uma cor é uma estrutura.',
+        'Uma cor bem clara é uma cor.'
+      ].join('\n')
+    },
+    {
+      name: 'Rotinas.pop',
+      text: [
+        'Rotina para que se escolha aleatoriamente uma cor bem clara:',
+        '  Retorne.'
+      ].join('\n')
+    }
+  ]);
+  const typeDocument = documents.find(document =>
+    document.uri.endsWith('/Tipos.pop')
+  );
+  const derivedType = typeDocument.parsed.declarations.find(declaration =>
+    declaration.name.normalizedName === 'cor bem clara'
+  );
+  const offset = derivedType.name.range.start + 2;
+  const baseType = findTypeDeclarationBaseAtOffset(typeDocument.parsed, offset);
+  const definition = index.getTypeDeclaration(
+    directory,
+    baseType.normalizedName
+  );
+
+  assert.equal(baseType.name, 'cor');
+  assert.equal(definition?.uri, typeDocument.uri);
+  assert.equal(definition?.reference.name, 'cor');
 });
 
 test('exposes declaration syntax before semantic resolution', () => {

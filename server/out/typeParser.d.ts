@@ -567,6 +567,7 @@ export declare function resolveTypeDeclarationSyntax(source: string, syntax: Par
 export declare function findRoutineDeclarationAtOffset(parsedDocument: ParsedDocument, offset: number): RoutineDeclaration | undefined;
 export declare function findRoutineFieldAtOffset(parsedDocument: ParsedDocument, offset: number): TypeField | undefined;
 export declare function findTypeDefinitionReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
+export declare function findTypeDeclarationBaseAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function findTypeReferenceAtOffset(parsedDocument: ParsedDocument, offset: number): TypeReference | undefined;
 export declare function getParsedReferences(parsed: ParsedDocument, onProfile?: (metrics: ParsedReferencesMetrics) => void): ParsedReference[];
 export {};

@@ -9910,6 +9910,16 @@ export function findTypeDefinitionReferenceAtOffset(
   return findTypeReferenceAtOffset(parsedDocument, offset);
 }
 
+export function findTypeDeclarationBaseAtOffset(
+  parsedDocument: ParsedDocument,
+  offset: number
+): TypeReference | undefined {
+  return parsedDocument.declarations.find(declaration =>
+    offset >= declaration.name.range.start &&
+    offset < declaration.name.range.end
+  )?.baseType;
+}
+
 function validateReservedNames(
   source: string,
   declarations: TypeDeclaration[],

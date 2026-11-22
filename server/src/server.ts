@@ -42,6 +42,7 @@ import {
   ParserSymbolCatalog,
   RoutineParameter,
   RoutineDeclaration,
+  findTypeDeclarationBaseAtOffset,
   getParserRegionKey,
   normalizeTypeName,
   parseTypeDeclarations
@@ -2300,6 +2301,7 @@ connection.onDefinition(params => profileRequest('definition', async requestId =
   const resolveTypeDefinition = (
     reference: ParsedReference
   ): ReturnType<typeof Location.create> | undefined =>
+    resolveTypeName(reference.name) ??
     resolveReferenceDeclaration(reference);
   const resolveTypeName = (
     typeName: string
@@ -2318,6 +2320,15 @@ connection.onDefinition(params => profileRequest('definition', async requestId =
     }
     return undefined;
   };
+  const declaredTypeBase = findTypeDeclarationBaseAtOffset(
+    parsedDocument,
+    offset
+  );
+  const declaredTypeBaseLocation = declaredTypeBase &&
+    resolveTypeName(declaredTypeBase.name);
+  if (declaredTypeBaseLocation) {
+    return declaredTypeBaseLocation;
+  }
   if (parsedReference?.kind === 'variable') {
     const isTypePosition = parsedReference.scope !== undefined &&
       parsedDocument.routines
