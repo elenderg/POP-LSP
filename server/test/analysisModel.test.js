@@ -1923,6 +1923,56 @@ test('detects an implicit local after a routine verb and any indefinite article 
   );
 });
 
+test('stops a named local before a chained routine call', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'types.pop',
+      text: [
+        'Um byte é um byte.',
+        'Um ponteiro é uma estrutura com 4 bytes.',
+        'Um caractere inicial é um ponteiro para um byte.',
+        'Um caractere final é um ponteiro para um byte.',
+        'Uma string é uma estrutura com um caractere inicial e um caractere final.',
+        'Uma string de caracteres amplos é uma string.',
+        'Um número é uma estrutura.'
+      ].join('\n')
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se converta uma string para uma string de caracteres amplos e anexe o caractere NULL nela:',
+        '  Retorne.',
+        'Rotina para que se anexe o caractere NULL após uma string de caracteres amplos:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se exercite usando uma string:',
+        '  Converta a string para uma string de caracteres amplos denominada nome amplificado do host e anexe o caractere NULL nela.',
+        '  Processe "winhttp.dll" "WinHttpConnect" com',
+        '    O caractere inicial deste nome amplificado do host [pswzServerName]',
+        '  Retornando um número.'
+      ].join('\n')
+    }
+  ]);
+  const caller = documents[2].parsed.routines[0];
+  const wideString = caller.localVariables.find(variable =>
+    variable.type.normalizedName === 'string de caracteres amplos'
+  );
+  const process = caller.processes[0];
+
+  assert.deepEqual(documents[2].parsed.diagnostics, []);
+  assert.ok(wideString);
+  assert.equal(wideString.name.normalizedName, 'nome amplificado do host');
+  assert.ok(process);
+  assert.deepEqual(
+    process.variableAccesses.map(access => access.reference.normalizedName),
+    ['nome amplificado do host']
+  );
+});
+
 test('preserves useful analysis for incomplete declarations', () => {
   const source = 'Uma pessoa é um tipo ausente.';
   const parsed = parseTypeDeclarations(source);

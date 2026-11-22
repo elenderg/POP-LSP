@@ -3872,7 +3872,8 @@ function processRoutineStatementCore(
   for (const localVariable of parseRoutineStatementLocalVariables(
     source,
     statement,
-    symbols
+    symbols,
+    routines
   )) {
     caller.localVariables.push(localVariable);
   }//
@@ -7635,6 +7636,7 @@ interface RoutineNameMatch extends RoutineNameCandidate {
 interface RoutineNameLookupIndex {
   byNormalizedName: Map<string, RoutineNameCandidate[]>;
   byNormalizedNameAndQualifier: Map<string, RoutineNameCandidate[]>;
+  firstWords: Set<string>;
   maximumNameWords: number;
 }
 
@@ -7668,6 +7670,7 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
     string,
     RoutineNameCandidate[]
   >();
+  const firstWords = new Set<string>();
   let order = 0;
   let maximumNameWords = 0;
   for (const routine of routines) {
@@ -7685,6 +7688,10 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
     ];
     for (const { name, parameters, trailingNameSuffix } of variants) {
       const normalizedName = normalizeRoutineName(name.name);
+      const firstWord = normalizedName.split(/\s+/u)[0];
+      if (firstWord) {
+        firstWords.add(firstWord);
+      }
       maximumNameWords = Math.max(
         maximumNameWords,
         normalizedName.split(/\s+/u).filter(Boolean).length
@@ -7713,6 +7720,7 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
   const index = {
     byNormalizedName,
     byNormalizedNameAndQualifier,
+    firstWords,
     maximumNameWords
   };
   routineNameLookupIndexes.set(routines, index);
@@ -9879,7 +9887,8 @@ function parseLocalVariableDeclarationUncached(
 function parseRoutineStatementLocalVariables(
   source: string,
   statement: SourceRange,
-  symbols: TypeSymbolTable
+  symbols: TypeSymbolTable,
+  routines: RoutineDeclaration[]
 ): RoutineLocalVariable[] {
   let declarationRange = statement;
   const statementKeyword = readWord(source, statement.start, statement.end);
@@ -9895,6 +9904,33 @@ function parseRoutineStatementLocalVariables(
         start: statement.start,
         end: destinationMarker.start
       };
+    }
+  }
+
+  const routineStartWords = getRoutineNameIndex(routines).firstWords;
+  const chainedCallPattern = /\be\s+(\p{L}+)/giu;
+  const declarationText = source.slice(
+    declarationRange.start,
+    declarationRange.end
+  );
+  let chainedCall: RegExpExecArray | null;
+  while ((chainedCall = chainedCallPattern.exec(declarationText))) {
+    if (!routineStartWords.has(chainedCall[1].toLocaleLowerCase('pt-BR'))) {
+      continue;
+    }
+    const chainedCallStart = declarationRange.start + chainedCall.index;
+    const hasNamedLocalBeforeCall = [...source.slice(
+      declarationRange.start,
+      chainedCallStart
+    ).matchAll(/\p{L}+/gu)].some(word =>
+      localVariableNameMarkers.has(word[0].toLocaleLowerCase('pt-BR'))
+    );
+    if (hasNamedLocalBeforeCall) {
+      declarationRange = {
+        ...declarationRange,
+        end: chainedCallStart
+      };
+      break;
     }
   }
 

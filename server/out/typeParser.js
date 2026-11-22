@@ -2306,7 +2306,7 @@ function processRoutineStatement(source, statement, caller, routines, globalVari
 function processRoutineStatementCore(source, statement, caller, routines, globalVariables, symbols, diagnostics, cacheRoutineArgumentTypes = true) {
     const statementDiagnosticStart = diagnostics.length;
     const statementKeyword = readWord(source, statement.start, statement.end);
-    for (const localVariable of parseRoutineStatementLocalVariables(source, statement, symbols)) {
+    for (const localVariable of parseRoutineStatementLocalVariables(source, statement, symbols, routines)) {
         caller.localVariables.push(localVariable);
     } //
     if (statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua') {
@@ -4671,6 +4671,7 @@ function getRoutineNameIndex(routines) {
     }
     const byNormalizedName = new Map();
     const byNormalizedNameAndQualifier = new Map();
+    const firstWords = new Set();
     let order = 0;
     let maximumNameWords = 0;
     for (const routine of routines) {
@@ -4688,6 +4689,10 @@ function getRoutineNameIndex(routines) {
         ];
         for (const { name, parameters, trailingNameSuffix } of variants) {
             const normalizedName = normalizeRoutineName(name.name);
+            const firstWord = normalizedName.split(/\s+/u)[0];
+            if (firstWord) {
+                firstWords.add(firstWord);
+            }
             maximumNameWords = Math.max(maximumNameWords, normalizedName.split(/\s+/u).filter(Boolean).length);
             const candidates = byNormalizedName.get(normalizedName) ?? [];
             const candidate = {
@@ -4708,6 +4713,7 @@ function getRoutineNameIndex(routines) {
     const index = {
         byNormalizedName,
         byNormalizedNameAndQualifier,
+        firstWords,
         maximumNameWords
     };
     routineNameLookupIndexes.set(routines, index);
@@ -6099,7 +6105,7 @@ function parseLocalVariableDeclarationUncached(source, argumentsRange, symbols, 
     }
     return localVariable;
 }
-function parseRoutineStatementLocalVariables(source, statement, symbols) {
+function parseRoutineStatementLocalVariables(source, statement, symbols, routines) {
     let declarationRange = statement;
     const statementKeyword = readWord(source, statement.start, statement.end);
     if (statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua') {
@@ -6112,6 +6118,24 @@ function parseRoutineStatementLocalVariables(source, statement, symbols) {
                 start: statement.start,
                 end: destinationMarker.start
             };
+        }
+    }
+    const routineStartWords = getRoutineNameIndex(routines).firstWords;
+    const chainedCallPattern = /\be\s+(\p{L}+)/giu;
+    const declarationText = source.slice(declarationRange.start, declarationRange.end);
+    let chainedCall;
+    while ((chainedCall = chainedCallPattern.exec(declarationText))) {
+        if (!routineStartWords.has(chainedCall[1].toLocaleLowerCase('pt-BR'))) {
+            continue;
+        }
+        const chainedCallStart = declarationRange.start + chainedCall.index;
+        const hasNamedLocalBeforeCall = [...source.slice(declarationRange.start, chainedCallStart).matchAll(/\p{L}+/gu)].some(word => localVariableNameMarkers.has(word[0].toLocaleLowerCase('pt-BR')));
+        if (hasNamedLocalBeforeCall) {
+            declarationRange = {
+                ...declarationRange,
+                end: chainedCallStart
+            };
+            break;
         }
     }
     const quotedRanges = findQuotedRanges(source, declarationRange);
