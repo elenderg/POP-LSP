@@ -14,7 +14,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/.vscode-test'
-      //,     '**/out'
+      ,     '**/out'
       ]
   },
   js.configs.recommended,
@@ -44,7 +44,7 @@ export default tseslint.config(
     }
   },
   {
-    files: ['server/benchmark/**/*.js'],
+    files: ['server/benchmark/**/*.js','server/out/*.js'],
     languageOptions: {
       globals: {
         ...globals.node

@@ -3454,6 +3454,19 @@ function parseRoutineProcess(source, statement, caller, routines, globalVariable
             argumentTypes.push(outputVariable.argumentType);
             continue;
         }
+        const expression = parseRoutineExpression(source, argument, []);
+        if (expression && expression.kind !== 'operand') {
+            const expressionType = resolveRoutineExpressionType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
+            if (!expressionType) {
+                diagnostics.push({
+                    message: `Unknown variable or field "${source.slice(argument.start, argument.end)}" passed to "Processe".`,
+                    range: argument
+                });
+                return undefined;
+            }
+            argumentTypes.push(expressionType);
+            continue;
+        }
         const article = readWord(source, argument.start, argument.end);
         if (!article || !definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
             diagnostics.push({

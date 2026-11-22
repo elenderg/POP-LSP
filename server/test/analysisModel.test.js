@@ -2462,6 +2462,63 @@ test('projects allocation, deallocation, and external process operations', () =>
   }
 });
 
+test('resolves expressions in external process arguments', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Uma string é uma estrutura.',
+    'Uma fonte é uma estrutura com um número denominado altura.',
+    'A fonte é uma fonte.',
+    'A mensagem é "olá".',
+    'Rotina para que se teste:',
+    '  Processe "lib.dll" "func" com',
+    '   - A altura desta fonte mais 2 menos 1 vezes 3 dividido por 4 e',
+    '     A mensagem junto com "!" seguido de "?" e',
+    '     - A altura desta fonte.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const process = parsed.routines[0].processes[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.deepEqual(
+    process.arguments.map(argument => argument.name),
+    [
+      '- A altura desta fonte mais 2 menos 1 vezes 3 dividido por 4',
+      'A mensagem junto com "!" seguido de "?"',
+      '- A altura desta fonte'
+    ]
+  );
+  assert.deepEqual(
+    process.argumentTypes.map(type => type.name),
+    ['fração', 'string', 'número']
+  );
+  assert.ok(process.fieldAccesses.some(access =>
+    access.target.name.name === 'altura'
+  ));
+});
+
+test('resolves unary negative expressions in every routine argument position', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'O valor é 1.',
+    'Rotina para que se use um número denominado primeiro e um número denominado segundo e um número denominado terceiro:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Use - O valor e O valor e - O valor.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const call = caller.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call.target.name.normalizedName, 'use');
+  assert.deepEqual(
+    call.arguments.map(argument => argument.name),
+    ['- O valor', 'O valor', '- O valor']
+  );
+});
+
 test('resolves internal function pointers through nested pointer fields', () => {
   const source = [
     'Um ponteiro é uma estrutura com 4 bytes.',

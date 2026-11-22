@@ -17,7 +17,7 @@ const editors = new Map();
  * Activates the vscode.lsp-sample extension
  */
 async function activate(docUri) {
-    const ext = vscode.extensions.getExtension('Elender.lsp-sample'); // tem que estar de acordo com o package.json
+    const ext = vscode.extensions.getExtension('Elender.lsp-sample');
     if (!ext) {
         throw new Error('The Português Puro extension is not available in the test host.');
     }
