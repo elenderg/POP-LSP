@@ -2612,6 +2612,75 @@ test('projects allocation, deallocation, and external process operations', () =>
   }
 });
 
+test('resolves nested pointer fields and deallocates pointer-backed local structures', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Um ponteiro é uma estrutura com 4 bytes.',
+        'Um hRgn é um ponteiro.',
+        'Uma localização é uma estrutura.',
+        'Um ponteiro da localização é um ponteiro para uma localização.',
+        'Uma quantidade de vértices é um número.',
+        'Uma série de vértices conjunto é uma estrutura com',
+        '  Uma quantidade de vértices e',
+        '  Um ponteiro da localização.',
+        'Uma série de vértices é um ponteiro para uma série de vértices conjunto.',
+        'Uma lista estruturada é uma estrutura.',
+        'Uma lista é um ponteiro para uma lista estruturada.',
+        'Um vértice é uma lista.',
+        'Um polígono é uma lista com uns vértices.'
+      ].join('\n')
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se crie uma série de vértices usando uns vértices:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se crie uma hRgn usando um polígono:',
+        '  Crie uma série de vértices usando os vértices deste polígono.',
+        '  Crie uma série de vértices com os vértices deste polígono.',
+        '  Processe "gdi32.dll" "LPtoDP" com',
+        '    O ponteiro da localização desta série de vértices [lppt] e',
+        '    A quantidade de vértices desta série de vértices [c].',
+        '  Processe "gdi32.dll" "CreatePolygonRgn" com',
+        '    O ponteiro da localização desta série de vértices [*pptl] e',
+        '    A quantidade de vértices desta série de vértices [cPoint] e',
+        '    2 [iMode = WINDING]',
+        '  Retornando o hRgn.',
+        '  Destrua a série de vértices.'
+      ].join('\n')
+    }
+  ]);
+  const parsed = documents[2].parsed;
+  const caller = parsed.routines[0];
+  const processes = caller.processes;
+  const deallocation = caller.memoryDeallocations[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.ok(caller.localVariables.some(variable =>
+    variable.name.normalizedName === 'série de vértices' &&
+    variable.type.normalizedName === 'série de vértices'
+  ));
+  assert.equal(processes.length, 2);
+  assert.deepEqual(
+    processes.map(process =>
+      process.fieldAccesses.map(access => access.target.name.name)
+    ),
+    [
+      ['ponteiro da localização', 'quantidade de vértices'],
+      ['ponteiro da localização', 'quantidade de vértices']
+    ]
+  );
+  assert.equal(deallocation.type.normalizedName, 'série de vértices');
+});
+
 test('resolves expressions in external process arguments', () => {
   const source = [
     'Um número é uma estrutura.',

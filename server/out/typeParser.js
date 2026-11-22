@@ -3258,7 +3258,8 @@ function validateMemoryDeallocationStatement(source, statement, routine, routine
     const computedFieldAccesses = [];
     const variableAccesses = [];
     const type = resolveRoutineArgumentType(source, targetRange, routine, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses);
-    if (!type || symbols.getBaseTypeDistance(type.name, 'lista') === undefined) {
+    if (!type ||
+        symbols.getBaseTypeDistance(type.name, 'ponteiro') === undefined) {
         return false;
     }
     routine.memoryDeallocations.push({
@@ -6157,7 +6158,8 @@ function parseRoutineStatementLocalVariables(source, statement, symbols, routine
     for (let index = 0; index < articles.length; index++) {
         const article = articles[index];
         const argumentEnd = articles[index + 1]?.start ?? declarationRange.end;
-        const candidate = parseLocalVariableDeclaration(source, trimRange(source, article.start, argumentEnd), symbols, true);
+        const argumentMarker = findAnyWord(source, article.end, argumentEnd, routineNameDelimiters);
+        const candidate = parseLocalVariableDeclaration(source, trimRange(source, article.start, argumentMarker?.start ?? argumentEnd), symbols, true);
         if (candidate) {
             variables.push(candidate);
         }

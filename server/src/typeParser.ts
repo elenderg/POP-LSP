@@ -5317,7 +5317,10 @@ function validateMemoryDeallocationStatement(
     computedFieldAccesses,
     variableAccesses
   );
-  if (!type || symbols.getBaseTypeDistance(type.name, 'lista') === undefined) {
+  if (
+    !type ||
+    symbols.getBaseTypeDistance(type.name, 'ponteiro') === undefined
+  ) {
     return false;
   }
 
@@ -9956,9 +9959,15 @@ function parseRoutineStatementLocalVariables(
   for (let index = 0; index < articles.length; index++) {
     const article = articles[index];
     const argumentEnd = articles[index + 1]?.start ?? declarationRange.end;
+    const argumentMarker = findAnyWord(
+      source,
+      article.end,
+      argumentEnd,
+      routineNameDelimiters
+    );
     const candidate = parseLocalVariableDeclaration(
       source,
-      trimRange(source, article.start, argumentEnd),
+      trimRange(source, article.start, argumentMarker?.start ?? argumentEnd),
       symbols,
       true
     );
