@@ -5980,10 +5980,19 @@ function isStringConvertibleType(actualType, routines, symbols) {
     if (getRoutineArgumentTypeDistance(actualType, 'string', symbols) !== undefined) {
         return true;
     }
-    return routines.some(routine => normalizeRoutineName(routine.name.name) === 'atribua' &&
-        routine.parameters.length === 2 &&
-        symbols.getBaseTypeDistance(routine.parameters[1].type.name, 'string') !== undefined &&
-        getRoutineArgumentTypeDistance(actualType, routine.parameters[0].type.name, symbols) !== undefined);
+    return routines.some(routine => {
+        const signatures = [
+            { name: routine.name.name, parameters: routine.parameters },
+            ...routine.alternateNames.map((name, index) => ({
+                name: name.name,
+                parameters: routine.alternateParameters[index] ?? routine.parameters
+            }))
+        ];
+        return signatures.some(signature => normalizeRoutineName(signature.name) === 'atribua' &&
+            signature.parameters.length === 2 &&
+            symbols.getBaseTypeDistance(signature.parameters[1].type.name, 'string') !== undefined &&
+            getRoutineArgumentTypeDistance(actualType, signature.parameters[0].type.name, symbols) !== undefined);
+    });
 }
 function getRoutineExpressionTypeDistance(expressionType, expectedName, symbols) {
     const directDistance = getRoutineArgumentTypeDistance(expressionType, expectedName, symbols);

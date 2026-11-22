@@ -2756,6 +2756,55 @@ test('resolves expressions in external process arguments', () => {
   ));
 });
 
+test('resolves numeric concatenation as one routine argument', () => {
+  const declarations = [
+    'Um número é uma estrutura.',
+    'Uma string é uma estrutura.',
+    'Um relatório é uma string.'
+  ];
+  const conversion = [
+    'Rotina para que se atribua um número para uma string;',
+    'Rotina para que se converta um número para uma string:',
+    '  Retorne.'
+  ];
+  const reportRoutines = [
+    'Rotina para que se produza o relatório de informações usando um relatório:',
+    '  Retorne.',
+    'Rotina para que se produza o relatório de informações usando um número e um segundo número:',
+    '  Produza o relatório de informações usando o número seguido de ", " junto com o segundo número.',
+    '  Retorne.'
+  ];
+  const parsed = parseTypeDeclarations([
+    ...declarations,
+    ...conversion,
+    ...reportRoutines
+  ].join('\n'));
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'produza o relatório de informações usando' &&
+    routine.parameters.length === 2
+  );
+  const call = caller.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call.target.name.normalizedName, 'produza o relatório de informações usando');
+  assert.deepEqual(
+    call.target.parameters.map(parameter => parameter.type.normalizedName),
+    ['relatório']
+  );
+  assert.deepEqual(
+    call.arguments.map(argument => argument.name),
+    ['o número seguido de ", " junto com o segundo número']
+  );
+
+  const withoutConversion = parseTypeDeclarations([
+    ...declarations,
+    ...reportRoutines
+  ].join('\n'));
+  assert.ok(withoutConversion.diagnostics.some(diagnostic =>
+    diagnostic.message.startsWith('No compatible routine found')
+  ));
+});
+
 test('resolves unary negative expressions in every routine argument position', () => {
   const source = [
     'Um número é uma estrutura.',
