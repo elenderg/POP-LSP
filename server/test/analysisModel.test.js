@@ -2061,6 +2061,43 @@ test('resolves workspace computed fields against the current type catalog', () =
   assert.deepEqual(incremental.diagnostics, []);
 });
 
+test('resolves a computed field whose owner is named by its type', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'types.pop',
+      text: [
+        'Uma string é uma estrutura.',
+        'Um grupo data-hora é uma estrutura.'
+      ].join('\n')
+    },
+    {
+      name: 'computed-field.pop',
+      text: [
+        'Rotina para que se atribua a string dum grupo data-hora para uma string:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se teste:',
+        '  Atribua a string deste grupo data-hora à string.'
+      ].join('\n')
+    }
+  ]);
+  const caller = documents[2].parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+
+  assert.deepEqual(documents[2].parsed.diagnostics, []);
+  assert.ok(caller.computedFieldAccesses.some(access =>
+    access.target.name.normalizedName ===
+      'atribua a string dum grupo data-hora' &&
+    access.target.computedField?.structureType.normalizedName ===
+      'grupo data-hora'
+  ));
+});
+
 test('resolves explicit atribua routine calls before assignment syntax', () => {
   const source = [
     'Um par de números é uma estrutura.',

@@ -5318,10 +5318,18 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
             type: createSyntheticTypeReference(globalVariable.typeName, rootNameRange)
         });
     }
-    const rootType = resolveVariableType(caller, globalVariables, rootName) ?? (caller.computedField &&
+    let rootType = resolveVariableType(caller, globalVariables, rootName) ?? (caller.computedField &&
         normalizeTypeName(caller.computedField.structureType.name) === rootName
         ? caller.computedField.structureType
         : undefined);
+    if (!rootType && !rootLocalVariable && !globalVariable && fieldRanges.length > 0) {
+        const rootTypeSymbol = symbols.lookup(rootName);
+        const firstFieldName = normalizeTypeName(source.slice(fieldRanges[0].start, fieldRanges[0].end));
+        if (rootTypeSymbol &&
+            findComputedFieldRoutine(createSyntheticTypeReference(rootTypeSymbol.name, rootNameRange), firstFieldName, routines, symbols)) {
+            rootType = createSyntheticTypeReference(rootTypeSymbol.name, rootNameRange);
+        }
+    }
     if (!rootType && fieldRanges.length === 1) {
         const operatorName = normalizeTypeName(source.slice(fieldRanges[0].start, fieldRanges[0].end));
         if (operatorName === 'magnitude') {
