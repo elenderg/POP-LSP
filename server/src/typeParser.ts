@@ -8269,7 +8269,17 @@ function resolveRoutineArgumentTypeCore(
       globalVariables,
       variableName
     );
-    return variableType;
+    if (variableType) {
+      return variableType;
+    }
+    if (
+      caller.computedField &&
+      normalizeTypeName(caller.computedField.structureType.name) ===
+        variableName
+    ) {
+      return caller.computedField.structureType;
+    }
+    return undefined;
   }
   return resolveIndefiniteTypeArgument(source, argument, symbols);
 }

@@ -1053,6 +1053,35 @@ test('matches trailing suffixes from alternate routine headers', () => {
   ]);
 });
 
+test('resolves null checks on a computed field owner through pointer overloads', () => {
+  const source = [
+    'Um ponteiro é uma estrutura.',
+    'Uma lista é um ponteiro para uma lista estruturada.',
+    'Uma lista estruturada é uma estrutura.',
+    'Uma caixa de texto é uma lista.',
+    'Um número é uma estrutura.',
+    'Uma malha quadriculada é uma estrutura.',
+    'Função para que se determine se um ponteiro é um número;',
+    'Função para que se determine se um ponteiro é um segundo ponteiro;',
+    'Função para que se determine se um número é um segundo número:',
+    '  Diga sim.',
+    'Rotina para que se atribua a malha quadriculada duma caixa de texto para uma malha quadriculada:',
+    '  Se a caixa de texto for inexistente, retorne.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const computedFieldRoutine = parsed.routines.find(routine =>
+    routine.computedField?.name.name === 'malha quadriculada'
+  );
+  const conditional = computedFieldRoutine?.conditionals[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(conditional?.target?.name.name, 'é ');
+  assert.deepEqual(
+    conditional?.conditionArguments.map(argument => argument.name),
+    ['a caixa de texto', 'inexistente']
+  );
+});
+
 test('caches repeated overload argument analysis without changing resolution', () => {
   const source = [
     'Um número é um byte.',
