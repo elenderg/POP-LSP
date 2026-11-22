@@ -970,6 +970,63 @@ test('resolves contracted address and content operators in routine arguments', (
   );
 });
 
+test('resolves all arithmetic operators for pointer and numeric operands', () => {
+  const header = [
+    'Um ponteiro é uma estrutura.',
+    'Um pbyte é um ponteiro para um byte.',
+    'Um pnúmero é um ponteiro para um número.',
+    'Um ponteiro derivado de byte é um pbyte.',
+    'Um ponteiro derivado de número é um pnúmero.',
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Uma quantidade de caracteres é uns twips.',
+    'Uma fração é um número.',
+    'Um octeto é um byte.',
+    'Rotina para que se use um ponteiro: Retorne.',
+    'Rotina para que se use um byte: Retorne.',
+    'Rotina para que se use um número: Retorne.',
+    'Rotina para que se use uma fração: Retorne.',
+    'Rotina para que se teste um ponteiro derivado de byte denominado ponteiro de bytes e um ponteiro derivado de número denominado ponteiro de números e um octeto denominado byte e uma quantidade de caracteres denominada número:'
+  ];
+  const pairs = [
+    ['o ponteiro de bytes', 'o ponteiro de números', 'ponteiro'],
+    ['o ponteiro de bytes', 'o número', 'ponteiro'],
+    ['o número', 'o ponteiro de bytes', 'ponteiro'],
+    ['o ponteiro de bytes', 'o byte', 'ponteiro'],
+    ['o byte', 'o ponteiro de bytes', 'ponteiro'],
+    ['o byte', 'o número', 'número'],
+    ['o número', 'o byte', 'número'],
+    ['o byte', 'o byte', 'byte'],
+    ['o número', 'o número', 'número']
+  ];
+  const operators = ['mais', 'menos', 'vezes', 'dividido por'];
+  const calls = pairs.flatMap(([left, right]) =>
+    operators.map(operator =>
+      `  Use ${left} ${operator} ${right}.`
+    )
+  );
+  const source = [...header, ...calls].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.calls.length === pairs.length * operators.length
+  );
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(caller?.calls.length, pairs.length * operators.length);
+  assert.ok(caller?.calls.every(call => call.target?.name.normalizedName === 'use'));
+  const resultCategories = caller?.calls.map(call =>
+    call.target?.parameters[0].type.name === 'ponteiro'
+      ? 'ponteiro'
+      : 'numeric'
+  );
+  assert.deepEqual(
+    resultCategories,
+    pairs.flatMap(([, , resultType]) =>
+      operators.map(() => resultType === 'ponteiro' ? 'ponteiro' : 'numeric')
+    )
+  );
+});
+
 test('caches repeated overload argument analysis without changing resolution', () => {
   const source = [
     'Um número é um byte.',

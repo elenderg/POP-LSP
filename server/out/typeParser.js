@@ -752,7 +752,7 @@ const articles = new Set([
     ...definiteArticles, ...indefiniteArticles
 ]);
 const builtInStatementStarts = new Set([
-    'atribua', // atribua não é um built-in statement.
+    //'atribua', // atribua não é um built-in statement.
     'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
     'processe', 'itere', 'pare', 'reitere',
     'aloque', 'desaloque', 'aponte', 'direcione', 'redirecione'
@@ -5817,8 +5817,35 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
                 : undefined;
         }
         const numericTypes = ['fração', 'número', 'byte'];
-        const leftBase = numericTypes.find(typeName => symbols.getBaseTypeDistance(leftType.name, typeName) !== undefined);
-        const rightBase = numericTypes.find(typeName => symbols.getBaseTypeDistance(rightType.name, typeName) !== undefined);
+        const getNumericBase = (type) => numericTypes.find(typeName => symbols.getBaseTypeDistance(type.name, typeName) !== undefined);
+        const leftBase = getNumericBase(leftType);
+        const rightBase = getNumericBase(rightType);
+        if (['mais', 'menos', 'vezes', 'dividido por', '/'].includes(node.operator)) {
+            const isPointerType = (type) => {
+                let symbol = symbols.lookup(type.name);
+                const visited = new Set();
+                while (symbol && !visited.has(symbol)) {
+                    if (symbol.pointedType) {
+                        return true;
+                    }
+                    visited.add(symbol);
+                    symbol = symbol.baseType
+                        ? symbols.lookup(symbol.baseType.name)
+                        : undefined;
+                }
+                return false;
+            };
+            const leftIsPointer = isPointerType(leftType);
+            const rightIsPointer = isPointerType(rightType);
+            if (leftIsPointer &&
+                (rightIsPointer || rightBase)) {
+                return leftType;
+            }
+            if (rightIsPointer &&
+                leftBase) {
+                return rightType;
+            }
+        }
         if (!leftBase || !rightBase) {
             return undefined;
         }
