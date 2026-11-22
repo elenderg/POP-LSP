@@ -321,6 +321,7 @@ export interface ParserSymbolCatalog {
 }
 export interface ParseOptions {
     resolveRoutineCalls?: boolean;
+    resolveRoutineParameterTypes?: boolean;
     cacheRoutineArgumentTypes?: boolean;
     incrementalRoutineResolution?: boolean;
     verifyIncrementalRoutineResolution?: boolean;

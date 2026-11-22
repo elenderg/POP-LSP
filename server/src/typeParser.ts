@@ -717,6 +717,7 @@ export interface ParserSymbolCatalog {
 
 export interface ParseOptions {
   resolveRoutineCalls?: boolean;
+  resolveRoutineParameterTypes?: boolean;
   cacheRoutineArgumentTypes?: boolean;
   incrementalRoutineResolution?: boolean;
   verifyIncrementalRoutineResolution?: boolean;
@@ -2468,12 +2469,14 @@ function resolveTypeDeclarationSyntaxCore(
   );
   options.onProgress?.('a resolução de parâmetros de rotinas', 'start');
   const routineParameterResolutionStartedAt = routineResolutionStartedAt;
-  resolveRoutineParameters(
-    parserSource,
-    routinesToResolve,
-    symbols,
-    diagnostics
-  );
+  if (options.resolveRoutineParameterTypes !== false) {
+    resolveRoutineParameters(
+      parserSource,
+      routinesToResolve,
+      symbols,
+      diagnostics
+    );
+  }
   const routineParameterResolutionFinishedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
@@ -8752,7 +8755,7 @@ function resolveStructureFieldAccessCore(
         diagnostic.range.start === fieldRange.start &&
         diagnostic.range.end === fieldRange.end
       )) {
-        diagnostics?.push({ message, range: fieldRange });
+        diagnostics?.push({ message, range: fieldRange, severity: 'hint' });
       }
       return undefined;
     }

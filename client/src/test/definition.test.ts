@@ -5085,6 +5085,12 @@ suite('Português Puro definitions', () => {
         diagnostic.message === 'Ambiguous structure field access "nome".'
       )
     );
+    assert.equal(
+      diagnostics.find(diagnostic =>
+        diagnostic.message === 'Ambiguous structure field access "nome".'
+      )?.severity,
+      vscode.DiagnosticSeverity.Hint
+    );
     assert.ok(
       diagnostics.every(diagnostic =>
         !diagnostic.message.startsWith('Unknown structure field access')

@@ -3804,6 +3804,7 @@ suite('Português Puro definitions', () => {
         const diagnostics = vscode.languages.getDiagnostics(docUri);
         assert.equal(diagnostics.filter(diagnostic => diagnostic.message.startsWith('Ambiguous structure field access')).length, 1);
         assert.ok(diagnostics.some(diagnostic => diagnostic.message === 'Ambiguous structure field access "nome".'));
+        assert.equal(diagnostics.find(diagnostic => diagnostic.message === 'Ambiguous structure field access "nome".')?.severity, vscode.DiagnosticSeverity.Hint);
         assert.ok(diagnostics.every(diagnostic => !diagnostic.message.startsWith('Unknown structure field access')));
         const document = await vscode.workspace.openTextDocument(docUri);
         const text = document.getText();

@@ -79,6 +79,51 @@ test('builds a position-preserving syntax tree and shared symbol index', () => {
   assert.equal(getDocumentAnalysis(parsed, source.length), analysis);
 });
 
+test('resolves cross-file routine parameter types from the workspace catalog', () => {
+  const typeSource = [
+    'Um ponteiro é uma estrutura com 4 bytes.',
+    'Um caractere inicial é um ponteiro para um byte.',
+    'Um caractere final é um ponteiro para um byte.',
+    'Uma string é uma estrutura com',
+    '  Um caractere inicial e',
+    '  Um caractere final.',
+    'Uma quantidade de bytes é uma contagem.',
+    'Uma contagem é um número.',
+    'Uma quantidade de caracteres é uns twips.',
+    'Um twip é um número.',
+    'Um número é uma estrutura.'
+  ].join('\n');
+  const routineSource = [
+    'Função para que se atribua a quantidade de caracteres duma string para uma quantidade de caracteres:',
+    '  Retorne.',
+    'para que se reaponte um ponteiro usando uma quantidade de bytes:',
+    '  Retorne.'
+  ].join('\n');
+  const callerSource = [
+    'para que se acrescente um byte no final de uma string:',
+    '  Reaponte o caractere inicial desta string usando a quantidade de caracteres desta string mais 1.'
+  ].join('\n');
+  const baseParseOptions = {
+    resolveRoutineCalls: false,
+    resolveRoutineParameterTypes: false
+  };
+  const base = [
+    parseTypeDeclarations(typeSource, undefined, undefined, baseParseOptions),
+    parseTypeDeclarations(routineSource, undefined, undefined, baseParseOptions)
+  ];
+  const catalog = {
+    declarations: base.flatMap(parsed => parsed.declarations),
+    globalVariables: base.flatMap(parsed => parsed.globalVariables),
+    routines: base.flatMap(parsed => parsed.routines)
+  };
+  const parsed = parseTypeDeclarations(callerSource, catalog);
+  const reponte = parsed.routines[0].calls[0].target;
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.ok(reponte);
+  assert.equal(reponte.name.normalizedName, 'reaponte');
+});
+
 test('preserves the full symbol catalog for large comment-free documents', () => {
   const alphabeticName = index => {
     let name = '';
@@ -1178,14 +1223,11 @@ test('reports ambiguity between direct and nested structure fields', () => {
   ].join('\n');
   const parsed = parseTypeDeclarations(source);
 
-  assert.deepEqual(
-    parsed.diagnostics
-      .filter(diagnostic =>
-        diagnostic.message.startsWith('Ambiguous structure field access')
-      )
-      .map(diagnostic => diagnostic.message),
-    ['Ambiguous structure field access "nome".']
+  const ambiguousDiagnostic = parsed.diagnostics.find(diagnostic =>
+    diagnostic.message === 'Ambiguous structure field access "nome".'
   );
+  assert.ok(ambiguousDiagnostic);
+  assert.equal(ambiguousDiagnostic.severity, 'hint');
 });
 
 test('reuses unchanged declaration syntax and rebases all source ranges', () => {

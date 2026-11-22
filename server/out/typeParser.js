@@ -1315,7 +1315,9 @@ function resolveTypeDeclarationSyntaxCore(source, syntax, workspaceSymbols, onPr
     options.onProgress?.('a validação de declarações', 'finish', routineResolutionStartedAt - globalVariableResolutionFinishedAt);
     options.onProgress?.('a resolução de parâmetros de rotinas', 'start');
     const routineParameterResolutionStartedAt = routineResolutionStartedAt;
-    resolveRoutineParameters(parserSource, routinesToResolve, symbols, diagnostics);
+    if (options.resolveRoutineParameterTypes !== false) {
+        resolveRoutineParameters(parserSource, routinesToResolve, symbols, diagnostics);
+    }
     const routineParameterResolutionFinishedAt = onProfile || options.onProgress
         ? node_perf_hooks_1.performance.now()
         : 0;
@@ -5373,7 +5375,7 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
             if (!diagnostics?.some(diagnostic => diagnostic.message === message &&
                 diagnostic.range.start === fieldRange.start &&
                 diagnostic.range.end === fieldRange.end)) {
-                diagnostics?.push({ message, range: fieldRange });
+                diagnostics?.push({ message, range: fieldRange, severity: 'hint' });
             }
             return undefined;
         }

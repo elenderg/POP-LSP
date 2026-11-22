@@ -2311,7 +2311,8 @@ async function buildWorkspaceDocumentIndex(requestId = 0, requestDocumentUri = '
                             }
                             : {}),
                         onProgress: documentParseProgress(requestId, requestDocumentUri, entry.uri, 'base'),
-                        resolveRoutineCalls: false
+                        resolveRoutineCalls: false,
+                        resolveRoutineParameterTypes: false
                     });
                     entry.analysis.baseParsed = parsed;
                     baseParseCount++;

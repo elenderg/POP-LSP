@@ -3154,7 +3154,8 @@ async function buildWorkspaceDocumentIndex(
                 entry.uri,
                 'base'
               ),
-              resolveRoutineCalls: false
+              resolveRoutineCalls: false,
+              resolveRoutineParameterTypes: false
             }
           );
           entry.analysis.baseParsed = parsed;
