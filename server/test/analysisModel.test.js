@@ -1006,6 +1006,56 @@ test('resolves contracted address and content operators in routine arguments', (
   );
 });
 
+test('resolves scalar arguments after alternate right-shift predicates', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'Tipos.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Uma unidade é um número.',
+        'Um bit é uma unidade.',
+        'Um código da cor é um número.'
+      ].join('\n')
+    },
+    {
+      name: 'Rotinas.pop',
+      text: [
+        'Rotina para que se desloque um número  para a direita uns bits;',
+        'Rotina para que se desloque um número uns bits para a direita:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'teste.pop',
+      text: [
+        'Rotina para que se converta um código da cor para um número:',
+        '  Desloque o código da cor para a direita 0 bits.',
+        '  Desloque o código da cor para a direita 8 bits.'
+      ].join('\n')
+    }
+  ]);
+  const parsed = documents.find(document =>
+    document.uri.endsWith('/teste.pop')
+  ).parsed;
+  const caller = parsed.routines.find(routine =>
+    routine.parameters.some(parameter =>
+      parameter.type.normalizedName === 'código da cor'
+    )
+  );
+
+  assert.deepEqual(documents.flatMap(document => document.parsed.diagnostics), []);
+  assert.deepEqual(
+    caller.calls.map(call =>
+      call.arguments.map(argument => argument.name)
+    ),
+    [
+      ['o código da cor', '0 bits'],
+      ['o código da cor', '8 bits']
+    ]
+  );
+  assert.ok(caller.calls.every(call => call.target?.name.normalizedName === 'desloque'));
+});
+
 test('resolves range conditions with numeric arguments from cross-file boolean overloads', () => {
   const { documents } = createWorkspace([
     {

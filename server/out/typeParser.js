@@ -3941,6 +3941,7 @@ function resolveRoutineCallCore(source, statementRange, routines, caller, global
             localVariablesByArgument.size === 0) {
             argumentsList = splitScalarRoutineArguments(source, argumentsList, parameters, caller, globalVariables, symbols, routines);
         }
+        argumentsList = trimScalarRoutineArgumentPrefixes(source, argumentsList, parameters, symbols);
         if (localVariablesByArgument.size === 0) {
             argumentsList = argumentsList.map((argument, index) => {
                 const argumentLocalVariable = parseLocalVariableDeclaration(source, argument, symbols);
@@ -4389,6 +4390,29 @@ function recordUnresolvedRoutineCallReferences(source, statement, routines, call
         arguments: argumentsList.map(range => createTypeReference(source, range)),
         variableAccesses,
         typeReferences
+    });
+}
+function trimScalarRoutineArgumentPrefixes(source, argumentsList, parameters, symbols) {
+    return argumentsList.map((argument, index) => {
+        const expectedType = parameters[index]?.type;
+        if (!expectedType) {
+            return argument;
+        }
+        const scalarType = symbols.lookup(expectedType.name);
+        if (!scalarType?.isScalar) {
+            return argument;
+        }
+        for (let literalStart = argument.start; literalStart < argument.end; literalStart++) {
+            if (literalStart > argument.start &&
+                !/\s/u.test(source[literalStart - 1])) {
+                continue;
+            }
+            const scalarRange = findScalarRoutineLiteral(source, literalStart, argument.end, expectedType, symbols);
+            if (scalarRange) {
+                return scalarRange;
+            }
+        }
+        return argument;
     });
 }
 function splitScalarRoutineArguments(source, argumentsList, parameters, caller, globalVariables, symbols, routines) {
