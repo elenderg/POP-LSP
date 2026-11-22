@@ -143,6 +143,8 @@ export interface RoutineDeclaration {
     qualifier?: string;
     alternateNames: TypeReference[];
     alternateParameters: RoutineParameter[][];
+    trailingNameSuffix?: string;
+    alternateTrailingNameSuffixes?: (string | undefined)[];
     parameters: RoutineParameter[];
     preservedParameters: PreservedRoutineParameter[];
     assignments: RoutineAssignment[];

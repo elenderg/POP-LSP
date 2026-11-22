@@ -185,6 +185,8 @@ export interface RoutineDeclaration {
   qualifier?: string;
   alternateNames: TypeReference[];
   alternateParameters: RoutineParameter[][];
+  trailingNameSuffix?: string;
+  alternateTrailingNameSuffixes?: (string | undefined)[];
   parameters: RoutineParameter[];
   preservedParameters: PreservedRoutineParameter[];
   assignments: RoutineAssignment[];
@@ -1614,7 +1616,7 @@ const articles = new Set([
 ]);
 const builtInStatementStarts = new Set([
 
-  //'atribua', // atribua não é um built-in statement.
+  'atribua', // atribua não é um built-in statement.
 
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere',
@@ -6241,8 +6243,7 @@ function resolveRoutineCallCore(
       source,
       nameEnd,
       callQualifier?.start ?? statementRange.end,
-      routine,
-      nameMatch.parameters
+      nameMatch.trailingNameSuffix
     );
     const hasArticleBeforeLiteral = hasArticleBeforeScalarLiteral(source, {
       start: nameEnd,
@@ -6778,37 +6779,12 @@ function trimRoutineTrailingNameSuffix(
   source: string,
   start: number,
   end: number,
-  routine: RoutineDeclaration,
-  parameters: RoutineParameter[]
+  trailingNameSuffix?: string
 ): number {
-  if (parameters !== routine.parameters || parameters.length === 0) {
+  if (!trailingNameSuffix) {
     return end;
   }
-  const headerEnd = routine.bodyRange.start - 1;
-  const lastParameter = parameters[parameters.length - 1];
-  if (
-    headerEnd < lastParameter.type.range.end ||
-    headerEnd > source.length
-  ) {
-    return end;
-  }
-  const returnMarker = findWord(
-    source,
-    lastParameter.type.range.end,
-    headerEnd,
-    'retornando'
-  );
-  const suffix = findTrailingRoutineNameSuffix(
-    source,
-    lastParameter.type.range.end,
-    returnMarker?.start ?? headerEnd
-  );
-  if (!suffix) {
-    return end;
-  }
-  const expectedSuffix = normalizeRoutineName(
-    source.slice(suffix.start, suffix.end)
-  );
+  const expectedSuffix = normalizeRoutineName(trailingNameSuffix);
   const callEnd = trimRange(source, start, end).end;
   const words = [...source.slice(start, callEnd).matchAll(/\S+/gu)];
   for (const word of words) {
@@ -7541,6 +7517,7 @@ interface RoutineNameCandidate {
   routine: RoutineDeclaration;
   name: TypeReference;
   parameters: RoutineParameter[];
+  trailingNameSuffix?: string;
   order: number;
 }
 
@@ -7590,20 +7567,31 @@ function getRoutineNameIndex(routines: RoutineDeclaration[]): RoutineNameLookupI
   let maximumNameWords = 0;
   for (const routine of routines) {
     const variants = [
-      { name: routine.name, parameters: routine.parameters },
+      {
+        name: routine.name,
+        parameters: routine.parameters,
+        trailingNameSuffix: routine.trailingNameSuffix
+      },
       ...routine.alternateNames.map((name, index) => ({
         name,
-        parameters: routine.alternateParameters[index] ?? routine.parameters
+        parameters: routine.alternateParameters[index] ?? routine.parameters,
+        trailingNameSuffix: routine.alternateTrailingNameSuffixes?.[index]
       }))
     ];
-    for (const { name, parameters } of variants) {
+    for (const { name, parameters, trailingNameSuffix } of variants) {
       const normalizedName = normalizeRoutineName(name.name);
       maximumNameWords = Math.max(
         maximumNameWords,
         normalizedName.split(/\s+/u).filter(Boolean).length
       );
       const candidates = byNormalizedName.get(normalizedName) ?? [];
-      const candidate = { routine, name, parameters, order: order++ };
+      const candidate = {
+        routine,
+        name,
+        parameters,
+        trailingNameSuffix,
+        order: order++
+      };
       candidates.push(candidate);
       byNormalizedName.set(normalizedName, candidates);
       const qualifierKey = routineNameQualifierKey(
@@ -10367,6 +10355,20 @@ function parseRoutineDeclarations(
         qualifier: alternate.qualifier
       })),
       alternateParameters: alternateHeaders.map(alternate => alternate.parameters),
+      trailingNameSuffix: header.trailingNameSuffix
+        ? source.slice(
+          header.trailingNameSuffix.start,
+          header.trailingNameSuffix.end
+        )
+        : undefined,
+      alternateTrailingNameSuffixes: alternateHeaders.map(alternate =>
+        alternate.trailingNameSuffix
+          ? source.slice(
+            alternate.trailingNameSuffix.start,
+            alternate.trailingNameSuffix.end
+          )
+          : undefined
+      ),
       parameters: header.parameters,
       preservedParameters: [],
       assignments: [],

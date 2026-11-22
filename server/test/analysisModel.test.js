@@ -1027,6 +1027,32 @@ test('resolves all arithmetic operators for pointer and numeric operands', () =>
   );
 });
 
+test('matches trailing suffixes from alternate routine headers', () => {
+  const source = [
+    'Um ponteiro é uma estrutura.',
+    'Um número é uma estrutura.',
+    'Uma contagem é um número.',
+    'Uma quantidade de bytes é uma contagem.',
+    'Rotina para que se arredonde um número para cima usando a potência imediata de dois;',
+    'Rotina para que se arredonde um número para cima usando a próxima potência de dois;',
+    'Rotina para que se arredonde um número para cima usando a potência de dois:',
+    '  Retorne.',
+    'Rotina para que se associe um ponteiro usando uma quantidade de bytes:',
+    '  Arredonde a quantidade de bytes para cima usando a próxima potência de dois.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine => routine.name.name === 'associe');
+  const call = caller?.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.ok(call?.target);
+  assert.equal(call.target.name.normalizedName, 'arredonde');
+  assert.equal(call.target.parameters[0].type.name, 'número');
+  assert.deepEqual(call.arguments.map(argument => argument.name), [
+    'a quantidade de bytes'
+  ]);
+});
+
 test('caches repeated overload argument analysis without changing resolution', () => {
   const source = [
     'Um número é um byte.',
