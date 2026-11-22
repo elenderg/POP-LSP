@@ -1684,7 +1684,8 @@ connection.onDefinition(params => profileRequest('definition', async (requestId)
         }
         return undefined;
     };
-    const resolveTypeDefinition = (reference) => resolveReferenceDeclaration(reference);
+    const resolveTypeDefinition = (reference) => resolveTypeName(reference.name) ??
+        resolveReferenceDeclaration(reference);
     const resolveTypeName = (typeName) => {
         const declaration = workspaceAnalysis.getTypeDeclaration(documentDirectory, (0, typeParser_1.normalizeTypeName)(typeName));
         const owner = declaration &&
@@ -1697,6 +1698,12 @@ connection.onDefinition(params => profileRequest('definition', async (requestId)
         }
         return undefined;
     };
+    const declaredTypeBase = (0, typeParser_1.findTypeDeclarationBaseAtOffset)(parsedDocument, offset);
+    const declaredTypeBaseLocation = declaredTypeBase &&
+        resolveTypeName(declaredTypeBase.name);
+    if (declaredTypeBaseLocation) {
+        return declaredTypeBaseLocation;
+    }
     if (parsedReference?.kind === 'variable') {
         const isTypePosition = parsedReference.scope !== undefined &&
             parsedDocument.routines

@@ -4406,8 +4406,12 @@ function resolveBooleanConditionCore(
         parameters.slice(1),
         routine
       );
-      if (trailingArguments?.length === parameters.length - 1) {
-        argumentsList = [prefix, ...trailingArguments];
+      const resolvedTrailingArguments =
+        trailingArguments?.length === parameters.length - 1
+          ? trailingArguments
+          : splitRoutineArguments(conditionSource, suffix);
+      if (resolvedTrailingArguments.length === parameters.length - 1) {
+        argumentsList = [prefix, ...resolvedTrailingArguments];
       }
     }
     if (

@@ -1006,6 +1006,59 @@ test('resolves contracted address and content operators in routine arguments', (
   );
 });
 
+test('resolves range conditions with numeric arguments from cross-file boolean overloads', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'Tipos.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Uma string é uma estrutura.',
+        'Um query byte é uma string.'
+      ].join('\n')
+    },
+    {
+      name: 'Funções.pop',
+      text: [
+        ...Array(200).fill(''),
+        'Função para que se determine se um byte está entre um segundo byte e um terceiro byte:',
+        '  Diga sim.',
+        'Função para que se determine se um byte está entre um número e um segundo número:',
+        '  Diga sim.'
+      ].join('\n')
+    },
+    {
+      name: 'Rotinas.pop',
+      text: [
+        'Rotina para que se converta um byte para um query byte:',
+        '  Se o byte estiver entre 48 e 57, retorne.',
+        '  Se o byte estiver entre 65 e 90, retorne.',
+        '  Se o byte estiver entre 97 e 122, retorne.'
+      ].join('\n')
+    }
+  ]);
+  const routines = documents.find(document =>
+    document.uri.endsWith('/Rotinas.pop')
+  ).parsed.routines;
+  const caller = routines.find(routine =>
+    routine.parameters.some(parameter =>
+      parameter.type.normalizedName === 'query byte'
+    )
+  );
+
+  assert.deepEqual(
+    documents.flatMap(document => document.parsed.diagnostics).filter(diagnostic =>
+      diagnostic.message.startsWith('No boolean function found')
+    ),
+    []
+  );
+  assert.deepEqual(
+    caller.conditionals.map(conditional =>
+      conditional.target?.parameters.map(parameter => parameter.type.name)
+    ),
+    Array(3).fill(['byte', 'byte', 'byte'])
+  );
+});
+
 test('resolves all arithmetic operators for pointer and numeric operands', () => {
   const header = [
     'Um ponteiro é uma estrutura.',
