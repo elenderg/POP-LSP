@@ -2042,6 +2042,66 @@ test('indexes cross-document type, variable, routine, and field dependencies', (
   assert.ok(affectedRegions.has(consumerRoutineRegion.id));
 });
 
+test('infers a local structure variable from a contracted type in an assignment', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'types.pop',
+      text: [
+        'Um byte é um byte.',
+        'Um ponteiro é uma estrutura com 4 bytes.',
+        'Um endereço de byte é um ponteiro para um byte.',
+        'Um caractere é um byte.',
+        'Um endereço do caractere é um endereço de byte.',
+        'Um número é uma estrutura.',
+        'Uma string é uma estrutura.',
+        'Uma URL_COMPONENTS é uma estrutura com',
+        '  Um endereço do caractere denominado lpszScheme e',
+        '  Um número denominado dwSchemeLength.',
+        'Um nome do protocolo é uma string.',
+        'Uma URL simplificada é uma estrutura com um nome do protocolo.'
+      ].join('\n')
+    },
+    {
+      name: 'conversion.pop',
+      text: [
+        'Rotina para que se converta um ponteiro e um número denominado quantidade de caracteres para uma string:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se teste uma URL simplificada:',
+        '  Atribua a magnitude duns URL_COMPONENTS ao dwStructSize destes URL_COMPONENTS.',
+        '  Converta o lpszScheme destes URL_COMPONENTS e o dwSchemeLength destes URL_COMPONENTS para o nome do protocolo desta URL simplificada.'
+      ].join('\n')
+    }
+  ]);
+  const caller = documents[2].parsed.routines[0];
+  const call = caller.calls.find(candidate =>
+    candidate.arguments.length === 3
+  );
+
+  assert.deepEqual(documents[2].parsed.diagnostics, []);
+  assert.ok(caller.localVariables.some(variable =>
+    variable.name.normalizedName === 'url_components' &&
+    variable.type.normalizedName === 'url_components'
+  ));
+  assert.equal(call.target.name.normalizedName, 'converta');
+  assert.deepEqual(
+    call.arguments.map(argument => argument.name),
+    [
+      'o lpszScheme destes URL_COMPONENTS',
+      'o dwSchemeLength destes URL_COMPONENTS',
+      'o nome do protocolo desta URL simplificada'
+    ]
+  );
+  assert.deepEqual(
+    call.fieldAccesses.map(access => access.target.name.name),
+    ['lpszScheme', 'dwSchemeLength', 'nome do protocolo']
+  );
+});
+
 test('resolves workspace computed fields against the current type catalog', () => {
   const types = parseTypeDeclarations([
     'Um número é uma estrutura.',

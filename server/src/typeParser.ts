@@ -1611,6 +1611,17 @@ const routineContractions = new Map([
   ['pelos', 'por os'],
   ['pelas', 'por as']
 ]);
+
+function isIndefiniteArticleOrDeContraction(word: string): boolean {
+  const normalizedWord = word.toLocaleLowerCase('pt-BR');
+  if (indefiniteArticles.has(normalizedWord)) {
+    return true;
+  }
+  const expansion = routineContractions.get(normalizedWord);
+  return expansion?.startsWith('de ') === true &&
+    indefiniteArticles.has(expansion.slice(3));
+}
+
 const routineNameWordPattern = /\p{L}+/gu;
 const articles = new Set([
   ...definiteArticles, ...indefiniteArticles
@@ -8719,15 +8730,12 @@ function resolveStructureFieldAccessCore(
     const firstFieldName = normalizeTypeName(
       source.slice(fieldRanges[0].start, fieldRanges[0].end)
     );
-    if (
-      rootTypeSymbol &&
-      findComputedFieldRoutine(
-        createSyntheticTypeReference(rootTypeSymbol.name, rootNameRange),
-        firstFieldName,
-        routines,
-        symbols
-      )
-    ) {
+    if (rootTypeSymbol && findComputedFieldRoutine(
+      createSyntheticTypeReference(rootTypeSymbol.name, rootNameRange),
+      firstFieldName,
+      routines,
+      symbols
+    )) {
       rootType = createSyntheticTypeReference(
         rootTypeSymbol.name,
         rootNameRange
@@ -9354,6 +9362,12 @@ function getRoutineArgumentTypeDistance(
   }
 
   const expectedSymbol = symbols.lookup(expectedName);
+  if (expectedSymbol?.normalizedName === 'ponteiro') {
+    const pointerDistance = getPointerTypeDistance(actual.name, symbols);
+    if (pointerDistance !== undefined) {
+      return pointerDistance + 1;
+    }
+  }
   const reverseDistance = expectedSymbol?.isScalar &&
     expectedSymbol.scale === '1/1' &&
     isNumberTypeName(actual.name)
@@ -9375,6 +9389,26 @@ function getRoutineArgumentTypeDistance(
   return symbols.getPluralMatches(expectedName)
     .map(symbol => symbols.getBaseTypeDistance(actual.name, symbol.name))
     .find((distance): distance is number => distance !== undefined);
+}
+
+function getPointerTypeDistance(
+  typeName: string,
+  symbols: TypeSymbolTable
+): number | undefined {
+  let symbol = symbols.lookup(typeName);
+  const visited = new Set<TypeSymbol>();
+  let distance = 0;
+  while (symbol && !visited.has(symbol)) {
+    if (symbol.pointedType) {
+      return distance;
+    }
+    visited.add(symbol);
+    symbol = symbol.baseType
+      ? symbols.lookup(symbol.baseType.name)
+      : undefined;
+    distance++;
+  }
+  return undefined;
 }
 
 function getLiteralRoutineArgumentTypeDistance(
@@ -9575,22 +9609,10 @@ function resolveRoutineExpressionTypeCore(
     if (
       ['mais', 'menos', 'vezes', 'dividido por', '/'].includes(node.operator)
     ) {
-      const isPointerType = (type: TypeReference): boolean => {
-        let symbol = symbols.lookup(type.name);
-        const visited = new Set<TypeSymbol>();
-        while (symbol && !visited.has(symbol)) {
-          if (symbol.pointedType) {
-            return true;
-          }
-          visited.add(symbol);
-          symbol = symbol.baseType
-            ? symbols.lookup(symbol.baseType.name)
-            : undefined;
-        }
-        return false;
-      };
-      const leftIsPointer = isPointerType(leftType);
-      const rightIsPointer = isPointerType(rightType);
+      const leftIsPointer =
+        getPointerTypeDistance(leftType.name, symbols) !== undefined;
+      const rightIsPointer =
+        getPointerTypeDistance(rightType.name, symbols) !== undefined;
       if (
         leftIsPointer &&
         (rightIsPointer || rightBase)
@@ -9709,7 +9731,8 @@ const routineLocalVariableParseCacheLimit = 256;
 function parseLocalVariableDeclaration(
   source: string,
   argumentsRange: SourceRange,
-  symbols: TypeSymbolTable
+  symbols: TypeSymbolTable,
+  allowDeContractedArticle = false
 ): RoutineLocalVariable | undefined {
   let cache = routineLocalVariableParseCaches.get(symbols);
   if (!cache) {
@@ -9720,7 +9743,8 @@ function parseLocalVariableDeclaration(
     cache.declarations.clear();
   }
 
-  const cacheKey = `${argumentsRange.start}:${argumentsRange.end}`;
+  const cacheKey =
+    `${argumentsRange.start}:${argumentsRange.end}:${allowDeContractedArticle}`;
   if (cache.declarations.has(cacheKey)) {
     return cache.declarations.get(cacheKey) ?? undefined;
   }
@@ -9728,7 +9752,8 @@ function parseLocalVariableDeclaration(
   const declaration = parseLocalVariableDeclarationUncached(
     source,
     argumentsRange,
-    symbols
+    symbols,
+    allowDeContractedArticle
   );
   if (cache.declarations.size >= routineLocalVariableParseCacheLimit) {
     const oldest = cache.declarations.keys().next().value;
@@ -9743,7 +9768,8 @@ function parseLocalVariableDeclaration(
 function parseLocalVariableDeclarationUncached(
   source: string,
   argumentsRange: SourceRange,
-  symbols: TypeSymbolTable
+  symbols: TypeSymbolTable,
+  allowDeContractedArticle: boolean
 ): RoutineLocalVariable | undefined {
   const castMatch = /\btal\s+(?:como|qual)\b/iu.exec(
     source.slice(argumentsRange.start, argumentsRange.end)
@@ -9757,7 +9783,11 @@ function parseLocalVariableDeclarationUncached(
   let localVariable: RoutineLocalVariable | undefined;
   while ((articleMatch = articles.exec(source)) && articleMatch.index < declarationEnd) {
     const article = articleMatch[0].toLocaleLowerCase('pt-BR');
-    if (!indefiniteArticles.has(article)) {
+    if (
+      !(allowDeContractedArticle
+        ? isIndefiniteArticleOrDeContraction(article)
+        : indefiniteArticles.has(article))
+    ) {
       continue;
     }
     const articleEnd = articleMatch.index + articleMatch[0].length;
@@ -9851,13 +9881,30 @@ function parseRoutineStatementLocalVariables(
   statement: SourceRange,
   symbols: TypeSymbolTable
 ): RoutineLocalVariable[] {
-  const quotedRanges = findQuotedRanges(source, statement);
+  let declarationRange = statement;
+  const statementKeyword = readWord(source, statement.start, statement.end);
+  if (statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua') {
+    const destinationMarker = ['para', 'à', 'ao', 'aos', 'às']
+      .map(marker =>
+        findWordOutsideStrings(source, statementKeyword.end, statement.end, marker)
+      )
+      .filter((marker): marker is SourceRange => marker !== undefined)
+      .sort((first, second) => first.start - second.start)[0];
+    if (destinationMarker) {
+      declarationRange = {
+        start: statement.start,
+        end: destinationMarker.start
+      };
+    }
+  }
+
+  const quotedRanges = findQuotedRanges(source, declarationRange);
   const articles: SourceRange[] = [];
   const words = /\p{L}+/gu;
-  words.lastIndex = statement.start;
+  words.lastIndex = declarationRange.start;
   let match: RegExpExecArray | null;
-  while ((match = words.exec(source)) && match.index < statement.end) {
-    if (!indefiniteArticles.has(match[0].toLocaleLowerCase('pt-BR'))) {
+  while ((match = words.exec(source)) && match.index < declarationRange.end) {
+    if (!isIndefiniteArticleOrDeContraction(match[0])) {
       continue;
     }
     const range = { start: match.index, end: match.index + match[0].length };
@@ -9872,11 +9919,12 @@ function parseRoutineStatementLocalVariables(
   const variables: RoutineLocalVariable[] = [];
   for (let index = 0; index < articles.length; index++) {
     const article = articles[index];
-    const argumentEnd = articles[index + 1]?.start ?? statement.end;
+    const argumentEnd = articles[index + 1]?.start ?? declarationRange.end;
     const candidate = parseLocalVariableDeclaration(
       source,
       trimRange(source, article.start, argumentEnd),
-      symbols
+      symbols,
+      true
     );
     if (candidate) {
       variables.push(candidate);
