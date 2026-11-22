@@ -6108,6 +6108,13 @@ function parseLocalVariableDeclarationUncached(source, argumentsRange, symbols, 
 }
 function parseRoutineStatementLocalVariables(source, statement, symbols, routines) {
     let declarationRange = statement;
+    const qualifier = findTrailingParentheticalQualifier(source, statement.start, statement.end);
+    if (qualifier) {
+        declarationRange = {
+            ...declarationRange,
+            end: qualifier.start
+        };
+    }
     const statementKeyword = readWord(source, statement.start, statement.end);
     if (statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua') {
         const destinationMarker = ['para', 'à', 'ao', 'aos', 'às']

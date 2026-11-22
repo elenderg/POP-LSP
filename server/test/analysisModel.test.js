@@ -1973,6 +1973,47 @@ test('stops a named local before a chained routine call', () => {
   );
 });
 
+test('ignores routine qualifiers when inferring locals but preserves call matching', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Um número de coluna é um número.',
+        'Uma linha de texto é uma estrutura.'
+      ].join('\n')
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se calcule (para obter um número de coluna usando uma linha de texto):',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se teste usando um número de coluna:',
+        '  Calcule (para obter um número de coluna usando uma linha de texto).',
+        '  Retorne.'
+      ].join('\n')
+    }
+  ]);
+  const caller = documents[2].parsed.routines[0];
+  const call = caller.calls[0];
+
+  assert.deepEqual(documents[2].parsed.diagnostics, []);
+  assert.deepEqual(
+    caller.localVariables.map(variable => variable.name.normalizedName),
+    []
+  );
+  assert.equal(call.target.name.normalizedName, 'calcule');
+  assert.equal(
+    call.target.qualifier,
+    '(para obter um número de coluna usando uma linha de texto)'
+  );
+});
+
 test('preserves useful analysis for incomplete declarations', () => {
   const source = 'Uma pessoa é um tipo ausente.';
   const parsed = parseTypeDeclarations(source);
