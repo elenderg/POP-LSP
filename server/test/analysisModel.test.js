@@ -1082,6 +1082,47 @@ test('resolves null checks on a computed field owner through pointer overloads',
   );
 });
 
+test('keeps contracted division by computed fields inside routine arguments', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um par de números é uma estrutura com',
+    '  Um número denominado número X e',
+    '  Um número denominado número Y.',
+    'Uma localização é um par de números.',
+    'Uma origem é uma localização.',
+    'Uma caixa de texto é uma estrutura.',
+    'Uma malha quadriculada é um par de números.',
+    'Função para que se atribua a origem duma caixa de texto para uma localização: Retorne.',
+    'Função para que se atribua a malha quadriculada duma caixa de texto para uma malha quadriculada: Retorne.',
+    'Rotina para que se atribua um par de números para um segundo par de números: Retorne.',
+    'Rotina para que se atualize uma caixa de texto:',
+    '  Atribua a origem desta caixa de texto dividido pela malha quadriculada desta caixa de texto para um par de números.',
+    '  Atribua a origem desta caixa de texto dividido por a malha quadriculada desta caixa de texto para um par de números.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine => routine.name.name === 'atualize');
+  const calls = caller?.calls ?? [];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(
+    calls.map(call => call.arguments.map(argument => argument.name)),
+    [
+      [
+        'a origem desta caixa de texto dividido pela malha quadriculada desta caixa de texto',
+        'par de números'
+      ],
+      [
+        'a origem desta caixa de texto dividido por a malha quadriculada desta caixa de texto',
+        'par de números'
+      ]
+    ]
+  );
+  for (const call of calls) {
+    assert.equal(call.target?.name.normalizedName, 'atribua');
+  }
+});
+
 test('caches repeated overload argument analysis without changing resolution', () => {
   const source = [
     'Um número é um byte.',

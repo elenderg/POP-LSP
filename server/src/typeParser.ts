@@ -1616,7 +1616,7 @@ const articles = new Set([
 ]);
 const builtInStatementStarts = new Set([
 
-  'atribua', // atribua não é um built-in statement.
+  //'atribua', // atribua não é um built-in statement.
 
   'diga', 'retorne', 'decodifique', 'preserve', 'empilhe', 'se',
   'processe', 'itere', 'pare', 'reitere',
@@ -7861,6 +7861,15 @@ function splitRoutineArgumentsCore(
     ) {
       continue;
     }
+    if (
+      separatedByWhitespace &&
+      previousWord === 'dividido' &&
+      (word === 'por' || getRoutineContractionFirstWord(word) === 'por')
+    ) {
+      previousWord = word;
+      previousWordEnd = wordEnd;
+      continue;
+    }
     const isArgumentSeparator = reservedIdentifierWords.has(word);
     if (
       !isArgumentSeparator ||
@@ -9479,6 +9488,33 @@ function resolveRoutineExpressionTypeCore(
         leftBase
       ) {
         return rightType;
+      }
+
+      const commonNumericPair = symbols.entries
+        .map(symbol => ({
+          symbol,
+          leftDistance: symbols.getBaseTypeDistance(leftType.name, symbol.name),
+          rightDistance: symbols.getBaseTypeDistance(rightType.name, symbol.name)
+        }))
+        .filter(candidate =>
+          candidate.leftDistance !== undefined &&
+          candidate.rightDistance !== undefined &&
+          candidate.symbol.fields?.length === 2 &&
+          candidate.symbol.fields.every(field =>
+            field.kind === 'named' && getNumericBase(field.type) !== undefined
+          )
+        )
+        .sort((first, second) =>
+          (first.leftDistance ?? Number.MAX_SAFE_INTEGER) +
+            (first.rightDistance ?? Number.MAX_SAFE_INTEGER) -
+          (second.leftDistance ?? Number.MAX_SAFE_INTEGER) -
+          (second.rightDistance ?? Number.MAX_SAFE_INTEGER)
+        )[0];
+      if (commonNumericPair) {
+        return createSyntheticTypeReference(
+          commonNumericPair.symbol.name,
+          node.range
+        );
       }
     }
 
