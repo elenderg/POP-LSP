@@ -1056,6 +1056,46 @@ test('resolves scalar arguments after alternate right-shift predicates', () => {
   assert.ok(caller.calls.every(call => call.target?.name.normalizedName === 'desloque'));
 });
 
+test('splits cross-file calls using alternate routine parameter separators', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Uma unidade é um número.',
+        'Um bit é uma unidade.'
+      ].join('\n')
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se desloque um número uns bits para a esquerda;',
+        'Rotina para que se desloque um número para a esquerda uns bits:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se teste um número denominado valor e uns bits denominados contagem de deslocamentos:',
+        '  Desloque o valor para a esquerda [usando] a contagem de deslocamentos.'
+      ].join('\n')
+    }
+  ]);
+  const caller = documents[2].parsed.routines[0];
+
+  assert.deepEqual(documents[2].parsed.diagnostics, []);
+  assert.equal(caller.calls[0].target.name.normalizedName, 'desloque');
+  assert.deepEqual(
+    caller.calls[0].arguments.map(argument => argument.name),
+    ['o valor', 'a contagem de deslocamentos']
+  );
+  assert.deepEqual(
+    caller.calls[0].target.parameters.map(parameter => parameter.type.name),
+    ['número', 'bits']
+  );
+});
+
 test('resolves range conditions with numeric arguments from cross-file boolean overloads', () => {
   const { documents } = createWorkspace([
     {

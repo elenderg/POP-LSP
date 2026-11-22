@@ -146,6 +146,7 @@ export interface RoutineDeclaration {
     trailingNameSuffix?: string;
     alternateTrailingNameSuffixes?: (string | undefined)[];
     parameters: RoutineParameter[];
+    parameterSeparators?: string[][][];
     preservedParameters: PreservedRoutineParameter[];
     assignments: RoutineAssignment[];
     outputs: RoutineOutput[];

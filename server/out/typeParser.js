@@ -4180,6 +4180,19 @@ function trimRoutineTrailingNameSuffix(source, start, end, trailingNameSuffix) {
     return end;
 }
 function getRoutineParameterSeparators(source, parameters, routine) {
+    const parameterVariants = [
+        routine.parameters,
+        ...routine.alternateParameters
+    ];
+    const parameterVariantIndex = parameterVariants.findIndex(variant => variant.length === parameters.length &&
+        variant.every((parameter, index) => parameter.type.range.start === parameters[index].type.range.start &&
+            parameter.type.range.end === parameters[index].type.range.end));
+    const storedSeparators = parameterVariantIndex === -1
+        ? undefined
+        : routine.parameterSeparators?.[parameterVariantIndex];
+    if (storedSeparators) {
+        return storedSeparators;
+    }
     if (routine.range.end > source.length ||
         routine.name.range.end > source.length ||
         normalizeRoutineName(source.slice(routine.name.range.start, routine.name.range.end)) !==
@@ -6545,6 +6558,10 @@ function parseRoutineDeclarations(source, diagnostics) {
                 qualifier: alternate.qualifier
             })),
             alternateParameters: alternateHeaders.map(alternate => alternate.parameters),
+            parameterSeparators: [
+                getHeaderRoutineParameterSeparators(source, header.parameters),
+                ...alternateHeaders.map(alternate => getHeaderRoutineParameterSeparators(source, alternate.parameters))
+            ],
             trailingNameSuffix: header.trailingNameSuffix
                 ? source.slice(header.trailingNameSuffix.start, header.trailingNameSuffix.end)
                 : undefined,
