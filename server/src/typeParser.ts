@@ -4555,13 +4555,66 @@ function resolveBooleanConditionCore(
           symbols
         )
         : undefined;
-      const compatibleDistance = distance ?? (expressionType
+      let compatibleDistance = distance ?? (expressionType
         ? getRoutineExpressionTypeDistance(
           expressionType,
           parameters[index].type.name,
           symbols
         )
         : undefined);
+      if (compatibleDistance === undefined) {
+        const words = /\p{L}+/gu;
+        words.lastIndex = argumentsList[index].start;
+        let wordMatch: RegExpExecArray | null;
+        while (
+          (wordMatch = words.exec(conditionSource)) &&
+          wordMatch.index < argumentsList[index].end
+        ) {
+          const expansion = routineContractions.get(
+            wordMatch[0].toLocaleLowerCase('pt-BR')
+          )?.split(' ');
+          if (
+            expansion?.length !== 2 ||
+            expansion[0] !== 'de' ||
+            !definiteArticles.has(expansion[1])
+          ) {
+            continue;
+          }
+          const parameterRange = trimRange(
+            conditionSource,
+            wordMatch.index + wordMatch[0].length,
+            argumentsList[index].end
+          );
+          if (parameterRange.start === parameterRange.end) {
+            continue;
+          }
+          const ownerType = resolveRoutineArgumentType(
+            conditionSource,
+            parameterRange,
+            caller,
+            globalVariables,
+            symbols,
+            fieldAccesses,
+            routines,
+            computedFieldAccesses,
+            variableAccesses,
+            true,
+            diagnostics
+          );
+          const parameterDistance = ownerType
+            ? getRoutineArgumentTypeDistance(
+              ownerType,
+              parameters[index].type.name,
+              symbols
+            )
+            : undefined;
+          if (parameterDistance !== undefined) {
+            argumentsList[index] = parameterRange;
+            compatibleDistance = parameterDistance;
+            break;
+          }
+        }
+      }
       if (compatibleDistance === undefined) {
         const outOfRangeInteger = getOutOfRangeIntegerLiteralRange(
           conditionSource,

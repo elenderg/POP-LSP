@@ -1210,6 +1210,37 @@ test('excludes a boolean function qualifier from its condition arguments', () =>
   );
 });
 
+test('resolves boolean condition contractions as parameter separators', () => {
+  const source = [
+    'Um posicionamento é uma estrutura.',
+    'Um cursor de texto é um posicionamento.',
+    'Uma caixa de texto é uma estrutura com um cursor de texto.',
+    'Função para que se determine se o cursor de texto de uma caixa de texto está sobre a última linha reta:',
+    '  Diga sim.',
+    'Rotina para que se teste usando uma caixa de texto:',
+    '  Se o cursor de texto dessa caixa de texto estiver sobre a última linha reta, retorne.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.conditionals.length > 0
+  );
+  const conditional = caller?.conditionals[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(conditional?.target?.name.name, 'está sobre a última linha reta');
+  assert.deepEqual(
+    conditional?.conditionArguments.map(argument => argument.name),
+    ['caixa de texto']
+  );
+  assert.deepEqual(conditional?.predicateCall?.fieldAccesses ?? [], []);
+  assert.deepEqual(
+    conditional?.predicateCall?.variableAccesses?.map(access =>
+      access.reference.name
+    ),
+    ['caixa de texto']
+  );
+});
+
 test('infers a local variable from a contracted type in an assignment destination', () => {
   const source = [
     'Um número é uma estrutura.',
