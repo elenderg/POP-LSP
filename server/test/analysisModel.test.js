@@ -125,6 +125,38 @@ test('resolves cross-file routine parameter types from the workspace catalog', (
   assert.equal(reponte.name.normalizedName, 'reaponte');
 });
 
+test('resolves pointer fields through contracted local variable owners', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Uma contagem é um número.',
+    'Uma quantidade de bytes é uma contagem.',
+    'Um byte é uma estrutura.',
+    'Um ponteiro é uma estrutura com 4 bytes.',
+    'Um caractere inicial é um ponteiro para um byte.',
+    'Um caractere final é um ponteiro para um byte.',
+    'Uma string é uma estrutura com',
+    '  Um caractere inicial e',
+    '  Um caractere final.',
+    'Um trecho é uma string.',
+    'Rotina para que se reaponte um ponteiro usando uma quantidade de bytes:',
+    '  Retorne.',
+    'Rotina para que se obtenha um trecho e uma quantidade de bytes denominada quantidade de caracteres:',
+    '  Reaponte o caractere inicial dum trecho usando a quantidade de caracteres.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'obtenha'
+  );
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(caller.calls[0].target?.name.normalizedName, 'reaponte');
+  assert.equal(caller.calls[0].arguments[0].name,
+    'o caractere inicial dum trecho');
+  assert.ok(caller.calls[0].fieldAccesses?.some(access =>
+    access.reference.name === 'caractere inicial'
+  ));
+});
+
 test('preserves the full symbol catalog for large comment-free documents', () => {
   const alphabeticName = index => {
     let name = '';

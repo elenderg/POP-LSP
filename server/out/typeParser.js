@@ -5387,6 +5387,9 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
         : undefined);
     if (!rootType && !rootLocalVariable && !globalVariable && fieldRanges.length > 0) {
         const rootTypeSymbol = symbols.lookup(rootName);
+        if (rootTypeSymbol) {
+            rootType = createSyntheticTypeReference(rootTypeSymbol.name, rootNameRange);
+        }
         const firstFieldName = normalizeTypeName(source.slice(fieldRanges[0].start, fieldRanges[0].end));
         if (rootTypeSymbol && findComputedFieldRoutine(createSyntheticTypeReference(rootTypeSymbol.name, rootNameRange), firstFieldName, routines, symbols)) {
             rootType = createSyntheticTypeReference(rootTypeSymbol.name, rootNameRange);
@@ -5745,7 +5748,16 @@ function findStructureAccessMarkersCore(source, range) {
     let match;
     while ((match = words.exec(source)) && match.index < range.end) {
         const word = match[0].toLocaleLowerCase('pt-BR');
-        if (!['deste', 'desta', 'destes', 'destas'].includes(word)) {
+        if (![
+            'deste',
+            'desta',
+            'destes',
+            'destas',
+            'dum',
+            'duma',
+            'duns',
+            'dumas'
+        ].includes(word)) {
             continue;
         }
         markers.push({ start: match.index, end: match.index + match[0].length });
@@ -6233,6 +6245,8 @@ function parseRoutineStatementLocalVariables(source, statement, symbols, routine
         }
     }
     const routineStartWords = getRoutineNameIndex(routines).firstWords;
+    const isAssignmentDestination = statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua' &&
+        declarationRange.end !== statement.end;
     const chainedCallPattern = /\be\s+(\p{L}+)/giu;
     const declarationText = source.slice(declarationRange.start, declarationRange.end);
     let chainedCall;
@@ -6256,6 +6270,11 @@ function parseRoutineStatementLocalVariables(source, statement, symbols, routine
     words.lastIndex = declarationRange.start;
     let match;
     while ((match = words.exec(source)) && match.index < declarationRange.end) {
+        const normalizedMatch = normalizeTypeName(match[0]);
+        if (!indefiniteArticles.has(normalizedMatch) &&
+            !isAssignmentDestination) {
+            continue;
+        }
         if (!isIndefiniteArticleOrDeContraction(match[0])) {
             continue;
         }
