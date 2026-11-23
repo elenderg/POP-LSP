@@ -1206,6 +1206,28 @@ test('resolves all arithmetic operators for pointer and numeric operands', () =>
   );
 });
 
+test('preserves a scalar quantity type when divided by a unitless number', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Uma quantidade de twips é uns twips.',
+    'Os twips são uns twips.',
+    'Rotina para que se mova uns twips:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Mova os twips dividido por 8.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const call = caller.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call.target.name.normalizedName, 'mova');
+  assert.equal(call.target.parameters[0].type.normalizedName, 'twips');
+});
+
 test('matches trailing suffixes from alternate routine headers', () => {
   const source = [
     'Um ponteiro é uma estrutura.',
@@ -2894,7 +2916,7 @@ test('resolves unary negative expressions in every routine argument position', (
   );
 });
 
-test('resolves slash-containing names and fraction separators', () => {
+test('resolves slash-containing names and slash-separated fractions', () => {
   const source = [
     'Um número é uma estrutura.',
     'Um twip é um número.',
@@ -2913,7 +2935,7 @@ test('resolves slash-containing names and fraction separators', () => {
     '  Ajuste a caixa usando 0 e a quantidade de twips/pixel e 0 e - a quantidade de twips/pixel.',
     '  Atribua 3/4 para a segunda fração.',
     '  Atribua o numerador / o denominador para a segunda fração.',
-    '  Use 6 / 2.'
+    '  Use 6 dividido por 2.'
   ].join('\n');
   const parsed = parseTypeDeclarations(source);
   const caller = parsed.routines.find(routine =>
@@ -2924,9 +2946,17 @@ test('resolves slash-containing names and fraction separators', () => {
   assert.deepEqual(parsed.diagnostics, []);
   assert.equal(call.target.name.normalizedName, 'ajuste');
   assert.equal(fractionCall.target.name.normalizedName, 'use');
+  assert.equal(
+    fractionCall.target.parameters[0].type.normalizedName,
+    'fração'
+  );
   assert.equal(caller.assignments[0].expression.kind, 'operand');
   assert.equal(caller.assignments[0].expression.text, '3/4');
   assert.equal(caller.assignments[1].expression.operator, '/');
+  assert.equal(
+    caller.calls[0].arguments[2].name,
+    'a quantidade de twips/pixel'
+  );
   assert.deepEqual(
     call.arguments.map(argument => argument.name),
     [
@@ -3102,8 +3132,7 @@ test('preserves every parsed expression operator as an exact AST range', () => {
     'vezes',
     'dividido por',
     'junto com',
-    'seguido de',
-    '/'
+    'seguido de'
   ];
   const source = [
     'O número é um byte.',

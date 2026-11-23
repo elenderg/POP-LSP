@@ -9709,6 +9709,16 @@ function resolveRoutineExpressionTypeCore(
       }
     }
 
+    if (
+      node.operator === 'dividido por' &&
+      leftBase !== 'fração' &&
+      rightBase !== 'fração' &&
+      symbols.lookup(leftType.name)?.isScalar &&
+      !symbols.lookup(rightType.name)?.isScalar
+    ) {
+      return leftType;
+    }
+
     if (!leftBase || !rightBase) {
       return undefined;
     }

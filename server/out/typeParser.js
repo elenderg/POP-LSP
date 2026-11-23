@@ -5981,6 +5981,13 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
                 return createSyntheticTypeReference(commonNumericPair.symbol.name, node.range);
             }
         }
+        if (node.operator === 'dividido por' &&
+            leftBase !== 'fração' &&
+            rightBase !== 'fração' &&
+            symbols.lookup(leftType.name)?.isScalar &&
+            !symbols.lookup(rightType.name)?.isScalar) {
+            return leftType;
+        }
         if (!leftBase || !rightBase) {
             return undefined;
         }
