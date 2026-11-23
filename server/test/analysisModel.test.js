@@ -1174,6 +1174,47 @@ test('excludes a boolean function qualifier from its condition arguments', () =>
   );
 });
 
+test('infers a local variable from a contracted type in an assignment destination', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um byte é uma estrutura.',
+    'Um ponteiro é uma estrutura com 4 bytes.',
+    'Um caractere inicial é um ponteiro para um byte.',
+    'Um caractere final é um ponteiro para um byte.',
+    'Uma string é uma estrutura com um caractere inicial e um caractere final.',
+    'Um subtexto é uma string.',
+    'A string é uma string.',
+    'Função para que se determine se um ponteiro é maior do que um segundo ponteiro:',
+    '  Diga sim.',
+    'Função para que se determine se uma string é uma segunda string (comparação de caracteres acentuados):',
+    '  Diga sim.',
+    'Rotina para que se mova uma string usando um número:',
+    '  Retorne.',
+    'Rotina para que se teste (wrapped caixa de texto):',
+    '  Atribua o caractere inicial desta string mais 1 ao caractere inicial dum subtexto.',
+    '  Se o caractere final deste subtexto for maior do que o caractere final desta string, retorne.',
+    '  Se o subtexto for a string (comparação de caracteres acentuados), retorne.',
+    '  Mova o subtexto usando 1.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.ok(caller.localVariables.some(variable =>
+    variable.name.normalizedName === 'subtexto' &&
+    variable.type.normalizedName === 'subtexto'
+  ));
+  assert.deepEqual(
+    caller.conditionals.map(conditional =>
+      conditional.target?.parameters.map(parameter => parameter.type.normalizedName)
+    ),
+    [['ponteiro', 'ponteiro'], ['string', 'string']]
+  );
+  assert.equal(caller.calls.at(-1).target?.name.normalizedName, 'mova');
+});
+
 test('resolves all arithmetic operators for pointer and numeric operands', () => {
   const header = [
     'Um ponteiro é uma estrutura.',

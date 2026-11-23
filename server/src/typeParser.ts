@@ -3897,23 +3897,40 @@ function processRoutineStatementCore(
   if (
     statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua'
   ) {
-    const destinationMarker = findWordOutsideStrings(
-      source,
-      statementKeyword.end,
-      statement.end,
-      'para'
-    );
+    const destinationMarker = ['para', 'à', 'ao', 'aos', 'às']
+      .map(marker =>
+        findWordOutsideStrings(
+          source,
+          statementKeyword.end,
+          statement.end,
+          marker
+        )
+      )
+      .filter((marker): marker is SourceRange => marker !== undefined)
+      .sort((first, second) => first.start - second.start)[0];
     if (destinationMarker) {
       const targetRange = trimRange(source, destinationMarker.end, statement.end);
       const targetArticle = readWord(source, targetRange.start, targetRange.end);
+      const targetTextWords = source
+        .slice(targetRange.start, targetRange.end)
+        .match(/\p{L}+/gu) ?? [];
+      const hasDeContractedTypeArticle = targetTextWords.some(word => {
+        const normalizedWord = word.toLocaleLowerCase('pt-BR');
+        return (
+          !indefiniteArticles.has(normalizedWord) &&
+          isIndefiniteArticleOrDeContraction(normalizedWord)
+        );
+      });
       if (
         targetArticle &&
-        indefiniteArticles.has(targetArticle.value.toLocaleLowerCase('pt-BR'))
+        (indefiniteArticles.has(targetArticle.value.toLocaleLowerCase('pt-BR')) ||
+          hasDeContractedTypeArticle)
       ) {
         const localVariable = parseLocalVariableDeclaration(
           source,
           targetRange,
-          symbols
+          symbols,
+          hasDeContractedTypeArticle
         );
         if (localVariable) {
           caller.localVariables.push(localVariable);
@@ -3964,9 +3981,17 @@ function processRoutineStatementCore(
     statementKeyword &&
     ['atribua', 'escreva'].includes(statementKind ?? '')
   ) {
-    const destinationMarker =
-      findWordOutsideStrings(source, statementKeyword.end, statement.end, 'para') ??
-      findWordOutsideStrings(source, statementKeyword.end, statement.end, 'à');
+    const destinationMarker = ['para', 'à', 'ao', 'aos', 'às']
+      .map(marker =>
+        findWordOutsideStrings(
+          source,
+          statementKeyword.end,
+          statement.end,
+          marker
+        )
+      )
+      .filter((marker): marker is SourceRange => marker !== undefined)
+      .sort((first, second) => first.start - second.start)[0];
     if (destinationMarker) {
       resolveFieldAccessRange(
         source,
