@@ -140,7 +140,7 @@ test('resolves pointer fields through contracted local variable owners', () => {
     'Um trecho é uma string.',
     'Rotina para que se reaponte um ponteiro usando uma quantidade de bytes:',
     '  Retorne.',
-    'Rotina para que se obtenha um trecho e uma quantidade de bytes denominada quantidade de caracteres:',
+    'Rotina para que se obtenha uma quantidade de bytes denominada quantidade de caracteres:',
     '  Reaponte o caractere inicial dum trecho usando a quantidade de caracteres.'
   ].join('\n');
   const parsed = parseTypeDeclarations(source);
@@ -152,6 +152,10 @@ test('resolves pointer fields through contracted local variable owners', () => {
   assert.equal(caller.calls[0].target?.name.normalizedName, 'reaponte');
   assert.equal(caller.calls[0].arguments[0].name,
     'o caractere inicial dum trecho');
+  assert.ok(caller.localVariables.some(variable =>
+    variable.name.normalizedName === 'trecho' &&
+    variable.type.normalizedName === 'trecho'
+  ));
   assert.ok(caller.calls[0].fieldAccesses?.some(access =>
     access.reference.name === 'caractere inicial'
   ));
@@ -1326,6 +1330,54 @@ test('preserves a scalar quantity type when divided by a unitless number', () =>
   assert.equal(call.target.parameters[0].type.normalizedName, 'twips');
 });
 
+test('resolves preserved original parameter names with the original parameter type', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um ponto osmosiano é um número.',
+    'Uma orientação é uns pontos osmosianos.',
+    'Um deslocamento vertical é um número.',
+    'Um deslocamento horizontal é um número.',
+    'Rotina para que se normalize uma orientação:',
+    '  Retorne.',
+    'Rotina para que se obtenha um deslocamento vertical e um deslocamento horizontal usando uma orientação denominada orientação:',
+    '  Preserve a orientação.',
+    '  Normalize a orientação.',
+    '  Normalize a orientação original.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'obtenha'
+  );
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(caller.calls.length, 2);
+  assert.ok(caller.calls.every(call =>
+    call.target?.name.normalizedName === 'normalize'
+  ));
+  assert.equal(caller.preservedParameters.length, 1);
+  assert.equal(
+    caller.preservedParameters[0].originalName,
+    'orientação original'
+  );
+  assert.ok(getParsedReferences(parsed).some(reference =>
+    reference.kind === 'variable' &&
+    reference.name === 'orientação' &&
+    source.slice(reference.range.start, reference.range.end) === 'orientação' &&
+    reference.scope === caller.range.start
+  ));
+  assert.ok(getParsedReferences(parsed).some(reference =>
+    reference.kind === 'variable' &&
+    reference.name === 'orientação' &&
+    source.slice(reference.range.start, reference.range.end) === 'orientação original'
+  ));
+  const analysis = getDocumentAnalysis(parsed, source.length);
+  const originalOffset = source.indexOf('orientação original');
+  const originalReference = analysis.findReferenceAt(originalOffset);
+  const declaration = analysis.getDeclaration(originalReference);
+  assert.equal(declaration?.name, 'orientação');
+  assert.ok(declaration?.range.start >= caller.range.start);
+});
+
 test('preserves a shared scalar scale through multiplication and division', () => {
   const source = [
     'Um número é uma estrutura.',
@@ -1594,6 +1646,42 @@ test('replays cached argument effects for expressions, fields, variables, and ca
   ));
   assert.equal(cached.diagnostics.length, 0, JSON.stringify(cached.diagnostics));
   assert.ok(cachedMetrics.routineResolutionProfile.argumentTypeCache.hits > 0);
+});
+
+test('resolves inherited destination fields in arithmetic routine calls', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Uma altura é uns twips.',
+    'Um twip é um número.',
+    'Uma caixa é uma estrutura com',
+    '  Um número denominado coordenada Y1 e',
+    '  Um número denominado coordenada Y2.',
+    'Um TEXTMETRIC é uma estrutura com',
+    '  Um número denominado tmHeight.',
+    'Um par de números é uma estrutura com',
+    '  Um número denominado número X e',
+    '  Um número denominado número Y.',
+    'Um deslocamento de coordenadas é um par de números.',
+    'Rotina para que se atribua a altura duma caixa para uma altura:',
+    '  Retorne.',
+    'Rotina para que se adicione um número para um segundo número:',
+    '  Retorne.',
+    'Rotina para que se teste um deslocamento de coordenadas denominado deslocamento e uma caixa denominada caixa e um TEXTMETRIC denominado texto métrico:',
+    '  Adicione a altura desta caixa para o número Y deste deslocamento.',
+    '  Adicione a tmHeight deste texto métrico para o número Y deste deslocamento.',
+    '  Adicione a altura desta caixa menos a tmHeight deste texto métrico dividido por 2 para um número.',
+    '  Adicione a altura desta caixa menos a tmHeight deste texto métrico dividido por 2 para o número Y deste deslocamento.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(caller.calls[0].target?.name.normalizedName, 'adicione');
+  assert.ok(caller.calls[0].fieldAccesses.some(access =>
+    access.reference.name === 'número Y'
+  ));
 });
 
 test('preserves implicit definite article contexts across overload candidates', () => {

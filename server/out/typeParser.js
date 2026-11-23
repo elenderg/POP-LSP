@@ -2308,8 +2308,13 @@ function processRoutineStatementCore(source, statement, caller, routines, global
     const statementDiagnosticStart = diagnostics.length;
     const statementKeyword = readWord(source, statement.start, statement.end);
     for (const localVariable of parseRoutineStatementLocalVariables(source, statement, symbols, routines)) {
+        const existingVariable = findRoutineVariable(caller, localVariable.name.normalizedName);
+        if (existingVariable &&
+            existingVariable.type.normalizedName === localVariable.type.normalizedName) {
+            continue;
+        }
         caller.localVariables.push(localVariable);
-    } //
+    }
     if (statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua') {
         const destinationMarker = ['para', 'à', 'ao', 'aos', 'às']
             .map(marker => findWordOutsideStrings(source, statementKeyword.end, statement.end, marker))
@@ -2463,7 +2468,7 @@ function processRoutineStatementCore(source, statement, caller, routines, global
         if (activeRoutineResolutionProfileCounters) {
             activeRoutineResolutionProfileCounters.callsUnresolved++;
         }
-        diagnoseUnresolvedRoutineCall(source, statement, caller, globalVariables, symbols, diagnostics, routineNameMatches.matches);
+        diagnoseUnresolvedRoutineCall(source, statement, caller, globalVariables, symbols, diagnostics, routines, routineNameMatches.matches);
     }
     return false;
 }
@@ -3004,6 +3009,7 @@ function validatePreserveStatement(source, statement, routine, diagnostics) {
             parameter,
             copyName: parameter.name.name,
             originalName: `${parameter.name.name} original`,
+            copyRange: parameterNameRange,
             range: statement
         });
     }
@@ -4600,14 +4606,14 @@ function findScalarRoutineLiteral(source, start, end, expectedType, symbols) {
     }
     return undefined;
 }
-function diagnoseUnresolvedRoutineCall(source, statement, caller, globalVariables, symbols, diagnostics, nameMatches) {
+function diagnoseUnresolvedRoutineCall(source, statement, caller, globalVariables, symbols, diagnostics, routines, nameMatches) {
     if (!activeRoutineResolutionProfileCounters) {
-        diagnoseUnresolvedRoutineCallCore(source, statement, caller, globalVariables, symbols, diagnostics, nameMatches);
+        diagnoseUnresolvedRoutineCallCore(source, statement, caller, globalVariables, symbols, diagnostics, routines, nameMatches);
         return;
     }
-    profileRoutineResolutionHelper('diagnoseUnresolvedRoutineCall', statement, () => diagnoseUnresolvedRoutineCallCore(source, statement, caller, globalVariables, symbols, diagnostics, nameMatches));
+    profileRoutineResolutionHelper('diagnoseUnresolvedRoutineCall', statement, () => diagnoseUnresolvedRoutineCallCore(source, statement, caller, globalVariables, symbols, diagnostics, routines, nameMatches));
 }
-function diagnoseUnresolvedRoutineCallCore(source, statement, caller, globalVariables, symbols, diagnostics, nameMatches) {
+function diagnoseUnresolvedRoutineCallCore(source, statement, caller, globalVariables, symbols, diagnostics, routines, nameMatches) {
     const firstWord = readWord(source, statement.start, statement.end);
     if (!firstWord || builtInStatementStarts.has(firstWord.value.toLocaleLowerCase('pt-BR'))) {
         return;
@@ -4631,6 +4637,11 @@ function diagnoseUnresolvedRoutineCallCore(source, statement, caller, globalVari
         }
         for (let index = 0; index < argumentsList.length; index++) {
             const argument = argumentsList[index];
+            const resolvedArgumentType = resolveRoutineArgumentType(source, argument, caller, globalVariables, symbols, [], routines, [], [], hasContractedDefiniteArticleBefore(source, argument.start, nameEnd));
+            if (resolvedArgumentType &&
+                isCompatibleType(resolvedArgumentType, parameters[index].type, symbols)) {
+                continue;
+            }
             const article = readWord(source, argument.start, argument.end);
             if (!article ||
                 !definiteArticles.has(article.value.toLocaleLowerCase('pt-BR'))) {
@@ -5855,11 +5866,19 @@ function findRoutineVariable(routine, name) {
     const localVariable = [...routine.localVariables]
         .reverse()
         .find(variable => variable.name.normalizedName === name);
-    return localVariable ??
-        routine.parameters.find(parameter => parameter.name.normalizedName === name) ??
-        (routine.returnParameter?.name.normalizedName === name
-            ? routine.returnParameter
-            : undefined);
+    if (localVariable) {
+        return localVariable;
+    }
+    const parameter = routine.parameters.find(parameter => parameter.name.normalizedName === name);
+    if (parameter) {
+        return parameter;
+    }
+    if (routine.returnParameter?.name.normalizedName === name) {
+        return routine.returnParameter;
+    }
+    return routine.preservedParameters
+        .map(preserved => preserved.parameter)
+        .find(parameter => normalizeTypeName(`${parameter.name.name} original`) === name);
 }
 function isCompatibleType(actual, expected, symbols) {
     return nullLiteralWords.has(actual.normalizedName) ||
@@ -6034,6 +6053,11 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
             if (rightIsPointer &&
                 leftBase) {
                 return rightType;
+            }
+            if (['mais', 'menos'].includes(node.operator) &&
+                symbols.lookup(leftType.name)?.isScalar &&
+                rightBase) {
+                return leftType;
             }
             const commonNumericPair = symbols.entries
                 .map(symbol => ({
@@ -6245,8 +6269,6 @@ function parseRoutineStatementLocalVariables(source, statement, symbols, routine
         }
     }
     const routineStartWords = getRoutineNameIndex(routines).firstWords;
-    const isAssignmentDestination = statementKeyword?.value.toLocaleLowerCase('pt-BR') === 'atribua' &&
-        declarationRange.end !== statement.end;
     const chainedCallPattern = /\be\s+(\p{L}+)/giu;
     const declarationText = source.slice(declarationRange.start, declarationRange.end);
     let chainedCall;
@@ -6270,11 +6292,6 @@ function parseRoutineStatementLocalVariables(source, statement, symbols, routine
     words.lastIndex = declarationRange.start;
     let match;
     while ((match = words.exec(source)) && match.index < declarationRange.end) {
-        const normalizedMatch = normalizeTypeName(match[0]);
-        if (!indefiniteArticles.has(normalizedMatch) &&
-            !isAssignmentDestination) {
-            continue;
-        }
         if (!isIndefiniteArticleOrDeContraction(match[0])) {
             continue;
         }
@@ -7673,7 +7690,9 @@ function getParsedReferences(parsed, onProfile) {
     };
     const addVariableAccesses = (accesses, routine) => {
         for (const access of accesses ?? []) {
-            add('variable', access.reference.name, access.reference.range, {
+            const variable = findRoutineVariable(routine, access.reference.normalizedName);
+            const canonicalName = variable?.name.name ?? access.reference.name;
+            add('variable', canonicalName, access.reference.range, {
                 scope: access.scope === undefined ? undefined : routine.range.start
             });
         }
@@ -7753,6 +7772,13 @@ function getParsedReferences(parsed, onProfile) {
                 declaration: true
             });
             addType(variable.type);
+        }
+        for (const preserved of routine.preservedParameters) {
+            if (preserved.copyRange) {
+                add('variable', preserved.parameter.name.name, preserved.copyRange, {
+                    scope: routine.range.start
+                });
+            }
         }
         if (routine.computedField) {
             add('field', routine.computedField.name.name, routine.computedField.name.range, {

@@ -69,6 +69,7 @@ export interface PreservedRoutineParameter {
     parameter: RoutineParameter;
     copyName: string;
     originalName: string;
+    copyRange?: SourceRange;
     range: SourceRange;
 }
 export type ExpressionOperator = 'mais' | 'menos' | 'vezes' | 'dividido por' | 'junto com' | 'seguido de' | '/';
