@@ -8486,6 +8486,15 @@ function resolveRoutineArgumentTypeCore(
     return fieldAccessType;
   }
 
+  const scalarLiteralType = resolveScalarLiteralType(
+    source,
+    argument,
+    symbols
+  );
+  if (scalarLiteralType) {
+    return scalarLiteralType;
+  }
+
   const literal = parseGlobalVariableLiteral(source, argument);
   if (literal) {
     if (literal.kind === 'null') {
@@ -8643,13 +8652,22 @@ function resolveScalarRoutineArgumentType(
   symbols: TypeSymbolTable
 ): TypeReference | undefined {
   const expectedSymbol = symbols.lookup(expectedType.name);
-  if (
-    !expectedSymbol ||
-    expectedSymbol.pluralName !== expectedType.normalizedName
-  ) {
+  if (!expectedSymbol?.isScalar) {
     return undefined;
   }
 
+  const actualType = resolveScalarLiteralType(source, argument, symbols);
+  return actualType &&
+    getRoutineArgumentTypeDistance(actualType, expectedType.name, symbols) !== undefined
+    ? actualType
+    : undefined;
+}
+
+function resolveScalarLiteralType(
+  source: string,
+  argument: SourceRange,
+  symbols: TypeSymbolTable
+): TypeReference | undefined {
   const text = source.slice(argument.start, argument.end);
   const literalMatch = /^([+-]?\d+(?:\+[+-]?\d+\/[+-]?\d+|\/[+-]?\d+)?)(\s+)([\s\S]+)$/u.exec(text);
   if (!literalMatch) {
@@ -8673,6 +8691,7 @@ function resolveScalarRoutineArgumentType(
   const actualType = symbols.lookup(source.slice(typeRange.start, typeRange.end));
   if (
     !actualType ||
+    !actualType.isScalar ||
     ![
       actualType.normalizedName,
       normalizeTypeName(actualType.pluralName)

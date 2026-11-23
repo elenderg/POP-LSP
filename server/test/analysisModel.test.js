@@ -1339,6 +1339,39 @@ test('resolves all arithmetic operators for pointer and numeric operands', () =>
   );
 });
 
+test('resolves scalar units in compound arithmetic routine arguments', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Um pixel são 15 twips.',
+    'Um px são 15 twips.',
+    'Uma coordenada é uns twips.',
+    'Um par de números é uma estrutura com',
+    '  Um número denominado número X e',
+    '  Um número denominado número Y.',
+    'Uma localização é um par de números com',
+    '  Uma coordenada denominada coordenada X e',
+    '  Uma coordenada denominada coordenada Y.',
+    'Rotina para que se multiplique um par de números por um número:',
+    '  Retorne.',
+    'Rotina para que se adicione um número para um segundo número:',
+    '  Retorne.',
+    'Rotina para que se teste uma localização denominada centro e uma segunda localização:',
+    '  Multiplique a segunda localização por 24 px.',
+    '  Adicione a coordenada X deste centro menos 299 pixels para a coordenada X desta segunda localização.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.deepEqual(
+    caller?.calls.map(call => call.target?.name.normalizedName),
+    ['multiplique', 'adicione']
+  );
+});
+
 test('preserves a scalar quantity type when divided by a unitless number', () => {
   const source = [
     'Um número é uma estrutura.',
