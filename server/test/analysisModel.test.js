@@ -1149,6 +1149,31 @@ test('resolves range conditions with numeric arguments from cross-file boolean o
   );
 });
 
+test('excludes a boolean function qualifier from its condition arguments', () => {
+  const source = [
+    'Uma string é uma estrutura.',
+    'Um subtexto é uma string.',
+    'O subtexto é um subtexto.',
+    'O texto pesquisado é uma string.',
+    'Função para que se determine se uma string é uma segunda string (comparação de caracteres acentuados):',
+    '  Diga sim.',
+    'Rotina para que se teste:',
+    '  Se o subtexto for o texto pesquisado (comparação de caracteres acentuados), retorne.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const conditional = caller.conditionals[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(conditional.target?.qualifier, '(comparação de caracteres acentuados)');
+  assert.deepEqual(
+    conditional.conditionArguments.map(argument => argument.name),
+    ['o subtexto', 'o texto pesquisado']
+  );
+});
+
 test('resolves all arithmetic operators for pointer and numeric operands', () => {
   const header = [
     'Um ponteiro é uma estrutura.',

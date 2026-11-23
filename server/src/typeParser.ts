@@ -4397,14 +4397,20 @@ function resolveBooleanConditionCore(
     if (!routine.isBooleanFunction) {
       continue;
     }
+    const qualifier = findTrailingParentheticalQualifier(
+      conditionSource,
+      nameEnd,
+      condition.end
+    );
+    const argumentsEnd = qualifier?.start ?? condition.end;
     if (
-      nameEnd < condition.end &&
+      nameEnd < argumentsEnd &&
       !/\s/u.test(conditionSource[nameEnd] ?? '')
     ) {
       continue;
     }
     const prefix = trimRange(conditionSource, condition.start, nameStart);
-    const suffix = trimRange(conditionSource, nameEnd, condition.end);
+    const suffix = trimRange(conditionSource, nameEnd, argumentsEnd);
     if (parameters.length === 0) {
       if (
         normalizeTypeName(conditionSource.slice(prefix.start, prefix.end)) === 'algo' &&
