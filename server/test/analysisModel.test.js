@@ -1228,6 +1228,37 @@ test('preserves a scalar quantity type when divided by a unitless number', () =>
   assert.equal(call.target.parameters[0].type.normalizedName, 'twips');
 });
 
+test('preserves a shared scalar scale through multiplication and division', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Uma coordenada é uns twips.',
+    'Um deslocamento horizontal é um número.',
+    'A coordenada é uma coordenada.',
+    'O deslocamento horizontal é um deslocamento horizontal.',
+    'Os twips são uns twips.',
+    'Rotina para que se adicione um número para um segundo número:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Adicione o deslocamento horizontal vezes os twips dividido por 10000 para a coordenada.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const call = caller.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call.target.name.normalizedName, 'adicione');
+  assert.deepEqual(
+    call.arguments.map(argument => argument.name),
+    [
+      'o deslocamento horizontal vezes os twips dividido por 10000',
+      'a coordenada'
+    ]
+  );
+});
+
 test('matches trailing suffixes from alternate routine headers', () => {
   const source = [
     'Um ponteiro é uma estrutura.',

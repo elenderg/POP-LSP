@@ -9709,6 +9709,18 @@ function resolveRoutineExpressionTypeCore(
       }
     }
 
+    if (node.operator === 'vezes') {
+      const leftSymbol = symbols.lookup(leftType.name);
+      const rightSymbol = symbols.lookup(rightType.name);
+      if (
+        leftSymbol?.isScalar &&
+        rightSymbol?.isScalar &&
+        leftSymbol.scale === rightSymbol.scale
+      ) {
+        return leftType;
+      }
+    }
+
     if (
       node.operator === 'dividido por' &&
       leftBase !== 'fração' &&
