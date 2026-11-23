@@ -2408,6 +2408,54 @@ test('resolves a computed field whose owner is named by its type', () => {
   ));
 });
 
+test('resolves a computed field through a compatible nested field type', () => {
+  const { documents } = createWorkspace([
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Uma localização é um número.',
+        'Uma caixa é uma estrutura.',
+        'Uma elipse é uma estrutura com uma caixa.'
+      ].join('\n')
+    },
+    {
+      name: 'computed-field.pop',
+      text: [
+        'Rotina para que se atribua o centro duma caixa para uma localização:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'variables.pop',
+      text: 'A figura é uma estrutura com uma caixa.'
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se teste uma elipse e uma localização denominada centro localização:',
+        '  Atribua o centro desta elipse para a localização.',
+        '  Atribua o centro desta figura para a localização.'
+      ].join('\n')
+    }
+  ]);
+  const caller = documents[3].parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+
+  assert.deepEqual(documents[3].parsed.diagnostics, []);
+  assert.equal(
+    new Set(caller.computedFieldAccesses
+      .filter(access => access.reference.name === 'centro')
+      .map(access => access.reference.range.start)).size,
+    2
+  );
+  assert.ok(caller.computedFieldAccesses.every(access =>
+    access.target.name.normalizedName === 'atribua o centro duma caixa' &&
+    access.target.computedField?.structureType.normalizedName === 'caixa'
+  ));
+});
+
 test('resolves computed fields owned by a global structure variable', () => {
   const sources = [
     {

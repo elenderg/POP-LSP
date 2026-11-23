@@ -8917,7 +8917,7 @@ function resolveStructureFieldAccessCore(
         fieldName,
         routines,
         symbols,
-        index === 0 ? globalVariable?.normalizedName : undefined
+        index === 0 ? globalVariable : undefined
       );
       if (computedField) {
         break;
@@ -9121,7 +9121,7 @@ function findComputedFieldRoutine(
   fieldName: string,
   routines: RoutineDeclaration[],
   symbols: TypeSymbolTable,
-  globalVariableName?: string
+  globalVariable?: GlobalVariableSymbol
 ): { routine: RoutineDeclaration; valueType: TypeReference } | undefined {
   const candidates = getComputedFieldRoutineIndex(routines).get(fieldName) ?? [];
   let bestMatch:
@@ -9129,6 +9129,7 @@ function findComputedFieldRoutine(
       routine: RoutineDeclaration;
       valueType: TypeReference;
       ownerDistance: number;
+      ownerNestingDistance: number;
       typeDistance: number;
     }
     | undefined;
@@ -9140,19 +9141,29 @@ function findComputedFieldRoutine(
     if (
       computedField.globalVariable &&
       normalizeTypeName(computedField.globalVariable.name) !==
-        normalizeTypeName(globalVariableName ?? '')
+        normalizeTypeName(globalVariable?.name ?? '')
     ) {
       continue;
     }
     const ownerDistance = computedField.globalVariable ? 0 : 1;
-    const typeDistance = getRoutineArgumentTypeDistance(
+    const directTypeDistance = getRoutineArgumentTypeDistance(
       structureType,
       computedField.structureType.name,
       symbols
     );
+    const nestedTypeDistance = directTypeDistance === undefined
+      ? getNestedComputedFieldOwnerTypeDistance(
+        structureType,
+        computedField.structureType.name,
+        symbols,
+        globalVariable?.declaration.fields
+      )
+      : undefined;
+    const typeDistance = directTypeDistance ?? nestedTypeDistance;
     if (typeDistance === undefined) {
       continue;
     }
+    const ownerNestingDistance = directTypeDistance === undefined ? 1 : 0;
     const valueType = computedField.valueType ??
       resolveRoutineParameterTypeReference(routine.parameters[0], symbols);
     if (
@@ -9160,16 +9171,69 @@ function findComputedFieldRoutine(
       bestMatch && (
         ownerDistance > bestMatch.ownerDistance ||
         ownerDistance === bestMatch.ownerDistance &&
+          ownerNestingDistance > bestMatch.ownerNestingDistance ||
+        ownerDistance === bestMatch.ownerDistance &&
+          ownerNestingDistance === bestMatch.ownerNestingDistance &&
           typeDistance >= bestMatch.typeDistance
       )
     ) {
       continue;
     }
-    bestMatch = { routine, valueType, ownerDistance, typeDistance };
+    bestMatch = {
+      routine,
+      valueType,
+      ownerDistance,
+      ownerNestingDistance,
+      typeDistance
+    };
   }
   return bestMatch
     ? { routine: bestMatch.routine, valueType: bestMatch.valueType }
     : undefined;
+}
+
+function getNestedComputedFieldOwnerTypeDistance(
+  structureType: TypeReference,
+  expectedTypeName: string,
+  symbols: TypeSymbolTable,
+  additionalFields: TypeField[] = []
+): number | undefined {
+  let structure = symbols.lookup(structureType.name);
+  const visited = new Set<TypeSymbol>();
+  let bestDistance: number | undefined;
+  for (const field of additionalFields) {
+    if (field.kind !== 'named') {
+      continue;
+    }
+    const distance = getRoutineArgumentTypeDistance(
+      field.type,
+      expectedTypeName,
+      symbols
+    );
+    if (distance !== undefined && (bestDistance === undefined || distance < bestDistance)) {
+      bestDistance = distance;
+    }
+  }
+  while (structure && !visited.has(structure)) {
+    visited.add(structure);
+    for (const field of structure.fields ?? []) {
+      if (field.kind !== 'named') {
+        continue;
+      }
+      const distance = getRoutineArgumentTypeDistance(
+        field.type,
+        expectedTypeName,
+        symbols
+      );
+      if (distance !== undefined && (bestDistance === undefined || distance < bestDistance)) {
+        bestDistance = distance;
+      }
+    }
+    structure = structure.baseType
+      ? symbols.lookup(structure.baseType.name)
+      : undefined;
+  }
+  return bestDistance;
 }
 
 function resolveRoutineParameterTypeReference(
