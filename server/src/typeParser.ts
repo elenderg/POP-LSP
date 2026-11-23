@@ -276,6 +276,7 @@ export interface RoutineSimpleInstruction {
 export interface RoutineComputedField {
   name: TypeReference;
   structureType: TypeReference;
+  globalVariable?: TypeReference;
   valueType?: TypeReference;
 }
 
@@ -2148,11 +2149,12 @@ export function resolveRoutineSyntaxRegions(
       : undefined;
     return requested ?? rebaseParsedRegion(routine, 0);
   });
+  const workspaceRoutineCandidates = workspaceRoutines.map(routine =>
+    resolveRoutineCandidateTypes(routine, symbols)
+  );
   const routineCandidates = [
     ...localRoutineCandidates,
-    ...workspaceRoutines.map(routine =>
-      resolveRoutineCandidateTypes(routine, symbols)
-    )
+    ...workspaceRoutineCandidates
   ];
   const symbolSetupMs = onProfile ? performance.now() - startedAt : 0;
   const profileCounters = onProfile
@@ -2185,7 +2187,18 @@ export function resolveRoutineSyntaxRegions(
       : 0;
     phaseStartedAt = onProfile ? performance.now() : 0;
     candidateDiagnostics.length = 0;
-    resolveComputedFields(localRoutineCandidates, symbols, candidateDiagnostics);
+    resolveComputedFields(
+      localRoutineCandidates,
+      symbols,
+      new GlobalVariableSymbolTable(globalVariables),
+      candidateDiagnostics
+    );
+    resolveComputedFields(
+      workspaceRoutineCandidates,
+      symbols,
+      new GlobalVariableSymbolTable(globalVariables),
+      []
+    );
     diagnostics.push(...candidateDiagnostics.filter(diagnostic =>
       regions.some(region =>
         diagnostic.range.start >= region.range.start &&
@@ -2423,12 +2436,10 @@ function resolveTypeDeclarationSyntaxCore(
     !reusedRoutines.has(routine)
   );
   const routineSymbols = new RoutineSymbolTable(routines);
-  const routineCandidates = [
-    ...routines,
-    ...(workspaceSymbols?.routines ?? []).map(routine =>
-      resolveRoutineCandidateTypes(routine, symbols)
-    )
-  ];
+  const workspaceRoutineCandidates = (workspaceSymbols?.routines ?? []).map(
+    routine => resolveRoutineCandidateTypes(routine, symbols)
+  );
+  const routineCandidates = [...routines, ...workspaceRoutineCandidates];
   const catalogFinishedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
@@ -2506,7 +2517,13 @@ function resolveTypeDeclarationSyntaxCore(
     ? performance.now()
     : 0;
   options.onProgress?.('a resolução de campos calculados', 'start');
-  resolveComputedFields(routinesToResolve, symbols, diagnostics);
+  resolveComputedFields(routinesToResolve, symbols, globalVariableSymbols, diagnostics);
+  resolveComputedFields(
+    workspaceRoutineCandidates,
+    symbols,
+    globalVariableSymbols,
+    []
+  );
   const computedFieldResolutionFinishedAt = onProfile || options.onProgress
     ? performance.now()
     : 0;
@@ -8862,7 +8879,8 @@ function resolveStructureFieldAccessCore(
         lookupType,
         fieldName,
         routines,
-        symbols
+        symbols,
+        index === 0 ? globalVariable?.normalizedName : undefined
       );
       if (computedField) {
         break;
@@ -9065,13 +9083,15 @@ function findComputedFieldRoutine(
   structureType: TypeReference,
   fieldName: string,
   routines: RoutineDeclaration[],
-  symbols: TypeSymbolTable
+  symbols: TypeSymbolTable,
+  globalVariableName?: string
 ): { routine: RoutineDeclaration; valueType: TypeReference } | undefined {
   const candidates = getComputedFieldRoutineIndex(routines).get(fieldName) ?? [];
   let bestMatch:
     | {
       routine: RoutineDeclaration;
       valueType: TypeReference;
+      ownerDistance: number;
       typeDistance: number;
     }
     | undefined;
@@ -9080,6 +9100,14 @@ function findComputedFieldRoutine(
     if (!computedField) {
       continue;
     }
+    if (
+      computedField.globalVariable &&
+      normalizeTypeName(computedField.globalVariable.name) !==
+        normalizeTypeName(globalVariableName ?? '')
+    ) {
+      continue;
+    }
+    const ownerDistance = computedField.globalVariable ? 0 : 1;
     const typeDistance = getRoutineArgumentTypeDistance(
       structureType,
       computedField.structureType.name,
@@ -9092,11 +9120,15 @@ function findComputedFieldRoutine(
       resolveRoutineParameterTypeReference(routine.parameters[0], symbols);
     if (
       !valueType ||
-      bestMatch && typeDistance >= bestMatch.typeDistance
+      bestMatch && (
+        ownerDistance > bestMatch.ownerDistance ||
+        ownerDistance === bestMatch.ownerDistance &&
+          typeDistance >= bestMatch.typeDistance
+      )
     ) {
       continue;
     }
-    bestMatch = { routine, valueType, typeDistance };
+    bestMatch = { routine, valueType, ownerDistance, typeDistance };
   }
   return bestMatch
     ? { routine: bestMatch.routine, valueType: bestMatch.valueType }
@@ -9700,6 +9732,7 @@ function isStringConvertibleType(
     ];
     return signatures.some(signature =>
       normalizeRoutineName(signature.name) === 'atribua' &&
+      // este 'atribua' é para conversões implícitas de tipos.
       signature.parameters.length === 2 &&
       symbols.getBaseTypeDistance(
         signature.parameters[1].type.name,
@@ -10224,6 +10257,7 @@ function parseComputedFieldHeader(
 ): {
   name: TypeReference;
   structureType: TypeReference;
+  globalVariable?: TypeReference;
   returnMarker: SourceRange;
 } | undefined {
   const verb = readWord(source, start, end);
@@ -10234,11 +10268,13 @@ function parseComputedFieldHeader(
   if (!fieldArticle || !definiteArticles.has(fieldArticle.value.toLocaleLowerCase('pt-BR'))) {
     return undefined;
   }
+  const typeOwnerMarkers = new Set(['dum', 'duma', 'duns', 'dumas']);
+  const globalOwnerMarkers = new Set(['deste', 'destes', 'desta', 'destas']);
   const structureMarker = findAnyWord(
     source,
     fieldArticle.end,
     end,
-    new Set(['dum', 'duma', 'duns', 'dumas'])
+    new Set([...typeOwnerMarkers, ...globalOwnerMarkers])
   );
   if (!structureMarker) {
     return undefined;
@@ -10262,6 +10298,12 @@ function parseComputedFieldHeader(
   return {
     name: createTypeReference(source, nameRange),
     structureType: createTypeReference(source, structureRange),
+    globalVariable: globalOwnerMarkers.has(
+      source.slice(structureMarker.start, structureMarker.end)
+        .toLocaleLowerCase('pt-BR')
+    )
+      ? createTypeReference(source, structureRange)
+      : undefined,
     returnMarker
   };
 }
@@ -10598,7 +10640,8 @@ function parseRoutineDeclarations(
       computedField: computedField
         ? {
           name: computedField.name,
-          structureType: computedField.structureType
+          structureType: computedField.structureType,
+          globalVariable: computedField.globalVariable
         }
         : undefined,
       returnParameter,
@@ -10984,12 +11027,35 @@ function resolveRoutineParameters(
 function resolveComputedFields(
   routines: RoutineDeclaration[],
   symbols: TypeSymbolTable,
+  globalVariables: GlobalVariableSymbolTable,
   diagnostics: ParserDiagnostic[]
 ): void {
   for (const routine of routines) {
     const computedField = routine.computedField;
     if (!computedField) {
       continue;
+    }
+
+    if (computedField.globalVariable) {
+      const owner = globalVariables.lookup(computedField.globalVariable.name);
+      if (!owner) {
+        diagnostics.push({
+          message: `Unknown computed field global variable "${computedField.globalVariable.name}".`,
+          range: computedField.globalVariable.range
+        });
+        continue;
+      }
+      if (!owner.typeName) {
+        diagnostics.push({
+          message: `Global variable "${owner.name}" has no type and cannot own a computed field.`,
+          range: computedField.globalVariable.range
+        });
+        continue;
+      }
+      computedField.structureType = createSyntheticTypeReference(
+        owner.typeName,
+        computedField.globalVariable.range
+      );
     }
 
     const structure = symbols.lookup(computedField.structureType.name);

@@ -226,6 +226,7 @@ export interface RoutineSimpleInstruction {
 export interface RoutineComputedField {
     name: TypeReference;
     structureType: TypeReference;
+    globalVariable?: TypeReference;
     valueType?: TypeReference;
 }
 export interface RoutineComputedFieldAccess {

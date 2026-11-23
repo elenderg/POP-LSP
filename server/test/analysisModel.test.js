@@ -2289,6 +2289,72 @@ test('resolves a computed field whose owner is named by its type', () => {
   ));
 });
 
+test('resolves computed fields owned by a global structure variable', () => {
+  const sources = [
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Uma localização é um número.'
+      ].join('\n')
+    },
+    {
+      name: 'variables.pop',
+      text: [
+        'O mouse é uma estrutura com',
+        '  Um número denominado botão.',
+        'O valor é uma localização.'
+      ].join('\n')
+    },
+    {
+      name: 'computed-field.pop',
+      text: [
+        'Rotina para que se atribua a localização deste mouse para uma localização:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Função para que se determine se uma localização estiver na caixa:',
+        '  Diga sim.',
+        'Rotina para que se teste:',
+        '  Se a localização deste mouse estiver na caixa, retorne.'
+      ].join('\n')
+    }
+  ];
+  const { documents } = createWorkspace(sources);
+  const caller = documents[3].parsed.routines.find(routine =>
+    routine.conditionals.length > 0
+  );
+  const syntax = parseTypeDeclarationSyntax(sources[3].text);
+  const callerRegion = syntax.regions.find(region =>
+    region.kind === 'routine' &&
+    region.range.start === caller?.range.start
+  );
+  const catalog = {
+    declarations: documents.flatMap(document => document.parsed.declarations),
+    globalVariables: documents.flatMap(document => document.parsed.globalVariables),
+    routines: documents.flatMap(document => document.parsed.routines)
+  };
+  assert.ok(caller);
+  assert.ok(callerRegion);
+
+  assert.deepEqual(documents[3].parsed.diagnostics, []);
+  assert.ok(caller.conditionals[0].predicateCall?.computedFieldAccesses?.some(access =>
+    access.target.computedField?.globalVariable?.normalizedName === 'mouse'
+  ));
+  assert.deepEqual(
+    resolveRoutineSyntaxRegions(
+      sources[3].text,
+      syntax,
+      [callerRegion],
+      catalog
+    ).diagnostics,
+    []
+  );
+});
+
 test('resolves explicit atribua routine calls before assignment syntax', () => {
   const source = [
     'Um par de números é uma estrutura.',
