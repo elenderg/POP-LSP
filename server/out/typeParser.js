@@ -2868,7 +2868,11 @@ function parseRoutineExpressionCore(source, range, diagnostics) {
             index = quotedRange.end - 1;
             continue;
         }
-        if (source[index] === '/') {
+        if (source[index] === '/' &&
+            index > range.start &&
+            index + 1 < range.end &&
+            /\s/u.test(source[index - 1]) &&
+            /\s/u.test(source[index + 1])) {
             operators.push({
                 operator: '/',
                 range: { start: index, end: index + 1 }
@@ -5943,7 +5947,12 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
         const getNumericBase = (type) => numericTypes.find(typeName => symbols.getBaseTypeDistance(type.name, typeName) !== undefined);
         const leftBase = getNumericBase(leftType);
         const rightBase = getNumericBase(rightType);
-        if (['mais', 'menos', 'vezes', 'dividido por', '/'].includes(node.operator)) {
+        if (node.operator === '/') {
+            return leftBase && rightBase
+                ? createSyntheticTypeReference('fração', node.range)
+                : undefined;
+        }
+        if (['mais', 'menos', 'vezes', 'dividido por'].includes(node.operator)) {
             const leftIsPointer = getPointerTypeDistance(leftType.name, symbols) !== undefined;
             const rightIsPointer = getPointerTypeDistance(rightType.name, symbols) !== undefined;
             if (leftIsPointer &&
@@ -5975,7 +5984,7 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
         if (!leftBase || !rightBase) {
             return undefined;
         }
-        const resultBase = node.operator === 'dividido por' || node.operator === '/' ||
+        const resultBase = node.operator === 'dividido por' ||
             leftBase === 'fração' || rightBase === 'fração'
             ? 'fração'
             : leftBase === 'número' || rightBase === 'número'

@@ -2894,6 +2894,54 @@ test('resolves unary negative expressions in every routine argument position', (
   );
 });
 
+test('resolves slash-containing names and fraction separators', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Uma fração é um número.',
+    'A quantidade de twips/pixel é uns twips.',
+    'O numerador é um número.',
+    'O denominador é um número.',
+    'Uma caixa é uma estrutura.',
+    'A caixa é uma caixa.',
+    'A segunda fração é uma fração.',
+    'Rotina para que se ajuste uma caixa usando um número e um segundo número e um terceiro número e um quarto número:',
+    '  Retorne.',
+    'Rotina para que se use uma fração:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Ajuste a caixa usando 0 e a quantidade de twips/pixel e 0 e - a quantidade de twips/pixel.',
+    '  Atribua 3/4 para a segunda fração.',
+    '  Atribua o numerador / o denominador para a segunda fração.',
+    '  Use 6 / 2.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const [call, fractionCall] = caller.calls;
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call.target.name.normalizedName, 'ajuste');
+  assert.equal(fractionCall.target.name.normalizedName, 'use');
+  assert.equal(caller.assignments[0].expression.kind, 'operand');
+  assert.equal(caller.assignments[0].expression.text, '3/4');
+  assert.equal(caller.assignments[1].expression.operator, '/');
+  assert.deepEqual(
+    call.arguments.map(argument => argument.name),
+    [
+      'a caixa',
+      '0',
+      'a quantidade de twips/pixel',
+      '0',
+      '- a quantidade de twips/pixel'
+    ]
+  );
+  assert.ok(call.variableAccesses.some(access =>
+    access.reference.name === 'quantidade de twips/pixel'
+  ));
+});
+
 test('resolves internal function pointers through nested pointer fields', () => {
   const source = [
     'Um ponteiro é uma estrutura com 4 bytes.',
