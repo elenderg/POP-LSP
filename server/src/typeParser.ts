@@ -6677,6 +6677,12 @@ function resolveRoutineCallCore(
           parameter.type,
           symbols
         );
+      const hasImplicitDefiniteArticle =
+        hasContractedDefiniteArticleBefore(
+          source,
+          argumentsList[index].start,
+          nameEnd
+        );
       const argumentType = localVariable
         ? localVariable.type
         : scalarArgumentType ??
@@ -6691,11 +6697,7 @@ function resolveRoutineCallCore(
           routines,
           computedFieldAccesses,
           variableAccesses,
-          hasContractedDefiniteArticleBefore(
-            source,
-            argumentsList[index].start,
-            nameEnd
-          ) || implicitDefiniteArticle === true,
+          hasImplicitDefiniteArticle || implicitDefiniteArticle === true,
           diagnostics,
           argumentTypeResolutionCache
         );
@@ -6755,7 +6757,8 @@ function resolveRoutineCallCore(
           variableAccesses,
           diagnostics,
           parsedExpression,
-          argumentTypeResolutionCache
+          argumentTypeResolutionCache,
+          hasImplicitDefiniteArticle || implicitDefiniteArticle === true
         );
       if (candidateProfile) {
         expressionResolutionMs += performance.now() - expressionStartedAt;
@@ -9732,7 +9735,8 @@ function resolveRoutineExpressionType(
   variableAccesses: RoutineVariableAccess[],
   diagnostics?: ParserDiagnostic[],
   parsedExpression?: RoutineExpression | null,
-  argumentTypeResolutionCache?: Map<string, RoutineArgumentTypeResolution>
+  argumentTypeResolutionCache?: Map<string, RoutineArgumentTypeResolution>,
+  implicitDefiniteArticle = false
 ): TypeReference | undefined {
   if (activeRoutineResolutionProfileCounters) {
     activeRoutineResolutionProfileCounters.expressionTypeResolutions++;
@@ -9754,7 +9758,8 @@ function resolveRoutineExpressionType(
       variableAccesses,
       diagnostics,
       parsedExpression,
-      argumentTypeResolutionCache
+      argumentTypeResolutionCache,
+      implicitDefiniteArticle
     );
   }
   return profileRoutineResolutionHelper(
@@ -9772,7 +9777,8 @@ function resolveRoutineExpressionType(
       variableAccesses,
       diagnostics,
       parsedExpression,
-      argumentTypeResolutionCache
+      argumentTypeResolutionCache,
+      implicitDefiniteArticle
     )
   );
 }
@@ -9789,7 +9795,8 @@ function resolveRoutineExpressionTypeCore(
   variableAccesses: RoutineVariableAccess[],
   diagnostics?: ParserDiagnostic[],
   parsedExpression?: RoutineExpression | null,
-  argumentTypeResolutionCache?: Map<string, RoutineArgumentTypeResolution>
+  argumentTypeResolutionCache?: Map<string, RoutineArgumentTypeResolution>,
+  implicitDefiniteArticle = false
 ): TypeReference | undefined {
   const expression = parsedExpression === null
     ? undefined
@@ -9798,13 +9805,17 @@ function resolveRoutineExpressionTypeCore(
     return undefined;
   }
 
-  const resolveType = (node: RoutineExpression): TypeReference | undefined => {
+  const resolveType = (
+    node: RoutineExpression,
+    inheritedImplicitDefiniteArticle = false
+  ): TypeReference | undefined => {
     if (node.kind === 'unary') {
-      return resolveType(node.operand);
+      return resolveType(node.operand, inheritedImplicitDefiniteArticle);
     }
     if (node.kind === 'operand') {
       const implicitDefiniteArticle =
-        node.implicitDefiniteArticle ?? false;
+        node.implicitDefiniteArticle ??
+        inheritedImplicitDefiniteArticle;
       const cacheKey =
         `${node.range.start}:${node.range.end}:${implicitDefiniteArticle ? 1 : 0}`;
       const cacheHit = Boolean(
@@ -9865,7 +9876,10 @@ function resolveRoutineExpressionTypeCore(
       return undefined;
     }
 
-    const leftType = resolveType(node.left);
+    const leftType = resolveType(
+      node.left,
+      inheritedImplicitDefiniteArticle
+    );
     const rightType = resolveType(node.right);
     if (!leftType || !rightType) {
       return undefined;
@@ -9982,7 +9996,7 @@ function resolveRoutineExpressionTypeCore(
     return createSyntheticTypeReference(resultBase, node.range);
   };
 
-  return resolveType(expression);
+  return resolveType(expression, implicitDefiniteArticle);
 }
 
 function isStringConvertibleType(

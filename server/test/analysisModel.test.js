@@ -1394,6 +1394,31 @@ test('preserves a scalar quantity type when divided by a unitless number', () =>
   assert.equal(call.target.parameters[0].type.normalizedName, 'twips');
 });
 
+test('resolves divided scalar arguments after contracted definite articles', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Uma quantidade de twips é uns twips.',
+    'Uma caixa é uma estrutura com um número denominado coordenada X.',
+    'Rotina para que se encolha uma caixa por uns twips:',
+    '  Retorne.',
+    'Rotina para que se teste uma caixa e uns twips:',
+    '  Encolha a caixa pelos twips dividido por 2.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const call = caller?.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call?.target?.name.normalizedName, 'encolha');
+  assert.deepEqual(call?.arguments.map(argument => argument.name), [
+    'a caixa',
+    'twips dividido por 2'
+  ]);
+});
+
 test('resolves preserved original parameter names with the original parameter type', () => {
   const source = [
     'Um número é uma estrutura.',

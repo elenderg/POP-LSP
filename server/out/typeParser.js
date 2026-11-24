@@ -4081,11 +4081,12 @@ function resolveRoutineCallCore(source, statementRange, routines, caller, global
             const scalarArgumentType = localVariable
                 ? undefined
                 : resolveScalarRoutineArgumentType(source, argumentsList[index], parameter.type, symbols);
+            const hasImplicitDefiniteArticle = hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd);
             const argumentType = localVariable
                 ? localVariable.type
                 : scalarArgumentType ??
                     typeOperatorArgument?.valueType ??
-                    resolveRoutineArgumentTypeWithCache(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasContractedDefiniteArticleBefore(source, argumentsList[index].start, nameEnd) || implicitDefiniteArticle === true, diagnostics, argumentTypeResolutionCache);
+                    resolveRoutineArgumentTypeWithCache(source, argumentsList[index], caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, hasImplicitDefiniteArticle || implicitDefiniteArticle === true, diagnostics, argumentTypeResolutionCache);
             if (candidateProfile) {
                 argumentTypeResolutionMs +=
                     node_perf_hooks_1.performance.now() - argumentTypeStartedAt;
@@ -4126,7 +4127,7 @@ function resolveRoutineCallCore(source, statementRange, routines, caller, global
             }
             const expressionType = localVariable
                 ? undefined
-                : resolveRoutineExpressionType(source, expressionRange, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache);
+                : resolveRoutineExpressionType(source, expressionRange, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache, hasImplicitDefiniteArticle || implicitDefiniteArticle === true);
             if (candidateProfile) {
                 expressionResolutionMs += node_perf_hooks_1.performance.now() - expressionStartedAt;
             }
@@ -5994,7 +5995,7 @@ function getLiteralRoutineArgumentTypeDistance(source, argument, expectedName, s
         ? -Math.min(...distances)
         : undefined;
 }
-function resolveRoutineExpressionType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache) {
+function resolveRoutineExpressionType(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache, implicitDefiniteArticle = false) {
     if (activeRoutineResolutionProfileCounters) {
         activeRoutineResolutionProfileCounters.expressionTypeResolutions++;
         if (activeRoutineResolutionProfileCounters.currentCall) {
@@ -6003,23 +6004,24 @@ function resolveRoutineExpressionType(source, argument, caller, globalVariables,
         }
     }
     if (!activeRoutineResolutionProfileCounters) {
-        return resolveRoutineExpressionTypeCore(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache);
+        return resolveRoutineExpressionTypeCore(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache, implicitDefiniteArticle);
     }
-    return profileRoutineResolutionHelper('resolveRoutineExpressionType', argument, () => resolveRoutineExpressionTypeCore(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache));
+    return profileRoutineResolutionHelper('resolveRoutineExpressionType', argument, () => resolveRoutineExpressionTypeCore(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache, implicitDefiniteArticle));
 }
-function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache) {
+function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariables, symbols, fieldAccesses, routines, computedFieldAccesses, variableAccesses, diagnostics, parsedExpression, argumentTypeResolutionCache, implicitDefiniteArticle = false) {
     const expression = parsedExpression === null
         ? undefined
         : parsedExpression ?? parseRoutineExpression(source, argument, []);
     if (!expression || expression.kind === 'operand') {
         return undefined;
     }
-    const resolveType = (node) => {
+    const resolveType = (node, inheritedImplicitDefiniteArticle = false) => {
         if (node.kind === 'unary') {
-            return resolveType(node.operand);
+            return resolveType(node.operand, inheritedImplicitDefiniteArticle);
         }
         if (node.kind === 'operand') {
-            const implicitDefiniteArticle = node.implicitDefiniteArticle ?? false;
+            const implicitDefiniteArticle = node.implicitDefiniteArticle ??
+                inheritedImplicitDefiniteArticle;
             const cacheKey = `${node.range.start}:${node.range.end}:${implicitDefiniteArticle ? 1 : 0}`;
             const cacheHit = Boolean(argumentTypeResolutionCache?.has(cacheKey));
             if (cacheHit) {
@@ -6061,7 +6063,7 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
         ].includes(node.operator)) {
             return undefined;
         }
-        const leftType = resolveType(node.left);
+        const leftType = resolveType(node.left, inheritedImplicitDefiniteArticle);
         const rightType = resolveType(node.right);
         if (!leftType || !rightType) {
             return undefined;
@@ -6142,7 +6144,7 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
                 : 'byte';
         return createSyntheticTypeReference(resultBase, node.range);
     };
-    return resolveType(expression);
+    return resolveType(expression, implicitDefiniteArticle);
 }
 function isStringConvertibleType(actualType, routines, symbols) {
     if (getRoutineArgumentTypeDistance(actualType, 'string', symbols) !== undefined) {
