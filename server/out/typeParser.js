@@ -5604,7 +5604,7 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
                 currentType = nestedFields[0].type;
                 continue;
             }
-            return undefined;
+            field = nestedFields[0];
         }
         field = field ?? nestedFields[0];
         if (!field && computedField) {

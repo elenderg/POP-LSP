@@ -1916,6 +1916,73 @@ test('reports ambiguity between direct and nested structure fields', () => {
   assert.equal(ambiguousDiagnostic.severity, 'hint');
 });
 
+test('chooses the first matching field when ambiguous fields have different types', () => {
+  const sources = [
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Um byte é um número.',
+        'Uma string é uma estrutura.',
+        'Um pai é uma estrutura com',
+        '  Uma string denominada valor.',
+        'Uma pessoa é uma estrutura com',
+        '  Um byte denominado valor e',
+        '  Um pai.'
+      ].join('\n')
+    },
+    {
+      name: 'variables.pop',
+      text: 'O cliente é uma pessoa.'
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se receba um byte:',
+        '  Retorne.',
+        'Rotina para que se receba uma string:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se teste:',
+        '  Receba o valor deste cliente.'
+      ].join('\n')
+    }
+  ];
+  const { documents, index } = createWorkspace(sources);
+  const caller = documents[3].parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const call = caller?.calls[0];
+  const reference = getParsedReferences(documents[3].parsed).find(candidate =>
+    candidate.kind === 'field' &&
+    !candidate.declaration &&
+    candidate.name === 'valor'
+  );
+  const declaration = reference &&
+    index.getDeclaration(documents[3].directory, reference, documents[3].uri);
+
+  assert.ok(caller);
+  assert.equal(call?.target?.parameters[0].type.normalizedName, 'byte');
+  assert.equal(
+    call?.fieldAccesses?.find(access => access.reference.name === 'valor')
+      ?.target.type.normalizedName,
+    'byte'
+  );
+  assert.ok(documents[3].parsed.diagnostics.some(diagnostic =>
+    diagnostic.message === 'Ambiguous structure field access "valor".'
+  ));
+  assert.ok(declaration);
+  assert.equal(
+    sources[0].text.slice(declaration.reference.range.start, declaration.reference.range.end),
+    'valor'
+  );
+  assert.equal(declaration.reference.container, 'pessoa');
+});
+
 test('reuses unchanged declaration syntax and rebases all source ranges', () => {
   const source = [
     'Um caractere é um byte.',
