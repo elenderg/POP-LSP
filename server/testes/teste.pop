@@ -1338,6 +1338,10 @@ Rotina para que se normalize uma orientação:
   Se a orientação for menor do que 0, 
     Adicione 3840 para a orientação.
 
+Função para que se determine se um par de números é menor do que um segundo par de números:
+  Diga sim.
+  Diga não.
+
 Rotina para que se normalize uma linha reta horizontal:
   []\Se a localização final desta linha reta horizontal for menor do que a localização inicial desta linha reta horizontal, 
     Permute a localização final desta linha reta horizontal com a localização inicial desta linha reta horizontal.
