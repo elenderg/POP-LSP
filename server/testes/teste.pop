@@ -1339,11 +1339,14 @@ Rotina para que se normalize uma orientação:
     Adicione 3840 para a orientação.
 
 Função para que se determine se um par de números é menor do que um segundo par de números:
+  Se o número X deste par de números for maior do que o número X deste segundo par de números, 
+    Diga não.
+  Se o número Y deste par de números for maior do que o número Y deste segundo par de números, 
+    Diga não.
   Diga sim.
-  Diga não.
 
 Rotina para que se normalize uma linha reta horizontal:
-  []\Se a localização final desta linha reta horizontal for menor do que a localização inicial desta linha reta horizontal, 
+  Se a localização final desta linha reta horizontal for menor do que a localização inicial desta linha reta horizontal, 
     Permute a localização final desta linha reta horizontal com a localização inicial desta linha reta horizontal.
   Retorne.
 
@@ -1371,20 +1374,20 @@ Rotina para que se normalize uma caixa de texto:
   Normalize a caixa desta caixa de texto.
 
 Rotina para que se normalize um linha reta vertical:
-  []\Se a localização final desta linha reta for menor do que a localização inicial desta linha reta, 
-    []\Permute a localização final desta linha reta com a localização inicial desta linha reta.
+  Se a localização final desta linha reta for menor do que a localização inicial desta linha reta, 
+    Permute a localização final desta linha reta com a localização inicial desta linha reta.
   Retorne.
 
 Rotina para que se anexe o caractere NULL após uma string:
   Atribua a quantidade de caracteres desta string para um número denominado quantidade de caracteres armazenados.
-  []\Reaponte o caractere inicial desta string usando a quantidade de caracteres armazenados mais 1.
+  Reaponte o caractere inicial desta string usando a quantidade de caracteres armazenados mais 1.
   Atribua o caractere inicial desta string mais a quantidade de caracteres armazenados menos 1 ao caractere final desta string.
   Atribua o caractere final desta string mais 1 para um endereço de byte .
   Atribua o caractere null ao conteúdo deste endereço de byte.
 
 Rotina para que se anexe o caractere NULL após uma string de caracteres amplos:
   Atribua a quantidade de caracteres deste string de caracteres amplos para um número denominado quantidade de caracteres armazenados.
-  []\Reaponte o caractere inicial desta string de caracteres amplos usando a quantidade de caracteres armazenados mais 2.
+  Reaponte o caractere inicial desta string de caracteres amplos usando a quantidade de caracteres armazenados mais 2.
   Atribua o caractere inicial desta string de caracteres amplos mais a quantidade de caracteres armazenados menos 1 ao caractere final desta string de caracteres amplos.
 
 Rotina para que se reduza o nível de identação das linhas de texto selecionadas em uma caixa de texto:
@@ -1570,20 +1573,20 @@ Rotina para que se atribua um índice sobre o primeiro caractere de uma string:
 
 Rotina para que se atribua a contagem dum catálogo para uma contagem:
   Atribua 0 à contagem.
-  []\Se o catálogo for inexistente, retorne.
+  Se o catálogo for inexistente, retorne.
   Itere.
-  []\Obtenha um recipiente usando o catálogo.
-  []\Se o recipiente for inexistente, retorne.
-  []\Adicione a contagem destes referências deste recipiente para a contagem.
+    Obtenha um recipiente usando o catálogo.
+    Se o recipiente for inexistente, retorne.
+    Adicione a contagem destes referências deste recipiente para a contagem.
   Reitere.
 
 Rotina para que se atribua a used contagem de recipientes dum catálogo para uma contagem:
   Atribua 0 à contagem.
-  []\Se o catálogo for inexistente, retorne.
+  Se o catálogo for inexistente, retorne.
   Itere.
-    []\Obtenha um recipiente usando o catálogo.
-    []\Se o recipiente for inexistente, retorne.
-    []\Se as referências deste recipiente estiverem vazios, reitere.
+    Obtenha um recipiente usando o catálogo.
+    Se o recipiente for inexistente, retorne.
+    Se as referências deste recipiente estiverem vazios, reitere.
     Adicione 1 para a contagem.
   Reitere.
 
@@ -1604,7 +1607,7 @@ Rotina para que se converta um número para uma string:
     Se o quociente for 0, pare.
     Atribua o quociente ao número.
   Reitere.
-  []\Se o número original for menor do que 0, 
+  Se o número original for menor do que 0, 
     Anteponha o hífen para a string.
 
 Rotina para que se atribua um número sobre a stack:
@@ -1616,7 +1619,7 @@ Rotina para que se atribua o módulo dum número para um segundo número:
   Remova o sinal desde o segundo número.
 
 Rotina para que se atribua um OutlineTextmetric para uma segunda OutlineTextmetric:
-  []\Copie bytes desde o endereçamento deste OutlineTextmetric para o endereçamento desta segunda OutlineTextmetric pela magnitude deste OutlineTextmetric.
+  Copie bytes desde o endereçamento deste OutlineTextmetric para o endereçamento desta segunda OutlineTextmetric pela magnitude deste OutlineTextmetric.
   Retorne.
 
 Rotina para que se atribua o módulo dum par de números para um segundo par de números:
