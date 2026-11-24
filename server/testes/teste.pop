@@ -2230,8 +2230,8 @@ Rotina para que se redimensione uma imagem para uma largura por uma altura:
    e A largura do pixel [dstwidth ] e 
    A altura do pixel [dstheight][/count]
    e 0 [srcx] e 0 [srcy]
-   []\e A largura deste gpBitmap desta imagem menos 1 [srcwidth]
-   []\e A altura deste gpBitmap desta imagem menos 1 [srcheight]
+   e A largura deste gpBitmap desta imagem menos 1 [srcwidth]
+   e A altura deste gpBitmap desta imagem menos 1 [srcheight]
    e 2 [srcUnit = UnitPixel]
    e nil [*imageAttributes]  \ https://learn.microsoft.com/pt-br/windows/desktop/api/gdiplusimageattributes/nl-gdiplusimageattributes-imageattributes
    e nil [callback] e 0. [*callbackData]
@@ -2337,11 +2337,11 @@ Rotina para que se inverta uma string;
 Rotina para que se reverta uma string:
   \ podia ser mais eficiente. Verificar se a quantidade de caracteres é menor do que 2, por exemplo.
   Preserve a string.
-  []\Limpe a string original.
+  Limpe a string original.
   Itere.
     Se a string estiver em branco, pare.
     Obtenha um caractere desde a string (regressivamente).
-    []\Acrescente o caractere para a string original.
+    Acrescente o caractere para a string original.
   Reitere.
 
 Rotina para que se inverta umas listas:
@@ -2387,8 +2387,8 @@ Rotina para que se rotacione um GpImage usando um ângulo:
 
 Rotina para que se rotacione uma linha reta:
   Atribua o centro desta linha reta para uma localização denominada centro.
-  []\Rotacione a localização inicial desta linha reta em direção ao centro.
-  []\Rotacione a localização final desta linha reta em direção ao centro.
+  Rotacione a localização inicial desta linha reta em direção ao centro.
+  Rotacione a localização final desta linha reta em direção ao centro.
 
 Rotina para que se rotacione uma imagem:
   Se a imagem for inexistente, retorne.
@@ -2401,10 +2401,10 @@ Rotina para que se rotacione uma imagem:
   Atribua o centro desta caixa desta imagem para uma localização denominada centro.
   Atribua o centro desta caixa intacta desta imagem para uma localização denominada segundo centro.
   Atribua a coordenada Y deste centro menos a coordenada Y desta segundo centro mais a coordenada X deste centro ao número X dum twip par de números.
-  []\Subtraia a coordenada X desta segundo centro desde o número X deste twip par de números.
+  Subtraia a coordenada X deste segundo centro desde o número X deste twip par de números.
   Atribua a coordenada Y deste centro mais a coordenada X desta segundo centro menos a coordenada X deste centro ao número Y deste twip par de números.
-  []\Subtraia a coordenada Y desta segundo centro desde o número Y deste twip par de números.
-  []\Mova a caixa intacta desta imagem usando o twip par de números.
+  Subtraia a coordenada Y deste segundo centro desde o número Y deste twip par de números.
+  Mova a caixa intacta desta imagem usando o twip par de números.
   Rotacione o gpBitmap desta imagem.
 
 Rotina para que se rotacione um polígono:
