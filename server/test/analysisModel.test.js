@@ -2877,6 +2877,78 @@ test('resolves nested fields owned by a global structure variable', () => {
   }
 });
 
+test('resolves routine calls when ambiguous nested fields share a type', () => {
+  const sources = [
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Uma coordenada é um número.',
+        'Uma margem é um número.',
+        'Uma localização é uma estrutura com',
+        '  Uma coordenada denominada coordenada X e',
+        '  Uma coordenada denominada coordenada Y.',
+        'Uma caixa é uma estrutura com',
+        '  Uma localização denominada canto superior esquerdo e',
+        '  Uma localização denominada canto inferior direito.',
+        'Uma caixa de texto é uma estrutura com',
+        '  Uma caixa e',
+        '  Uma margem.'
+      ].join('\n')
+    },
+    {
+      name: 'variables.pop',
+      text: 'O menor número é um número.'
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se delimite um número para um segundo número e um terceiro número:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se delimite a origem de uma caixa de texto e um número:',
+        '  Delimite a coordenada X desta caixa de texto para o menor número e a margem desta caixa de texto.',
+        '  Delimite a coordenada Y desta caixa de texto para - o número e 0.'
+      ].join('\n')
+    }
+  ];
+  const { documents, index } = createWorkspace(sources);
+  const caller = documents[3].parsed.routines.find(routine =>
+    routine.name.normalizedName === 'delimite a origem de'
+  );
+  const calls = caller?.calls.filter(call =>
+    call.name.name.toLocaleLowerCase('pt-BR') === 'delimite'
+  ) ?? [];
+  const references = getParsedReferences(documents[3].parsed).filter(reference =>
+    reference.kind === 'routine' &&
+    !reference.declaration &&
+    sources[3].text.slice(reference.range.start, reference.range.end) === 'Delimite'
+  );
+
+  assert.equal(
+    documents[3].parsed.diagnostics.filter(diagnostic =>
+      diagnostic.message.startsWith('No compatible routine found')
+    ).length,
+    0
+  );
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(call =>
+    call.target?.name.normalizedName === 'delimite'
+  ));
+  assert.equal(references.length, 2);
+  assert.ok(references.every(reference =>
+    index.getDeclaration(
+      documents[3].directory,
+      reference,
+      documents[3].uri
+    )
+  ));
+});
+
 test('resolves explicit atribua routine calls before assignment syntax', () => {
   const source = [
     'Um par de números é uma estrutura.',

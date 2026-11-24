@@ -5599,6 +5599,11 @@ function resolveStructureFieldAccessCore(source, argument, caller, globalVariabl
                 diagnostic.range.end === fieldRange.end)) {
                 diagnostics?.push({ message, range: fieldRange, severity: 'hint' });
             }
+            const commonTypeName = nestedFields[0].type.normalizedName;
+            if (nestedFields.every(field => field.type.normalizedName === commonTypeName)) {
+                currentType = nestedFields[0].type;
+                continue;
+            }
             return undefined;
         }
         field = field ?? nestedFields[0];
