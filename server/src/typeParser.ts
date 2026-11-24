@@ -296,6 +296,7 @@ export interface RoutineListSpecialFieldAccess {
 export interface RoutineFieldAccess {
   reference: TypeReference;
   target: TypeField;
+  container?: string;
 }
 
 export class RoutineSymbolTable {
@@ -3981,6 +3982,55 @@ function processRoutineStatementCore(
       if (call.localVariables) {
         caller.localVariables.push(...call.localVariables);
       }
+      const destinationMarker = ['para', 'à', 'ao', 'aos', 'às']
+        .map(marker =>
+          findWordOutsideStrings(
+            source,
+            statementKeyword!.end,
+            statement.end,
+            marker
+          )
+        )
+        .filter((marker): marker is SourceRange => marker !== undefined)
+        .sort((first, second) => first.start - second.start)[0];
+      if (destinationMarker) {
+        const targetRange = trimRange(
+          source,
+          destinationMarker.end,
+          statement.end
+        );
+        const targetArticle = readWord(source, targetRange.start, targetRange.end);
+        const declaresLocalVariable = call.localVariables?.some(local =>
+          local.range.start >= targetRange.start &&
+          local.range.end <= targetRange.end
+        );
+        if (
+          declaresLocalVariable &&
+          targetArticle &&
+          indefiniteArticles.has(targetArticle.value.toLocaleLowerCase('pt-BR'))
+        ) {
+          const expression = parseRoutineExpression(
+            source,
+            trimRange(source, statementKeyword!.end, destinationMarker.start),
+            []
+          );
+          if (expression) {
+            call.fieldAccesses ??= [];
+            call.variableAccesses ??= [];
+            resolveExpressionFieldAccesses(
+              source,
+              expression,
+              caller,
+              routines,
+              globalVariables,
+              symbols,
+              [],
+              call.fieldAccesses,
+              call.variableAccesses
+            );
+          }
+        }
+      }
       return false;
     }
     diagnostics.length = callDiagnosticStart;
@@ -4037,7 +4087,11 @@ function processRoutineStatementCore(
       routines,
       [],
       variableAccesses,
-      false,
+      hasContractedDefiniteArticleBefore(
+        source,
+        assignment.target.range.start,
+        assignment.range.start
+      ),
       diagnostics
     );
     assignment.fieldAccesses = fieldAccesses;
@@ -9051,10 +9105,13 @@ function resolveStructureFieldAccessCore(
     }
 
     let lookupType = currentType;
-    let field = index === 0
+    const globalVariableField = index === 0
       ? findGlobalVariableField(globalVariable, fieldName, symbols)
       : undefined;
-    let nestedFields: NamedTypeField[] = [];
+    let field = globalVariableField;
+    let nestedFields = index === 0 && !field
+      ? findNestedGlobalVariableFields(globalVariable, fieldName, symbols)
+      : [];
     let computedField:
       | { routine: RoutineDeclaration; valueType: TypeReference }
       | undefined;
@@ -9150,7 +9207,10 @@ function resolveStructureFieldAccessCore(
     }
     resolvedAccesses.push({
       reference: createTypeReference(source, fieldRange),
-      target: field
+      target: field,
+      container: globalVariableField
+        ? globalVariable?.typeName
+        : undefined
     });
     currentType = field.kind === 'named' ? field.type : field.elementType;
   }
@@ -9534,6 +9594,24 @@ function findGlobalVariableField(
       field.kind === 'named' && isSingularListFieldAlias(field, fieldName, symbols)
     )
   );
+}
+
+function findNestedGlobalVariableFields(
+  variable: GlobalVariableSymbol | undefined,
+  fieldName: string,
+  symbols: TypeSymbolTable
+): NamedTypeField[] {
+  const nestedFields: NamedTypeField[] = [];
+  for (const field of variable?.declaration.fields ?? []) {
+    if (field.kind === 'named') {
+      nestedFields.push(...findNestedStructureFields(
+        field.type.name,
+        fieldName,
+        symbols
+      ));
+    }
+  }
+  return nestedFields;
 }
 
 function findNestedStructureFields(
@@ -12187,7 +12265,12 @@ export function getParsedReferences(
       const name = access.target.name;
       if (name) {
         add('field', name.name, access.reference.range, {
-          container: normalizeTypeName(ownerTypeName ?? findFieldOwner(access.target, parsed) ?? '')
+          container: normalizeTypeName(
+            access.container ??
+            ownerTypeName ??
+            findFieldOwner(access.target, parsed) ??
+            ''
+          )
         });
       }
     }

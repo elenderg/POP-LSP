@@ -2757,6 +2757,126 @@ test('resolves computed fields owned by a global structure variable', () => {
   );
 });
 
+test('resolves nested fields owned by a global structure variable', () => {
+  const sources = [
+    {
+      name: 'types.pop',
+      text: [
+        'Um número é uma estrutura.',
+        'Um twip é um número.',
+        'Uma coordenada é uns twips.',
+        'Um par de números é uma estrutura com',
+        '  Um número denominado número X e',
+        '  Um número denominado número Y.',
+        'Uma localização é um par de números com',
+        '  Uma coordenada denominada coordenada X e',
+        '  Uma coordenada denominada coordenada Y.',
+        'Uma caixa é uma estrutura com',
+        '  Uma coordenada denominada coordenada X1 e',
+        '  Uma coordenada denominada coordenada Y1 e',
+        '  Uma coordenada denominada coordenada X2 e',
+        '  Uma coordenada denominada coordenada Y2 e',
+        '  Uma localização denominada canto inferior direito.',
+        'Uma altura é um número.',
+        'Uma largura é um número.',
+        'Uma coordenada X1 é uma coordenada.',
+        'Uma coordenada Y1 é uma coordenada.',
+        'Uma coordenada X2 é uma coordenada.',
+        'Uma coordenada Y2 é uma coordenada.'
+      ].join('\n')
+    },
+    {
+      name: 'variables.pop',
+      text: [
+        'O tpi é uns twips igual a 1440.',
+        'O ppi é uns twips.',
+        'A quantidade de twips/pixel é uns twips.',
+        'A tela é uma estrutura com',
+        '  Uma caixa,',
+        '  Uma altura denominada altura do pixel e',
+        '  Uma largura denominada largura do pixel.'
+      ].join('\n')
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se use um número:',
+        '  Retorne.',
+        'Rotina para que se use uma caixa:',
+        '  Retorne.',
+        'Rotina para que se atribua um número:',
+        '  Retorne.',
+        'Rotina para que se subtraia um número desde um par de números:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se teste:',
+        '  Processe "user32.dll" "GetSystemMetrics" com',
+        '    0 [nIndex = SM_CXSCREEN]',
+        '    Retornando a largura do pixel desta tela.',
+        '  Processe "user32.dll" "GetSystemMetrics" com',
+        '    1 [nIndex = SM_CYSCREEN]',
+        '    Retornando a altura do pixel desta tela.',
+        '  Atribua o tpi dividido pelo ppi à quantidade de twips/pixel.',
+        '  Atribua a largura do pixel desta tela vezes a quantidade de twips/pixel para uma largura.',
+        '  Atribua a altura do pixel desta tela vezes a quantidade de twips/pixel para uma altura.',
+        '  Use a caixa desta tela.',
+        '  Use a largura do pixel desta tela.',
+        '  Use a altura do pixel desta tela.',
+        '  Subtraia a quantidade de twips/pixel desde o canto inferior direito desta tela.'
+      ].join('\n')
+    }
+  ];
+  const { documents, index } = createWorkspace(sources);
+  const caller = documents[3].parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const calls = caller?.calls ?? [];
+  const references = getParsedReferences(documents[3].parsed).filter(reference =>
+    !reference.declaration &&
+    [
+      'largura do pixel',
+      'altura do pixel',
+      'quantidade de twips/pixel',
+      'tela',
+      'caixa',
+      'canto inferior direito'
+    ].includes(reference.name)
+  );
+
+  assert.deepEqual(documents[3].parsed.diagnostics, []);
+  assert.ok(calls.some(call =>
+    call.target?.name.normalizedName === 'subtraia' &&
+    call.fieldAccesses?.some(access =>
+      access.reference.name === 'canto inferior direito'
+    )
+  ));
+  for (const [name, expectedCount] of [
+    ['largura do pixel', 3],
+    ['altura do pixel', 3],
+    ['quantidade de twips/pixel', 4],
+    ['tela', 8],
+    ['caixa', 1],
+    ['canto inferior direito', 1]
+  ]) {
+    const namedReferences = references.filter(reference =>
+      reference.name === name
+    );
+    assert.equal(namedReferences.length, expectedCount);
+    const unresolvedReferences = namedReferences.filter(reference =>
+      !index.getDeclaration(
+        documents[3].directory,
+        reference,
+        documents[3].uri
+      )
+    );
+    assert.deepEqual(unresolvedReferences, [], `Expected declarations for "${name}".`);
+  }
+});
+
 test('resolves explicit atribua routine calls before assignment syntax', () => {
   const source = [
     'Um par de números é uma estrutura.',

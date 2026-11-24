@@ -243,6 +243,7 @@ export interface RoutineListSpecialFieldAccess {
 export interface RoutineFieldAccess {
     reference: TypeReference;
     target: TypeField;
+    container?: string;
 }
 export declare class RoutineSymbolTable {
     private readonly routines;
