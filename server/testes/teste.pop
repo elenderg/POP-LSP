@@ -1634,8 +1634,8 @@ Rotina para que se centralize uma imagem sobre uma localização:
   Mova a imagem usando o valor da diferença.
 
 Rotina para que se atribua a working string duma linha de texto para um subtexto:
-  []\Se a linha de texto for inexistente,
-    []\Limpe o subtexto;
+  Se a linha de texto for inexistente,
+    Limpe o subtexto;
     Retorne.
   Lance o subtexto sobre a string desta linha de texto.
   Subtraia 1 desde o caractere final deste subtexto.
@@ -1645,7 +1645,7 @@ Rotina para que se atribua uma seleção para uma segunda seleção:
   Atribua o cursor de texto desta seleção ao cursor de texto desta segunda seleção.
 
 Rotina para que se atribua um SOCKADDR para um segundo SOCKADDR:
-  []\Copie bytes desde o endereçamento deste SOCKADDR para o endereçamento deste segundo SOCKADDR pela magnitude deste SOCKADDR.
+  Copie bytes desde o endereçamento deste SOCKADDR para o endereçamento deste segundo SOCKADDR pela magnitude deste SOCKADDR.
   Retorne.
 
 Rotina para que se atribua uma string para uma letra:
@@ -1682,7 +1682,7 @@ Rotina para que se atribua uma string sobre a área de transferência do Windows:
     O número identificador [hMem]
     Retornando um ponteiro.
   \Copie os bytes presentes entre [intervalo inicial] e o [intervalo final] para o [endereço de destino] .
-  []\Copie bytes desde o caractere inicial desta string para o ponteiro pela quantidade de caracteres desta string.
+  Copie bytes desde o caractere inicial desta string para o ponteiro pela quantidade de caracteres desta string.
   Processe "kernel32.dll" "GlobalUnlock" com
   \ Diminui a contagem de bloqueios associada para um objeto de memória que foi alocado com GMEM_MOVEABLE.
   \ Documentação: ->  https://learn.microsoft.com/pt-br/windows/win32/api/winbase/nf-winbase-globalunlock
@@ -1698,12 +1698,12 @@ Rotina para que se atribua uma string sobre a área de transferência do Windows:
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winuser/nf-winuser-closeclipboard
 
 Rotina para que se atribua a largura duma string para uma largura: \ unidade "e.m"?
-  []\Obtenha a largura usando a string e o contexto de dispositivo de memória e a fonte padrão.
+  Obtenha a largura usando a string e o contexto de dispositivo de memória e a fonte padrão.
   Retorne.
 
 \\leave out - causes Spanish string put into destrinche here instead of "Atribua uma string para uma segunda string"
 Rotina para que se atribua um subtexto para um segundo subtexto:
-  []\Copie bytes desde o endereçamento deste subtexto para o endereçamento deste segundo subtexto pela magnitude deste subtexto.
+  Copie bytes desde o endereçamento deste subtexto para o endereçamento deste segundo subtexto pela magnitude deste subtexto.
   Retorne.
 
 Rotina para que se atribua o grupo data-hora do system para um grupo data-hora:
@@ -1754,15 +1754,15 @@ Rotina para que se centralize uma caixa de texto sobre uma localização:
   Mova a caixa de texto usando o valor da diferença.
 
 Rotina para que se atribua a primeira linha reta duma caixa de texto para uma string:
-  []\Se a caixa de texto for inexistente,
-    []\Limpe a string;
+  Se a caixa de texto for inexistente,
+    Limpe a string;
     Retorne.
   Atribua a string desta primeira linha de texto desta caixa de texto à string.
   Remova o último caractere desde a string.
 
 Rotina para que se atribua a primeira linha reta contendo texto duma caixa de texto para uma string:
   Limpe a string.
-  []\Se a caixa de texto for inexistente, retorne.
+  Se a caixa de texto for inexistente, retorne.
   Itere.
     Obtenha uma linha de texto desde as linhas de texto desta caixa de texto.
     Se a linha de texto for inexistente, retorne.
@@ -1774,8 +1774,8 @@ Rotina para que se atribua a primeira linha reta contendo texto duma caixa de te
   \Se a string não estiver em branco, pare.
 
 Rotina para que se atribua a globalized origem duma caixa de texto para uma localização:
-  []\Se a caixa de texto for inexistente,
-    []\Limpe a localização;
+  Se a caixa de texto for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua a origem desta caixa de texto à localização.
   Mova a localização usando o canto superior esquerdo desta caixa de texto.
@@ -1788,12 +1788,12 @@ Função para que se atribua a malha quadriculada duma caixa de texto para uma mal
   Atribua a altura desta fonte desta caixa de texto ao número Y desta malha quadriculada.
 
 Rotina para que se atribua a normalized seleção duma caixa de texto para uma seleção:
-  []\Se a caixa de texto for inexistente, retorne.
+  Se a caixa de texto for inexistente, retorne.
   Atribua a seleção desta caixa de texto à seleção.
   Normalize a seleção.
 
 Rotina para que se atribua a contagem de linhas duma caixa de texto para uma contagem:
-  []\Se a caixa de texto for inexistente,
+  Se a caixa de texto for inexistente,
     Atribua 0 à contagem;
     Retorne.
   Se as linhas de texto desta caixa de texto estiverem vazias,
@@ -1802,31 +1802,31 @@ Rotina para que se atribua a contagem de linhas duma caixa de texto para uma con
   Atribua o número da linha desta última linha de texto destas linhas de texto desta caixa de texto à contagem.
 
 Rotina para que se atribua a altura da linha duma caixa de texto para uma altura:
-  []\Se a caixa de texto for inexistente,
+  Se a caixa de texto for inexistente,
     Atribua 0 à altura;
     Retorne.
   Atribua a altura desta fonte desta caixa de texto à altura.
 
 Rotina para que se atribua as linhas de texto/box duma caixa de texto para uma contagem:
-  []\Se a caixa de texto for inexistente,
+  Se a caixa de texto for inexistente,
     Atribua 0 à contagem;
     Retorne.
   Atribua a altura desta caixa desta caixa de texto dividido pela altura da linha desta caixa de texto à contagem.\ calculated field
 
 Rotina para que se atribua a quantidade de caracteres selecionados duma caixa de texto para uma contagem:
   Atribua 0 à contagem.
-  []\Se a caixa de texto for inexistente, retorne.
+  Se a caixa de texto for inexistente, retorne.
   Se nada estiver selecionado na caixa de texto, retorne.
   Itere.
-  Obtenha uma linha de texto desde as linhas de texto desta caixa de texto.
-  Se a linha de texto for inexistente, retorne.
- []\ Lance um subtexto sobre qualquer trecho selecionado na linha de texto na caixa de texto.
-  []\Adicione a quantidade de caracteres deste subtexto para a contagem.
+    Obtenha uma linha de texto desde as linhas de texto desta caixa de texto.
+    Se a linha de texto for inexistente, retorne.
+    Lance um subtexto sobre qualquer trecho selecionado na linha de texto na caixa de texto.
+    Adicione a quantidade de caracteres deste subtexto para a contagem.
   Reitere.
 
 Rotina para que se atribua a selecionado contagem de linhas duma caixa de texto para uma contagem:
   Atribua 0 à contagem.
-  []\Se a caixa de texto for inexistente, retorne.
+  Se a caixa de texto for inexistente, retorne.
   Atribua a normalized seleção desta caixa de texto para uma seleção. \ calculated field
   Se a âncora de linha desta seleção é o número de linhas do cursor desta seleção, retorne.
   Atribua o número de linhas do cursor desta seleção à contagem.
@@ -1835,8 +1835,8 @@ Rotina para que se atribua a selecionado contagem de linhas duma caixa de texto 
     Adicione 1 para a contagem.
 
 Rotina para que se atribua o painel de informações string duma caixa de texto para uma string:
-  []\Se a caixa de texto for inexistente,
-    []\Limpe a string;
+  Se a caixa de texto for inexistente,
+    Limpe a string;
     Retorne.
   Atribua a selecionado contagem de linhas desta caixa de texto para uma contagem. \ calculated field
   Se a contagem não for 0,
@@ -1872,8 +1872,8 @@ Rotina para que se atribua a quantidade dumas listas para uma contagem;
 Rotina para que se atribua a contagem dumas listas para uma contagem:
   Atribua 0 à contagem.
   Itere.
-    []\Obtenha uma lista desde as listas.
-    []\Se a lista for inexistente, retorne.
+    Obtenha uma lista desde as listas.
+    Se a lista for inexistente, retorne.
     Adicione 1 para a contagem.
   Reitere.
 
@@ -1887,9 +1887,9 @@ Rotina para que se atribua a string dum temporizador para uma string:
 Rotina para que se atribua os intervalos dum temporizador para uns intervalos:
   Atribua os intervalos totais deste temporizador aos intervalos.
   Se a contagem deste temporizador for 0, retorne.
-  []\Atribua a contagem de intervalos do sistema a uns intervalos de temporização.
-  []\Subtraia os intervalos iniciais deste temporizador desde os intervalos de temporização.
-  []\Adicione os intervalos de temporização para os intervalos.
+  Atribua a contagem de intervalos do sistema para uns intervalos denominados intervalos de temporização.
+  Subtraia os intervalos iniciais deste temporizador desde os intervalos de temporização.
+  Adicione os intervalos de temporização para os intervalos.
 
 Rotina para que se atribua um segmento inicial sobre a stack:
   Aloque memória para um elemento da stack.
