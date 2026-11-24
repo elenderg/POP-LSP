@@ -48,8 +48,8 @@
     {
       "patterns": 
       [
-          { "name": "support.type.primitive.pop", "match": "(?i)\\b(byte|bytes|estrutura|estruturas)\\b"                                         }
-        , { "name": "constant.language.pop",      "match": "(?i)\\b(sim|não|nulo|inexistente|em branco|nula|nulos|nulas|inexistentes|zerado)\\b" }
+          { "name": "support.type.primitive.pop", "match": "(?i)\\b(byte|bytes|estrutura|estruturas)(?![A-Za-z0-9À-ÖØ-öø-ÿ€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿×÷#@'£\\-/&])"                                         }
+        , { "name": "constant.language.pop",      "match": "(?i)\\b(sim|não|nulo|inexistente|em branco|nula|nulos|nulas|inexistentes|zerado)(?![A-Za-z0-9À-ÖØ-öø-ÿ€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿×÷#@'£\\-/&])" }
       ]
     }
     , "rotinas-e-funções": 
