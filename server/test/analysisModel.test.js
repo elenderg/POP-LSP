@@ -1419,6 +1419,32 @@ test('resolves divided scalar arguments after contracted definite articles', () 
   ]);
 });
 
+test('splits routine arguments at a typed parameter with no separator word', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Uma linha reta é uma estrutura.',
+    'Uma linha reta horizontal é uma linha reta.',
+    'Uma caixa é uma estrutura com um número.',
+    'Uma fração é uma estrutura.',
+    'Rotina para que se faça uma linha reta através de uma caixa uma fração no caminho para cima desde a base;',
+    'Rotina para que se imagine uma linha reta através de uma caixa uma fração no caminho para cima desde a base:',
+    '  Retorne.',
+    'Rotina para que se teste usando uma linha reta horizontal e uma caixa e uma fração:',
+    '  Imagine a linha reta horizontal através dessa caixa a fração no caminho para cima desde a base.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine => routine.calls.length > 0);
+  const call = caller?.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call?.name.normalizedName, 'imagine');
+  assert.deepEqual(call?.arguments.map(argument => argument.name), [
+    'a linha reta horizontal',
+    'caixa',
+    'a fração'
+  ]);
+});
+
 test('resolves preserved original parameter names with the original parameter type', () => {
   const source = [
     'Um número é uma estrutura.',

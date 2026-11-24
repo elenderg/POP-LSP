@@ -4348,8 +4348,7 @@ function splitRoutineArgumentsUsingParameterSeparators(source, range, parameters
 function splitRoutineArgumentsUsingParameterSeparatorsCore(source, range, parameters, routine) {
     const expectedSeparators = getRoutineParameterSeparators(source, parameters, routine);
     if (!expectedSeparators ||
-        expectedSeparators.length !== parameters.length - 1 ||
-        expectedSeparators.some(separators => separators.length === 0)) {
+        expectedSeparators.length !== parameters.length - 1) {
         return undefined;
     }
     const words = [];
@@ -4363,7 +4362,18 @@ function splitRoutineArgumentsUsingParameterSeparatorsCore(source, range, parame
     const argumentsList = [];
     let argumentStart = range.start;
     let wordIndex = 0;
-    for (const separators of normalizedExpectedSeparators) {
+    for (let index = 0; index < normalizedExpectedSeparators.length; index++) {
+        const separators = normalizedExpectedSeparators[index];
+        if (separators.length === 0) {
+            const parameterStart = findRoutineParameterStart(words, wordIndex, range.end, parameters[index + 1]);
+            if (!parameterStart) {
+                return undefined;
+            }
+            argumentsList.push(trimRange(source, argumentStart, words[parameterStart.wordIndex].index));
+            argumentStart = words[parameterStart.wordIndex].index;
+            wordIndex = parameterStart.nextWordIndex;
+            continue;
+        }
         let firstSeparator;
         let lastSeparator;
         for (const separator of separators) {
@@ -4397,6 +4407,29 @@ function splitRoutineArgumentsUsingParameterSeparatorsCore(source, range, parame
     return argumentsList.every(argument => argument.start < argument.end)
         ? argumentsList
         : undefined;
+}
+function findRoutineParameterStart(words, startWordIndex, rangeEnd, parameter) {
+    const expectedWordVariants = [
+        parameter.type.name,
+        pluralizeTypeName(parameter.type.name)
+    ].map(typeName => [...typeName.matchAll(/\p{L}+/gu)].map(match => match[0].toLocaleLowerCase('pt-BR')));
+    for (let wordIndex = startWordIndex; wordIndex < words.length && words[wordIndex].index < rangeEnd; wordIndex++) {
+        const article = words[wordIndex][0].toLocaleLowerCase('pt-BR');
+        if (!articles.has(article)) {
+            continue;
+        }
+        for (const expectedWords of expectedWordVariants) {
+            if (expectedWords.length > 0 &&
+                expectedWords.every((word, offset) => words[wordIndex + offset + 1]?.[0].toLocaleLowerCase('pt-BR') === word &&
+                    words[wordIndex + offset + 1].index < rangeEnd)) {
+                return {
+                    wordIndex,
+                    nextWordIndex: wordIndex + expectedWords.length + 1
+                };
+            }
+        }
+    }
+    return undefined;
 }
 const routineSeparatorNormalizationCache = new Map();
 const routineSeparatorNormalizationCacheLimit = 512;
