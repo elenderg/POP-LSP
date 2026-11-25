@@ -5386,21 +5386,21 @@ Rotina para que se leia uma URL para um trecho:
     Atribua "Erro. Não foi possível abrir a seguinte URL: " junto com a URL seguido de "." ao erro do fluxo de entrada/saída;
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Processe "wininet.dll" "InternetCloseHandle" com
-  \Fecha um identificador de Internet único.
+    \Fecha um identificador de Internet único.
     \ Documentação> -> https://learn.microsoft.com/pt-br/windows/win32/api/wininet/nf-wininet-internetclosehandle
       O número identificador da conexão de internet; [hInternet]
     Retorne.
     \ lê o arquivo
-    Atribua 64 kilobytes para um trecho tamanho.
+    Atribua 64 kilobytes para um tamanho denominado trecho tamanho.
   Itere.
-    Atribua a quantidade de caracteres deste trecho para um número denominado quantidade de caracteres armazenados.
-    []\Reaponte o caractere inicial deste trecho usando a quantidade de caracteres armazenados mais o trecho tamanho.
+    Atribua a quantidade de caracteres deste trecho para uma quantidade de caracteres denominada quantidade de caracteres armazenados.
+    Reaponte o caractere inicial deste trecho usando a quantidade de caracteres armazenados mais o trecho tamanho.
     Atribua o caractere inicial deste trecho mais a quantidade de caracteres armazenados para um ponteiro.
     Processe "wininet.dll" "InternetReadFile" com
-  \ Lê dados de um identificador aberto pela função InternetOpenUrl, FtpOpenFile ou HttpOpenRequest.
+    \ Lê dados de um identificador aberto pela função InternetOpenUrl, FtpOpenFile ou HttpOpenRequest.
     \ Documentação -> https://learn.microsoft.com/pt-br/windows/win32/api/wininet/nf-wininet-internetreadfile
       O número identificador da URL [hFile]
-      []\e O ponteiro [lpBuffer]
+      e O ponteiro [lpBuffer]
       e O trecho tamanho [dwNumberOfBytesToRead]
       e O endereçamento duma contagem [lpdwNumberOfBytesRead]
     Retornando um número resultante.
@@ -5409,7 +5409,7 @@ Rotina para que se leia uma URL para um trecho:
       Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
       Pare.
     Atribua o ponteiro mais a contagem menos 1 ao caractere final deste trecho.
-    []\Se a contagem for 0, pare.
+    Se a contagem for 0, pare.
   Reitere.
   \ clean up
   Processe "wininet.dll" "InternetCloseHandle" com
