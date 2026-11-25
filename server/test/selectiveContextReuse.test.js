@@ -1039,6 +1039,105 @@ test('excludes the current document base routines from contextual candidates', a
       }
     });
 
+    test('shows distinct hover prefixes for boolean functions and routines', async () => {
+      const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-routine-hover-'));
+      const filePath = path.join(workspace, 'routines.pop');
+      const uri = pathToFileURL(filePath).toString();
+      const workspaceFolder = {
+        uri: pathToFileURL(workspace).toString(),
+        name: 'routine-hover-test'
+      };
+      const source = [
+        'Um número é uma estrutura.',
+        'Um segundo número é um número.',
+        'Uma coisa é uma estrutura com um número denominado valor.',
+        'Função para que se determine se um número é um segundo número: Diga sim.',
+        'Função para que se atribua o valor duma coisa para um número: Retorne.',
+        'Rotina para que se faça algo: Retorne.',
+        'Rotina para que se teste um número:',
+        '  Se o número for um segundo número, retorne.'
+      ].join('\n');
+      writeWindows1252(filePath, source);
+
+      const child = spawn(
+        process.execPath,
+        [path.resolve(__dirname, '../out/server.js'), '--stdio'],
+        {
+          env: { ...process.env, POP_LSP_PROFILE: '1' },
+          stdio: ['pipe', 'pipe', 'pipe']
+        }
+      );
+      const client = createLspClient(child, workspaceFolder);
+      let stderr = '';
+      child.stderr.on('data', data => {
+        stderr += data.toString();
+      });
+
+      try {
+        const initialize = await client.request('initialize', {
+          processId: process.pid,
+          rootUri: workspaceFolder.uri,
+          workspaceFolders: [workspaceFolder],
+          capabilities: {
+            workspace: { workspaceFolders: { supported: true } }
+          }
+        });
+        assert.ok(initialize.result);
+        client.send({ jsonrpc: '2.0', method: 'initialized', params: {} });
+        client.send({
+          jsonrpc: '2.0',
+          method: 'textDocument/didOpen',
+          params: {
+            textDocument: {
+              uri,
+              languageId: 'portugues-puro',
+              version: 1,
+              text: source
+            }
+          }
+        });
+
+        await waitForEvent(
+          client.events,
+          event => event.event === 'document-parse' &&
+            event.pass === 'contextual' &&
+            event.documentUri === uri,
+          'the routine hover document analysis'
+        );
+
+        for (const [needle, expected] of [
+          ['faça algo', 'Rotina para que se'],
+          ['for um segundo número', 'Função para que se determine se']
+        ]) {
+          const offset = source.indexOf(needle);
+          const position = {
+            line: source.slice(0, offset).split('\n').length - 1,
+            character: offset - source.lastIndexOf('\n', offset) - 1
+          };
+          const hover = await client.request('textDocument/hover', {
+            textDocument: { uri },
+            position
+          });
+          assert.match(hover.result?.contents?.value ?? '', new RegExp(expected));
+        }
+
+        await client.request('shutdown', null);
+        client.send({ jsonrpc: '2.0', method: 'exit', params: null });
+        await once(child, 'close');
+      } catch (error) {
+        child.stdin.end();
+        if (child.exitCode === null) {
+          child.kill();
+          await once(child, 'close');
+        }
+        throw new Error(
+          `${error instanceof Error ? error.message : String(error)}\n${stderr}`
+        );
+      } finally {
+        fs.rmSync(workspace, { recursive: true, force: true });
+      }
+    });
+
     test('reuses declarations outside the cross-document semantic dependency closure', async () => {
       const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'pop-lsp-semantic-worklist-'));
       const typesPath = path.join(workspace, 'types.pop');
