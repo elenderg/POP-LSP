@@ -13460,8 +13460,7 @@ Rotina para que se include uma fonte no current pdf:
   Acrescente
     "/Flags " junto com o valor de configuração desta definição da fonte para
     o descriptor.
-  []
-  \Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor. \ verificar
+  Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor. \ verificar
   Acrescente
     "/Ascent " junto com o valor da ascensão desta definição da fonte para
     o descriptor.
@@ -13503,7 +13502,7 @@ Rotina para que se include uma fonte no current pdf:
     "/Subtype /TrueType" para
     a definition.
   Acrescente
-    "/Nomeie /" junto com o nome da fonte para
+    "/Name /" junto com o nome da fonte para
     a definition.
   Acrescente
     "/BaseFont /" junto com o nome base da fonte para
