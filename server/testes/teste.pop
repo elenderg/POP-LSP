@@ -1346,7 +1346,7 @@ Função para que se determine se um par de números é menor do que um segundo par 
   Diga sim.
 
 Rotina para que se normalize uma linha reta horizontal:
-  Se a localização final desta linha reta horizontal for menor do que a localização inicial desta linha reta horizontal, 
+  Se a coordenada X desta localização final desta linha reta horizontal for menor do que a coordenada X desta localização inicial desta linha reta horizontal 
     Permute a localização final desta linha reta horizontal com a localização inicial desta linha reta horizontal.
   Retorne.
 
@@ -2916,14 +2916,14 @@ Rotina para que se envie um mensagem para um destinatário desde um remetente:
   Atribua o destinatário ao destinatário deste email.
   Atribua o remetente ao remetente deste email.
   Atribua o mensagem à mensagem deste email.
-  []\Envie o email.
+  Envie o email.
 
 Rotina para que se envie um mensagem para um destinatário desde um remetente via um servidor SMTP:
   Atribua o servidor SMTP ao servidor SMTP dum email.
   Atribua o destinatário ao destinatário deste email.
   Atribua o remetente ao remetente deste email.
   Atribua o mensagem à mensagem deste email.
-  []\Envie o email.
+  Envie o email.
 
 Rotina para que se envie um mensagem para um destinatário desde um remetente com um assunto:
   Atribua o servidor SMTP padrão ao servidor SMTP dum email.
@@ -2931,7 +2931,7 @@ Rotina para que se envie um mensagem para um destinatário desde um remetente com
   Atribua o remetente ao remetente deste email.
   Atribua o assunto ao assunto deste email.
   Atribua o mensagem à mensagem deste email.
-  []\Envie o email.
+  Envie o email.
 
 Rotina para que se envie um mensagem para um destinatário desde um remetente com um assunto via um servidor SMTP:
   Atribua o servidor SMTP ao servidor SMTP dum email.
@@ -2939,13 +2939,13 @@ Rotina para que se envie um mensagem para um destinatário desde um remetente com
   Atribua o remetente ao remetente deste email.
   Atribua o assunto ao assunto deste email.
   Atribua o mensagem à mensagem deste email.
-  []\Envie o email.
+  Envie o email.
 
-Rotina para que se envie uma string para um soquete e receba um response string:
+Rotina para que se envie uma string para um soquete e receba uma response string:
   Limpe a response string.
-  []\Envie a string para o soquete.
+  Envie a string tal como um trecho para o soquete.
   Se o erro do fluxo de entrada/saída não estiver em branco, retorne.
-  []\Receba a response string desde o soquete.
+  Receba a response string desde o soquete.
 
 Rotina para que se defina o código da cor de um canvas usando uma cor:
   Converta a cor para um código da cor.
@@ -2961,22 +2961,20 @@ Rotina para que se defina o drawing origem para uma localização:
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-getdevicecaps
     O contexto do dispositivo atual [hdc]
     e 112 [index = PhysicalOffsetX]
-  []\Retornando o número X dum par de números
-  .
+  Retornando o número X dum par de números.
   Processe "gdi32.dll" "GetDeviceCaps" com
     O contexto do dispositivo atual
     e 113 [PhysicalOffsetY ]
-  []\Retornando o número Y deste par de números
-  .
-  []\Inverta o sinal desse par de números.
-  []\Se o contexto do dispositivo atual não for a área de impressão, 
-    []\Limpe o par de números.
+  Retornando o número Y deste par de números.
+  Inverta o sinal desse par de números.
+  Se o contexto do dispositivo atual não for a área de impressão, 
+    Limpe o par de números.
   Processe "gdi32.dll" "SetViewportOrgEx" com
   \ Especifica qual ponto do dispositivo mapeia para a origem da janela (0,0).
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setviewportorgex
     O contexto do dispositivo atual [hdc]
-    []\e O número X deste par de números [x]
-    []\e O número Y deste par de números  [y]
+    e O número X deste par de números [x]
+    e O número Y deste par de números  [y]
     e nil. [lppt] \ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/windef/ns-windef-point
   Preserve a localização.
   Processe "gdi32.dll" "LPtoDP" com
@@ -3057,7 +3055,7 @@ Rotina para que se desligue:
   \Finalize o mouse.
   Finalize os cursors.
   Finalize as fontes.
-  []\Finalize a janela do programa.
+  Finalize a janela do programa.
   \Finalize a tela.
   \Finalize as cores.
   \Finalize o módulo.
@@ -3149,20 +3147,20 @@ Rotina para que se suavize um polígono:
   Se o polígono estiver closed,
     Acrescente a localização deste próximo vértice deste primeiro vértice deste polígono para o polígono;
     Ative um sinalizador.
-  []\Atribua o primeiro vértice deste polígono para um vértice esquerdo.
+  Atribua o primeiro vértice deste polígono para um vértice denominado vértice esquerdo.
   Itere.
-    []\Se o próximo vértice deste vértice esquerdo for inexistente, pare.
-    Atribua o próximo vértice deste vértice esquerdo para um direito vértice.
-    []\Obtenha um centro localização usando a localização deste vértice esquerdo e a localização deste direito vértice.
-    []\Insira o centro ao polígono após o vértice esquerdo.
+    Se o próximo vértice deste vértice esquerdo for inexistente, pare.
+    Atribua o próximo vértice deste vértice esquerdo para um vértice denominado direito vértice.
+    Obtenha uma localização denominada centro usando a localização deste vértice esquerdo e a localização deste direito vértice.
+    Insira o centro ao polígono após o vértice esquerdo.
     Atribua o próximo vértice deste vértice esquerdo para um novo vértice.
-    []\Se o vértice anterior deste vértice esquerdo for inexistente,
-    Atribua o direito vértice ao vértice esquerdo;
+    Se o vértice anterior deste vértice esquerdo for inexistente,
+      Atribua o direito vértice ao vértice esquerdo;
     Reitere.
-    []\Obtenha uma segundo centro localização usando a localização deste vértice anterior deste vértice esquerdo e a localização deste novo vértice.
-    []\Calcule um valor da diferença entre a segundo centro e a localização deste vértice esquerdo.
-    []\Divida o valor da diferença por 2.
-    []\Adicione o valor da diferença para a localização deste vértice esquerdo.
+    Obtenha uma localização denominada segundo centro  usando a localização deste vértice anterior deste vértice esquerdo e a localização deste novo vértice.
+    Calcule um valor da diferença entre o segundo centro e a localização deste vértice esquerdo.
+    Divida o valor da diferença por 2.
+    Adicione o valor da diferença para a localização deste vértice esquerdo.
     Atribua o direito vértice ao vértice esquerdo.
   Reitere.
   Se o sinalizador não estiver ativo, retorne.

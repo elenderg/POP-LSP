@@ -1842,9 +1842,9 @@ connection.onHover(params => profileRequest('hover', async requestId => {
           ? 'Função para que se'
           : 'Rotina para que se';
         const parameters = routine.parameters.map(parameter =>
-          `${parameter.type.name} ${parameter.name.name}`
+          `um(a) ${parameter.type.name}`
         );
-        contents = `**${routineKind} ${routine.name.name}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(', ')}` : ''}`;
+        contents = `**${routineKind} ${routine.name.name}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(' e ')}` : ''}`;
       }
     }
   }

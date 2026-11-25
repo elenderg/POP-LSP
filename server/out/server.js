@@ -1329,8 +1329,8 @@ connection.onHover(params => profileRequest('hover', async (requestId) => {
                 const routineKind = routine.annotation === 'função'
                     ? 'Função para que se'
                     : 'Rotina para que se';
-                const parameters = routine.parameters.map(parameter => `${parameter.type.name} ${parameter.name.name}`);
-                contents = `**${routineKind} ${routine.name.name}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(', ')}` : ''}`;
+                const parameters = routine.parameters.map(parameter => `um(a) ${parameter.type.name}`);
+                contents = `**${routineKind} ${routine.name.name}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(' e ')}` : ''}`;
             }
         }
     }
