@@ -4096,7 +4096,7 @@ Rotina para que se escreva um trecho para um endereço completo:
 
 Rotina para que se escreva um byte:
   Atribua o byte para uma string.
-  Escreva a string.
+  []\ Escreva a string. \ rotina não implementada
 
 Rotina para que se escreva um número para StdOut:
   Converta o número para uma string.
@@ -4460,12 +4460,12 @@ Rotina para que se escreva uma string para StdOut:
 
 Rotina para que se escreva um byte sem passar pra próxima linha:
   Atribua o byte para uma string.
-  []\Escreva a string sem passar pra próxima linha.
+  []\Escreva a string sem passar pra próxima linha. \ implementar esta rotina
 
 \ will translate to English because "Converta um sinalizador" é used para transcreva reams pelo caderno
 Rotina para que se escreva um sinalizador:
   Converta o sinalizador para uma string.
-  Escreva a string.
+  []\ Escreva a string. \ rotina não implementada
 
 Rotina para que se escreva um sinalizador sem passar pra próxima linha:
   Converta o sinalizador para uma string.
@@ -4473,7 +4473,7 @@ Rotina para que se escreva um sinalizador sem passar pra próxima linha:
 
 Rotina para que se escreva uma fração:
   Converta a fração para uma string.
-  Escreva a string.
+  []\ Escreva a string. \ rotina não implementada
 
 Rotina para que se escreva uma fração sem passar pra próxima linha:
   Converta a fração para uma string.
@@ -4481,7 +4481,7 @@ Rotina para que se escreva uma fração sem passar pra próxima linha:
 
 Rotina para que se escreva um número:
   Converta o número para uma string.
-  Escreva a string.
+  []\ Escreva a string. \ rotina não implementada
 
 Rotina para que se escreva um número sem passar pra próxima linha:
   Converta o número para uma string.
