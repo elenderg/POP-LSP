@@ -3652,19 +3652,31 @@ test('resolves numeric concatenation as one routine argument', () => {
 });
 
 test('resolves string concatenation with a converted structure field', () => {
-  const source = [
+  const declarations = [
     'Um número é uma estrutura.',
     'Uma caixa é uma estrutura.',
     'Uma caixa de fonte é uma caixa.',
     'Uma definição da fonte é uma estrutura com uma caixa de fonte.',
     'Uma string é uma estrutura.',
-    'Um objeto pdf é uma estrutura.',
+    'Um objeto pdf é uma estrutura.'
+  ];
+  const appendRoutine = [
     'Rotina para que se acrescente uma string para um objeto pdf:',
-    '  Retorne.',
+    '  Retorne.'
+  ];
+  const conversion = [
     'Rotina para que se converta uma caixa para uma string:',
-    '  Retorne.',
+    '  Retorne.'
+  ];
+  const callerRoutine = [
     'Rotina para que se teste uma definição da fonte e um objeto pdf:',
     '  Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o objeto pdf.'
+  ];
+  const source = [
+    ...declarations,
+    ...appendRoutine,
+    ...conversion,
+    ...callerRoutine
   ].join('\n');
   const parsed = parseTypeDeclarations(source);
   const caller = parsed.routines.find(routine =>
@@ -3680,6 +3692,15 @@ test('resolves string concatenation with a converted structure field', () => {
   ]);
   assert.ok(call?.fieldAccesses?.some(access =>
     access.target.name.name === 'caixa de fonte'
+  ));
+
+  const withoutConversion = parseTypeDeclarations([
+    ...declarations,
+    ...appendRoutine,
+    ...callerRoutine
+  ].join('\n'));
+  assert.ok(withoutConversion.diagnostics.some(diagnostic =>
+    diagnostic.message.startsWith('No compatible routine found')
   ));
 });
 
