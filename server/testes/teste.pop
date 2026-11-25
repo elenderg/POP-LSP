@@ -5471,7 +5471,7 @@ Rotina para que se post um data string para uma URL e receba um response string:
   Limpe o erro do fluxo de entrada/saída.
   Crie uma requisição WinHTTP por posting para a URL.
   Se o erro do fluxo de entrada/saída não estiver em branco, retorne.
-  []\Envie o data para a requisição WinHTTP.
+  Envie a data string para a requisição WinHTTP.
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Destrua a requisição WinHTTP;
     Retorne.
@@ -5663,7 +5663,7 @@ Rotina para que se pinte um byte:
 Rotina para que se pinte a grade de caracteres :
   \ temporário
   Salve o contexto.
-  []\Atribua a grossura da canetinha para uma nova grossura da canetinha.
+  Atribua a grossura da canetinha deste contexto para um número denominado nova grossura da canetinha.
   Use a canetinha cinza claro.
   Atribua o tamanho da letra deste contexto dividido por 4 para um tamanho.
   Dê meia volta.
@@ -5797,7 +5797,7 @@ Rotina para que se pinte a letra 'Á' maiúscula:
   Ande 1+14/16 quadrado.
   Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/2 quadrado.
+  Pinte 1 quadrado menos 1/2 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -5873,7 +5873,7 @@ Rotina para que se pinte a letra 'À' maiúscula:
   Ande 1/100 quadrado.
   \Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 2/4 quadrado.
+  Pinte 1 quadrado menos 2/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
