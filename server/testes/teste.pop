@@ -1571,7 +1571,7 @@ Função para que se atribua a string dum grupo data-hora para uma string:
 Rotina para que se atribua um índice sobre o primeiro caractere de uma string:
   Atribua o caractere inicial desta string ao índice.
 
-Rotina para que se atribua a contagem dum catálogo para uma contagem:
+Função para que se atribua a contagem dum catálogo para uma contagem:
   Atribua 0 à contagem.
   Se o catálogo for inexistente, retorne.
   Itere.
@@ -1580,7 +1580,7 @@ Rotina para que se atribua a contagem dum catálogo para uma contagem:
     Adicione a contagem destes referências deste recipiente para a contagem.
   Reitere.
 
-Rotina para que se atribua a used contagem de recipientes dum catálogo para uma contagem:
+Função para que se atribua a used contagem de recipientes dum catálogo para uma contagem:
   Atribua 0 à contagem.
   Se o catálogo for inexistente, retorne.
   Itere.
@@ -1614,7 +1614,7 @@ Rotina para que se atribua um número sobre a stack:
   Converta o número para um segmento inicial.
   Atribua o segmento inicial sobre a stack.
 
-Rotina para que se atribua o módulo dum número para um segundo número:
+Função para que se atribua o módulo dum número para um segundo número:
   Atribua o número ao segundo número.
   Remova o sinal desde o segundo número.
 
@@ -1622,7 +1622,7 @@ Rotina para que se atribua um OutlineTextmetric para uma segunda OutlineTextmetr
   Copie bytes desde o endereçamento deste OutlineTextmetric para o endereçamento desta segunda OutlineTextmetric pela magnitude deste OutlineTextmetric.
   Retorne.
 
-Rotina para que se atribua o módulo dum par de números para um segundo par de números:
+Função para que se atribua o módulo dum par de números para um segundo par de números:
   Atribua o par de números ao segundo par de números.
   Remova o sinal desde o segundo par de números.
 
@@ -1633,7 +1633,7 @@ Rotina para que se centralize uma imagem sobre uma localização:
   Arredonde o valor da diferença usando o múltiplo imediato dessa quantidade de twips/pixel .
   Mova a imagem usando o valor da diferença.
 
-Rotina para que se atribua a working string duma linha de texto para um subtexto:
+Função para que se atribua a working string duma linha de texto para um subtexto:
   Se a linha de texto for inexistente,
     Limpe o subtexto;
     Retorne.
@@ -1697,7 +1697,7 @@ Rotina para que se atribua uma string sobre a área de transferência do Windows:
   Processe "user32.dll" "CloseClipboard". \Fecha a área de transferência.
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winuser/nf-winuser-closeclipboard
 
-Rotina para que se atribua a largura duma string para uma largura: \ unidade "e.m"?
+Função para que se atribua a largura duma string para uma largura: \ unidade "e.m"?
   Obtenha a largura usando a string e o contexto de dispositivo de memória e a fonte padrão.
   Retorne.
 
@@ -1753,14 +1753,14 @@ Rotina para que se centralize uma caixa de texto sobre uma localização:
   Arredonde o valor da diferença usando o múltiplo imediato dessa quantidade de twips/pixel .
   Mova a caixa de texto usando o valor da diferença.
 
-Rotina para que se atribua a primeira linha reta duma caixa de texto para uma string:
+Função para que se atribua a primeira linha reta duma caixa de texto para uma string:
   Se a caixa de texto for inexistente,
     Limpe a string;
     Retorne.
   Atribua a string desta primeira linha de texto desta caixa de texto à string.
   Remova o último caractere desde a string.
 
-Rotina para que se atribua a primeira linha reta contendo texto duma caixa de texto para uma string:
+Função para que se atribua a primeira linha reta contendo texto duma caixa de texto para uma string:
   Limpe a string.
   Se a caixa de texto for inexistente, retorne.
   Itere.
@@ -1773,7 +1773,7 @@ Rotina para que se atribua a primeira linha reta contendo texto duma caixa de te
   Se a string estiver em branco, reitere.
   \Se a string não estiver em branco, pare.
 
-Rotina para que se atribua a globalized origem duma caixa de texto para uma localização:
+Função para que se atribua a globalized origem duma caixa de texto para uma localização:
   Se a caixa de texto for inexistente,
     Limpe a localização;
     Retorne.
@@ -1807,13 +1807,13 @@ Função para que se atribua a altura da linha duma caixa de texto para uma altura
     Retorne.
   Atribua a altura desta fonte desta caixa de texto à altura.
 
-Rotina para que se atribua as linhas de texto/box duma caixa de texto para uma contagem:
+Função para que se atribua as linhas de texto/box duma caixa de texto para uma contagem:
   Se a caixa de texto for inexistente,
     Atribua 0 à contagem;
     Retorne.
   Atribua a altura desta caixa desta caixa de texto dividido pela altura da linha desta caixa de texto à contagem.\ calculated field
 
-Rotina para que se atribua a quantidade de caracteres selecionados duma caixa de texto para uma contagem:
+Função para que se atribua a quantidade de caracteres selecionados duma caixa de texto para uma contagem:
   Atribua 0 à contagem.
   Se a caixa de texto for inexistente, retorne.
   Se nada estiver selecionado na caixa de texto, retorne.
@@ -1824,7 +1824,7 @@ Rotina para que se atribua a quantidade de caracteres selecionados duma caixa de
     Adicione a quantidade de caracteres deste subtexto para a contagem.
   Reitere.
 
-Rotina para que se atribua a selecionado contagem de linhas duma caixa de texto para uma contagem:
+Função para que se atribua a selecionado contagem de linhas duma caixa de texto para uma contagem:
   Atribua 0 à contagem.
   Se a caixa de texto for inexistente, retorne.
   Atribua a normalized seleção desta caixa de texto para uma seleção. \ calculated field
@@ -1834,7 +1834,7 @@ Rotina para que se atribua a selecionado contagem de linhas duma caixa de texto 
   Se o cursor da coluna desta seleção não for 1, 
     Adicione 1 para a contagem.
 
-Rotina para que se atribua o painel de informações string duma caixa de texto para uma string:
+Função para que se atribua o painel de informações string duma caixa de texto para uma string:
   Se a caixa de texto for inexistente,
     Limpe a string;
     Retorne.
@@ -1868,8 +1868,8 @@ Função para que se determine se a stack possui algum elemento nela:
   Se a contagem desta stack for 1, diga sim.
   Diga não.
 
-Rotina para que se atribua a quantidade dumas listas para uma contagem;
-Rotina para que se atribua a contagem dumas listas para uma contagem:
+Função para que se atribua a quantidade dumas listas para uma contagem;
+Função para que se atribua a contagem dumas listas para uma contagem:
   Atribua 0 à contagem.
   Itere.
     Obtenha uma lista desde as listas.
@@ -1881,10 +1881,10 @@ Rotina para que se atribua um temporizador para uma string;
 Rotina para que se converta um temporizador para uma string:
   Converta os intervalos deste temporizador para a string.
 
-Rotina para que se atribua a string dum temporizador para uma string:
+Função para que se atribua a string dum temporizador para uma string:
   Converta os intervalos deste temporizador para a string.
 
-Rotina para que se atribua os intervalos dum temporizador para uns intervalos:
+Função para que se atribua os intervalos dum temporizador para uns intervalos:
   Atribua os intervalos totais deste temporizador aos intervalos.
   Se a contagem deste temporizador for 0, retorne.
   Atribua a contagem de intervalos do sistema para uns intervalos denominados intervalos de temporização.
@@ -4544,7 +4544,7 @@ Rotina para que se atribua uma fonte para uma segunda fonte:
   Atribua o nome desta fonte ao nome desta segunda fonte.
   Atribua a altura desta fonte à altura desta segunda fonte.
 
-Rotina para que se atribua a adjusted altura duma fonte para uma altura:
+Função para que se atribua a adjusted altura duma fonte para uma altura:
   Atribua a altura desta fonte vezes 3/4 à altura.
 
 Rotina para que se atribua o actual data de uma fonte para um trecho:
@@ -5263,7 +5263,7 @@ Rotina para que se leia um console para uma string:
   Desmanche todos os eventos.
   Atualize o cursor.
 
-Rotina para que se atribua a localização deste mouse para uma localização:
+Função para que se atribua a localização deste mouse para uma localização:
   Processe "user32.dll" "GetCursorPos" com
   \ Recupera a posição do cursor do mouse, retornando as coordenadas da tela.
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winuser/nf-winuser-getcursorpos
@@ -8569,79 +8569,79 @@ Rotina para que se atribua uma caixa arredondada para uma segunda caixa arredond
   Atribua a coordenada Y2 desta caixa arredondada à coordenada Y2 desta segunda caixa arredondada.
   Atribua o raio desta caixa arredondada ao raio desta segunda caixa arredondada.
 
-Rotina para que se atribua o centro dum polígono para uma localização:
+Função para que se atribua o centro dum polígono para uma localização:
   Se o polígono for inexistente,
     Limpe a localização;
     Retorne.
   Atribua o centro desta caixa deste polígono à localização.
 
-Rotina para que se atribua o centro inferior dum polígono para uma localização:
+Função para que se atribua o centro inferior dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o centro inferior  desta caixa deste polígono à localização.
 
-Rotina para que se atribua o centro superior dum polígono para uma localização:
+Função para que se atribua o centro superior dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o centro superior desta caixa deste polígono à localização.
 
-Rotina para que se atribua a altura dum polígono para uma altura:
+Função para que se atribua a altura dum polígono para uma altura:
   []\Se o polígono for inexistente,
     []\Limpe a altura;
     Retorne.
   Atribua a altura desta caixa deste polígono à altura.
 
-Rotina para que se atribua o canto inferior esquerdo dum polígono para uma localização:
+Função para que se atribua o canto inferior esquerdo dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o canto inferior esquerdo desta caixa deste polígono à localização.
 
-Rotina para que se atribua o centro esquerdo dum polígono para uma localização:
+Função para que se atribua o centro esquerdo dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o centro esquerdo desta caixa deste polígono à localização.
 
-Rotina para que se atribua o canto superior esquerdo dum polígono para uma localização:
+Função para que se atribua o canto superior esquerdo dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o canto superior esquerdo desta caixa deste polígono à localização.
 
-Rotina para que se atribua o canto inferior direito dum polígono para uma localização:
+Função para que se atribua o canto inferior direito dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o canto inferior direito desta caixa deste polígono à localização.
 
-Rotina para que se atribua o centro direito dum polígono para uma localização:
+Função para que se atribua o centro direito dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o centro direito desta caixa deste polígono à localização.
 
-Rotina para que se atribua o canto superior direito dum polígono para uma localização:
+Função para que se atribua o canto superior direito dum polígono para uma localização:
   []\Se o polígono for inexistente,
     []\Limpe a localização;
     Retorne.
   Atribua o canto superior direito desta caixa deste polígono à localização.
 
-Rotina para que se atribua a largura dum polígono para uma largura:
+Função para que se atribua a largura dum polígono para uma largura:
   []\Se o polígono for inexistente,
     []\Limpe a largura;
     Retorne.
   Atribua a largura desta caixa deste polígono à largura.
 
-Rotina para que se atribua o x-extent dum polígono para uma largura:
+Função para que se atribua o x-extent dum polígono para uma largura:
   []\Se o polígono for inexistente,
     []\Limpe a largura;
     Retorne.
   Atribua o x-extent desta caixa deste polígono ao largura.
 
-Rotina para que se atribua o y-extent dum polígono para uma altura:
+Função para que se atribua o y-extent dum polígono para uma altura:
   []\Se o polígono for inexistente,
     []\Limpe a altura;
     Retorne.
@@ -8667,7 +8667,7 @@ Rotina para que se centralize um polígono sobre uma localização:
   Arredonde o valor da diferença usando o múltiplo imediato dessa quantidade de twips/pixel .
   Mova o polígono usando o valor da diferença.
 
-Rotina para que se atribua a caixa dum polígono para uma caixa:
+Função para que se atribua a caixa dum polígono para uma caixa:
   []\Se o polígono for inexistente,
     []\Zero a caixa;
     Retorne.
@@ -8728,32 +8728,32 @@ Rotina para que se atribua uma linha reta para uma segunda linha reta:
   Atribua a localização inicial desta linha reta à localização inicial desta segunda linha reta.
   Atribua a localização final desta linha reta à localização final desta segunda linha reta.
 
-Rotina para que se atribua a base duma linha reta para uma coordenada:
+Função para que se atribua a base duma linha reta para uma coordenada:
   Atribua a coordenada Y desta localização inicial desta linha reta à coordenada.
   Se a coordenada Y desta localização final desta linha reta for maior do que a coordenada Y desta localização inicial desta linha reta, 
     Atribua a coordenada Y desta localização final desta linha reta à coordenada.
 
-Rotina para que se atribua a caixa duma linha reta para uma caixa:
+Função para que se atribua a caixa duma linha reta para uma caixa:
   Atribua a localização inicial desta linha reta ao canto superior esquerdo desta caixa.
   Atribua a localização final desta linha reta ao canto inferior direito desta caixa.
   Normalize a caixa.
 
-Rotina para que se atribua o centro duma linha reta para uma localização:
+Função para que se atribua o centro duma linha reta para uma localização:
   Atribua a coordenada X desta localização inicial desta linha reta mais a coordenada X desta localização final desta linha reta à coordenada X desta localização.
   Atribua a coordenada Y desta localização inicial desta linha reta mais a coordenada Y desta localização final desta linha reta à coordenada Y desta localização.
   Divida a localização por 2.
 
-Rotina para que se atribua a coordenada X1 duma linha reta para uma coordenada:
+Função para que se atribua a coordenada X1 duma linha reta para uma coordenada:
   Atribua a coordenada X desta localização inicial desta linha reta à coordenada.
   Se a coordenada X desta localização final desta linha reta for menor do que a coordenada X desta localização inicial desta linha reta, 
     Atribua a coordenada X desta localização final desta linha reta à coordenada.
 
-Rotina para que se atribua o lado direito duma linha reta para uma coordenada:
+Função para que se atribua o lado direito duma linha reta para uma coordenada:
   Atribua a coordenada X desta localização inicial desta linha reta à coordenada.
   Se a coordenada X desta localização final desta linha reta for maior do que a coordenada X desta localização inicial desta linha reta, 
     Atribua a coordenada X desta localização final desta linha reta à coordenada.
 
-Rotina para que se atribua o topo duma linha reta para uma coordenada:
+Função para que se atribua o topo duma linha reta para uma coordenada:
   Atribua a coordenada Y desta localização inicial desta linha reta à coordenada.
   Se a coordenada Y desta localização final desta linha reta for menor do que a coordenada Y desta localização inicial desta linha reta, 
     Atribua a coordenada Y desta localização final desta linha reta à coordenada.
@@ -8771,13 +8771,13 @@ Rotina para que se atribua masking tape debaixo de uma figura geométrica:
   Cubra internamente a segunda figura geométrica.
   Destrua a segunda figura geométrica.
 
-Rotina para que se atribua o GpRect dum GpImage para um GpRect:
+Função para que se atribua o GpRect dum GpImage para um GpRect:
   Atribua 0 ao x deste GpRect.
   Atribua 0 ao y deste GpRect.
   Atribua a largura desta GpImage à largura deste GpRect.
   Atribua a altura desta GpImage à altura deste GpRect.
 
-Rotina para que se atribua a altura dum GpImage para uma altura:
+Função para que se atribua a altura dum GpImage para uma altura:
   []\Se o GpImage for inexistente,
     Atribua 0 à altura;
     Retorne.
@@ -8794,7 +8794,7 @@ Rotina para que se ajuste uma imagem (extraindo as caixas do gpBitmap):
   Atribua a altura deste gpBitmap desta imagem menos 1 vezes a quantidade de twips/pixel à coordenada Y2 desta caixa desta imagem.
   Atribua a caixa desta imagem à caixa intacta desta imagem.
 
-Rotina para que se atribua a largura dum GpImage para uma largura:
+Função para que se atribua a largura dum GpImage para uma largura:
   []\Se o GpImage for inexistente,
     Atribua 0 à largura;
     Retorne.
@@ -8868,40 +8868,40 @@ Rotina para que se centralize uma caixa uns twips por uns outros twips em uma se
   \ Atribua a coordenada X deste centro desta caixa à coordenada X desta localização.
   \ Atribua a coordenada Y2 desta caixa à coordenada Y desta localização.
 
-Rotina para que se atribua o centro superior duma caixa para uma localização:
+Função para que se atribua o centro superior duma caixa para uma localização:
   Atribua a coordenada X deste centro desta caixa à coordenada X desta localização.
   Atribua a coordenada Y1 desta caixa à coordenada Y desta localização.
 
-Rotina para que se atribua a altura duma caixa para uma altura: \ OK
+Função para que se atribua a altura duma caixa para uma altura: \ OK
   Atribua a coordenada Y2 desta caixa à altura.
   Subtraia a coordenada Y1 desta caixa desde a altura.
   Adicione a quantidade de twips/pixel para a altura.
 
-Rotina para que se atribua a linha reta do lado esquerdo duma caixa para uma linha reta:
+Função para que se atribua a linha reta do lado esquerdo duma caixa para uma linha reta:
   Atribua a coordenada X1 desta caixa e a coordenada Y1 desta caixa à localização inicial desta linha reta.
   Atribua a coordenada X1 desta caixa e a coordenada Y2 desta caixa à localização final desta linha reta.
 
-Rotina para que se atribua a canto inferior esquerdo duma caixa para uma localização:
+Função para que se atribua a canto inferior esquerdo duma caixa para uma localização:
   Atribua a coordenada X1 desta caixa à coordenada X desta localização.
   Atribua a coordenada Y2 desta caixa à coordenada Y desta localização.
 
-Rotina para que se atribua o centro esquerdo duma caixa para uma localização:
+Função para que se atribua o centro esquerdo duma caixa para uma localização:
   Atribua a coordenada X1 desta caixa à coordenada X desta localização.
   Atribua a coordenada Y deste centro desta caixa à coordenada Y desta localização.
 
-Rotina para que se atribua a linha reta do lado direito duma caixa para uma linha reta:
+Função para que se atribua a linha reta do lado direito duma caixa para uma linha reta:
   Atribua a coordenada X2 desta caixa e a coordenada Y1 desta caixa à localização inicial desta linha reta.
   Atribua a coordenada X2 desta caixa e a coordenada Y2 desta caixa à localização final desta linha reta.
 
-Rotina para que se atribua o centro direito duma caixa para uma localização:
+Função para que se atribua o centro direito duma caixa para uma localização:
   Atribua a coordenada X2 desta caixa à coordenada X desta localização.
   Atribua a coordenada Y deste centro desta caixa à coordenada Y desta localização.
 
-Rotina para que se atribua o canto superior direito duma caixa para uma localização:
+Função para que se atribua o canto superior direito duma caixa para uma localização:
   Atribua a coordenada X2 desta caixa à coordenada X desta localização.
   Atribua a coordenada Y1 desta caixa à coordenada Y desta localização.
 
-Rotina para que se atribua a linha de cima duma caixa para uma linha reta horizontal:
+Função para que se atribua a linha de cima duma caixa para uma linha reta horizontal:
   Atribua a coordenada X1 desta caixa e a coordenada Y1 desta caixa à localização inicial  desta linha reta horizontal.
   Atribua a coordenada X2 desta caixa e a coordenada Y1 desta caixa à localização final desta linha reta horizontal.
 
@@ -8909,16 +8909,16 @@ Rotina para que se atribua a linha de cima duma caixa para uma linha reta horizo
 \  Atribua a coordenada X deste centro desta caixa à coordenada X desta localização.
 \  Atribua a coordenada Y1 desta caixa à coordenada Y desta localização.
 
-Rotina para que se atribua a largura duma caixa para uma largura:
+Função para que se atribua a largura duma caixa para uma largura:
   Atribua a coordenada X2 desta caixa ao largura.
   Subtraia a coordenada X1 desta caixa desde a largura.
   Adicione a quantidade de twips/pixel para a largura.
 
-Rotina para que se atribua o x-extent duma caixa para uma largura:
+Função para que se atribua o x-extent duma caixa para uma largura:
   Atribua a coordenada X2 desta caixa ao largura.
   Subtraia a coordenada X1 desta caixa desde a largura.
 
-Rotina para que se atribua o y-extent duma caixa para uma altura:
+Função para que se atribua o y-extent duma caixa para uma altura:
   Atribua a coordenada Y2 desta caixa à altura.
   Subtraia a coordenada Y1 desta caixa desde a altura.
 

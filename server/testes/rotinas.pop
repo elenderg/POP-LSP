@@ -4091,7 +4091,7 @@ Rotina para que se converta uma fração para uma string:
     Acrescente o sinal de adição para a string.
   Acrescente o numerador deste numeral misto seguido de "/" junto com o denominador deste numeral misto para a string.
 
-Rotina para que se atribua o módulo duma fração para uma segunda fração:
+Função para que se atribua o módulo duma fração para uma segunda fração:
   Atribua a fração à segunda fração.
   Remova o sinal desde a segunda fração.
 
