@@ -4493,14 +4493,14 @@ Rotina para que se escreva um número sobre um console:
 
 Rotina para que se escreva uns quoras em uma caixa:
   \Pinte a caixa com a cor vermelha e a cor vermelha. \ temp ***
-  Atribua a caixa para uma quora caixa.
+  Atribua a caixa para uma caixa denominada quora caixa.
   Atribua a coordenada Y1 desta quora caixa mais 24 pixels à coordenada Y2 desta quora caixa.
   Itere.
     Obtenha um quora desde o quoras.
     Se o quora for inexistente, pare.
     \Pinte o quora caixa com a cor amarela. \ temp ***
     Escreva a string deste quora no quora caixa com a cor deste quora.
-    []\Mova o quora caixa para baixo 24 px.
+    Mova o quora caixa para baixo 24 px.
   Reitere.
 
 Rotina para que se Solicite o evento para o Windows:
