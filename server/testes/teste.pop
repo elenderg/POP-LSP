@@ -2658,12 +2658,12 @@ Rotina para que se role um console usando um evento:
   Encontre um região da tela usando a malha quadriculada deste console e a localização deste evento.
   Itere.
     Se o botão direito deste mouse não estiver sendo pressionado, retorne.
-    []\Encontre um segundo região da tela usando a malha quadriculada deste console e a localização deste mouse.
-    []\Calcule um valor da diferença entre o segundo região da tela e o região da tela.
-    []\Se o valor da diferença for 0, reitere.
-    []\Role a caixa de texto deste console usando o valor da diferença.
+    Encontre um segundo região da tela usando a malha quadriculada deste console e a localização deste mouse.
+    Calcule um valor da diferença entre o segundo região da tela e o região da tela.
+    Se o valor da diferença for 0, reitere.
+    Role a caixa de texto deste console usando o valor da diferença.
     Mostre o console.
-    []\Adicione o valor da diferença para o região da tela.
+    Adicione o valor da diferença para o região da tela.
   Reitere.
 
 Rotina para que se role uma caixa de texto para a base:
@@ -2683,7 +2683,7 @@ Rotina para que se role uma caixa de texto para o cursor de texto:
   Se o número de coluna deste cursor de texto desta seleção desta caixa de texto for 1, 
     Atribua a margem desta caixa de texto à coordenada X desta caixa de texto.
   Obtenha uma caixa pelo cursor de texto na caixa de texto.
-  []\Ajuste a caixa usando 0 e - a quantidade de twips/pixel e 0 e a quantidade de twips/pixel . \ cursor de texto caixas do not preencha entire linha de texto
+  Ajuste a caixa usando 0 e - a quantidade de twips/pixel e 0 e a quantidade de twips/pixel . \ cursor de texto caixas do not preencha entire linha de texto
   Se a coordenada Y1 desta caixa for menor do que a coordenada Y1 desta caixa desta caixa de texto, 
     Atribua a coordenada Y1 desta caixa desta caixa de texto menos a coordenada Y1 desta caixa ao número Y duma valor da diferença.
   Se a coordenada Y2 desta caixa for maior do que a coordenada Y2 desta caixa desta caixa de texto, 
@@ -2692,15 +2692,15 @@ Rotina para que se role uma caixa de texto para o cursor de texto:
     Atribua a coordenada X1 desta caixa desta caixa de texto menos a coordenada X1 desta caixa ao número X deste valor da diferença.
   Se a coordenada X2 desta caixa for maior do que a coordenada X2 desta caixa desta caixa de texto, 
     Atribua a coordenada X2 desta caixa desta caixa de texto menos a coordenada X2 desta caixa ao número X deste valor da diferença.
-  []\Se o valor da diferença for 0, retorne.
-  []\Role a caixa de texto usando o valor da diferença.
+  Se o valor da diferença for 0, retorne.
+  Role a caixa de texto usando o valor da diferença.
 
 Rotina para que se role uma caixa de texto para o cursor de texto e centralize-o:
   Se a caixa de texto for inexistente, retorne.
   Atribua a margem desta caixa de texto à coordenada X desta caixa de texto.
   Obtenha uma caixa pelo cursor de texto na caixa de texto.
   Se a caixa estiver dentro dessa caixa desta caixa de texto, retorne.
-  []\Ajuste a caixa usando 0 e - a quantidade de twips/pixel e 0 e a quantidade de twips/pixel . \ cursor de texto caixas don not preencha entire linha de texto
+  Ajuste a caixa usando 0 e - a quantidade de twips/pixel e 0 e a quantidade de twips/pixel . \ cursor de texto caixas don not preencha entire linha de texto
   Atribua o y-extent desta caixa desta caixa de texto dividido por 2 para uma altura.
   Arredonde a altura para baixo usando o múltiplo imediato dessa altura da linha desta caixa de texto.\ calculated field
   Atribua a coordenada Y1 desta caixa desta caixa de texto mais a altura para uma coordenada Y1.
@@ -2713,20 +2713,20 @@ Rotina para que se role uma caixa de texto para o cursor de texto e centralize-o
     Atribua a coordenada X1 desta caixa desta caixa de texto menos a coordenada X1 desta caixa ao número X deste valor da diferença.
   Se a coordenada X2 desta caixa for maior do que a coordenada X2 desta caixa desta caixa de texto, 
     Atribua a coordenada X2 desta caixa desta caixa de texto menos a coordenada X2 desta caixa ao número X deste valor da diferença.
-  []\Se o valor da diferença for 0, retorne.
-  []\Role a caixa de texto usando o valor da diferença.
+  Se o valor da diferença for 0, retorne.
+  Role a caixa de texto usando o valor da diferença.
 
 Rotina para que se role uma caixa de texto para baixo one linha reta:
   Se a caixa de texto for inexistente, retorne.
   Se o sinalizador de rolagem vertical desta caixa de texto não estiver ativo, retorne.
   Atribua - a altura da linha desta caixa de texto ao número Y duma valor da diferença. \ \ calculated field. reescrever esse comando
-  []\Role a caixa de texto usando o valor da diferença.
+  Role a caixa de texto usando o valor da diferença.
 
 Rotina para que se role uma caixa de texto para baixo one página:
   Se a caixa de texto for inexistente, retorne.
   Se o sinalizador de rolagem vertical desta caixa de texto não estiver ativo, retorne.
-  []\Subtraia o y-extent desta caixa desta caixa de texto desde a coordenada Y desta caixa de texto.
-  []\Adicione a altura da linha desta caixa de texto para a coordenada Y desta caixa de texto.\ calculated field
+  Subtraia o y-extent desta caixa desta caixa de texto desde a coordenada Y desta caixa de texto.
+  Adicione a altura da linha desta caixa de texto para a coordenada Y desta caixa de texto.\ calculated field
   Delimite a origem dessa caixa de texto.
 
 Rotina para que se role uma caixa de texto usando uma valor da diferença:
@@ -2750,13 +2750,13 @@ Rotina para que se role uma caixa de texto para cima one linha reta:
   Se a caixa de texto for inexistente, retorne.
   Se o sinalizador de rolagem vertical desta caixa de texto não estiver ativo, retorne.
   Atribua a altura da linha desta caixa de texto ao número Y duma valor da diferença.\ calculated field
-  []\Role a caixa de texto usando o valor da diferença.
+  Role a caixa de texto usando o valor da diferença.
 
 Rotina para que se role uma caixa de texto para cima one página:
   Se a caixa de texto for inexistente, retorne.
   Se o sinalizador de rolagem vertical desta caixa de texto não estiver ativo, retorne.
-  []\Adicione o y-extent desta caixa desta caixa de texto para a coordenada Y desta caixa de texto.
-  []\Subtraia a altura da linha desta caixa de texto desde a coordenada Y desta caixa de texto.\ calculated field
+  Adicione o y-extent desta caixa desta caixa de texto para a coordenada Y desta caixa de texto.
+  Subtraia a altura da linha desta caixa de texto desde a coordenada Y desta caixa de texto.\ calculated field
   Delimite a origem dessa caixa de texto.
 
 Rotina para que se selecione cada byte em uma caixa de texto:
