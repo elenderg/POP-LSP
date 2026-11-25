@@ -1329,7 +1329,7 @@ connection.onHover(params => profileRequest('hover', async (requestId) => {
                 const routineKind = routine.isBooleanFunction
                     ? 'Função para que se determine se'
                     : routine.computedField
-                        ? 'Função para que se atribua'
+                        ? 'Função para que se'
                         : 'Rotina para que se';
                 const parameters = routine.parameters.map(parameter => `um(a) ${parameter.type.name}${parameter.name.name !== parameter.type.name ? ` denominado(a) ${parameter.name.name}` : ''}`);
                 contents = `**${routineKind} ${routine.name.name}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(' e ')}` : ''}`;
