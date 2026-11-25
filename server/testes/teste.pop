@@ -2822,18 +2822,18 @@ Rotina para que se envie um email:
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Retorne.
-  []\Receba uma response string desde o soquete.
+  Receba uma response string desde o soquete.
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Destrua o soquete;
     Retorne.
-  []\Se o response string começa com "5",
+  Se a response string começa com "5",
     Atribua a response string ao erro do fluxo de entrada/saída;
-    []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
-    []\Elimine os resíduos no erro do fluxo de entrada/saída;
-    []\Destrua o soquete;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Elimine os resíduos no erro do fluxo de entrada/saída;
+    Destrua o soquete;
     Retorne.
-  []\Envie "HELO " junto com o nome deste módulo junto com o texto CRLF para o soquete e receba o response string.
+  Envie "HELO " junto com o nome deste módulo junto com o texto CRLF para o soquete e receba a response string.
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Destrua o soquete;

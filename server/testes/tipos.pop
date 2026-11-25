@@ -1479,4 +1479,4 @@ Uma cifra hexadecimal é uma string. \ Exemplo: $0010A0… O cifrão serve para indi
 Uma máscara de disjunção exclusiva é uma mask.
 Uma letra do alfabeto é uma letra.
 
-Uma response string é uma string.
+Uma response string é um trecho.
