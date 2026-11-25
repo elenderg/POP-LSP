@@ -9237,40 +9237,40 @@ Rotina para que se include uma fonte no current pdf:
   Atribua "F" junto com o número deste descriptor para um nome da fonte.
   Atribua o nome desta fonte para um nome base da fonte.
   Replace o caractere de espaço com o underline no nome base da fonte.
-   Acrescente o número deste descriptor seguido de " 0 obj" para o descriptor.
-   Acrescente "<<" para o descriptor.
-   Acrescente "/Type /FontDescriptor" para o descriptor.
-   Acrescente "/FontName /" junto com o nome base da fonte para o descriptor.
-   Acrescente "/FontFile2 " junto com o número deste stream seguido de " 0 R" para o descriptor.
-   Acrescente "/Flags " junto com o valor de configuração desta definição da fonte para o descriptor.
-   []\Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor. \ verificar
-   Acrescente "/Ascent " junto com o valor da ascensão desta definição da fonte para o descriptor.
-   Acrescente "/Descent " junto com o valor da descensão desta definição da fonte para o descriptor.
-   Acrescente "/CapHeight " junto com o valor da altura desta definição da fonte para o descriptor.
-   Acrescente "/ItalicAngle " junto com o valor do ângulo itálico desta definição da fonte para o descriptor.
-   Acrescente "/StemV " junto com o valor da largura vertical desta definição da fonte para o descriptor.
-   Acrescente ">>" para o descriptor.
-   Acrescente "endobj" para o descriptor.
+  Acrescente o número deste descriptor seguido de " 0 obj" para o descriptor.
+  Acrescente "<<" para o descriptor.
+  Acrescente "/Type /FontDescriptor" para o descriptor.
+  Acrescente "/FontName /" junto com o nome base da fonte para o descriptor.
+  Acrescente "/FontFile2 " junto com o número deste stream seguido de " 0 R" para o descriptor.
+  Acrescente "/Flags " junto com o valor de configuração desta definição da fonte para o descriptor.
+  []\Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor. \ verificar
+  Acrescente "/Ascent " junto com o valor da ascensão desta definição da fonte para o descriptor.
+  Acrescente "/Descent " junto com o valor da descensão desta definição da fonte para o descriptor.
+  Acrescente "/CapHeight " junto com o valor da altura desta definição da fonte para o descriptor.
+  Acrescente "/ItalicAngle " junto com o valor do ângulo itálico desta definição da fonte para o descriptor.
+  Acrescente "/StemV " junto com o valor da largura vertical desta definição da fonte para o descriptor.
+  Acrescente ">>" para o descriptor.
+  Acrescente "endobj" para o descriptor.
   \ definition
   Adicione um definition objeto pdf denominado definition usando "fonte definition".
   Atribua o nome da fonte ao nome da fonte desta definition.
-   Acrescente o número desta definition seguido de " 0 obj" para a definition.
-   Acrescente "<<" para a definition.
-   Acrescente "/Type /Font" para a definition.
-   Acrescente "/Subtype /TrueType" para a definition.
-   Acrescente "/Nomeie /" junto com o nome da fonte para a definition.
-   Acrescente "/BaseFont /" junto com o nome base da fonte para a definition.
-   Acrescente "/Encoding /WinAnsiEncoding" para a definition.
-   Acrescente "/FontDescriptor " junto com o número deste descriptor seguido de " 0 R" para a definition.
-   Acrescente "/FirstChar 0" para a definition.
-   Acrescente "/LastChar 255" para a definition.
+  Acrescente o número desta definition seguido de " 0 obj" para a definition.
+  Acrescente "<<" para a definition.
+  Acrescente "/Type /Font" para a definition.
+  Acrescente "/Subtype /TrueType" para a definition.
+  Acrescente "/Nomeie /" junto com o nome da fonte para a definition.
+  Acrescente "/BaseFont /" junto com o nome base da fonte para a definition.
+  Acrescente "/Encoding /WinAnsiEncoding" para a definition.
+  Acrescente "/FontDescriptor " junto com o número deste descriptor seguido de " 0 R" para a definition.
+  Acrescente "/FirstChar 0" para a definition.
+  Acrescente "/LastChar 255" para a definition.
   Atribua as larguras de fonte desta definição da fonte para um segundo trecho.
-   []\Acrescente "/Widths [" para a definition.
-   []\Acrescente o segundo trecho seguido de "]" para a definition.
-   []\Acrescente ">>" para a definition.
-   []\Acrescente "endobj" para a definition.
+  Acrescente "/Widths [" para a definition.
+  Acrescente o segundo trecho seguido de "]" para a definition.
+  Acrescente ">>" para a definition.
+  Acrescente "endobj" para a definition.
   Atribua a definição da fonte à definição da fonte desta definition.
-   []\Catalogue a definition usando o nome desta fonte e a catálogo de fontes deste pdf state.
+  Catalogue a definition usando o nome desta fonte e a catálogo de fontes deste pdf state.
 
 Rotina para que se include uma fonte em um objeto pdf:
   Se o objeto pdf for inexistente, retorne.
@@ -9293,53 +9293,53 @@ Rotina para que se encontre um objeto pdf usando um categoria:
 Rotina para que se end uma folha (modo pdf - finalização da do conteúdo atual):
   Atribua os conteúdos atuais deste pdf state para um content objeto pdf.
   Atribua os data deste content objeto pdf para um trecho.
-   []\Limpe os data deste content objeto pdf.
-   []\Acrescente o número deste content objeto pdf seguido de " 0 obj" para o content.
-   []\Acrescente "<</Length " junto com a quantidade de caracteres deste trecho seguido de " >>" para o content objeto pdf.
+  Limpe os data trecho deste content objeto pdf.
+  Acrescente o número deste content objeto pdf seguido de " 0 obj" para o content objeto pdf.
+  Acrescente "<</Length " junto com a quantidade de caracteres deste trecho seguido de " >>" para o content objeto pdf.
   Acrescente "stream" para o content objeto pdf.
-   []\Acrescente o trecho para os data deste content objeto pdf.
+  Acrescente o trecho para os data trecho deste content objeto pdf.
   Acrescente "endstream" para o content objeto pdf.
   Acrescente "endobj" para o content objeto pdf.
   Desative a sinalizador de páginas deste pdf state.
 
 Rotina para que se end uma folha (modo pdf - finalização da página atual - fontes):
-  Atribua a página atual deste pdf state para uma página objeto pdf.
-  []\Se as textos de fonte desta página estiverem vazias, retorne.
-  []\Acrescente "/Font <<" para a página sem passar pra próxima linha.
+  Atribua a página atual deste pdf state para uma página objeto pdf denominada página.
+  Se as textos de fonte desta página estiverem vazias, retorne.
+  Acrescente "/Font <<" para a página sem passar pra próxima linha.
   Itere.
-   []\ Obtenha um conjunto de texto desde as textos de fonte desta página.
-    []\Se o conjunto de texto for inexistente, pare.
+    Obtenha um conjunto de texto desde as textos de fonte desta página.
+    Se o conjunto de texto for inexistente, pare.
     Se um sinalizador estiver ativo, 
-      []\Acrescente " " para a página sem passar pra próxima linha.
-    []\Acrescente a string deste conjunto de texto para a página sem passar pra próxima linha.
-    []\Ative o sinalizador.
+      Acrescente " " para a página sem passar pra próxima linha.
+    Acrescente a string deste conjunto de texto para a página sem passar pra próxima linha.
+    []\Ative o sinalizador. \ verificar
   Reitere.
-  []\Acrescente ">>" para a página.
+  Acrescente ">>" para a página.
 
 Rotina para que se end uma folha (modo pdf - finalização da página atual - recursos):
-  Atribua a página atual deste pdf state para uma página objeto pdf.
-  []\Se as textos de imagem desta página estiverem vazias, retorne.
-  []\Acrescente "/XObject <<" para a página sem passar pra próxima linha.
+  Atribua a página atual deste pdf state para uma página objeto pdf denominada página.
+  Se os textos de imagem desta página estiverem vazias, retorne.
+  Acrescente "/XObject <<" para a página sem passar pra próxima linha.
   Itere.
-    []\Obtenha um conjunto de texto desde as textos de imagem desta página.
-    []\Se o conjunto de texto for inexistente, pare.
+    Obtenha um conjunto de texto desde as textos de imagem desta página.
+    Se o conjunto de texto for inexistente, pare.
     Se um sinalizador estiver ativo, 
-      []\Acrescente " " para a página sem passar pra próxima linha.
-    []\Acrescente a string deste conjunto de texto para a página sem passar pra próxima linha.
+      Acrescente " " para a página sem passar pra próxima linha.
+    Acrescente a string deste conjunto de texto para a página sem passar pra próxima linha.
     []\Ative o sinalizador.
   Reitere.
-  []\Acrescente ">>" para a página.
+  Acrescente ">>" para a página.
 
 Rotina para que se end uma folha (modo pdf - finalização da página atual):
-  Atribua a página atual deste pdf state para uma página objeto pdf.
-  []\Acrescente "/Resources" para a página.
-  []\Acrescente "<<" para a página.
-  []\Acrescente "/ProcSet [/PDF /Text /ImageC]" para a página.
+  Atribua a página atual deste pdf state para uma página objeto pdf denominada página.
+  Acrescente "/Resources" para a página.
+  Acrescente "<<" para a página.
+  Acrescente "/ProcSet [/PDF /Text /ImageC]" para a página.
   End a folha (modo pdf - finalização da página atual - fontes).
   End a folha (modo pdf - finalização da página atual - recursos).
-  []\Acrescente ">>" para a página. \ end resources
-  []\Acrescente ">>" para a página. \ end página
-  []\Acrescente "endobj" para a página.
+  Acrescente ">>" para a página. \ end resources
+  Acrescente ">>" para a página. \ end página
+  Acrescente "endobj" para a página.
 
 Rotina para que se end uma folha (modo pdf):
   End a folha (modo pdf - finalização da página atual).
@@ -9380,7 +9380,7 @@ Rotina para que se acabe de imprimir um pdf:
 
 Rotina para que se acabe de imprimir um pdf (inserção de rodapé):
   Acrescente "startxref" junto com o texto CRLF para o pdf.
-  []\Acrescente o deslocamento da tabela XREF deste pdf state junto com o texto CRLF para o pdf.
+  Acrescente o deslocamento da tabela XREF deste pdf state junto com o texto CRLF para o pdf.
   Acrescente "%%EOF" para o pdf.
 
 Rotina para que se acabe de imprimir um pdf (inserção de cabeçalho):
@@ -9401,19 +9401,19 @@ Rotina para que se acabe de imprimir um pdf (inserção de marcadores):
   Itere.
     Obtenha um marcador pdf desde os marcadores deste pdf state.
     Se o marcador pdf for inexistente, retorne.
-    Atribua o objeto pdf desta marcador pdf para um object objeto pdf.
-    []\Acrescente o número deste object seguido de " 0 obj" para o object.
-    []\Acrescente "<<" para o object.
+    Atribua o objeto pdf desta marcador pdf para um object objeto pdf denominado object.
+    Acrescente o número deste object seguido de " 0 obj" para o object.
+    Acrescente "<<" para o object.
     Converta o título de índice remissivo deste marcador pdf para uma string formatada.
-    []\Acrescente "/Title " junto com a string formatada para o object.
-    []\Acrescente "/Parent " junto com o número deste marcador do pdf deste pdf state seguido de " 0 R" para o object.
-    []\Se o próximo marcador pdf desta marcador pdf não for inexistente,
-      []\Acrescente "/Next " junto com o número deste objeto pdf deste próximo marcador pdf deste marcador pdf seguido de " 0 R" para o object.
+    Acrescente "/Title " junto com a string formatada para o object.
+    Acrescente "/Parent " junto com o número deste marcador do pdf deste pdf state seguido de " 0 R" para o object.
+    Se o próximo marcador pdf desta marcador pdf não for inexistente,
+      Acrescente "/Next " junto com o número deste objeto pdf deste próximo marcador pdf deste marcador pdf seguido de " 0 R" para o object.
     Se o marcador pdf anterior desta marcador pdf não for inexistente,
-      []\Acrescente "/Prev " junto com o número deste objeto pdf deste marcador pdf anterior deste marcador pdf seguido de " 0 R" para o object.
-    []\Acrescente "/Dest [" junto com a destinação deste marcador pdf seguido de " 0 R /XYZ null " junto com a altura da página deste marcador pdf seguido de " null]" para o object.
-    []\Acrescente ">>" para o object.
-    []\Acrescente "endobj" para o object.
+      Acrescente "/Prev " junto com o número deste objeto pdf deste marcador pdf anterior deste marcador pdf seguido de " 0 R" para o object.
+    Acrescente "/Dest [" junto com a destinação deste marcador pdf seguido de " 0 R /XYZ null " junto com a altura da página deste marcador pdf seguido de " null]" para o object.
+    Acrescente ">>" para o object.
+    Acrescente "endobj" para o object.
   Reitere.
 
 Rotina para que se acabe de imprimir um pdf (inserção de índice):
@@ -9422,12 +9422,12 @@ Rotina para que se acabe de imprimir um pdf (inserção de índice):
   Adicione um marcador do pdf usando "outline".
   Atribua o marcador do pdf ao marcador do pdf deste pdf state.
   Acabe de imprimir o pdf (inserção de marcadores).
-  []\Acrescente o número deste marcador do pdf seguido de " 0 obj" para o marcador do pdf.
-  []\Acrescente "<<" para o marcador do pdf.
-  []\Acrescente "/Type /Outlines" para o marcador do pdf.
-  []\Acrescente "/First " junto com o número deste objeto pdf deste primeiro marcador pdf destes marcadores deste pdf state seguido de " 0 R" para o marcador do pdf.
-  []\Acrescente "/Last " junto com o número deste objeto pdf deste último marcador pdf destes marcadores deste pdf state seguido de " 0 R" para o marcador do pdf .
-  []\Acrescente "/Count " junto com a contagem destes marcadores deste pdf state para o marcador do pdf.
+  Acrescente o número deste marcador do pdf seguido de " 0 obj" para o marcador do pdf.
+  Acrescente "<<" para o marcador do pdf.
+  Acrescente "/Type /Outlines" para o marcador do pdf.
+  Acrescente "/First " junto com o número deste objeto pdf deste primeiro marcador pdf destes marcadores deste pdf state seguido de " 0 R" para o marcador do pdf.
+  Acrescente "/Last " junto com o número deste objeto pdf deste último marcador pdf destes marcadores deste pdf state seguido de " 0 R" para o marcador do pdf .
+  Acrescente "/Count " junto com a contagem destes marcadores deste pdf state para o marcador do pdf.
   Acrescente ">>" para o marcador do pdf.
   Acrescente "endobj" para o marcador do pdf.
 
@@ -9435,8 +9435,8 @@ Rotina para que se acabe de imprimir um pdf (inserção do trailer):
   Acrescente "trailer" junto com o texto CRLF para o pdf.
   Acrescente "<<" junto com o texto CRLF para o pdf.
   Atribua a contagem destes objetos deste pdf state mais 1 para uma contagem.
-  []\Acrescente "/Size " junto com a contagem junto com o texto CRLF para o pdf.
-  []\Acrescente "/Root " junto com o número deste objeto da raiz deste pdf state seguido de " 0 R" junto com o texto CRLF para o pdf.
+  Acrescente "/Size " junto com a contagem junto com o texto CRLF para o pdf.
+  Acrescente "/Root " junto com o número deste objeto da raiz deste pdf state seguido de " 0 R" junto com o texto CRLF para o pdf.
   Acrescente ">>" junto com o texto CRLF para o pdf.
   Acrescente o texto CRLF para o pdf.
 
@@ -9444,7 +9444,7 @@ Rotina para que se acabe de imprimir um pdf (inserção de tabela XREF):
   Atribua a quantidade de caracteres deste pdf ao deslocamento da tabela XREF deste pdf state.
   Acrescente "xref" junto com o texto CRLF para o pdf.
   Atribua a contagem destes objetos deste pdf state mais 1 para uma contagem.
-  []\Acrescente "0 " junto com a contagem junto com o texto CRLF para o pdf.
+  Acrescente "0 " junto com a contagem junto com o texto CRLF para o pdf.
   Acrescente "0000000000 65535 f" junto com o texto CRLF para o pdf. \ generation number
   Itere.
     Obtenha um objeto pdf desde os objetos deste pdf state.
@@ -9463,25 +9463,25 @@ Rotina para que se acabe de imprimir um pdf (finalização do objeto pai):
     Se a categoria deste objeto pdf não for "page", reitere.
     Se um sinalizador estiver ativo,
       Acrescente " " para o objeto pai sem passar pra próxima linha.
-    []\Acrescente o número deste objeto pdf seguido de " 0 R" para o objeto pai sem passar pra próxima linha.
+    Acrescente o número deste objeto pdf seguido de " 0 R" para o objeto pai sem passar pra próxima linha.
     []\Ative o sinalizador.
     Adicione 1 para uma contagem.
     Se a contagem for uniformemente divisível por 20,
       Acrescente o texto CRLF seguido de " " para o objeto pai sem passar pra próxima linha.
   Reitere.
   Acrescente "]" para o objeto pai.
-  []\Acrescente "/Count " junto com a contagem para o objeto pai.
+  Acrescente "/Count " junto com a contagem para o objeto pai.
   Acrescente ">>" para o objeto pai.
   Acrescente "endobj" para o objeto pai.
 
 Rotina para que se acabe de imprimir um pdf (finalização do objeto raiz):
   Atribua o objeto da raiz deste pdf state para um objeto da raiz.
-  []\Acrescente "/Pages " junto com o número deste objeto pai deste pdf state seguido de " 0 R" para o objeto da raiz.
+  Acrescente "/Pages " junto com o número deste objeto pai deste pdf state seguido de " 0 R" para o objeto da raiz.
   Encontre um objeto pdf usando "page".
-  []\Acrescente "/OpenAction [" junto com o número deste objeto pdf seguido de " 0 R /XYZ null null 1]" para o objeto da raiz.
+  Acrescente "/OpenAction [" junto com o número deste objeto pdf seguido de " 0 R /XYZ null null 1]" para o objeto da raiz.
   Acrescente "/PageMode /UseNone" para o objeto da raiz.
   Se o marcador do pdf deste pdf state não for inexistente,
-    []\Acrescente "/Outlines " junto com o número deste marcador do pdf deste pdf state seguido de " 0 R" para o objeto da raiz.
+    Acrescente "/Outlines " junto com o número deste marcador do pdf deste pdf state seguido de " 0 R" para o objeto da raiz.
   Acrescente ">>" para o objeto da raiz.
   Acrescente "endobj" para o objeto da raiz.
 
@@ -9498,21 +9498,21 @@ Rotina para que se pinte uma string sob uma localização com uma cor e uma fonte 
   Preserve a localização.
   Include a fonte no current pdf.
   Include a fonte na página atual deste pdf state.
-  Encontre um definition objeto pdf usando o nome desta fonte e a catálogo de fontes deste pdf state.
-  []\Se o definition for inexistente, retorne. \ erro
+  Encontre um definition objeto pdf denominado definition usando o nome desta fonte e a catálogo de fontes deste pdf state.
+  Se o definition for inexistente, retorne. \ erro
   Crie uma definição da fonte usando a fonte e a string.
   Transcreva o borda do pdf usando a cor.
   Transcreva o preenchimento do pdf usando a cor.
   Transcreva "BT".
-  []\Transcreva "/" junto com o nome da fonte desta definition seguido de " " junto com a adjusted altura desta fonte seguido de " Tf".
-\ Adicione a adjusted altura desta fonte menos o valor de espaçamento desta definição da fonte para o a coordenada Y desta localização. \ Errado
+  Transcreva "/" junto com o nome da fonte desta definition seguido de " " junto com a adjusted altura desta fonte seguido de " Tf".
+  \ Adicione a adjusted altura desta fonte menos o valor de espaçamento desta definição da fonte para o a coordenada Y desta localização. \ Errado
   Adicione o valor da ascensão desta definição da fonte para a coordenada Y desta localização. \ Certo. Necessário para a linha ficar em cima
   Transcreva a localização sem passar pra próxima linha.
   Transcreva "Td".
   Transcreva "[" sem passar pra próxima linha.
   Converta a definição da fonte para pdf em units.
-  []\Converta a string e a definição da fonte e a definição da fonte desta definition para um trecho por pdf output.
-  []\Transcreva o trecho sem passar pra próxima linha.
+  Converta a string e a definição da fonte e a definição da fonte desta definition para um trecho por pdf output.
+  Transcreva o trecho sem passar pra próxima linha.
   Transcreva "]" sem passar pra próxima linha.
   Transcreva " TJ".
   Transcreva "ET".
@@ -9529,26 +9529,25 @@ Rotina para que se pinte uma string sob uma localização com uma cor e uma fonte:
   Atribua o caractere inicial deste subtexto mais a delimitação de corte textual menos 1 ao caractere final deste subtexto.
   Preserve a localização.
   Itere.
-    []\Se o subtexto estiver em branco, pare.
-    []\Se o caractere final deste subtexto for maior do que o caractere final desta string, 
+    Se o subtexto estiver em branco, pare.
+    Se o caractere final deste subtexto for maior do que o caractere final desta string, 
       Atribua o caractere final desta string ao caractere final deste subtexto.
     Processe "gdi32.dll" "TextOutA" com
-  \ Grava uma sequência de caracteres no DC especificado, usando a fonte, a cor de fundo e a cor do texto atualmente selecionadas.
+    \ Grava uma sequência de caracteres no DC especificado, usando a fonte, a cor de fundo e a cor do texto atualmente selecionadas.
     \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-textouta
       O contexto do dispositivo atual [hdc]
       e A coordenada X desta localização [x]
       e A coordenada Y desta localização [y]
-      []\e O caractere inicial deste subtexto [lpString]
-      []\e A quantidade de caracteres deste subtexto
-      . [c]
-    []\Obtenha uma largura usando o subtexto e o contexto do dispositivo atual.
-    []\Adicione a largura para a coordenada X desta localização.
-    []\Mova o subtexto usando a delimitação de corte textual.
+      e O caractere inicial deste subtexto [lpString]
+      e A quantidade de caracteres deste subtexto. [c]
+    Obtenha uma largura usando o subtexto e o contexto do dispositivo atual.
+    Adicione a largura para a coordenada X desta localização.
+    Mova o subtexto usando a delimitação de corte textual.
   Reitere.
   Destrua o número da fonte desse contexto do dispositivo atual.
 
 Rotina para que se pinte uma caixa arredondada com uma cor da borda e uma cor de preenchimento (modo pdf):
-  []\Se a cor da borda e a cor de preenchimento são clear, retorne.
+  Se a cor da borda e a cor de preenchimento são clear, retorne.
   Se o raio desta caixa arredondada for 0,
     Pinte a caixa arredondada tal como uma caixa com a cor da borda e a cor de preenchimento (modo pdf);
     Retorne.
@@ -9610,7 +9609,7 @@ Rotina para que se pinte um polígono com uma cor denominada cor da borda e uma c
 
 Rotina para que se pinte um polígono com uma cor denominada cor da borda e uma cor denominada cor de preenchimento (modo pdf):
   Se o polígono for inexistente, retorne.
-  []\Se a cor da borda e a cor de preenchimento forem clear, retorne.
+  Se a cor da borda e a cor de preenchimento forem clear, retorne.
   Transcreva setcolor usando a cor da borda e a cor de preenchimento.
   Obtenha um vértice desde os vértices deste polígono.
   Se o vértice for inexistente, retorne.
@@ -9681,10 +9680,10 @@ Rotina para que se pinte uma imagem (modo pdf):
 
 Rotina para que se pinte uma linha reta com uma cor (modo pdf):
   Se a cor for clear, retorne.
-  []\Transcreva setcolor usando a cor e a cor preta.
+  Transcreva setcolor usando a cor e a cor preta.
   Transcreva moveto usando a localização inicial desta linha reta.
   Transcreva lineto usando a localização final desta linha reta.
-  []\Transcreva stroke e preencha usando a cor e a cor preta.
+  Transcreva stroke e preencha usando a cor e a cor preta.
 
 Rotina para que se pinte uma linha reta com uma cor:
   Se a sinalizador de páginas deste pdf state estiver ativo,
@@ -9717,45 +9716,45 @@ Rotina para que se pinte uma linha reta com uma cor:
 Rotina para que se pinte um gpBitmap sob uma localização (modo pdf):
   Se o gpBitmap for inexistente, retorne.
   \ adicione xobject
-  Adicione um xobject objeto pdf usando "image object".
+  Adicione um xobject objeto pdf denominado xobject usando "image object".
   Atribua "I" junto com o número deste xobject para um nome.
   \ adicione para image resources em página atual
   Atribua "/" junto com o nome seguido de " " junto com o número deste xobject seguido de " 0 R" para uma string.
   Crie um new conjunto de texto usando a string.
   Acrescente o new conjunto de texto para os textos de imagem desta página atual deste pdf state.
   \ finish setting para cima xobject
-  []\Acrescente o número deste xobject seguido de " 0 obj" para o xobject.
-  []\Acrescente "<<" para o xobject.
-  []\Acrescente "/Type /XObject" para o xobject.
-  []\Acrescente "/Subtype /Image" para o xobject.
-  []\Acrescente "/ColorSpace /DeviceRGB" para o xobject.
-  []\Acrescente "/Width " junto com a largura deste gpBitmap para o xobject.
-  []\Acrescente "/Height " junto com a altura deste gpBitmap para o xobject.
-  []\Acrescente "/BitsPerComponent 8" para o xobject.
+  Acrescente o número deste xobject seguido de " 0 obj" para o xobject.
+  Acrescente "<<" para o xobject.
+  Acrescente "/Type /XObject" para o xobject.
+  Acrescente "/Subtype /Image" para o xobject.
+  Acrescente "/ColorSpace /DeviceRGB" para o xobject.
+  Acrescente "/Width " junto com a largura deste gpBitmap para o xobject.
+  Acrescente "/Height " junto com a altura deste gpBitmap para o xobject.
+  Acrescente "/BitsPerComponent 8" para o xobject.
   Converta o gpBitmap para um trecho (modo pdf).
   Converta o trecho para uma cifra hexadecimal.
-  []\Acrescente "/Filter /ASCIIHexDecode" para o xobject.
-  []\Acrescente "/Length " junto com a quantidade de caracteres deste cifra hexadecimal para o xobject.
-  []\Acrescente ">>" para o xobject.
-  []\Acrescente "stream" para o xobject.
-  []\Acrescente a cifra hexadecimal para o xobject.
-  []\Acrescente "endstream" para o xobject.
-  []\Acrescente "endobj" para o xobject.
+  Acrescente "/Filter /ASCIIHexDecode" para o xobject.
+  Acrescente "/Length " junto com a quantidade de caracteres deste cifra hexadecimal para o xobject.
+  Acrescente ">>" para o xobject.
+  Acrescente "stream" para o xobject.
+  Acrescente a cifra hexadecimal para o xobject.
+  Acrescente "endstream" para o xobject.
+  Acrescente "endobj" para o xobject.
   \ pinte o image no conteúdos atuais
   Atribua a largura deste gpBitmap vezes a quantidade de twips/pixel para uma largura.
   Atribua a altura deste gpBitmap vezes a quantidade de twips/pixel para uma altura.
   Atribua a coordenada X desta localização para um número X.
   Atribua a altura atual deste pdf state menos a coordenada Y desta localização menos a altura para um número Y.
   Transcreva "q".
-  []\Transcreva a largura seguido de " 0 0 " junto com a altura seguido de " " junto com o número X seguido de " " junto com o número Y seguido de " cm".
+  Transcreva a largura seguido de " 0 0 " junto com a altura seguido de " " junto com o número X seguido de " " junto com o número Y seguido de " cm".
   Transcreva "/" junto com o nome seguido de " Do".
   Transcreva "Q".
 
 Rotina para que se pinte uma elipse com uma cor da borda e uma cor de preenchimento (modo pdf):
-  []\Se a cor da borda e a cor de preenchimento são clear, retorne.
+  Se a cor da borda e a cor de preenchimento são clear, retorne.
   Transcreva setcolor usando a cor da borda e a cor de preenchimento.
   Atribua a coordenada X1 desta elipse e a coordenada Y1 desta elipse para uma localização.
-  []\Adicione o y-extent desta elipse dividido por 2 para a coordenada Y desta localização.
+  Adicione o y-extent desta elipse dividido por 2 para a coordenada Y desta localização.
   Transcreva moveto usando a localização.
   Transcreva o arco dessa elipse usando "canto superior esquerdo". \ 
   Transcreva o arco dessa elipse usando "canto superior direito".
@@ -9765,7 +9764,7 @@ Rotina para que se pinte uma elipse com uma cor da borda e uma cor de preenchime
 
 Rotina para que se pinte uma elipse com uma cor denominada cor da borda e uma cor denominada cor de preenchimento:
   Se a sinalizador de páginas deste pdf state estiver ativo,
-    []\Pinte a elipse com a cor da borda e a cor de preenchimento (modo pdf);
+    []\Pinte a elipse com a cor da borda e a cor de preenchimento (modo pdf); \ verificar
     Retorne.
   Preserve a elipse.
   Crie o hPen desse contexto do dispositivo atual usando a cor da borda.
@@ -9784,13 +9783,13 @@ Rotina para que se pinte uma elipse com uma cor denominada cor da borda e uma co
   Destrua o hPen desse contexto do dispositivo atual.
 
 Rotina para que se pinte uma caixa com uma cor denominada cor da borda e uma cor denominada cor de preenchimento (modo pdf):
-  []\[Se a cor da borda e a cor de preenchimento forem clear, retorne.]
-  []\[Transcreva setcolor usando a cor da borda e a cor de preenchimento.]
+  Se a cor da borda e a cor de preenchimento forem clear, retorne.
+  Transcreva setcolor usando a cor da borda e a cor de preenchimento.
   Transcreva o canto inferior esquerdo desta caixa sem passar pra próxima linha.
   Transcreva o x-extent desta caixa sem passar pra próxima linha.
   Transcreva o y-extent desta caixa sem passar pra próxima linha.
   Transcreva "re".
-  []\Transcreva stroke e preencha usando a cor da borda e a cor de preenchimento.
+  Transcreva stroke e preencha usando a cor da borda e a cor de preenchimento.
 
 Rotina para que se pinte uma caixa com uma cor denominada cor da borda e uma cor denominada cor de preenchimento:
   Se a sinalizador de páginas deste pdf state estiver ativo,
@@ -9858,7 +9857,7 @@ Rotina para que se converta uma string e um actual definição da fonte e um origi
       Adicione 1 para o current byte#; 
       Reitere.
     Converta o subtexto para uma string formatada.
-    []\Acrescente a string formatada seguido de " " junto com o offset seguido de " " para o trecho.
+    Acrescente a string formatada seguido de " " junto com o offset seguido de " " para o trecho.
     Atribua o caractere final deste subtexto mais 1 ao caractere final deste subtexto.
     Atribua o caractere final deste subtexto ao caractere inicial deste subtexto.
     Adicione 1 para o current byte#.
@@ -9868,7 +9867,7 @@ Rotina para que se converta uma string e um actual definição da fonte e um origi
   Acrescente a segunda string formatada para o trecho.
 
 Rotina para que se converta um número para pdf em units usando um tamanho UPM e uma fonte:
-  []\Multiplique o número pelo tamanho UPM / a adjusted altura desta fonte.
+  Multiplique o número pelo tamanho UPM / a adjusted altura desta fonte.
   Multiplique o número por 1000 / o tamanho UPM.
 
 Rotina para que se converta um gpBitmap para um trecho (modo pdf):
@@ -9883,9 +9882,9 @@ Rotina para que se converta um gpBitmap para um trecho (modo pdf):
     Adicione 1 para o número da linha.
     Se o número da linha for maior do que a altura deste BitmapData, pare.
     Obtenha um ponteiro RGB desde o BitmapData sob o número da linha e o número de coluna.
-    []\Acrescente o espectro vermelho deste ponteiro RGB para o trecho.
-    []\Acrescente o espectro verde deste ponteiro RGB para o trecho.
-    []\Acrescente o espectro azul deste ponteiro RGB para o trecho.
+    Acrescente o espectro vermelho deste ponteiro RGB para o trecho.
+    Acrescente o espectro verde deste ponteiro RGB para o trecho.
+    Acrescente o espectro azul deste ponteiro RGB para o trecho.
     Adicione 1 para o número de coluna.
   Reitere.
   Desbloqueie o gpBitmap usando o BitmapData.
@@ -9913,31 +9912,31 @@ Rotina para que se converta umas larguras de fonte para pdf em units:
 
 Rotina para que se converta uma definição da fonte para pdf em units:
   Se a definição da fonte for inexistente, retorne.
-  []\Converta o valor de espaçamento desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
-  []\Converta o valor da ascensão desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
-  []\Converta o valor da descensão desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
-  []\Converta o valor da altura desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta o valor de espaçamento desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta o valor da ascensão desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta o valor da descensão desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta o valor da altura desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
   \ Converta o italicangle desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte. \não sei porque está comentado
-  []\Converta o valor da largura vertical desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
-  []\Converta a coordenada X1 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
-  []\Converta a coordenada Y1 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
-  []\Converta a coordenada X2 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
-  []\Converta a coordenada Y2 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta o valor da largura vertical desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta a coordenada X1 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta a coordenada Y1 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta a coordenada X2 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
+  Converta a coordenada Y2 desta caixa de fonte desta definição da fonte para pdf em units usando o tamanho UPM desta definição da fonte e a fonte desta definição da fonte.
   Permute a coordenada Y1 desta caixa de fonte desta definição da fonte com a coordenada Y2 desta caixa de fonte desta definição da fonte.
   Converta as larguras de fonte desta definição da fonte para pdf em units.
 
 Rotina para que se inicie uma folha usando uma caixa e um título de índice remissivo (pdf style - comece o página atual):
   Adicione o página atual deste pdf state usando "page".
-  []\Acrescente o número desta página atual deste pdf state seguido de " 0 obj" para o página atual deste pdf state.
-  []\Acrescente "<<" para o página atual deste pdf state.
+  Acrescente o número desta página atual deste pdf state seguido de " 0 obj" para o página atual deste pdf state.
+  Acrescente "<<" para o página atual deste pdf state.
   Acrescente "/Type /Page" para o página atual deste pdf state.
-  []\Acrescente "/Parent " junto com o número deste objeto pai deste pdf state seguido de " 0 R" para a página atual deste pdf state.
+  Acrescente "/Parent " junto com o número deste objeto pai deste pdf state seguido de " 0 R" para a página atual deste pdf state.
   Atribua a largura desta caixa menos a quantidade de twips/pixel vezes 72 / o tpi para uma largura.
   Atribua a altura desta caixa menos a quantidade de twips/pixel vezes 72 / o tpi para uma altura.
-  []\Acrescente "/MediaBox [0 0 " junto com a largura seguido de " " junto com a altura seguido de "]" para a página atual deste pdf state.
+  Acrescente "/MediaBox [0 0 " junto com a largura seguido de " " junto com a altura seguido de "]" para a página atual deste pdf state.
   Atribua a altura desta caixa menos a quantidade de twips/pixel para a altura atual deste pdf state.
   Adicione os conteúdos atuais deste pdf state usando "contents".
-  []\Acrescente "/Contents " junto com o número destes conteúdos atuais deste pdf state seguido de " 0 R" para a página atual deste pdf state.
+  Acrescente "/Contents " junto com o número destes conteúdos atuais deste pdf state seguido de " 0 R" para a página atual deste pdf state.
   Acrescente "0.05 0 0 0.05 1 1 cm" para os conteúdos atuais deste pdf state. \ open matrix to scale 72/1440
   Acrescente "13 w 0 J 0 j 0 i" para os conteúdos atuais deste pdf state. \ penwidth, linecap, linejoin, flatness \ 15 w sobre penwidth comes out to em largura
 
