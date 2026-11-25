@@ -4915,7 +4915,7 @@ Rotina para que se pinte uma string com uma cor no meio de uma caixa:
   Atribua a quantidade de caracteres desta string vezes o tamanho do quadrado vezes 3 menos o tamanho do quadrado para uma largura.
   Divida a largura por 2.
   Comece no meio dessa caixa.
-  []\Mova para baixo a tamanho da letra deste contexto dividido por 2. \ was 2 ***
+  Mova para baixo a tamanho da letra deste contexto dividido por 2. \ was 2 ***
   Mova a largura para a esquerda.
   Vire para cima.
   Pinte a string com a cor.
@@ -4931,10 +4931,10 @@ Rotina para que se escreva uma string com uma fonte e um tamanho e uma cor e uma
   Atribua o tamanho à altura desta fonte.
   Atribua a largura desta string para uma largura.
   Atribua a localização e a localização para uma caixa.
-  []\Subtraia a largura dividido por 2 desde a coordenada X1 desta caixa.
-  []\Adicione a largura dividido por 2 para a coordenada X2 desta caixa.
-  []\Subtraia o tamanho dividido por 2 desde a coordenada Y1 desta caixa.
-  []\Adicione o tamanho dividido por 2 para a coordenada Y2 desta caixa.
+  Subtraia a largura dividido por 2 desde a coordenada X1 desta caixa.
+  Adicione a largura dividido por 2 para a coordenada X2 desta caixa.
+  Subtraia o tamanho dividido por 2 desde a coordenada Y1 desta caixa.
+  Adicione o tamanho dividido por 2 para a coordenada Y2 desta caixa.
   Pinte a string na caixa com a cor e a fonte e "centralizado".
   Atualize a tela.
 
@@ -4977,9 +4977,9 @@ Rotina para que se remova bytes de uma string usando um subtexto:
   Se o subtexto estiver em branco, retorne.
   Atribua o caractere final desta string menos o caractere final deste subtexto para uma quantidade de caracteres.
   Atribua o caractere final deste subtexto mais 1 para um ponteiro.
-  []\Copie bytes desde o ponteiro para o caractere inicial deste subtexto pela quantidade de caracteres.
+  Copie bytes desde o ponteiro para o caractere inicial deste subtexto pela quantidade de caracteres.
   Atribua a quantidade de caracteres desta string menos a quantidade de caracteres deste subtexto para uma nova quantidade de caracteres.
-  []\Reaponte o caractere inicial desta string usando a nova quantidade de caracteres.
+  Reaponte o caractere inicial desta string usando a nova quantidade de caracteres.
   Atribua o caractere inicial desta string mais a nova quantidade de caracteres menos 1 ao caractere final desta string.
 
 Rotina para que se escreva um número para o fluxo de saída:
@@ -5045,7 +5045,7 @@ Rotina para que se atribua stdin para um trecho:
     \Retorne.
   Converta o valor da díade para uma quantidade de caracteres.
   Se a quantidade de caracteres for 0, retorne.
-  []\Reaponte o caractere inicial deste trecho usando a quantidade de caracteres.
+  Reaponte o caractere inicial deste trecho usando a quantidade de caracteres.
   Processe "kernel32.dll" "ReadFile" com
   \Lê dados do arquivo especificado ou dispositivo de entrada / saída (E / S).
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/fileapi/nf-fileapi-readfile
@@ -5114,7 +5114,7 @@ Rotina para que se leia um endereço completo para um trecho:
     O número identificador [hFile]
     e nil [lpFileSizeHigh]
   Retornando um tamanho.
-  []\Reaponte o caractere inicial deste trecho usando o tamanho.
+  Reaponte o caractere inicial deste trecho usando o tamanho.
   Atribua o caractere inicial deste trecho mais o tamanho menos 1 ao caractere final deste trecho.
   Processe "kernel32.dll" "ReadFile" com
   \Lê dados do arquivo especificado ou dispositivo de entrada / saída (E / S).
@@ -5151,7 +5151,7 @@ Rotina para que se leia um texto retornado desde um terminal:
     Limpe o texto retornado;
     Retorne.
   Desmanche todos os eventos.
-  []\Limpe o texto retornado deste terminal.
+  Limpe o texto retornado deste terminal.
   Adicione um quora para o terminal.
   Atribua "> " à string deste quora. \ isso aqui pode ajudar
   Atribua a cor de entrada deste terminal à cor deste quora.
@@ -5194,7 +5194,7 @@ Rotina para que se leia um arquivo para um trecho:
     O arquivo [hFile]
     e nil [lpFileSizeHigh] \ o tamanho do arquivo. Pode ser NULL
   Retornando um tamanho. \ o valor de retorno é o tamanho do arquivo
-  []\Reaponte o caractere inicial deste trecho usando o tamanho.
+  Reaponte o caractere inicial deste trecho usando o tamanho.
   Atribua o caractere inicial deste trecho mais o tamanho menos 1 ao caractere final deste trecho.
   Processe "kernel32.dll" "ReadFile" com
   \ Lê dados do arquivo especificado ou dispositivo de entrada/saída (E/S).
@@ -5296,7 +5296,7 @@ Rotina para que se abra um arquivo usando um endereço completo:
     Atribua "A Pasta: " junto com o endereço da pasta seguido de " não existe." ao erro do fluxo de entrada/saída;
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Retorne.
-  []\Ative o endereço completo para modo de leitura&gravação.
+  Defina o endereço completo para modo de leitura&gravação.
   Preserve o endereço completo.
   Anexe o caractere NULL após o endereço completo.
   Processe "kernel32.dll" "CreateFileA" com
