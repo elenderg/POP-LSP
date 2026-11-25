@@ -2,44 +2,65 @@ Rotina para que se pinte uma imagem:
   Se a sinalizador de páginas deste pdf state estiver ativo,
     Pinte a imagem (modo pdf);
     Retorne.
-  Se a imagem for inexistente, retorne.
+  Se a imagem for inexistente,
+    Retorne.
   Salve o contexto do dispositivo atual.
   Cubra externamente a caixa desta imagem.
   Processe "gdiplus.dll" "GdipCreateFromHDC" com
   \ Cria um objeto Graphics associado para um contexto de dispositivo especificado.
   \ Ao usar esta função para criar um objeto Graphics, certifique-se de que o objeto Graphics seja excluído antes que o contexto do dispositivo seja liberado.
-    O contexto do dispositivo atual [hdc] \ Identificador para um contexto de dispositivo que será associado ao novo objeto Graphics.
-    e O endereçamento dum gpGraphic [**graphics] \Ponteiro para uma variável que recebe um ponteiro para o novo objeto Graphics criado.
-    retornando um número denominado status.
+    O contexto do dispositivo atual [hdc] e \ Identificador para um contexto de dispositivo que será associado ao novo objeto Graphics.
+    O endereçamento dum gpGraphic [**graphics] \Ponteiro para uma variável que recebe um ponteiro para o novo objeto Graphics criado.
+  Retornando
+    um número denominado status.
   \Se o status for 0,
-    \Escreva "Função GdipCreateFromHDC invocada com sucesso." junto com o texto CRLF para StdOut.
-  Se o status não for 0, 
-    Converta o status para uma string denominada string de erro;
-    Escreva "" junto com  
-    "Erro na função GdipCreateFromHDC da biblioteca gdiplus.dll. Número do erro:" junto com o texto CRLF junto com a string de erro para StdOut.
+  \Escreva "Função GdipCreateFromHDC invocada com sucesso." junto com o texto CRLF para StdOut.
+  Se o status não for 0,
+    Converta
+      o status para uma string denominada
+      string de erro;
+    Escreva "" junto com
+      "Erro na função GdipCreateFromHDC da biblioteca gdiplus.dll. Número do erro:" junto com
+      o texto CRLF junto com
+      a string de erro para StdOut.
   Processe "gdiplus.dll" "GdipSetPageUnit" com
   \Define a unidade de medida para este objeto Graphics.
   \A unidade da página pertence à transformação da página, que converte as coordenadas da página em coordenadas do dispositivo.
     O gpGraphic [*graphics] \ Ponteiro para o objeto Metafile.
     \ https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusenums/ne-gdiplusenums-metafiletype
-    e 2 [unit = pixels] \ Elemento da enumeração Unit que especifica a unidade de medida para este objeto Graphics.
+    e
+    2 [unit = pixels] \ Elemento da enumeração Unit que especifica a unidade de medida para este objeto Graphics.
     \ https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusenums/ne-gdiplusenums-unit
     \ https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusgraphics/nl-gdiplusgraphics-graphics
-    retornando o status.
+  Retornando
+    o status.
   \Se o status for 0,
-    \Escreva "Função GdipSetPageUnit invocada com sucesso." junto com o texto CRLF para StdOut.
-  Se o status não for 0, 
-    Converta o status para a string de erro;
-    Escreva "Erro na função GdipSetPageUnit da biblioteca gdiplus.dll. Número do erro: " junto com o texto CRLF junto com a string de erro para StdOut.
-  Pinte a imagem sobre o gpGraphic sob a coordenada X1 desta caixa intacta desta imagem e a coordenada Y1 desta caixa intacta desta imagem.
+  \Escreva "Função GdipSetPageUnit invocada com sucesso." junto com o texto CRLF para StdOut.
+  Se o status não for 0,
+    Converta
+      o status para
+      a string de erro;
+    Escreva "Erro na função GdipSetPageUnit da biblioteca gdiplus.dll. Número do erro: " junto com
+      o texto CRLF junto com
+      a string de erro para StdOut.
+  Pinte
+    a imagem sobre
+    o gpGraphic sob
+    a coordenada X1 desta caixa intacta desta imagem e
+    a coordenada Y1 desta caixa intacta desta imagem.
   Processe "gdiplus.dll" "GdipDeleteGraphics" com
   \ Exclui o objeto Graphics especificado.
     O gpGraphic [*graphics] \ponteito do número identificador do objeto Graphics.
    \Valor de retorno da funlção: Retorna o valor GpStatus, sendo que o valor 0 significa que a função foi bem sucedida.
-    retornando o status.
+  Retornando
+    o status.
   \Se o status for 0,
-    \Escreva "Função GdipDeleteGraphics invocada com sucesso." junto com o texto CRLF junto com o texto CRLF para StdOut.
-  Se o status não for 0, 
-    Converta o status para a string de erro;
-    Escreva "Erro na função GdipDeleteGraphics da biblioteca gdiplus.dll. Número do erro: " junto com o texto CRLF junto com a string de erro para StdOut.
+  \Escreva "Função GdipDeleteGraphics invocada com sucesso." junto com o texto CRLF junto com o texto CRLF para StdOut.
+  Se o status não for 0,
+    Converta
+      o status para
+      a string de erro;
+    Escreva "Erro na função GdipDeleteGraphics da biblioteca gdiplus.dll. Número do erro: " junto com
+      o texto CRLF junto com
+      a string de erro para StdOut.
   Restaure o contexto do dispositivo atual.

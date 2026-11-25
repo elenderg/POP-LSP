@@ -10,9 +10,11 @@
 Um caractere é um byte.
 Um endereço de byte é um ponteiro para um byte.
 
-Uma word big-endian unsigned é uma estrutura com 2 bytes.
+Uma word big-endian unsigned é uma estrutura com
+  2 bytes.
 
-Um ponteiro é uma estrutura com 4 bytes.
+Um ponteiro é uma estrutura com
+  4 bytes.
 Um caractere inicial é um ponteiro para um byte. 
 Um caractere final é um ponteiro para um byte.
 
@@ -217,7 +219,7 @@ Uma caixa de texto é uma lista com
   Uma seleção, \ número de linhas do cursor
   Um sinalizador de alteração,
   Uma última operação,
-  Umas caixas de texto denominadas restaurações, \reversões 
+  Umas caixas de texto denominadas restaurações, \reversões
   Umas caixas de texto denominadas alterações. \ modificações
 
 Um número de linha é um número.
@@ -252,7 +254,8 @@ Um sinalizador de quebra de texto é um sinalizador.
 
 Um número do texto é um número.
 
-Um elemento da stack é uma lista com uma string.
+Um elemento da stack é uma lista com
+  uma string.
 
 Uma linha de texto é uma lista com
   Um número da linha e
@@ -267,8 +270,7 @@ Uma referência é uma lista com
 Um GpImageAttributes é um ponteiro. \ Referência: -> https://doxygen.reactos.org/d7/d6a/structGpImageAttributes.html
 
 Um evento é uma lista com
-  Uma categoria, 
-  [atualização de tela, exibir cursor, pressionamento de tecla, clique (normal, duplo, direito, direito duplo, deactivate, activate, done]
+  Uma categoria, [atualização de tela, exibir cursor, pressionamento de tecla, clique (normal, duplo, direito, direito duplo, deactivate, activate, done]
   Um sinalizador de tecla Shift,
   Um sinalizador de tecla Ctrl,
   Um sinalizador de tecla Alt,
@@ -280,7 +282,7 @@ Um valor da díade é uma string.
 
 Uma díade é uma lista com
   Um nome,
-  Um valor da díade. 
+  Um valor da díade.
 
 Um contexto é uma lista com 
   \ Um contexto de dispositivo é uma estrutura que define um conjunto de objetos gráficos, como a tela do monitor.
@@ -314,12 +316,14 @@ Um status de erro é um número.
 Um bipe é um número.
 Um título de índice remissivo é uma string.
 
-Um versículo é uma lista com uma string.
+Um versículo é uma lista com
+  uma string.
 
 Um código binário é uma string.
 Um brilho é uma luminosidade.
 Uma contagem de recipientes é uma contagem.
-Um conjunto de recipientes é uma estrutura com umas referências.
+Um conjunto de recipientes é uma estrutura com
+  umas referências.
 Um recipiente é um ponteiro para um conjunto de recipientes.
 Um trecho é uma string.
 Uma quantidade de bytes é uma contagem.
@@ -330,8 +334,8 @@ Um número de coluna é um número.
 Um número da linha é um número.
 Um número da coluna é um número.
 
-Uma alternativa é uma lista com 
-  Um nome e 
+Uma alternativa é uma lista com
+  Um nome e
   Uma caixa.
 
 Um console é uma lista com
@@ -390,7 +394,8 @@ Um root endereço da pasta é um endereço da pasta.
 
 Um ponto circular é uma elipse.
 
-Uma elipse é uma estrutura com uma caixa.
+Uma elipse é uma estrutura com
+  uma caixa.
 
 Um email é uma estrutura com
   Um servidor SMTP,
@@ -404,7 +409,8 @@ Uns extra pontos osmosianos são uns pontos osmosianos.
 Um delta é um número.
 Um número quadrado é um número.
 Um índice é um endereço de byte.
-Um sinalizador é uma estrutura com 4 bytes.
+Um sinalizador é uma estrutura com
+  4 bytes.
 
 Uma fonte é uma estrutura com
   Um nome e
@@ -563,11 +569,9 @@ Uma caixa arredondada é uma caixa com
   Uma coordenada denominada coordenada Y1,
   Uma coordenada denominada coordenada X2,
   Uma coordenada denominada coordenada Y2,
-  Uma localização denominada canto superior esquerdo sob a coordenada X1 ,
+  Uma localização denominada canto superior esquerdo sob a coordenada X1,
   Uma localização denominada canto inferior direito sob a coordenada X2 e
   Um raio.
-
-
 
 Um região da tela é um par de números com
   Uma coordenada X e
@@ -609,7 +613,7 @@ Um parâmetro de consulta é uma string.
 Um endereço de recurso é uma string.
 
 Uma URL simplificada é uma estrutura com
-  Uma string denominada nome do protocolo,\ lpszScheme? -> exemplo: http / ftp / https / etc. e as dwFlags?
+  Uma string denominada nome do protocolo, \ lpszScheme? -> exemplo: http / ftp / https / etc. e as dwFlags?
   Um string denominada nome de host, \ lpszHostName ?  -> exemplo: www.google.com ou mail.stackoverflow.com
   Um string denominada endereço de recurso, \ lpszUrlPath? -> exemplo: index.html ou /css/style.css ou questions/SubmitQuestion.aspx
   Um string denominada parâmetro de consulta, \ lpszExtraInfo? -> exemplo: ?useLiveData=1&internal=0
@@ -648,7 +652,8 @@ Um destinatário é uma string.
 Uma mensagem é uma string.
 Uma palavra é um subtexto. \ não confundir com word
 
-Um conjunto de texto é uma lista com uma string.
+Um conjunto de texto é uma lista com
+  uma string.
 Um nome é uma string.
 
 
@@ -665,7 +670,8 @@ Uma tabela de tradução é um texto hexadecimal.
 
 Uma coordenada X é uma coordenada.
 Uma coordenada Y é uma coordenada.
-Um polígono é uma lista com uns vértices.
+Um polígono é uma lista com
+  uns vértices.
 Umas x-twips são uns twips.
 Umas y-twips são uns twips.
 Um ponto osmosiano é um número. \cujos valores vão desde 1 até 3840;  servem para dividir um ciírculo.
@@ -885,7 +891,8 @@ Um In_Addr é uma estrutura com \ representa um endereço IPv4. -> Internet Adress
 
 Um IStream é um ponteiro para um IStream object.
 
-Um IStream object é uma estrutura com um IStream VTable denominado VTable.
+Um IStream object é uma estrutura com
+  um IStream VTable denominado VTable.
 
 Um IStream VTable é um ponteiro para um IStream VTable conjunto.
   \Uma VTable (tabela de método virtual) é uma tabela de ponteiros de função.
@@ -894,13 +901,12 @@ Um IStream VTable é um ponteiro para um IStream VTable conjunto.
 Um IStream VTable conjunto é uma estrutura com
   \ iUnknown
   \ https://learn.microsoft.com/pt-br/windows/win32/api/objidl/nn-objidl-istream
-  Um ponteiro denominado QueryInterface,
-  \ https://learn.microsoft.com/pt-br/windows/win32/com/queryinterface--navigating-in-an-object
+  Um ponteiro denominado QueryInterface, \ https://learn.microsoft.com/pt-br/windows/win32/com/queryinterface--navigating-in-an-object
   Um ponteiro denominado AddRef, \Incrementa a contagem de referência de um ponteiro de interface para um objeto COM.
   Um ponteiro denominado Release, \ Diminui a contagem de referência para uma interface em um objeto COM.\function(this:istream):number; stdcall;
   \ istream
-  Um ponteiro denominado Read,\O método Read lê um número especificado de bytes do objeto stream para a memória, começando no ponteiro de busca atual.
-  Um ponteiro denominado Write,\O método Write grava um número especificado de bytes no objeto de fluxo, começando no ponteiro de busca atual.
+  Um ponteiro denominado Read, \O método Read lê um número especificado de bytes do objeto stream para a memória, começando no ponteiro de busca atual.
+  Um ponteiro denominado Write, \O método Write grava um número especificado de bytes no objeto de fluxo, começando no ponteiro de busca atual.
   Um ponteiro denominado Seek, \Muda o ponteiro de busca para um novo local. O novo local é relativo ao início, ao final do fluxo ou ao ponteiro de busca atual.
   Um ponteiro denominado SetSize, \Altera o tamanho do objeto de fluxo.
   Um ponteiro denominado CopyTo, \Copia um número especificado de bytes do ponteiro de busca atual no fluxo para o ponteiro de busca atual em outro fluxo.
@@ -908,8 +914,8 @@ Um IStream VTable conjunto é uma estrutura com
   Um ponteiro denominado Revert, \O método Revert descarta todas as alterações feitas em um fluxo transacionado desde a última chamada IStream :: Commit.
   \Em fluxos abertos em modo direto e fluxos usando a implementação de arquivo composto COM de IStream :: Revert, este método não tem efeito.
   Um ponteiro denominado LockRegion, \O método LockRegion restringe o acesso para um intervalo especificado de bytes no fluxo.
-  Um ponteiro denominado UnlockRegion,\O método UnlockRegion remove a restrição de acesso em um intervalo de bytes anteriormente restrito com IStream :: LockRegion.
-  Um ponteiro denominado Stat,\O método Stat recupera a estrutura STATSTG para este fluxo.
+  Um ponteiro denominado UnlockRegion, \O método UnlockRegion remove a restrição de acesso em um intervalo de bytes anteriormente restrito com IStream :: LockRegion.
+  Um ponteiro denominado Stat, \O método Stat recupera a estrutura STATSTG para este fluxo.
   Um ponteiro denominado Clone. \O método Clone cria um novo objeto de fluxo com seu próprio ponteiro de busca que faz referência aos mesmos bytes que o fluxo original.
 
 Um OUTLINETEXTMETRIC é uma estrutura com \ Descreve uma fonte TrueType.
@@ -999,8 +1005,8 @@ Um SockAddrPtr é um ponteiro [que aponta] para um SOCKADDR.
 Um STARTUPINFO é uma estrutura com \Especifica a estação da janela, a área de trabalho, os identificadores padrão e a aparência da janela principal para um processo no momento da criação.
 \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfoa
   Um número denominado cb,
-  Um ponteiro denominado lIsoled,\
-  Um ponteiro denominado lpDesktop,\Consulte https://learn.microsoft.com/pt-br/windows/win32/winstation/thread-connection-to-a-desktop
+  Um ponteiro denominado lIsoled, \
+  Um ponteiro denominado lpDesktop, \Consulte https://learn.microsoft.com/pt-br/windows/win32/winstation/thread-connection-to-a-desktop
   Um ponteiro denominado lpTitle, \Para processos de console apenas
   Um número denominado dwX,
   Um número denominado dwY,
@@ -1013,7 +1019,7 @@ Um STARTUPINFO é uma estrutura com \Especifica a estação da janela, a área de tr
   Uma word denominada wShowWindow,
   Uma word denominada cbReserved2,
   Um ponteiro denominado lIsoled2,
-  Um número identificador denominado hStdInput,\Consulte CreateWindowEx. https://learn.microsoft.com/pt-br/windows/win32/api/winuser/nf-winuser-createwindowexa
+  Um número identificador denominado hStdInput, \Consulte CreateWindowEx. https://learn.microsoft.com/pt-br/windows/win32/api/winuser/nf-winuser-createwindowexa
   Um número identificador denominado hStdOutput,
   Um número identificador denominado hStdError.
 
@@ -1070,7 +1076,7 @@ Um SYSTEMTIME é uma estrutura com \Especifica uma data e hora, usando membros in
 
 Um sintetizador de voz é um ponteiro para um objeto sintetizador de voz.
 
-Um objeto sintetizador de voz é uma estrutura com 
+Um objeto sintetizador de voz é uma estrutura com
   Um identificador VTable denominado VTable.
 
 Um identificador VTable é um ponteiro para um sintetizador de voz VTable.
@@ -1078,7 +1084,7 @@ Um identificador VTable é um ponteiro para um sintetizador de voz VTable.
 Um sintetizador de voz VTable é uma estrutura com
 \ Documentação: ->  https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/ee413476(v=vs.85)
   \ iunknown
-  Um ponteiro denominado QueryInterface,\https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/ms719854(v=vs.85)
+  Um ponteiro denominado QueryInterface, \https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/ms719854(v=vs.85)
   Um ponteiro denominado AddRef,
   Um ponteiro denominado Release, \ in this:pspvoice out number
   \ italker -.https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/ms717961(v=vs.85)
@@ -1088,7 +1094,7 @@ Um sintetizador de voz VTable é uma estrutura com
   Um ponteiro denominado SetNotifyCallbackInterface,
   Um ponteiro denominado SetNotifyWin32Event,
   Um ponteiro denominado WaitForNotifyEvent,
-  Um ponteiro denominado GetNotifyEventHandle,\Recupera um identificador para um evento de notificação.
+  Um ponteiro denominado GetNotifyEventHandle, \Recupera um identificador para um evento de notificação.
   \ https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/ms717848(v=vs.85)
   Um ponteiro denominado SetInterest,
   Um ponteiro denominado GetEvents,
@@ -1139,8 +1145,8 @@ Um TEXTMETRIC é uma estrutura com \ Dados de uma fonte física.
   Um byte denominado tmItalic,
   Um byte denominado tmUnderlined,
   Um byte denominado tmStruckOut,
-  Um byte denominado tmPitchAndFamily,\Estrutura LOGFONT. https://learn.microsoft.com/pt-br/windows/desktop/api/wingdi/ns-wingdi-logfonta
- Um byte denominado tmCharSet.
+  Um byte denominado tmPitchAndFamily, \Estrutura LOGFONT. https://learn.microsoft.com/pt-br/windows/desktop/api/wingdi/ns-wingdi-logfonta
+  Um byte denominado tmCharSet.
 
 Um URL_COMPONENTS é uma estrutura com \Contém os componentes de uma URL.
 \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/WinHTTP/ns-WinHTTP-url_components
@@ -1172,12 +1178,12 @@ Um UUID é uma estrutura com \ Identificador Único Universal (UUID).
 Um WIN32FINDDATA é uma estrutura com \Contém informações sobre um arquivo localizado pela função FindFirstFile, FindFirstFileEx ou FindNextFile.
 \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/minwinbase/ns-minwinbase-win32_find_dataa
   Um número denominado dwFileAttributes, \ Consulte https://learn.microsoft.com/pt-br/windows/desktop/FileIO/file-attribute-constants
-  Um filetime denominado ftCreationTime,\ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/minwinbase/ns-minwinbase-filetime
+  Um filetime denominado ftCreationTime, \ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/minwinbase/ns-minwinbase-filetime
   Um filetime denominado ftLastAccessTime,
   Um filetime denominado ftLastWriteTime,
   Um número denominado nFileSizeHigh,
   Um número denominado nFileSizeLow,
-  Um número denominado dwReserved0,\ Consulte https://learn.microsoft.com/pt-br/windows/desktop/FileIO/reparse-point-tags
+  Um número denominado dwReserved0, \ Consulte https://learn.microsoft.com/pt-br/windows/desktop/FileIO/reparse-point-tags
   Um número denominado dwReserved1,
   260 bytes denominados cFileName,
   14 bytes denominados cAlternateFileName.
@@ -1186,33 +1192,25 @@ Uma WNDCLASS é uma estrutura com \Contém informações de classe de janela.
   \Os dois campos mais importantes na estrutura WNDCLASS são o segundo e o último.
   \Esta estrutura inclui dois campos que são ponteiros para cadeias de caracteres
   \É usada com as funções RegisterClassEx e GetClassInfoEx.
-  Um número denominado cbSize,
-  \ O tamanho, em bytes, dessa estrutura.
+  Um número denominado cbSize, \ O tamanho, em bytes, dessa estrutura.
   \ Defina este membro como sizeof (WNDCLASSEX).
   \ Certifique-se de definir esse membro antes de chamar a função GetClassInfoEx. https://learn.microsoft.com/pt-br/windows/desktop/api/winuser/nf-winuser-getclassinfoexa
-  Um número denominado style,
-  \ O (s) estilo (s) da classe.
+  Um número denominado style, \ O (s) estilo (s) da classe.
   \ Este membro pode ser qualquer combinação dos estilos de classe. https://learn.microsoft.com/pt-br/windows/desktop/winmsg/aproximadamente-janela do programa-classes
   Um ponteiro denominado lpfnWndProc, \O prefixo lpfn significa "ponteiro longo" para uma função.
   \ Um ponteiro para o procedimento da janela.
   \Você deve usar a função CallWindowProc para chamar o procedimento de janela.
   \Para obter mais informações, consulte https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/legacy/ms633573(v=vs.85)
-  Um número denominado cbClsExtra,
-  \ O número de bytes extras a serem alocados seguindo a estrutura da classe da janela. O sistema inicializa os bytes para zero.
-  Um número denominado cbWndExtra,
-  \ O número de bytes extras a serem alocados após a instância da janela.
+  Um número denominado cbClsExtra, \ O número de bytes extras a serem alocados seguindo a estrutura da classe da janela. O sistema inicializa os bytes para zero.
+  Um número denominado cbWndExtra, \ O número de bytes extras a serem alocados após a instância da janela.
   \ O sistema inicializa os bytes para zero.
   \ Se um aplicativo usa WNDCLASSEX para registrar uma caixa de diálogo criada usando a diretiva CLASS no arquivo de recurso, ele deve definir este membro como DLGWINDOWEXTRA.
-  Um número identificador denominado hInstance,
-  \ Um identificador para a instância que contém o procedimento de janela para a classe.
-  Um hIcon denominado hIcon,
-  \ Um número identificador do ícone da classe.
+  Um número identificador denominado hInstance, \ Um identificador para a instância que contém o procedimento de janela para a classe.
+  Um hIcon denominado hIcon, \ Um número identificador do ícone da classe.
   \ Se este membro for NULL, o sistema fornecerá um ícone padrão.
-  Um cursor denominado hCursor,
-  \ Um identificador para o cursor da classe.
+  Um cursor denominado hCursor, \ Um identificador para o cursor da classe.
   \ Se este membro for NULL, um aplicativo deve definir explicitamente a forma do cursor sempre que o mouse se move para a janela do aplicativo.
-  Um hBrush denominado hbrBackground,
-  \ Um número identificador da canetinha de plano de fundo da classe.
+  Um hBrush denominado hbrBackground, \ Um número identificador da canetinha de plano de fundo da classe.
   \ Este membro pode ser um identificador para a cor da canetinha a ser usado para pintar o plano de fundo ou pode ser um valor de cor.
   \ Um valor de cor deve ser uma das seguintes cores padrão do sistema (o valor 1 deve ser adicionado à cor escolhida).
   Um ponteiro denominado lpszMenuName, \O prefixo lpsz é um "ponteiro longo" para uma string terminada em zero (NUL).
@@ -1220,8 +1218,7 @@ Uma WNDCLASS é uma estrutura com \Contém informações de classe de janela.
   \ Se você usar um número inteiro para identificar o menu, use a macro MAKEINTRESOURCE.
   \ https://learn.microsoft.com/pt-br/windows/desktop/api/winuser/nf-winuser-makeintresourcea
   \ Se este membro for NULL, as janelas pertencentes a esta classe não terão menu padrão.
-  Um ponteiro denominado lpszClassName,
-  \ Um ponteiro para uma string terminada em nulo.
+  Um ponteiro denominado lpszClassName, \ Um ponteiro para uma string terminada em nulo.
   \Esse campo é o nome do texto da classe da janela.
   \Isso pode ser o que você quiser. Em programas que criam apenas uma janela, o nome da classe da janela é comumente definido como o nome do programa.
   \O comprimento máximo para lpszClassName é 256.
@@ -1315,7 +1312,7 @@ Um ponteiro RGB é um ponteiro [que aponta] para um espaço de cor RGB.
 Uma saturação é um número [cujos valores vão de 0 até 1000].
 
 Uma cor é uma estrutura com
-  Uma matiz, 
+  Uma matiz,
   Uma tonalidade sob a matiz,
   Uma saturação,
   Uma luminosidade,

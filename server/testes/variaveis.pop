@@ -41,7 +41,8 @@ O console é um console.
 
 O contexto do dispositivo atual é um canvas.
 
-A Bíblia é uma lista com uns versículos.
+A Bíblia é uma lista com
+  uns versículos.
 O evento atual é um evento.
 A fonte padrão é uma fonte.
 
@@ -53,7 +54,8 @@ O cursor de mão é um cursor.
 
 O tamanho de letra grande é um tamanho da letra.
 
-O dicionário léxico é uma lista com um catálogo.
+O dicionário léxico é uma lista com
+  um catálogo.
 
 O texto retornado é um texto retornado.
 
@@ -80,7 +82,7 @@ O recurso de fonte Tahoma é uma identificador de fonte.
 O texto de espaço é uma string igual a " ".
 
 O mouse é uma estrutura com
-  Uma tecla denominado botão esquerdo, 
+  Uma tecla denominado botão esquerdo,
   Uma tecla denominado botão direito.
   \ e uma tecla denominada roda do mouse.
 
