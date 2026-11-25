@@ -3741,7 +3741,7 @@ Rotina para que se inicialize os componentes:
   Inicialize o sintetizador de voz.
   Inicialize o módulo.
   Inicialize as cores.
-  []\Inicialize o tela.
+  Inicialize a tela.
   Inicialize a janela do programa.
   Inicialize as fontes.
   Inicialize os cursors.
