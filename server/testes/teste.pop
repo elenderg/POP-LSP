@@ -8785,7 +8785,7 @@ Função para que se atribua a altura dum GpImage para uma altura:
     Retorne.
   Processe "gdiplus.dll" "GdipGetImageHeight" com
   \Obtém a altura da imagem, em pixels, desta imagem.
-    []\O GpImage [*image] e  \Ponteiro para o objeto Imagem. 
+    O GpImage [*image] e  \Ponteiro para o objeto Imagem. 
     O endereçamento desta altura. [*height] \Ponteiro para uma variável que recebe a altura, em pixels, desta imagem.
 
 Rotina para que se ajuste uma imagem (extraindo as caixas do gpBitmap):
@@ -8797,12 +8797,12 @@ Rotina para que se ajuste uma imagem (extraindo as caixas do gpBitmap):
   Atribua a caixa desta imagem à caixa intacta desta imagem.
 
 Função para que se atribua a largura dum GpImage para uma largura:
-  []\Se o GpImage for inexistente,
+  Se o GpImage for inexistente,
     Atribua 0 à largura;
     Retorne.
   Processe "gdiplus.dll" "GdipGetImageWidth" com
   \Obtém a largura, em pixels, desta imagem.
-    []\O GpImage [*image] e 
+    O GpImage [*image] e 
     O endereçamento desta largura. [*width]
 
 Rotina para que se atribua um GpRect para um segundo GpRect:
@@ -8957,7 +8957,7 @@ Rotina para que se escolha aleatoriamente uma localização na metade de cima de u
   Escolha aleatoriamente a localização na caixa.
 
 Rotina para que se escolha aleatoriamente uma localização sobre um linha reta horizontal:
-  []\Escolha aleatoriamente a coordenada X desta localização entre a coordenada X desta localização inicial desta linha reta e a coordenada X desta localização final desta linha reta horizontal.
+  Escolha aleatoriamente a coordenada X desta localização entre a coordenada X desta localização inicial desta linha reta e a coordenada X desta localização final desta linha reta horizontal.
   Atribua a coordenada Y desta linha reta horizontal à coordenada Y desta localização.
   Retorne.
 
@@ -9003,7 +9003,7 @@ Rotina para que se escolha aleatoriamente uma orientação:
 
 Rotina para que se mova um vértice uns twips para a esquerda;
 Rotina para que se mova um vértice para a esquerda uns twips:
-  []\Mova o vértice usando - os twips e 0.
+  Mova o vértice usando - os twips e 0.
   Retorne.
 
 Rotina para que se mova um vértice para a direita uns twips;
@@ -9023,8 +9023,8 @@ Rotina para que se mova uns twips:
   Atribua a localização deste contexto à localização inicial duma linha reta.
   Atribua a localização deste contexto à localização final desta linha reta.
   Obtenha um deslocamento vertical e um deslocamento horizontal usando a orientação deste contexto.
-  []\Adicione o deslocamento horizontal vezes os twips dividido por 10000 para a coordenada X desta localização final desta linha reta.
-  []\Adicione o deslocamento vertical vezes os twips dividido por 10000 para a coordenada Y desta localização final desta linha reta.
+  Adicione o deslocamento horizontal vezes os twips dividido por 10000 para a coordenada X desta localização final desta linha reta.
+  Adicione o deslocamento vertical vezes os twips dividido por 10000 para a coordenada Y desta localização final desta linha reta.
   Atribua a localização final desta linha reta à localização deste contexto.
 
 Rotina para que se mova uma caixa de texto para baixo uns twips:
@@ -9099,7 +9099,7 @@ Rotina para que se mova uma linha reta para uma localização:
   Mova a linha reta usando o valor da diferença.
 
 Rotina para que se mova uma linha reta para a esquerda uns twips:
-  []\Mova a linha reta usando - os twips e 0.
+  Mova a linha reta usando - os twips e 0.
   Retorne.
 
 
@@ -9130,9 +9130,9 @@ Rotina para que se ande uns twips para trás:
 
 Rotina para que se mova uma caixa perto do lado esquerdo de uma segunda caixa;
 Rotina para que se mova uma caixa perto da esquerda de uma segunda caixa:  
-  []\Mova a caixa para a esquerda dessa segunda caixa.
-  []\Escolha aleatoriamente uma quantidade de caracteres entre 0 e a largura desta caixa vezes 3/4.
-  []\Mova a caixa para a direita a quantidade de caracteres.
+  Mova a caixa para a esquerda dessa segunda caixa.
+  []\Escolha aleatoriamente uma quantidade de caracteres entre 0 e a largura desta caixa vezes 3/4. \ verificar
+  Mova a caixa para a direita a quantidade de caracteres.
   Retorne.
 
 
@@ -9178,7 +9178,7 @@ Rotina para que se atribua umas larguras de fonte para um trecho:
   Itere.
     Se o contador for maior do que a contagem destas larguras de fonte, pare.
     Adicione 1 para o contador.
-    []\Acrescente o conteúdo deste endereço numérico seguido de " " para o trecho.
+    Acrescente o conteúdo deste endereço numérico seguido de " " para o trecho.
     Adicione 1 para uma contagem.
     Se a contagem for uniformemente divisível por 16, 
       Acrescente o texto CRLF para o trecho.
