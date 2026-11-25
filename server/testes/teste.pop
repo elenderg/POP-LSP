@@ -5452,7 +5452,8 @@ Rotina para que se receba um trecho desde um soquete:
     Se a contagem não for -1 [SOCKET_ERROR],
       Atribua o ponteiro mais a contagem menos 1 ao caractere final deste trecho;
       Retorne.
-    Processe "ws2_32.dll" "WSAGetLastError" retornando um número denominado último erro do Windows Sockets. []\verificar porque foi preciso fazer isso.
+    Processe "ws2_32.dll" "WSAGetLastError" retornando um número denominado último erro do Windows Sockets.
+    []\verificar porque foi preciso fazer isso.
     Se o último erro do Windows Sockets não for 10040 [WSAMSGSIZE],
       Atribua "Erro ao receber os dados da Função 'recv' da lib 'ws2_32.dll'." ao erro do fluxo de entrada/saída;
       Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
@@ -6028,7 +6029,7 @@ Rotina para que se pinte o 'É' maiúsculo:
   Ande 1+1/2 quadrado.
   Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/4 quadrado.
+  Pinte 1 quadrado menos 1/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6101,7 +6102,7 @@ Rotina para que se pinte o È maiúsculo:
   Ande 49/100 quadrado.
   \Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 2/4 quadrado.
+  Pinte 1 quadrado menos 2/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6215,7 +6216,7 @@ Rotina para que se pinte o Í maiúsculo:
   Ande 1 quadrado.
   Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/2 quadrado.
+  Pinte 1 quadrado menos 1/2 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6291,7 +6292,7 @@ Rotina para que se pinte o Ì maiúsculo:
   Ande 68/100 quadrado.
   \Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 3/4 quadrado.
+  Pinte 1 quadrado menos 3/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6415,7 +6416,7 @@ Rotina para que se pinte o Ó maiúsculo:
   Ande 1+14/16 quadrado.
   Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/4 quadrado.
+  Pinte 1 quadrado menos 1/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6494,7 +6495,7 @@ Rotina para que se pinte o Ò maiúsculo:
   \Ande 5/100 quadrado.
   \Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 3/8 quadrado.
+  Pinte 1 quadrado menos 3/8 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6631,7 +6632,7 @@ Rotina para que se pinte o Ú maiúsculo:
   Ande 1 quadrado.
   Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/2 quadrado.
+  Pinte 1 quadrado menos 1/2 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6698,7 +6699,7 @@ Rotina para que se pinte o Ù maiúsculo:
   Ande 50/100 quadrado.
   \Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/4 quadrado.
+  Pinte 1 quadrado menos 1/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -6792,7 +6793,7 @@ Rotina para que se pinte o Ý maiúsculo:
   Ande 1 quadrado.
   Vire para a esquerda.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/2 quadrado.
+  Pinte 1 quadrado menos 1/2 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -7146,7 +7147,7 @@ Rotina para que se pinte o 'à' minúsculo:
   Vire para a direita.
   Ande 1/100 quadrado.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 2/4 quadrado.
+  Pinte 1 quadrado menos 2/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -7405,7 +7406,7 @@ Rotina para que se pinte o little-e-grave caractere:
   Vire para a direita.
   Ande 1/100 quadrado.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 2/4 quadrado.
+  Pinte 1 quadrado menos 2/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -7592,7 +7593,7 @@ Rotina para que se pinte o little-i-grave caractere:
   Vire para a direita.
   Ande 29/100 quadrado.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 2/4 quadrado.
+  Pinte 1 quadrado menos 2/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -7828,7 +7829,7 @@ Rotina para que se pinte o little-o-grave caractere:
   Vire para a direita.
   Ande 1/100 quadrado.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 2/4 quadrado.
+  Pinte 1 quadrado menos 2/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -8067,7 +8068,7 @@ Rotina para que se pinte o little-u-grave caractere:
   Vire para a direita.
   Ande 59/100 quadrado.
   Vire para 4/32.
-  []\Pinte 1 quadrado menos 1/4 quadrado.
+  Pinte 1 quadrado menos 1/4 quadrado.
   \ fim do acento
   Restaure o contexto.
 
@@ -8236,7 +8237,7 @@ Rotina para que se pinte o número hum:
   Vire para a direita.
   Pinte 2 quadrados.
   Redefina o contexto.
-  []\Ande 3 quadrados menos 5/8 quadrados.
+  Ande 3 quadrados menos 5/8 quadrados.
   Vire para 1/8.
   Pinte 1 quadrado na diagonal.
   Restaure o contexto.
@@ -8405,12 +8406,12 @@ Rotina para que se pinte a barra inclinada:
   Restaure o contexto.
 
 Rotina para que se pinte uns quadrados:
-  []\Pinte o tamanho do quadrado vezes os quadrados dividido por 1 quadrado. 
+  Pinte o tamanho do quadrado vezes os quadrados dividido por 1 quadrado. 
   \ quadrados são ampliados para precisão por isso dividimos ao fim
   Retorne.
 
 Rotina para que se pinte uns quadrados na diagonal:
-  []\Pinte o tamanho do quadrado vezes os quadrados vezes a raiz de dois dividido por 1 quadrado.
+  Pinte o tamanho do quadrado vezes os quadrados vezes a raiz de dois dividido por 1 quadrado.
   Retorne.
 
 Rotina para que se pinte o número três:
@@ -8512,7 +8513,7 @@ Rotina para que se use um tamanho da letra em  uns twips:
 
 Rotina para que se use small pointy letras:
   \ seria o oposto de  "big roundy letras" | ainda não foi implementado
-  []\Use small letras.
+  []\Use small letras. \não implementado
   Retorne.
 
 Rotina para que se escolha aleatoriamente um tamanho da letra entre uns twips e uns outros twips:
@@ -8577,74 +8578,74 @@ Função para que se atribua o centro dum polígono para uma localização:
   Atribua o centro desta caixa deste polígono à localização.
 
 Função para que se atribua o centro inferior dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o centro inferior  desta caixa deste polígono à localização.
 
 Função para que se atribua o centro superior dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o centro superior desta caixa deste polígono à localização.
 
 Função para que se atribua a altura dum polígono para uma altura:
-  []\Se o polígono for inexistente,
-    []\Limpe a altura;
+  Se o polígono for inexistente,
+    Limpe a altura;
     Retorne.
   Atribua a altura desta caixa deste polígono à altura.
 
 Função para que se atribua o canto inferior esquerdo dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o canto inferior esquerdo desta caixa deste polígono à localização.
 
 Função para que se atribua o centro esquerdo dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o centro esquerdo desta caixa deste polígono à localização.
 
 Função para que se atribua o canto superior esquerdo dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o canto superior esquerdo desta caixa deste polígono à localização.
 
 Função para que se atribua o canto inferior direito dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o canto inferior direito desta caixa deste polígono à localização.
 
 Função para que se atribua o centro direito dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o centro direito desta caixa deste polígono à localização.
 
 Função para que se atribua o canto superior direito dum polígono para uma localização:
-  []\Se o polígono for inexistente,
-    []\Limpe a localização;
+  Se o polígono for inexistente,
+    Limpe a localização;
     Retorne.
   Atribua o canto superior direito desta caixa deste polígono à localização.
 
 Função para que se atribua a largura dum polígono para uma largura:
-  []\Se o polígono for inexistente,
-    []\Limpe a largura;
+  Se o polígono for inexistente,
+    Limpe a largura;
     Retorne.
   Atribua a largura desta caixa deste polígono à largura.
 
 Função para que se atribua o x-extent dum polígono para uma largura:
-  []\Se o polígono for inexistente,
-    []\Limpe a largura;
+  Se o polígono for inexistente,
+    Limpe a largura;
     Retorne.
   Atribua o x-extent desta caixa deste polígono ao largura.
 
 Função para que se atribua o y-extent dum polígono para uma altura:
-  []\Se o polígono for inexistente,
-    []\Limpe a altura;
+  Se o polígono for inexistente,
+    Limpe a altura;
     Retorne.
   Atribua o y-extent desta caixa deste polígono à altura.
 
@@ -8669,8 +8670,8 @@ Rotina para que se centralize um polígono sobre uma localização:
   Mova o polígono usando o valor da diferença.
 
 Função para que se atribua a caixa dum polígono para uma caixa:
-  []\Se o polígono for inexistente,
-    []\Zero a caixa;
+  Se o polígono for inexistente,
+    Zero a caixa;
     Retorne.
   Se os vértices deste polígono estiverem vazios,
     Zero a caixa;
@@ -8765,9 +8766,9 @@ Rotina para que se atribua masking tape debaixo de uma figura geométrica:
   Copie a figura geométrica para uma segunda figura geométrica.
   Atribua a coordenada Y2 desta tela à  coordenada Y duma localização.
   Atribua a coordenada X deste último vértice desta figura geométrica à coordenada X desta localização.
-  []\Acrescente a localização para a segunda figura geométrica.
+  Acrescente a localização para a segunda figura geométrica.
   Atribua a coordenada X deste primeiro vértice desta figura geométrica à coordenada X desta localização.
-  []\Acrescente a localização para a segunda figura geométrica.
+  Acrescente a localização para a segunda figura geométrica.
   Acrescente a localização deste primeiro vértice desta figura geométrica para a segunda figura geométrica.
   Cubra internamente a segunda figura geométrica.
   Destrua a segunda figura geométrica.
@@ -8779,7 +8780,7 @@ Função para que se atribua o GpRect dum GpImage para um GpRect:
   Atribua a altura desta GpImage à altura deste GpRect.
 
 Função para que se atribua a altura dum GpImage para uma altura:
-  []\Se o GpImage for inexistente,
+  Se o GpImage for inexistente,
     Atribua 0 à altura;
     Retorne.
   Processe "gdiplus.dll" "GdipGetImageHeight" com
@@ -9793,7 +9794,7 @@ Rotina para que se pinte uma caixa com uma cor denominada cor da borda e uma cor
 
 Rotina para que se pinte uma caixa com uma cor denominada cor da borda e uma cor denominada cor de preenchimento:
   Se a sinalizador de páginas deste pdf state estiver ativo,
-    []\Pinte a caixa com a cor da borda e a cor de preenchimento (modo pdf);
+    Pinte a caixa com a cor da borda e a cor de preenchimento (modo pdf);
     Retorne.
   Preserve a caixa.
   Crie o hPen desse contexto do dispositivo atual usando a cor da borda.
