@@ -3220,7 +3220,7 @@ Rotina para que se subdivida um trecho em umas díades: \ desmembre / subdivida /
 
 Rotina para que se subdivida um byte em uma cifra binária e uma segunda cifra binária:
   Atribua o byte à cifra binária.
-  []\Desloque a cifra binária 4 bits para a direita.
+  Desloque a cifra binária 4 bits para a direita.
   Atribua o byte à segunda cifra binária.
   Conjuncione logicamente a segunda cifra binária com 15.
 
@@ -3232,7 +3232,7 @@ Rotina para que se subdivida uma linha reta em uma segunda linha reta e uma terc
 
 Rotina para que se subdivida um número em uma word e uma segunda word:
   Preserve o número.
-  []\Desloque o número 16 bits para a direita.
+  Desloque o número 16 bits para a direita.
   Atribua o número ao word.
   Atribua o número original à segunda word.
 
@@ -3262,9 +3262,9 @@ Rotina para que se subdivida uma string em um subtexto denominado subtexto anter
   Atribua o caractere inicial desta string ao caractere inicial dum subtexto.
   Atribua o caractere inicial deste subtexto menos 1 ao caractere final deste subtexto.
   Itere.
-    []\Se o caractere final deste subtexto for maior do que o caractere final desta string, retorne.
-    []\Adicione 1 para o caractere final deste subtexto.
-    []\Se o conteúdo deste caractere final deste subtexto for o byte separador, pare.
+    Se o caractere final deste subtexto for maior do que o caractere final desta string, retorne.
+    Adicione 1 para o caractere final deste subtexto.
+    Se o conteúdo deste caractere final deste subtexto for o byte separador, pare.
   Reitere.
   Atribua o caractere inicial deste subtexto ao caractere inicial deste subtexto anterior.
   Atribua o caractere final deste subtexto menos 1 ao caractere final deste subtexto anterior.
@@ -3315,7 +3315,7 @@ Rotina para que se subdivida umas listas em umas listas denominadas listas anter
 
 Rotina para que se subdivida uma word em um byte e um segundo byte:
   Preserve a word.
-  []\Desloque a word 8 bits para a direita.
+  Desloque a word 8 bits para a direita.
   Atribua a word ao byte.
   Atribua a word original ao segundo byte.
 
@@ -3671,7 +3671,7 @@ Rotina para que se comece um processo usando um endereço completo:
   \ Cria um thread a ser executado no espaço de endereço virtual do processo de chamada.
     0 [lpThreadAttributes] \ Consulte https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/legacy/aa379560(v=vs.85)
     e 0 [dwStackSize]\ Consulte https://learn.microsoft.com/pt-br/windows/win32/procthread/thread-stack-size
-    []\e O ponteiro [lpStartAddress] \ Consulte https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/legacy/ms686736(v=vs.85)
+    e O ponteiro [lpStartAddress] \ Consulte https://learn.microsoft.com/pt-br/previous-versions/windows/desktop/legacy/ms686736(v=vs.85)
     e O endereçamento deste processo [lpParameter]
     e 0 [dwCreationFlags]
     e O endereçamento dum segundo número [lpThreadId]
