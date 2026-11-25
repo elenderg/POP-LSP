@@ -1394,6 +1394,54 @@ test('preserves a scalar quantity type when divided by a unitless number', () =>
   assert.equal(call.target.parameters[0].type.normalizedName, 'twips');
 });
 
+test('preserves a scalar unit when multiplied by a fractional literal', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Um twip é um número.',
+    'Uma largura é uns twips.',
+    'Uma quantidade de caracteres é uns twips.',
+    'Uma fração é uma estrutura com um número denominado numerador e um número denominado denominador.',
+    'Uma caixa é uma estrutura.',
+    'Rotina para que se escolha aleatoriamente um número entre um segundo número e um terceiro número:',
+    '  Retorne.',
+    'Função para que se atribua a largura duma caixa para uma largura:',
+    '  Retorne.',
+    'Rotina para que se mova uma caixa perto da esquerda de uma segunda caixa:',
+    '  Escolha aleatoriamente uma quantidade de caracteres entre 0 e a largura desta caixa vezes 3/4.',
+    '  Escolha aleatoriamente uma quantidade de caracteres entre 0 e 3/4 vezes a largura desta caixa.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'mova'
+  );
+  const calls = caller?.calls ?? [];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(call =>
+    call.target?.name.normalizedName === 'escolha aleatoriamente'
+  ));
+  assert.deepEqual(calls.map(call => call.arguments.map(argument =>
+    argument.name
+  )), [
+    [
+      'quantidade de caracteres',
+      '0',
+      'a largura desta caixa vezes 3/4'
+    ],
+    [
+      'quantidade de caracteres',
+      '0',
+      '3/4 vezes a largura desta caixa'
+    ]
+  ]);
+  assert.ok(calls.every(call =>
+    call.computedFieldAccesses?.some(access =>
+      access.target.computedField?.name.normalizedName === 'largura'
+    )
+  ));
+});
+
 test('resolves divided scalar arguments after contracted definite articles', () => {
   const source = [
     'Um número é uma estrutura.',

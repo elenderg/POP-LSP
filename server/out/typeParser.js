@@ -6184,6 +6184,21 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
                 rightBase) {
                 return leftType;
             }
+            if (node.operator === 'vezes') {
+                const leftSymbol = symbols.lookup(leftType.name);
+                const rightSymbol = symbols.lookup(rightType.name);
+                if (leftSymbol?.isScalar && rightBase === 'fração') {
+                    return leftType;
+                }
+                if (rightSymbol?.isScalar && leftBase === 'fração') {
+                    return rightType;
+                }
+                if (leftSymbol?.isScalar &&
+                    rightSymbol?.isScalar &&
+                    leftSymbol.scale === rightSymbol.scale) {
+                    return leftType;
+                }
+            }
             const commonNumericPair = symbols.entries
                 .map(symbol => ({
                 symbol,
@@ -6200,15 +6215,6 @@ function resolveRoutineExpressionTypeCore(source, argument, caller, globalVariab
                 (second.rightDistance ?? Number.MAX_SAFE_INTEGER))[0];
             if (commonNumericPair) {
                 return createSyntheticTypeReference(commonNumericPair.symbol.name, node.range);
-            }
-        }
-        if (node.operator === 'vezes') {
-            const leftSymbol = symbols.lookup(leftType.name);
-            const rightSymbol = symbols.lookup(rightType.name);
-            if (leftSymbol?.isScalar &&
-                rightSymbol?.isScalar &&
-                leftSymbol.scale === rightSymbol.scale) {
-                return leftType;
             }
         }
         if (node.operator === 'dividido por' &&

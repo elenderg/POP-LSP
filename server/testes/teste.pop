@@ -6350,11 +6350,9 @@ Rotina para que se vire uns degraus:
     os degraus vezes 10 e
     3600 para uma
     fração.
-  []
-  \Se os degraus forem negativos, \ rotina não implementada?
-  []
-  \Vire a fração para a esquerda;
-  Retorne.
+  Se os degraus forem negativos, \ rotina não implementada?
+    Vire a fração para a esquerda;
+    Retorne.
   Vire para a fração.
 
 Rotina para que se vire pra direita uma fração igual a um número sobre um segundo número;
@@ -6703,9 +6701,20 @@ Rotina para que se escreva um trecho para um endereço completo:
     erro do fluxo de entrada/saída.
 
 Rotina para que se escreva um byte:
-  Atribua o byte para uma string.
-  []
-  \ Escreva a string. \ rotina não implementada
+  Atribua o byte para uma string.  
+  Escreva a string.
+
+Rotina para que se escreva uma string sem passar pra próxima linha;
+Rotina para que se escreva uma string;
+Rotina para que se pinte uma string:
+  Preserve a string.
+  Itere.
+    Se a string estiver em branco, retorne.
+    Obtenha um byte dessa string.
+    Pinte o byte.
+    Se a string não estiver em branco, 
+      Providencie espaçamento adequado entre caracteres.
+  Reitere.
 
 Rotina para que se escreva um número para StdOut:
   Converta
@@ -7425,51 +7434,44 @@ Rotina para que se escreva uma string para StdOut:
 
 Rotina para que se escreva um byte sem passar pra próxima linha:
   Atribua o byte para uma string.
-  []
-  \Escreva a string sem passar pra próxima linha. \ implementar esta rotina
+  Escreva a string sem passar pra próxima linha. \ implementar esta rotina
   \ will translate to English because "Converta um sinalizador" é used para transcreva reams pelo caderno
 
 Rotina para que se escreva um sinalizador:
   Converta
     o sinalizador para uma
     string.
-  []
-  \ Escreva a string. \ rotina não implementada
+  Escreva a string.
 
 Rotina para que se escreva um sinalizador sem passar pra próxima linha:
   Converta
     o sinalizador para uma
     string.
-  []
-  \Escreva a string sem passar pra próxima linha.
+  Escreva a string sem passar pra próxima linha.
 
 Rotina para que se escreva uma fração:
   Converta
     a fração para uma
     string.
-  []
-  \ Escreva a string. \ rotina não implementada
+  Escreva a string.
 
 Rotina para que se escreva uma fração sem passar pra próxima linha:
   Converta
     a fração para uma
     string.
-  []
-  \Escreva a string sem passar pra próxima linha.
+  Escreva a string sem passar pra próxima linha.
 
 Rotina para que se escreva um número:
   Converta
     o número para uma
     string.
-  []
-  \ Escreva a string. \ rotina não implementada
+  Escreva a string.
 
 Rotina para que se escreva um número sem passar pra próxima linha:
   Converta
     o número para uma
     string.
-  []
-  \Escreva a string sem passar pra próxima linha.
+  Escreva a string sem passar pra próxima linha.
 
 Rotina para que se escreva um número sobre um console:
   Converta
@@ -7951,20 +7953,6 @@ Rotina para que se uppercase uma caixa de texto:
     Uppercase a string desta linha de texto.
   Reitere.
   Selecione o texto na caixa de texto.
-
-Rotina para que se escreva uma string;
-Rotina para que se pinte uma string:
-  Preserve a string.
-  Itere.
-    Se a string estiver em branco,
-      Retorne.
-    Obtenha um
-      byte desde
-      a string.
-    Pinte o byte.
-    Se a string não estiver em branco,
-      Providencie espaçamento adequado entre caracteres.
-  Reitere.
 
 Rotina para que se escreva uma string usando um centro localização e um raio;
 Rotina para que se pinte uma string usando um centro localização e um raio:
@@ -8917,10 +8905,6 @@ Rotina para que se receba um trecho desde um soquete:
         o texto CRLF para StdOut;
       Limpe o trecho;
       Retorne.
-    \Se o último winsock erro dum system não for 10040 [WSAMSGSIZE],  \ "dum" não é permitido aqui
-    \Atribua "Ocorreu um erro no recebimento dos dados." ao erro do fluxo de entrada/saída;
-    \Limpe o trecho;
-    \Retorne.
     Atribua
       o ponteiro mais
       a contagem menos
@@ -10352,8 +10336,7 @@ Rotina para que se pinte o W maiúsculo:
   Salve o contexto.
   Vire para a direita.
   Ande 2 quadrados.
-  []
-  \Vire para a esquerda 2/3 quadrados.
+  Vire para a esquerda 41/96.
   Pinte 3+1/2 quadrados.
   Restaure o contexto.
 
@@ -12145,10 +12128,9 @@ Rotina para que se use um tamanho da letra em  uns twips:
     tamanho da letra deste contexto.
 
 Rotina para que se use small pointy letras:
-  \ seria o oposto de  "big roundy letras" | ainda não foi implementado
-  []
-  \Use small letras. \não implementado
-  Retorne.
+  \ seria o oposto de  "big roundy letras"
+  Use letras pequenas.
+  
 
 Rotina para que se escolha aleatoriamente um tamanho da letra entre uns twips e uns outros twips:
   Escolha aleatoriamente um
@@ -12875,8 +12857,8 @@ Função para que se atribua a linha de cima duma caixa para uma linha reta horizo
 
 Função para que se atribua a largura duma caixa para uma largura:
   Atribua
-    a coordenada X2 desta caixa ao
-    largura.
+    a coordenada X2 desta caixa para
+    a largura.
   Subtraia
     a coordenada X1 desta caixa desde
     a largura.
@@ -13281,14 +13263,9 @@ Rotina para que se ande uns twips para trás:
 
 Rotina para que se mova uma caixa perto do lado esquerdo de uma segunda caixa;
 Rotina para que se mova uma caixa perto da esquerda de uma segunda caixa:
-  Mova
-    a caixa para a esquerda dessa
-    segunda caixa.
-  []
-  \Escolha aleatoriamente uma quantidade de caracteres entre 0 e a largura desta caixa vezes 3/4. \ verificar
-  []
-  \Mova a caixa para a direita a quantidade de caracteres.
-  Retorne.
+  Mova a caixa para a esquerda dessa segunda caixa.
+  Escolha aleatoriamente uma quantidade de caracteres entre 0 e a largura desta caixa vezes 3/4.
+  Mova a caixa para a direita a quantidade de caracteres.  
 
 Rotina para que se mova uma caixa usando um par de números racionais e uma localização;
 Rotina para que se mova uma caixa usando uma par de números fracionários e uma localização:
