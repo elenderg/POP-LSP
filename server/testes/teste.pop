@@ -3840,7 +3840,7 @@ Rotina para que se vire uns degraus para o lado direito:
 
 Rotina para que se vire uns degraus:
   Atribua os degraus vezes 10 e 3600 para uma fração.
-  []\Se os degraus forem negativos,
+  []\Se os degraus forem negativos, \ rotina não implementada?
     []\Vire a fração para a esquerda;
     Retorne.
   Vire para a fração.
