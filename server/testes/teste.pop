@@ -9132,7 +9132,7 @@ Rotina para que se mova uma caixa perto do lado esquerdo de uma segunda caixa;
 Rotina para que se mova uma caixa perto da esquerda de uma segunda caixa:  
   Mova a caixa para a esquerda dessa segunda caixa.
   []\Escolha aleatoriamente uma quantidade de caracteres entre 0 e a largura desta caixa vezes 3/4. \ verificar
-  Mova a caixa para a direita a quantidade de caracteres.
+  []\Mova a caixa para a direita a quantidade de caracteres.
   Retorne.
 
 
@@ -9221,49 +9221,49 @@ Rotina para que se include uma fonte no current pdf:
   \ stream
   Atribua a actual data dessa fonte para um trecho.
   Converta o trecho para uma cifra hexadecimal.
-  Adicione um stream objeto pdf usando "font stream".
-  []\Acrescente o número deste stream seguido de " 0 obj" para o stream.
-  []\Acrescente "<<" para o stream sem passar pra próxima linha.
-  []\Acrescente "/Filter /ASCIIHexDecode" para o stream sem passar pra próxima linha.
-  []\Acrescente " /Length " junto com a quantidade de caracteres deste cifra hexadecimal para o stream sem passar pra próxima linha.
-  []\Acrescente " /Length1 " junto com a quantidade de caracteres deste trecho para o stream sem passar pra próxima linha.
-  []\Acrescente ">>" para o stream.
-  []\Acrescente "stream" para o stream.
-  []\Acrescente a cifra hexadecimal para o stream.
-  []\Acrescente "endstream" para o stream.
-  []\Acrescente "endobj" para o stream.
+  Adicione um stream objeto pdf denominado stream usando "font stream".
+  Acrescente o número deste stream seguido de " 0 obj" para o stream.
+  Acrescente "<<" para o stream sem passar pra próxima linha.
+  Acrescente "/Filter /ASCIIHexDecode" para o stream sem passar pra próxima linha.
+  Acrescente " /Length " junto com a quantidade de caracteres deste cifra hexadecimal para o stream sem passar pra próxima linha.
+  Acrescente " /Length1 " junto com a quantidade de caracteres deste trecho para o stream sem passar pra próxima linha.
+  Acrescente ">>" para o stream.
+  Acrescente "stream" para o stream.
+  Acrescente a cifra hexadecimal para o stream.
+  Acrescente "endstream" para o stream.
+  Acrescente "endobj" para o stream.
   \ descriptor
-  Adicione um descriptor objeto pdf usando "fonte descriptor".
+  Adicione um descriptor objeto pdf denominado descriptor usando "fonte descriptor".
   Atribua "F" junto com o número deste descriptor para um nome da fonte.
   Atribua o nome desta fonte para um nome base da fonte.
   Replace o caractere de espaço com o underline no nome base da fonte.
-   []\Acrescente o número deste descriptor seguido de " 0 obj" para o descriptor.
-   []\Acrescente "<<" para o descriptor.
-   []\Acrescente "/Type /FontDescriptor" para o descriptor.
-   []\Acrescente "/FontName /" junto com o nome base da fonte para o descriptor.
-   []\Acrescente "/FontFile2 " junto com o número deste stream seguido de " 0 R" para o descriptor.
-   []\Acrescente "/Flags " junto com o valor de configuração desta definição da fonte para o descriptor.
-   []\Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor.
-   []\Acrescente "/Ascent " junto com o valor da ascensão desta definição da fonte para o descriptor.
-   []\Acrescente "/Descent " junto com o valor da descensão desta definição da fonte para o descriptor.
-   []\Acrescente "/CapHeight " junto com o valor da altura desta definição da fonte para o descriptor.
-   []\Acrescente "/ItalicAngle " junto com o valor do ângulo itálico desta definição da fonte para o descriptor.
-   []\Acrescente "/StemV " junto com o valor da largura vertical desta definição da fonte para o descriptor.
-   []\Acrescente ">>" para o descriptor.
-   []\Acrescente "endobj" para o descriptor.
+   Acrescente o número deste descriptor seguido de " 0 obj" para o descriptor.
+   Acrescente "<<" para o descriptor.
+   Acrescente "/Type /FontDescriptor" para o descriptor.
+   Acrescente "/FontName /" junto com o nome base da fonte para o descriptor.
+   Acrescente "/FontFile2 " junto com o número deste stream seguido de " 0 R" para o descriptor.
+   Acrescente "/Flags " junto com o valor de configuração desta definição da fonte para o descriptor.
+   []\Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor. \ verificar
+   Acrescente "/Ascent " junto com o valor da ascensão desta definição da fonte para o descriptor.
+   Acrescente "/Descent " junto com o valor da descensão desta definição da fonte para o descriptor.
+   Acrescente "/CapHeight " junto com o valor da altura desta definição da fonte para o descriptor.
+   Acrescente "/ItalicAngle " junto com o valor do ângulo itálico desta definição da fonte para o descriptor.
+   Acrescente "/StemV " junto com o valor da largura vertical desta definição da fonte para o descriptor.
+   Acrescente ">>" para o descriptor.
+   Acrescente "endobj" para o descriptor.
   \ definition
-  Adicione um definition objeto pdf usando "fonte definition".
+  Adicione um definition objeto pdf denominado definition usando "fonte definition".
   Atribua o nome da fonte ao nome da fonte desta definition.
-   []\Acrescente o número desta definition seguido de " 0 obj" para a definition.
-   []\Acrescente "<<" para a definition.
-   []\Acrescente "/Type /Font" para a definition.
-   []\Acrescente "/Subtype /TrueType" para a definition.
-   []\Acrescente "/Nomeie /" junto com o nome da fonte para a definition.
-   []\Acrescente "/BaseFont /" junto com o nome base da fonte para a definition.
-   []\Acrescente "/Encoding /WinAnsiEncoding" para a definition.
-   []\Acrescente "/FontDescriptor " junto com o número deste descriptor seguido de " 0 R" para a definition.
-   []\Acrescente "/FirstChar 0" para a definition.
-   []\Acrescente "/LastChar 255" para a definition.
+   Acrescente o número desta definition seguido de " 0 obj" para a definition.
+   Acrescente "<<" para a definition.
+   Acrescente "/Type /Font" para a definition.
+   Acrescente "/Subtype /TrueType" para a definition.
+   Acrescente "/Nomeie /" junto com o nome da fonte para a definition.
+   Acrescente "/BaseFont /" junto com o nome base da fonte para a definition.
+   Acrescente "/Encoding /WinAnsiEncoding" para a definition.
+   Acrescente "/FontDescriptor " junto com o número deste descriptor seguido de " 0 R" para a definition.
+   Acrescente "/FirstChar 0" para a definition.
+   Acrescente "/LastChar 255" para a definition.
   Atribua as larguras de fonte desta definição da fonte para um segundo trecho.
    []\Acrescente "/Widths [" para a definition.
    []\Acrescente o segundo trecho seguido de "]" para a definition.
