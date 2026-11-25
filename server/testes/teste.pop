@@ -3185,23 +3185,23 @@ Rotina para que se classifique algumas linhas de texto selecionadas em uma caixa
   Enumere novamente as linhas de texto desta caixa de texto.
 
 Rotina para que se classifique umas linhas de texto:
-  Se a primeira linha de texto destas linhas de texto for a última linha de texto destas linhas de texto, retorne.
-  []\Subdivida as linhas de texto em uns linhas de texto anteriores e umas linhas de texto posteriores.
-  []\Classifique as linhas de texto anteriores.
-  []\Classifique as linhas de texto posteriores.
+  Se a primeira linha de texto destas linhas de texto for a última linha de texto destas linhas de texto, retorne. \verificar os campos da lista
+  Subdivida as linhas de texto em umas linhas de texto denominadas linhas de texto anteriores e umas linhas de texto denominadas linhas de texto posteriores.
+  Classifique as linhas de texto anteriores.
+  Classifique as linhas de texto posteriores.
   Itere.
-    []\Atribua a primeira linha de texto destas linhas de texto anteriores para uma linha de texto anterior.
-    []\Atribua a primeira linha de texto destas linhas de texto posteriores para uma linha de texto posterior.
-    []\Se a linha de texto anterior for inexistente,
-    []\Acrescente as linhas de texto posteriores para as linhas de texto;
-    Retorne.
-    []\Se a linha de texto posterior for inexistente,
-    []\Acrescente as linhas de texto anteriores para as linhas de texto;
-    Retorne.
-    []\Se a string desta linha de texto anterior for maior do que a string desta linha de texto posterior,
-    []\Mova a linha de texto posterior desde as linhas de texto posteriores para as linhas de texto;
-    Reitere.
-    []\Mova a linha de texto anterior desde as linhas de texto anteriores para as linhas de texto.
+    Atribua a primeira linha de texto destas linhas de texto anteriores para uma linha de texto denominada linha de texto anterior.
+    Atribua a primeira linha de texto destas linhas de texto posteriores para uma linha de texto denominada linha de texto posterior.
+    Se a linha de texto anterior for inexistente,
+      Acrescente as linhas de texto posteriores para as linhas de texto;
+      Retorne.
+    Se a linha de texto posterior for inexistente,
+      Acrescente as linhas de texto anteriores para as linhas de texto;
+      Retorne.
+    Se a string desta linha de texto anterior for maior do que a string desta linha de texto posterior,
+      Mova a linha de texto posterior desde as linhas de texto posteriores para as linhas de texto;
+      Reitere.
+    Mova a linha de texto anterior desde as linhas de texto anteriores para as linhas de texto.
   Reitere.
 
 Rotina para que se subdivida um trecho em umas díades: \ desmembre / subdivida / segmente / fracione / reparta
@@ -3283,7 +3283,7 @@ Rotina para que se subdivida uma string em uns conjuntos de texto usando um byte
   Se o conteúdo deste caractere final desta string não for o byte separador, retorne.
   Adicione "" para os conjuntos de texto.
 
-Rotina para que se subdivida umas listas em umas listas anteriores e umas listas posteriores:
+Rotina para que se subdivida umas listas em umas listas denominadas listas anteriores e umas listas denominadas listas posteriores:
   Se as listas estiverem vazias,
     Limpe as listas anteriores;
     Limpe as listas posteriores;
@@ -3296,7 +3296,7 @@ Rotina para que se subdivida umas listas em umas listas anteriores e umas listas
     Reitere.
     Subdivida as listas em as listas anteriores e as listas posteriores sob a lista.
 
-Rotina para que se subdivida umas listas em umas listas anteriores e umas listas posteriores sob uma lista:
+Rotina para que se subdivida umas listas em umas listas denominadas listas anteriores e umas listas denominadas listas posteriores sob uma lista:
   Limpe as listas anteriores.
   Limpe as listas posteriores.
   Se a lista for inexistente,
