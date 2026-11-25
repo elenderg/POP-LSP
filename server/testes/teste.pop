@@ -5317,7 +5317,7 @@ Rotina para que se abra um arquivo usando um endereço completo:
 Rotina para que se leia uma response string desde uma requisição WinHTTP:
   Se a requisição WinHTTP for inexistente, retorne.
   Limpe a response string.
-  Atribua 8 kilobytes para um trecho tamanho.
+  Atribua 8 kilobytes para um tamanho denominado trecho tamanho.
   Itere.
     Atribua 0 para um tamanho.
     Processe "winhttp.dll" "WinHttpqueryDataAvailable" com
@@ -5331,14 +5331,14 @@ Rotina para que se leia uma response string desde uma requisição WinHTTP:
       Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
       Limpe a response string;
       Pare.
-    []\Atribua a quantidade de caracteres desta response string para uma quantidade de caracteres armazenados.
-    []\Reaponte o caractere inicial desta response string usando a quantidade de caracteres armazenados mais o trecho tamanho.
+    Atribua a quantidade de caracteres desta response string para uma quantidade de caracteres denominada quantidade de caracteres armazenados.
+    Reaponte o caractere inicial desta response string usando a quantidade de caracteres armazenados mais o trecho tamanho.
     Atribua o caractere inicial desta response string mais a quantidade de caracteres armazenados para um ponteiro.
     Processe "winhttp.dll" "WinHttpReadData" com
   \ Lê dados de um identificador aberto pela função WinHttpOpenRequest.
     \ Documentação> -> https://learn.microsoft.com/pt-br/windows/win32/api/winhttp/nf-winhttp-winhttpreaddata
       O número identificador de requisição desta requisição WinHTTP [hRequest]
-      []\e O ponteiro [lpBuffer]
+      e O ponteiro [lpBuffer]
       e O trecho tamanho [dwNumberOfBytesToRead]
       e O endereçamento duma contagem [lpdwNumberOfBytesRead]
     Retornando o número resultante.
@@ -5349,7 +5349,7 @@ Rotina para que se leia uma response string desde uma requisição WinHTTP:
       Limpe a response string;
       Pare.
     Atribua o ponteiro mais a contagem menos 1 ao caractere final desta response string.
-    []\Se a contagem for 0, pare.
+    Se a contagem for 0, pare.
   Reitere.
 
 Rotina para que se leia uma URL para um trecho:
