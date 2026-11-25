@@ -5438,21 +5438,22 @@ Rotina para que se receba um trecho desde um soquete:
   Itere.
     Atribua 0 para um tamanho.
     Atribua a quantidade de caracteres deste trecho para um número denominado quantidade de caracteres armazenados.
-    []\Reaponte o caractere inicial deste trecho usando a quantidade de caracteres armazenados mais o trecho tamanho.
+    Reaponte o caractere inicial deste trecho usando a quantidade de caracteres armazenados mais o trecho tamanho.
     Atribua o caractere inicial deste trecho mais a quantidade de caracteres armazenados para um ponteiro.
     Processe "ws2_32.dll" "recv" com
   \ Recebe dados de um soquete conectado ou um soquete vinculado sem conexão.
     \ Documentação -> https://learn.microsoft.com/pt-br/windows/win32/api/winsock/nf-winsock-recv
     \ Usado para ler dados de entrada em soquetes orientados à conexão ou soquetes sem conexão.
       O soquete [s]
-      []\e O ponteiro [*buf]
+      e O ponteiro [*buf]
       e O trecho tamanho [len]
       e 0 [flags]
     Retornando uma contagem.
     Se a contagem não for -1 [SOCKET_ERROR],
       Atribua o ponteiro mais a contagem menos 1 ao caractere final deste trecho;
       Retorne.
-    []\Se o último erro do windows sockets não for 10040 [WSAMSGSIZE],
+    Processe "ws2_32.dll" "WSAGetLastError" retornando um número denominado último erro do Windows Sockets. []\verificar porque foi preciso fazer isso.
+    Se o último erro do Windows Sockets não for 10040 [WSAMSGSIZE],
       Atribua "Erro ao receber os dados. Função 'recv' da lib 'ws2_32.dll'." ao erro do fluxo de entrada/saída;
       []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
       []\Limpe o trecho;
