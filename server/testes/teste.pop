@@ -1787,12 +1787,12 @@ Função para que se atribua a malha quadriculada duma caixa de texto para uma mal
   Atribua a altura desta fonte desta caixa de texto vezes 4 ao número X desta malha quadriculada.
   Atribua a altura desta fonte desta caixa de texto ao número Y desta malha quadriculada.
 
-Rotina para que se atribua a normalized seleção duma caixa de texto para uma seleção:
+Função para que se atribua a normalized seleção duma caixa de texto para uma seleção:
   Se a caixa de texto for inexistente, retorne.
   Atribua a seleção desta caixa de texto à seleção.
   Normalize a seleção.
 
-Rotina para que se atribua a contagem de linhas duma caixa de texto para uma contagem:
+Função para que se atribua a contagem de linhas duma caixa de texto para uma contagem:
   Se a caixa de texto for inexistente,
     Atribua 0 à contagem;
     Retorne.
@@ -1801,7 +1801,7 @@ Rotina para que se atribua a contagem de linhas duma caixa de texto para uma con
     Retorne.
   Atribua o número da linha desta última linha de texto destas linhas de texto desta caixa de texto à contagem.
 
-Rotina para que se atribua a altura da linha duma caixa de texto para uma altura:
+Função para que se atribua a altura da linha duma caixa de texto para uma altura:
   Se a caixa de texto for inexistente,
     Atribua 0 à altura;
     Retorne.
