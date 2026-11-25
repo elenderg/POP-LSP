@@ -13460,7 +13460,7 @@ Rotina para que se include uma fonte no current pdf:
   Acrescente
     "/Flags " junto com o valor de configuração desta definição da fonte para
     o descriptor.
-  Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor. \ verificar
+  Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o descriptor.
   Acrescente
     "/Ascent " junto com o valor da ascensão desta definição da fonte para
     o descriptor.
@@ -14397,7 +14397,7 @@ Rotina para que se pinte um gpBitmap sob uma localização (modo pdf):
   Transcreva "/" junto com o nome seguido de " Do".
   Transcreva "Q".
 
-Rotina para que se pinte uma elipse com uma cor da borda e uma cor de preenchimento (modo pdf):
+Rotina para que se pinte uma elipse com uma cor denominada cor da borda e uma cor denominada cor de preenchimento (modo pdf):
   Se a cor da borda e a cor de preenchimento são clear,
     Retorne.
   Transcreva setcolor usando
@@ -14428,9 +14428,8 @@ Rotina para que se pinte uma elipse com uma cor da borda e uma cor de preenchime
     a cor de preenchimento.
 
 Rotina para que se pinte uma elipse com uma cor denominada cor da borda e uma cor denominada cor de preenchimento:
-  Se a sinalizador de páginas deste pdf state estiver ativo,
-    []
-    \Pinte a elipse com a cor da borda e a cor de preenchimento (modo pdf); \ verificar
+  Se o sinalizador de páginas deste pdf state estiver ativo,
+    Pinte a elipse com a cor da borda e a cor de preenchimento (modo pdf);
     Retorne.
   Preserve a elipse.
   Crie o hPen desse
