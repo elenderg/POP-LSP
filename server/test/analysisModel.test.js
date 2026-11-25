@@ -3016,6 +3016,53 @@ test('resolves routine calls when ambiguous nested fields share a type', () => {
   ));
 });
 
+test('ignores parameter separators inside string literals', () => {
+  const sources = [
+    {
+      name: 'types.pop',
+      text: [
+        'Uma string é uma estrutura.',
+        'Um destinatário é uma string.',
+        'Um email é uma estrutura com um destinatário.'
+      ].join('\n')
+    },
+    {
+      name: 'variables.pop',
+      text: 'O texto CRLF é uma string.'
+    },
+    {
+      name: 'routines.pop',
+      text: [
+        'Rotina para que se acrescente uma string para uma segunda string:',
+        '  Retorne.'
+      ].join('\n')
+    },
+    {
+      name: 'caller.pop',
+      text: [
+        'Rotina para que se envie usando um email e uma string denominada temp string:',
+        '  Acrescente "Para: " junto com o destinatário deste email junto com o texto CRLF para a temp string.',
+        '  Acrescente "Responder-Para: " junto com o destinatário deste email junto com o texto CRLF para a temp string.'
+      ].join('\n')
+    }
+  ];
+  const { documents } = createWorkspace(sources);
+  const caller = documents[3].parsed.routines.find(routine =>
+    routine.name.normalizedName === 'envie usando'
+  );
+  const calls = caller?.calls.filter(call =>
+    sources[3].text.slice(call.name.range.start, call.name.range.end)
+      .toLocaleLowerCase('pt-BR') === 'acrescente'
+  ) ?? [];
+
+  assert.deepEqual(documents[3].parsed.diagnostics, []);
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(call =>
+    call.target?.name.normalizedName === 'acrescente' &&
+    call.arguments.length === 2
+  ));
+});
+
 test('resolves explicit atribua routine calls before assignment syntax', () => {
   const source = [
     'Um par de números é uma estrutura.',

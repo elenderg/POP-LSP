@@ -7203,10 +7203,26 @@ function splitRoutineArgumentsUsingParameterSeparatorsCore(
   }
 
   const words: RegExpExecArray[] = [];
+  const quotedRanges = findQuotedRanges(source, range);
+  let quotedRangeIndex = 0;
   const wordPattern = /\p{L}+/gu;
   wordPattern.lastIndex = range.start;
   let wordMatch: RegExpExecArray | null;
   while ((wordMatch = wordPattern.exec(source)) && wordMatch.index < range.end) {
+    while (
+      quotedRangeIndex < quotedRanges.length &&
+      quotedRanges[quotedRangeIndex].end <= wordMatch.index
+    ) {
+      quotedRangeIndex++;
+    }
+    const quotedRange = quotedRanges[quotedRangeIndex];
+    if (
+      quotedRange &&
+      wordMatch.index >= quotedRange.start &&
+      wordMatch.index < quotedRange.end
+    ) {
+      continue;
+    }
     words.push(wordMatch);
   }
   const normalizedExpectedSeparators = expectedSeparators.map(separators =>
