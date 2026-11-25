@@ -2838,63 +2838,63 @@ Rotina para que se envie um email:
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Destrua o soquete;
     Retorne.
- []\ Se o response string começa com "5",
+  Se o response string começa com "5",
     Atribua o response string ao erro do fluxo de entrada/saída;
-    []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
-    []\Elimine os resíduos no erro do fluxo de entrada/saída;
-    []\Destrua o soquete;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Elimine os resíduos no erro do fluxo de entrada/saída;
+    Destrua o soquete;
     Retorne.
-  []\Envie "MAIL FROM: <" junto com o remetente deste email seguido de ">" junto com o texto CRLF para o soquete e receba o response string.
+  Envie "MAIL FROM: <" junto com o remetente deste email seguido de ">" junto com o texto CRLF para o soquete e receba o response string.
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Destrua o soquete;
     Retorne.
-  []\Se o response string começa com "5",
+  Se o response string começa com "5",
     Atribua o response string ao erro do fluxo de entrada/saída;
-    []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
-    []\Elimine os resíduos no erro do fluxo de entrada/saída;
-    []\Destrua o soquete;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Elimine os resíduos no erro do fluxo de entrada/saída;
+    Destrua o soquete;
     Retorne.
-  []\Envie "RCPT TO: <" junto com o destinatário deste email seguido de ">" junto com o texto CRLF para o soquete e receba o response string.
+  Envie "RCPT TO: <" junto com o destinatário deste email seguido de ">" junto com o texto CRLF para o soquete e receba o response string.
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Destrua o soquete;
     Retorne.
-  []\Se o response string começa com "5",
+  Se o response string começa com "5",
     Atribua o response string ao erro do fluxo de entrada/saída;
-    []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
-    []\Elimine os resíduos no erro do fluxo de entrada/saída;
-    []\Destrua o soquete;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Elimine os resíduos no erro do fluxo de entrada/saída;
+    Destrua o soquete;
     Retorne.
-  []\Envie "DATA" junto com o texto CRLF para o soquete e receba o response string.
+  Envie "DATA" junto com o texto CRLF para o soquete e receba o response string.
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Destrua o soquete;
     Retorne.
-  []\Se o response string começa com "5",
+  Se o response string começa com "5",
     Atribua o response string ao erro do fluxo de entrada/saída;
-    []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
-    []\Elimine os resíduos no erro do fluxo de entrada/saída;
-    []\Destrua o soquete;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Elimine os resíduos no erro do fluxo de entrada/saída;
+    Destrua o soquete;
     Retorne.
   Limpe uma temp string.
-  []\Acrescente "De: " junto com o remetente deste email junto com o texto CRLF para a temp string.
-  []\Acrescente "Para: " junto com o destinatário deste email junto com o texto CRLF para a temp string.
-  []\Acrescente "Assunto: " junto com o assunto deste email junto com o texto CRLF para a temp string.
-  []\Acrescente "Responder-Para: " junto com o remetente deste email junto com o texto CRLF para a temp string.
+  Acrescente "De: " junto com o remetente deste email junto com o texto CRLF para a temp string.
+  Acrescente "Para: " junto com o destinatário deste email junto com o texto CRLF para a temp string.
+  Acrescente "Assunto: " junto com o assunto deste email junto com o texto CRLF para a temp string.
+  Acrescente "Responder-Para: " junto com o remetente deste email junto com o texto CRLF para a temp string.
   Acrescente o texto CRLF para a temp string.
   Acrescente a mensagem deste email para a temp string (para transparência nos emails).
   Acrescente o texto CRLF seguido de "." junto com o texto CRLF para a temp string.
-  []\Envie a temp string para o soquete e receba a response string.
+  Envie a temp string para o soquete e receba a response string.
   Se o erro do fluxo de entrada/saída não estiver em branco,
     Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
     Destrua o soquete;
     Retorne.
-  []\Se o response string começa com "5",
+  Se o response string começa com "5",
     Atribua o response string ao erro do fluxo de entrada/saída;
-    []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
-    []\Elimine os resíduos no o erro do fluxo de entrada/saída;
-    []\Destrua o soquete;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Elimine os resíduos no o erro do fluxo de entrada/saída;
+    Destrua o soquete;
     Retorne.
   Envie "QUIT" junto com o texto CRLF para o soquete.
   Destrua o soquete.
