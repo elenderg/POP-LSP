@@ -3840,8 +3840,8 @@ Rotina para que se vire uns degraus para o lado direito:
 
 Rotina para que se vire uns degraus:
   Atribua os degraus vezes 10 e 3600 para uma fração.
-  \Se os degraus forem negativos,
-    []\Vire a fração para a esquerda ;
+  []\Se os degraus forem negativos,
+    []\Vire a fração para a esquerda;
     Retorne.
   Vire para a fração.
 
@@ -3873,12 +3873,12 @@ Rotina para que se exponha tudo:
 
 Rotina para que se exponha conteúdo de uma caixa:
   Crie uma hRgn usando a caixa.
-  []\Mostre dentro desse hRgn.
+  Exponha conteúdo desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se exponha conteúdo de uma elipse:
   Crie uma hRgn usando a elipse.
-  []\Mostre dentro desse hRgn.
+  Exponha conteúdo desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se exponha conteúdo de uma hRgn:
@@ -3891,22 +3891,22 @@ Rotina para que se exponha conteúdo de uma hRgn:
 
 Rotina para que se exponha conteúdo de um polígono:
   Crie uma hRgn usando o polígono.
-  []\Mostre dentro desse hRgn.
+  Exponha conteúdo desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se exponha conteúdo de uma caixa arredondada:
   Crie uma hRgn usando a caixa arredondada.
-  []\Mostre dentro desse hRgn.
+  Exponha conteúdo desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se exponha exterior de uma caixa:
   Crie uma hRgn usando a caixa.
-  []\Mostre fora desse hRgn.
+  Exponha exterior desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se exponha exterior de uma elipse:
   Crie uma hRgn usando a elipse.
-  []\Mostre fora desse hRgn.
+  Exponha exterior desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se exponha exterior de uma hRgn:
@@ -3938,12 +3938,12 @@ Rotina para que se exponha exterior de uma hRgn:
 
 Rotina para que se exponha exterior de um polígono:
   Crie uma hRgn usando o polígono.
-  []\Mostre fora desse hRgn.
+  Exponha exterior desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se exponha exterior de uma caixa arredondada:
   Crie uma hRgn usando a caixa arredondada.
-  []\Mostre fora desse hRgn.
+  Exponha exterior desse hRgn.
   Destrua o hRgn.
 
 Rotina para que se renove a tela;
