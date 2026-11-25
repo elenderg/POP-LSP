@@ -7954,9 +7954,7 @@ function getParsedReferences(parsed, onProfile) {
             addVariableAccesses(instruction.variableAccesses, routine);
         }
         for (const access of routine.listSpecialFieldAccesses) {
-            add('field', access.reference.name, access.reference.range, {
-                container: 'lista'
-            });
+            add('type', access.elementType.name, access.reference.range);
             addType(access.elementType);
         }
         addComputedFieldAccesses(routine.computedFieldAccesses);

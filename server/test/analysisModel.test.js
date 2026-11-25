@@ -2239,14 +2239,14 @@ test('projects special list fields as typed field accesses and type references',
     'Um ponteiro é uma estrutura.',
     'Uma lista estruturada é uma estrutura.',
     'Uma lista é um ponteiro para uma lista estruturada.',
-    'Uma pessoa é uma estrutura.',
-    'O resultado é uma pessoa.',
+    'Uma linha de texto é uma estrutura.',
+    'O resultado é uma linha de texto.',
     'A lista atual é uma lista.',
     'para que se teste:',
-    '  Atribua a primeira pessoa desta lista atual para o resultado.',
-    '  Atribua a última pessoa desta lista atual para o resultado.',
-    '  Atribua a próxima pessoa desta lista atual para o resultado.',
-    '  Atribua a pessoa anterior desta lista atual para o resultado.',
+    '  Atribua a primeira linha de texto desta lista atual para o resultado.',
+    '  Atribua a última linha de texto desta lista atual para o resultado.',
+    '  Atribua a próxima linha de texto desta lista atual para o resultado.',
+    '  Atribua a linha de texto anterior desta lista atual para o resultado.',
     '  Retorne.'
   ].join('\n');
   const parsed = parseTypeDeclarations(source);
@@ -2267,20 +2267,44 @@ test('projects special list fields as typed field accesses and type references',
         node.listFieldAccess.elementType.range.end
       )
     ),
-    ['pessoa', 'pessoa', 'pessoa', 'pessoa']
+    ['linha de texto', 'linha de texto', 'linha de texto', 'linha de texto']
   );
   for (const node of listFieldNodes) {
     const typeReference = analysis.findReferenceAt(
       node.listFieldAccess.elementType.range.start,
       'type'
     );
-    assert.equal(typeReference.name, 'pessoa');
+    assert.equal(typeReference.name, 'linha de texto');
     assert.equal(
       analysis.findTypeDefinitionAt(node.listFieldAccess.elementType.range.start),
-      'pessoa'
+      'linha de texto'
     );
     assert.ok(analysis.nodes.get(node.parentId).range.start <= node.range.start);
     assert.ok(analysis.nodes.get(node.parentId).range.end >= node.range.end);
+  }
+
+  for (const node of listFieldNodes.filter(access =>
+    access.listFieldAccess.kind === 'first' ||
+    access.listFieldAccess.kind === 'last'
+  )) {
+    for (
+      let offset = node.listFieldAccess.reference.range.start;
+      offset < node.listFieldAccess.reference.range.end;
+      offset++
+    ) {
+      const reference = analysis.findReferenceAt(offset);
+      assert.equal(reference?.kind, 'type');
+      assert.equal(reference.name, node.listFieldAccess.elementType.name);
+      assert.equal(
+        analysis.findTypeDefinitionAt(offset),
+        node.listFieldAccess.elementType.name
+      );
+      assert.equal(
+        analysis.getDeclaration(reference)?.name,
+        node.listFieldAccess.elementType.name
+      );
+      assert.ok(analysis.getDeclarationNodes(reference).length > 0);
+    }
   }
 });
 
