@@ -3651,6 +3651,38 @@ test('resolves numeric concatenation as one routine argument', () => {
   ));
 });
 
+test('resolves string concatenation with a converted structure field', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'Uma caixa é uma estrutura.',
+    'Uma caixa de fonte é uma caixa.',
+    'Uma definição da fonte é uma estrutura com uma caixa de fonte.',
+    'Uma string é uma estrutura.',
+    'Um objeto pdf é uma estrutura.',
+    'Rotina para que se acrescente uma string para um objeto pdf:',
+    '  Retorne.',
+    'Rotina para que se converta uma caixa para uma string:',
+    '  Retorne.',
+    'Rotina para que se teste uma definição da fonte e um objeto pdf:',
+    '  Acrescente "/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]" para o objeto pdf.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const call = caller?.calls[0];
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(call?.target?.name.normalizedName, 'acrescente');
+  assert.deepEqual(call?.arguments.map(argument => argument.name), [
+    '"/FontBBox [" junto com a caixa de fonte desta definição da fonte seguido de "]"',
+    'o objeto pdf'
+  ]);
+  assert.ok(call?.fieldAccesses?.some(access =>
+    access.target.name.name === 'caixa de fonte'
+  ));
+});
+
 test('resolves unary negative expressions in every routine argument position', () => {
   const source = [
     'Um número é uma estrutura.',

@@ -10185,8 +10185,9 @@ function isStringConvertibleType(
       }))
     ];
     return signatures.some(signature =>
-      normalizeRoutineName(signature.name) === 'atribua' &&
-      // este 'atribua' é para conversões implícitas de tipos.
+      ['atribua', 'converta'].includes(
+        normalizeRoutineName(signature.name)
+      ) &&
       signature.parameters.length === 2 &&
       symbols.getBaseTypeDistance(
         signature.parameters[1].type.name,
