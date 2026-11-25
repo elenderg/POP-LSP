@@ -5434,7 +5434,7 @@ Rotina para que se receba o response string desde uma requisição WinHTTP:
 Rotina para que se receba um trecho desde um soquete:
   Limpe o erro do fluxo de entrada/saída.
   Limpe o trecho.
-  Atribua 8 kilobytes para um trecho tamanho.
+  Atribua 8 kilobytes para um tamanho denominado trecho tamanho.
   Itere.
     Atribua 0 para um tamanho.
     Atribua a quantidade de caracteres deste trecho para um número denominado quantidade de caracteres armazenados.
@@ -5454,9 +5454,9 @@ Rotina para que se receba um trecho desde um soquete:
       Retorne.
     Processe "ws2_32.dll" "WSAGetLastError" retornando um número denominado último erro do Windows Sockets. []\verificar porque foi preciso fazer isso.
     Se o último erro do Windows Sockets não for 10040 [WSAMSGSIZE],
-      Atribua "Erro ao receber os dados. Função 'recv' da lib 'ws2_32.dll'." ao erro do fluxo de entrada/saída;
-      []\Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
-      []\Limpe o trecho;
+      Atribua "Erro ao receber os dados da Função 'recv' da lib 'ws2_32.dll'." ao erro do fluxo de entrada/saída;
+      Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+      Limpe o trecho;
       Retorne.
   \Se o último winsock erro dum system não for 10040 [WSAMSGSIZE],  \ "dum" não é permitido aqui
     \Atribua "Ocorreu um erro no recebimento dos dados." ao erro do fluxo de entrada/saída;
