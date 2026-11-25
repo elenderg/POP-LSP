@@ -9998,37 +9998,33 @@ Rotina para que se inicie uma folha usando uma caixa:
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-getdevicecaps
     A área de impressão [hdc]
     e 112 [index = PhysicalOffsetX]
-  []\Retornando o número X dum par de números
-  .
+  Retornando o número X dum par de números.
   Processe "gdi32.dll" "GetDeviceCaps" com
     A área de impressão [hdc]
     e 113 [PhysicalOffsetY ]
-  []\Retornando o número Y deste par de números
-  .
-  []\Inverta o sinal desse par de números.
+  Retornando o número Y deste par de números.
+  Inverta o sinal desse par de números.
   Processe "gdi32.dll" "SetViewportOrgEx" com
   \ Especifica qual ponto DO DISPOSITIVO mapeia para a origem da janela (0,0).
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setviewportorgex
     A área de impressão [hdc]
-    []\e O número X deste par de números [x]
-    []\e O número Y deste par de números  [y]
+    e O número X deste par de números [x]
+    e O número Y deste par de números  [y]
     e nil. [lppt]
   Processe "gdi32.dll" "GetDeviceCaps" com
     A área de impressão [hdc]
     e 88 [index = LOGPIXELSX]
-  []\Retornando o número X deste par de números
-  .
+  Retornando o número X deste par de números.
   Processe "gdi32.dll" "GetDeviceCaps" com
     A área de impressão
     e 90 [index = LOGPIXELSY]
-  []\Retornando o número Y deste par de números
-  .
+  Retornando o número Y deste par de números.
   Processe "gdi32.dll" "SetViewportExtEx" com
   \ Define as extensões horizontal e vertical do viewport para um contexto de dispositivo
   \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setviewportextex
     A área de impressão [hdc]
-    []\e O número X deste par de números [x]
-    []\e O número Y deste par de números [y]
+    e O número X deste par de números [x]
+    e O número Y deste par de números [y]
     e nil. [lpsz]
   Processe "gdi32.dll" "SetWindowOrgEx" com
   \ Especifica qual ponto DA JANELA mapeia para a origem da janela de visualização (0,0).
@@ -10066,28 +10062,28 @@ Rotina para que se inicie a impressão um pdf:
 Rotina para que se inicie a impressão um pdf (criação do objeto pai):
   Adicione um objeto pai usando "parent".
   Atribua o objeto pai ao objeto pai deste pdf state.
-  []\Acrescente o número deste objeto pai seguido de " 0 obj" para o objeto pai.
+  Acrescente o número deste objeto pai seguido de " 0 obj" para o objeto pai.
   Acrescente "<<" para o objeto pai.
   Acrescente "/Type /Pages" para o objeto pai.
 
 Rotina para que se inicie a impressão um pdf (criação do objeto raiz):
   Adicione um objeto da raiz usando "root".
   Atribua o objeto da raiz ao objeto da raiz deste pdf state.
-  []\Acrescente o número deste objeto da raiz seguido de " 0 obj" para o objeto da raiz.
+  Acrescente o número deste objeto da raiz seguido de " 0 obj" para o objeto da raiz.
   Acrescente "<<" para o objeto da raiz.
   Acrescente "/Type /Catalog" para o objeto da raiz.
 
 Rotina para que se inicie uma folha no modo retrato usando um título de índice remissivo:
   []\Se o sinalizador de documentos deste pdf não estiver ativo,
     []\Limpe a folha no modo retrato;
-    []\Retorne.
+    Retorne.
   Faça a folha 816 pixels por 1056 pixels.
   []\Inicie a folha usando a caixa e o título de índice remissivo (modo pdf).
 
 Rotina para que se inicie uma folha no modo paisagem usando um título de índice remissivo:
   []\Se o sinalizador de documentos deste pdf não estiver ativo,
     []\Limpe a folha;
-    []\Retorne.
+    Retorne.
   Faça a folha 1056 pixels por 816 pixels.
   []\Inicie a folha usando a caixa e o título de índice remissivo (modo pdf).
 
