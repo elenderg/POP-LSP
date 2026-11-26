@@ -235,7 +235,7 @@ function formatRoutineBody(
             text,
             childIndent,
             child.range.start,
-            getStatementSyntax(routine, child.range, masked)
+            getStatementSyntax(source, routine, child.range, masked)
           );
           if (formattedStatement.length > 0) {
             formattedStatement[0] = capitalizeStatementStart(formattedStatement[0]);
@@ -282,7 +282,7 @@ function formatRoutineBody(
       raw.trim(),
       indent,
       statement.range.start,
-      getStatementSyntax(routine, statement.range, masked)
+      getStatementSyntax(source, routine, statement.range, masked)
     );
     const trailingComment = readTrailingComment(source, masked, statement.range.end, range.end);
     if (trailingComment) {
@@ -584,17 +584,58 @@ function wrapExpression(
   const lines: string[] = [];
   let start = 0;
   for (const breakAt of breaks) {
-    const segment = text.slice(start, breakAt).trim();
+    const rawSegment = text.slice(start, breakAt).trim();
+    const segment = containsComment(rawSegment)
+      ? replaceIndentTabs(rawSegment)
+      : normalizeStatementWhitespace(rawSegment);
     if (segment) {
       lines.push(`${spaces(start === 0 ? indent : indent + 1)}${segment}`);
     }
     start = breakAt;
   }
-  const finalSegment = text.slice(start).trim();
+  const rawFinalSegment = text.slice(start).trim();
+  const finalSegment = containsComment(rawFinalSegment)
+    ? replaceIndentTabs(rawFinalSegment)
+    : normalizeStatementWhitespace(rawFinalSegment);
   if (finalSegment) {
     lines.push(`${spaces(start === 0 ? indent : indent + 1)}${finalSegment}`);
   }
   return lines.length ? lines : [`${spaces(indent)}${replaceIndentTabs(text)}`];
+}
+
+function normalizeStatementWhitespace(text: string): string {
+  let normalized = '';
+  let inString = false;
+  let pendingWhitespace = false;
+  for (let index = 0; index < text.length; index++) {
+    const character = text[index];
+    if (inString) {
+      normalized += character;
+      if (character === '"' && text[index + 1] === '"') {
+        normalized += text[++index];
+      } else if (character === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (character === '"') {
+      if (pendingWhitespace && normalized.length > 0) {
+        normalized += ' ';
+      }
+      pendingWhitespace = false;
+      normalized += character;
+      inString = true;
+    } else if (/\s/u.test(character)) {
+      pendingWhitespace = true;
+    } else {
+      if (pendingWhitespace && normalized.length > 0) {
+        normalized += ' ';
+      }
+      pendingWhitespace = false;
+      normalized += character;
+    }
+  }
+  return normalized;
 }
 
 function capitalizeStatementStart(line: string): string {
@@ -613,6 +654,7 @@ function firstWordToken(source: string, range: SourceRange): string | undefined 
 }
 
 function getStatementSyntax(
+  source: string,
   routine: RoutineDeclaration,
   statement: SourceRange,
   masked: string
@@ -621,24 +663,38 @@ function getStatementSyntax(
   let returning: number | undefined;
   for (const assignment of routine.assignments) {
     if (containsRange(statement, assignment.range)) {
-      collectExpressionBreaks(assignment.expression, masked, breaks);
+      const argumentCount = countExpressionOperands(assignment.expression) + 1;
+      if (shouldWrapArguments(source, statement, argumentCount)) {
+        breaks.push(assignment.expression.range.start);
+        collectExpressionBreaks(assignment.expression, masked, breaks);
+        breaks.push(assignment.target.range.start);
+      }
     }
   }
   for (const output of routine.outputs) {
     if (containsRange(statement, output.range)) {
-      collectExpressionBreaks(output.expression, masked, breaks);
+      const argumentCount = countExpressionOperands(output.expression) + 1;
+      if (shouldWrapArguments(source, statement, argumentCount)) {
+        breaks.push(output.expression.range.start);
+        collectExpressionBreaks(output.expression, masked, breaks);
+        breaks.push(output.destination.range.start);
+      }
     }
   }
   for (const call of routine.calls) {
     if (isWithin(call.name.range.start, statement)) {
-      addArgumentBreaks(call.arguments, breaks);
+      if (shouldWrapArguments(source, statement, call.arguments.length)) {
+        addArgumentBreaks(call.arguments, breaks);
+      }
     }
   }
   for (const process of routine.processes) {
     if (!containsRange(statement, process.range)) {
       continue;
     }
-    addArgumentBreaks(process.arguments, breaks);
+    if (shouldWrapArguments(source, statement, process.arguments.length)) {
+      addArgumentBreaks(process.arguments, breaks);
+    }
     if (process.returnVariable) {
       returning = wordTokens(masked.slice(process.range.start, process.range.end))
         .find(token => token.text === 'retornando')
@@ -649,6 +705,32 @@ function getStatementSyntax(
     }
   }
   return { breaks, returning };
+}
+
+function countExpressionOperands(expression: RoutineExpression): number {
+  if (expression.kind === 'binary') {
+    return countExpressionOperands(expression.left) +
+      countExpressionOperands(expression.right);
+  }
+  if (expression.kind === 'unary') {
+    return countExpressionOperands(expression.operand);
+  }
+  return 1;
+}
+
+function shouldWrapArguments(
+  source: string,
+  statement: SourceRange,
+  argumentCount: number
+): boolean {
+  if (argumentCount > 4) {
+    return true;
+  }
+  const lineStart = source.lastIndexOf('\n', statement.start - 1) + 1;
+  const singleLineText = normalizeStatementWhitespace(
+    source.slice(statement.start, statement.end)
+  );
+  return statement.start - lineStart + singleLineText.length > 80;
 }
 
 function collectExpressionBreaks(
@@ -703,7 +785,7 @@ function addArgumentBreaks(
   argumentsList: { range: SourceRange }[],
   breaks: number[]
 ): void {
-  if (argumentsList.length > 1) {
+  if (argumentsList.length > 0) {
     breaks.push(argumentsList[0].range.start);
   }
   for (let index = 0; index < argumentsList.length - 1; index++) {

@@ -163,7 +163,7 @@ function formatRoutineBody(source, masked, routine, eol) {
                     const text = raw.trim();
                     const firstWord = firstWordToken(masked, child.range);
                     const childIndent = baseIndent + 1;
-                    const formattedStatement = formatStatement(raw, text, childIndent, child.range.start, getStatementSyntax(routine, child.range, masked));
+                    const formattedStatement = formatStatement(raw, text, childIndent, child.range.start, getStatementSyntax(source, routine, child.range, masked));
                     if (formattedStatement.length > 0) {
                         formattedStatement[0] = capitalizeStatementStart(formattedStatement[0]);
                     }
@@ -199,7 +199,7 @@ function formatRoutineBody(source, masked, routine, eol) {
             indent = loopDepth;
         }
         const raw = source.slice(statement.range.start, statement.range.end);
-        const formattedStatement = formatStatement(raw, raw.trim(), indent, statement.range.start, getStatementSyntax(routine, statement.range, masked));
+        const formattedStatement = formatStatement(raw, raw.trim(), indent, statement.range.start, getStatementSyntax(source, routine, statement.range, masked));
         const trailingComment = readTrailingComment(source, masked, statement.range.end, range.end);
         if (trailingComment) {
             formattedStatement[formattedStatement.length - 1] += ` ${trailingComment.text}`;
@@ -443,17 +443,60 @@ function wrapExpression(text, indent, absoluteBreaks, sourceOffset) {
     const lines = [];
     let start = 0;
     for (const breakAt of breaks) {
-        const segment = text.slice(start, breakAt).trim();
+        const rawSegment = text.slice(start, breakAt).trim();
+        const segment = containsComment(rawSegment)
+            ? replaceIndentTabs(rawSegment)
+            : normalizeStatementWhitespace(rawSegment);
         if (segment) {
             lines.push(`${spaces(start === 0 ? indent : indent + 1)}${segment}`);
         }
         start = breakAt;
     }
-    const finalSegment = text.slice(start).trim();
+    const rawFinalSegment = text.slice(start).trim();
+    const finalSegment = containsComment(rawFinalSegment)
+        ? replaceIndentTabs(rawFinalSegment)
+        : normalizeStatementWhitespace(rawFinalSegment);
     if (finalSegment) {
         lines.push(`${spaces(start === 0 ? indent : indent + 1)}${finalSegment}`);
     }
     return lines.length ? lines : [`${spaces(indent)}${replaceIndentTabs(text)}`];
+}
+function normalizeStatementWhitespace(text) {
+    let normalized = '';
+    let inString = false;
+    let pendingWhitespace = false;
+    for (let index = 0; index < text.length; index++) {
+        const character = text[index];
+        if (inString) {
+            normalized += character;
+            if (character === '"' && text[index + 1] === '"') {
+                normalized += text[++index];
+            }
+            else if (character === '"') {
+                inString = false;
+            }
+            continue;
+        }
+        if (character === '"') {
+            if (pendingWhitespace && normalized.length > 0) {
+                normalized += ' ';
+            }
+            pendingWhitespace = false;
+            normalized += character;
+            inString = true;
+        }
+        else if (/\s/u.test(character)) {
+            pendingWhitespace = true;
+        }
+        else {
+            if (pendingWhitespace && normalized.length > 0) {
+                normalized += ' ';
+            }
+            pendingWhitespace = false;
+            normalized += character;
+        }
+    }
+    return normalized;
 }
 function capitalizeStatementStart(line) {
     const token = wordTokens(maskProtectedText(line))[0];
@@ -468,29 +511,43 @@ function capitalizeStatementStart(line) {
 function firstWordToken(source, range) {
     return wordTokens(source.slice(range.start, range.end))[0]?.text;
 }
-function getStatementSyntax(routine, statement, masked) {
+function getStatementSyntax(source, routine, statement, masked) {
     const breaks = [];
     let returning;
     for (const assignment of routine.assignments) {
         if (containsRange(statement, assignment.range)) {
-            collectExpressionBreaks(assignment.expression, masked, breaks);
+            const argumentCount = countExpressionOperands(assignment.expression) + 1;
+            if (shouldWrapArguments(source, statement, argumentCount)) {
+                breaks.push(assignment.expression.range.start);
+                collectExpressionBreaks(assignment.expression, masked, breaks);
+                breaks.push(assignment.target.range.start);
+            }
         }
     }
     for (const output of routine.outputs) {
         if (containsRange(statement, output.range)) {
-            collectExpressionBreaks(output.expression, masked, breaks);
+            const argumentCount = countExpressionOperands(output.expression) + 1;
+            if (shouldWrapArguments(source, statement, argumentCount)) {
+                breaks.push(output.expression.range.start);
+                collectExpressionBreaks(output.expression, masked, breaks);
+                breaks.push(output.destination.range.start);
+            }
         }
     }
     for (const call of routine.calls) {
         if (isWithin(call.name.range.start, statement)) {
-            addArgumentBreaks(call.arguments, breaks);
+            if (shouldWrapArguments(source, statement, call.arguments.length)) {
+                addArgumentBreaks(call.arguments, breaks);
+            }
         }
     }
     for (const process of routine.processes) {
         if (!containsRange(statement, process.range)) {
             continue;
         }
-        addArgumentBreaks(process.arguments, breaks);
+        if (shouldWrapArguments(source, statement, process.arguments.length)) {
+            addArgumentBreaks(process.arguments, breaks);
+        }
         if (process.returnVariable) {
             returning = wordTokens(masked.slice(process.range.start, process.range.end))
                 .find(token => token.text === 'retornando')
@@ -501,6 +558,24 @@ function getStatementSyntax(routine, statement, masked) {
         }
     }
     return { breaks, returning };
+}
+function countExpressionOperands(expression) {
+    if (expression.kind === 'binary') {
+        return countExpressionOperands(expression.left) +
+            countExpressionOperands(expression.right);
+    }
+    if (expression.kind === 'unary') {
+        return countExpressionOperands(expression.operand);
+    }
+    return 1;
+}
+function shouldWrapArguments(source, statement, argumentCount) {
+    if (argumentCount > 4) {
+        return true;
+    }
+    const lineStart = source.lastIndexOf('\n', statement.start - 1) + 1;
+    const singleLineText = normalizeStatementWhitespace(source.slice(statement.start, statement.end));
+    return statement.start - lineStart + singleLineText.length > 80;
 }
 function collectExpressionBreaks(expression, masked, breaks) {
     if (expression.kind !== 'binary') {
@@ -533,7 +608,7 @@ function findOperator(source, start, end, operator) {
     return undefined;
 }
 function addArgumentBreaks(argumentsList, breaks) {
-    if (argumentsList.length > 1) {
+    if (argumentsList.length > 0) {
         breaks.push(argumentsList[0].range.start);
     }
     for (let index = 0; index < argumentsList.length - 1; index++) {

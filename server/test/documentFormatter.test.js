@@ -56,8 +56,8 @@ test('capitalizes conditional statements and wraps argument lists before the fir
     '  Se válido, retorne.',
     'para que se faça algo com um primeiro número e um segundo número e um terceiro número e um quarto número:',
     '  Faça outra coisa com o primeiro número e o segundo número e o terceiro número e o quarto número.',
-    'Rotina para que se processem quatro números:',
-    '  Processe "lib.dll" "func" com 1 e 2 e 3 e 4.'
+    'Rotina para que se processem cinco números:',
+    '  Processe "lib.dll" "func" com 1 e 2 e 3 e 4 e 5.'
   ].join('\r\n');
 
   const formatted = formatDocument(source);
@@ -73,26 +73,80 @@ test('capitalizes conditional statements and wraps argument lists before the fir
     '    1 e',
     '    2 e',
     '    3 e',
-    '    4.'
+    '    4 e',
+    '    5.'
   ].join('\r\n')));
   assert.ok(formatted.includes('  Se válido,\r\n    Retorne.'));
   assert.equal(formatDocument(formatted), formatted);
 });
 
-test('wraps arguments separated by a routine preposition', () => {
+test('keeps short arguments separated by a routine preposition on one line', () => {
   const source = [
     'Rotina para que se mova uma linha reta para a direita uns twips:',
     '  Mova a linha reta usando os twips e 0.'
   ].join('\r\n');
 
   const formatted = formatDocument(source);
-  assert.ok(formatted.includes([
-    '  Mova',
-    '    a linha reta usando',
-    '    os twips e',
-    '    0.'
-  ].join('\r\n')), formatted);
+  assert.ok(formatted.includes('  Mova a linha reta usando os twips e 0.'), formatted);
   assert.equal(formatDocument(formatted), formatted);
+});
+
+test('wraps statements above four arguments or column 80 and rejoins shorter input', () => {
+  const source = [
+    'Um número é uma estrutura.',
+    'para que se faça algo com um primeiro número e um segundo número e um terceiro número e um quarto número:',
+    '  retorne.',
+    'para que se faça outra coisa com um primeiro número e um segundo número e um terceiro número e um quarto número e um quinto número:',
+    '  retorne.',
+    'Rotina para que se teste:',
+    '  Faça algo com',
+    '    1 e',
+    '    2 e',
+    '    3 e',
+    '    4.',
+    '  Faça outra coisa com 1 e 2 e 3 e 4 e 5.',
+    '  Atribua ',
+    '    o número para',
+    '    o byte.'
+  ].join('\r\n');
+
+  const formatted = formatDocument(source);
+  assert.ok(formatted.includes('  Faça algo com 1 e 2 e 3 e 4.'), formatted);
+  assert.ok(formatted.includes([
+    '  Faça outra coisa com',
+    '    1 e',
+    '    2 e',
+    '    3 e',
+    '    4 e',
+    '    5.'
+  ].join('\r\n')), formatted);
+  assert.ok(formatted.includes('  Atribua o número para o byte.'), formatted);
+  assert.equal(formatDocument(formatted), formatted);
+});
+
+test('wraps a two-argument statement only when its end column exceeds 80', () => {
+  const prefix = 'Atribua "';
+  const suffix = '" para o byte.';
+  const makeSource = endColumn => {
+    const literalLength = endColumn - 2 - prefix.length - suffix.length;
+    const statement = `${prefix}${'x'.repeat(literalLength)}${suffix}`;
+    return [
+      'Rotina para que se teste:',
+      `  ${statement}`
+    ].join('\r\n');
+  };
+  const atLimit = formatDocument(makeSource(80));
+  const beyondLimit = formatDocument(makeSource(81));
+
+  assert.ok(
+    atLimit.includes(`  ${prefix}${'x'.repeat(80 - 2 - prefix.length - suffix.length)}${suffix}`),
+    atLimit
+  );
+  assert.ok(beyondLimit.includes([
+    '  Atribua',
+    `    "${'x'.repeat(81 - 2 - prefix.length - suffix.length)}" para`,
+    '    o byte.'
+  ].join('\r\n')), beyondLimit);
 });
 
 test('preserves block comments after statements inside conditionals', () => {
