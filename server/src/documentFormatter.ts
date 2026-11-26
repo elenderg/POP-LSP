@@ -37,8 +37,7 @@ const wrappedExpressionOperators = new Set([
   'menos',
   'vezes',
   'dividido por',
-  'junto com',
-  '/'
+  'junto com'
 ]);
 const routineSeparators = new Set([
   'à', 'às', 'ao', 'aos', 'para', 'em', 'no', 'na', 'nos', 'nas',
