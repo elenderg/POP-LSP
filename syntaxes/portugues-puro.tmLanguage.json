@@ -28,9 +28,18 @@
   {
     "comentário-de-linha": 
     {
-      "patterns": 
-      [
-          { "match": "\\\\(.*)",    "name": "comment.line.character.linha.pop" }        
+      "patterns": [
+        {
+          "begin": "\\\\",
+          "end": "$",
+          "name": "comment.line.character.linha.pop",
+          "patterns": [
+            {
+              "match": "https?://[^\\s]+",
+              "name": "markup.underline.link.pop"
+            }
+          ]
+        }
       ]
     }
     , "strings-literais": 
