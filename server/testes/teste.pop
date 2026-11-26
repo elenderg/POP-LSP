@@ -14963,7 +14963,7 @@ Rotina para que se inicie uma folha no modo retrato usando um título de índice r
     a folha
     816 pixels por
     1056 pixels.
-  Inicie a folha usando a caixa e o título de índice remissivo (modo pdf).
+  \Inicie a folha usando a caixa e o título de índice remissivo (modo pdf).
 
 Rotina para que se inicie uma folha no modo paisagem usando um título de índice remissivo:
   []
