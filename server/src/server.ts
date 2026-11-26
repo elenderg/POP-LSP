@@ -42,6 +42,7 @@ import {
   ParserSymbolCatalog,
   RoutineParameter,
   RoutineDeclaration,
+  TypeSymbol,
   findTypeDeclarationBaseAtOffset,
   getParserRegionKey,
   normalizeTypeName,
@@ -1782,6 +1783,28 @@ function getReservedInstructionHover(
     : undefined;
 }
 
+function getDerivedTypeHoverDetails(type: TypeSymbol): string[] {
+  const details = [
+    type.kind === 'scalar' ? 'Tipo escalar derivado.' : 'Tipo derivado.',
+    type.baseType ? `Tipo base: \`${type.baseType.name}\`.` : undefined,
+    type.pointedType
+      ? `Tipo apontado: \`${type.pointedType.name}\`.`
+      : undefined,
+    type.scalarFactor
+      ? `Fator escalar: \`${type.scalarFactor}\`.`
+      : undefined
+  ].filter((line): line is string => Boolean(line));
+  const fields = (type.fields ?? []).map(field =>
+    field.kind === 'named'
+      ? `- \`${field.type.name}\` ${field.name.name}`
+      : `- \`${field.elementType.name}\` ${field.count}${field.name ? ` ${field.name.name}` : ''}`
+  );
+  if (fields.length > 0) {
+    details.push('', '**Campos**', ...fields);
+  }
+  return details;
+}
+
 connection.onHover(params => profileRequest('hover', async requestId => {
   const document = documents.get(params.textDocument.uri);
   const parsedDocument = document && parsedDocuments.get(document.uri);
@@ -1880,27 +1903,11 @@ connection.onHover(params => profileRequest('hover', async requestId => {
     } else {
       const type = parsedDocument.symbols.lookup(reference.name);
       if (type) {
-        const details = [
+        contents = [
           `**${type.name}**`,
           '',
-          type.kind === 'scalar' ? 'Tipo escalar derivado.' : 'Tipo derivado.',
-          type.baseType ? `Tipo base: \`${type.baseType.name}\`.` : undefined,
-          type.pointedType
-            ? `Tipo apontado: \`${type.pointedType.name}\`.`
-            : undefined,
-          type.scalarFactor
-            ? `Fator escalar: \`${type.scalarFactor}\`.`
-            : undefined
-        ].filter((line): line is string => Boolean(line));
-        const fields = (type.fields ?? []).map(field =>
-          field.kind === 'named'
-            ? `- \`${field.type.name}\` ${field.name.name}`
-            : `- \`${field.elementType.name}\` ${field.count}${field.name ? ` ${field.name.name}` : ''}`
-        );
-        if (fields.length > 0) {
-          details.push('', '**Campos**', ...fields);
-        }
-        contents = details.join('\n');
+          ...getDerivedTypeHoverDetails(type)
+        ].join('\n');
       }
     }
   } else {
@@ -1919,7 +1926,18 @@ connection.onHover(params => profileRequest('hover', async requestId => {
       contents = `**${variable.name.name}**\n\nVariável global\n\nTipo: \`${typeName}\``;
     } else if (declarationNode?.parameterDeclaration) {
       const parameter = declarationNode.parameterDeclaration;
-      contents = `**${parameter.name.name}**\n\nParâmetro\n\nTipo: \`${parameter.type.name}\``;
+      const type = parsedDocument.symbols.lookup(parameter.type.name);
+      const typeDetails = type && type.kind !== 'primitive'
+        ? getDerivedTypeHoverDetails(type)
+        : [];
+      contents = [
+        `**${parameter.name.name}**`,
+        '',
+        'Parâmetro',
+        '',
+        `Tipo: \`${parameter.type.name}\``,
+        ...(typeDetails.length > 0 ? ['', ...typeDetails] : [])
+      ].join('\n');
     } else if (declarationNode?.localVariableDeclaration) {
       const variable = declarationNode.localVariableDeclaration;
       contents = `**${variable.name.name}**\n\nVariável local\n\nTipo: \`${variable.type.name}\``;

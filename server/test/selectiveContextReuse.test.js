@@ -1050,10 +1050,12 @@ test('excludes the current document base routines from contextual candidates', a
       const source = [
         'Um número é uma estrutura.',
         'Um segundo número é um número.',
+        'Um ponteiro é uma estrutura com 4 bytes.',
         'Uma coisa é uma estrutura com um número denominado valor.',
         'Função para que se determine se um número é um segundo número: Diga sim.',
         'Função para que se atribua o valor duma coisa para um número: Retorne.',
         'Rotina para que se faça algo: Retorne.',
+        'Rotina para que se use um ponteiro: Retorne.',
         'Rotina para que se teste um número:',
         '  Se o número for um segundo número, retorne.',
         '  Preserve o número.',
@@ -1128,6 +1130,32 @@ test('excludes the current document base routines from contextual candidates', a
             position
           });
           assert.match(hover.result?.contents?.value ?? '', new RegExp(expected));
+        }
+
+        const parameterOffset = source.indexOf(
+          'ponteiro:',
+          source.indexOf('Rotina para que se use')
+        );
+        const parameterPosition = {
+          line: source.slice(0, parameterOffset).split('\n').length - 1,
+          character: parameterOffset - source.lastIndexOf('\n', parameterOffset) - 1
+        };
+        const parameterHover = await client.request('textDocument/hover', {
+          textDocument: { uri },
+          position: parameterPosition
+        });
+        const parameterContents = parameterHover.result?.contents?.value ?? '';
+        for (const expected of [
+          'Parâmetro',
+          'Tipo: `ponteiro`',
+          'Tipo base: `estrutura`.',
+          '**Campos**',
+          '- `bytes` 4'
+        ]) {
+          assert.ok(
+            parameterContents.includes(expected),
+            `Expected parameter hover to include "${expected}", received: ${parameterContents}`
+          );
         }
 
         const routineStart = source.indexOf('Rotina para que se teste');
