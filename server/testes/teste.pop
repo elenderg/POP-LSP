@@ -8892,11 +8892,7 @@ Rotina para que se receba um trecho desde um soquete:
         1 ao
         caractere final deste trecho;
       Retorne.
-    Processe "ws2_32.dll" "WSAGetLastError"
-    Retornando
-      um número denominado último erro do Windows Sockets.
-    []
-    \verificar porque foi preciso fazer isso.
+    Processe "ws2_32.dll" "WSAGetLastError" Retornando um número denominado último erro do Windows Sockets.    
     Se o último erro do Windows Sockets não for 10040 [WSAMSGSIZE],
       Atribua
         "Erro ao receber os dados da Função 'recv' da lib 'ws2_32.dll'." ao
@@ -14960,21 +14956,18 @@ Rotina para que se inicie a impressão um pdf (criação do objeto raiz):
     o objeto da raiz.
 
 Rotina para que se inicie uma folha no modo retrato usando um título de índice remissivo:
-  []
-  \Se o sinalizador de documentos deste pdf não estiver ativo,
-  []
-  \Limpe a folha no modo retrato;
-  Retorne.
+  Se o sinalizador de documentos deste pdf state não estiver ativo,
+    Limpe a folha;
+    Retorne.
   Faça
     a folha
     816 pixels por
     1056 pixels.
-  []
-  \Inicie a folha usando a caixa e o título de índice remissivo (modo pdf).
+  Inicie a folha usando a caixa e o título de índice remissivo (modo pdf).
 
 Rotina para que se inicie uma folha no modo paisagem usando um título de índice remissivo:
   []
-  \Se o sinalizador de documentos deste pdf não estiver ativo,
+  \Se o sinalizador de documentos deste pdf state não estiver ativo,
   []
   \Limpe a folha;
   Retorne.
