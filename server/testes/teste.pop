@@ -13601,28 +13601,17 @@ Rotina para que se end uma folha (modo pdf - finalização da página atual - fonte
   Atribua a página atual deste pdf state para uma página objeto pdf denominada página.
   Se as textos de fonte desta página estiverem vazias,
     Retorne.
-  Acrescente
-    "/Font <<" para
-    a página sem passar pra próxima linha.
+  Acrescente "/Font <<" para a página sem passar pra próxima linha.
   Itere.
-    Obtenha um
-      conjunto de texto desde
-      as textos de fonte desta página.
+    Obtenha um conjunto de texto desde as textos de fonte desta página.
     Se o conjunto de texto for inexistente,
       Pare.
     Se um sinalizador estiver ativo,
-      Acrescente
-        " " para
-        a página sem passar pra próxima linha.
-    Acrescente
-      a string deste conjunto de texto para
-      a página sem passar pra próxima linha.
-    []
-    \Ative o sinalizador. \ verificar
+      Acrescente " " para a página sem passar pra próxima linha.
+    Acrescente a string deste conjunto de texto para a página sem passar pra próxima linha.
+    \Ative o sinalizador.
   Reitere.
-  Acrescente
-    ">>" para
-    a página.
+  Acrescente ">>" para a página.
 
 Rotina para que se end uma folha (modo pdf - finalização da página atual - recursos):
   Atribua a página atual deste pdf state para uma página objeto pdf denominada página.

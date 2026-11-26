@@ -1210,6 +1210,40 @@ test('excludes a boolean function qualifier from its condition arguments', () =>
   );
 });
 
+test('declares locals introduced by indefinite articles in boolean conditions', () => {
+  const source = [
+    'Um sinalizador é uma estrutura.',
+    'Função para que se determine se um sinalizador está ativo:',
+    '  Diga sim.',
+    'Rotina para que se ative um sinalizador:',
+    '  Retorne.',
+    'Rotina para que se teste:',
+    '  Se um sinalizador estiver ativo, ative o sinalizador.'
+  ].join('\n');
+  const parsed = parseTypeDeclarations(source);
+  const caller = parsed.routines.find(routine =>
+    routine.name.normalizedName === 'teste'
+  );
+  const condition = caller?.conditionals[0];
+  const localVariable = caller?.localVariables.find(variable =>
+    variable.name.normalizedName === 'sinalizador'
+  );
+  const conditionOffset = source.indexOf('sinalizador estiver');
+  const analysis = getDocumentAnalysis(parsed, source.length);
+  const conditionReference = analysis.findReferenceAt(conditionOffset);
+
+  assert.deepEqual(parsed.diagnostics, []);
+  assert.equal(condition?.predicateCall?.localVariables?.[0], localVariable);
+  assert.equal(localVariable?.type.normalizedName, 'sinalizador');
+  assert.equal(
+    caller?.calls.find(call => call.name.name === 'ative')?.target?.name.normalizedName,
+    'ative'
+  );
+  assert.equal(conditionReference?.kind, 'variable');
+  assert.equal(conditionReference?.declaration, true);
+  assert.equal(analysis.getDeclaration(conditionReference)?.name, 'sinalizador');
+});
+
 test('resolves boolean condition contractions as parameter separators', () => {
   const source = [
     'Um posicionamento é uma estrutura.',

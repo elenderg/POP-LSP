@@ -4346,6 +4346,28 @@ function parseConditionalBlockCore(
       });
     }
   } else {
+    const localVariables = condition.call.arguments.flatMap(argument => {
+      const article = readWord(source, argument.range.start, argument.range.end);
+      if (
+        !article ||
+        !indefiniteArticles.has(article.value.toLocaleLowerCase('pt-BR'))
+      ) {
+        return [];
+      }
+      const localVariable = parseLocalVariableDeclaration(
+        source,
+        argument.range,
+        symbols
+      );
+      return localVariable ? [localVariable] : [];
+    });
+    if (localVariables.length > 0) {
+      condition.call.localVariables = [
+        ...(condition.call.localVariables ?? []),
+        ...localVariables
+      ];
+      caller.localVariables.push(...localVariables);
+    }
     caller.calls.push(condition.call);
   }
 
