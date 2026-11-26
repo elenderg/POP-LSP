@@ -2087,7 +2087,7 @@ connection.onHover(params => profileRequest('hover', async requestId => {
         const parameters = routine.parameters.map(parameter =>
           `um(a) ${parameter.type.name}${parameter.name.name !== parameter.type.name ? ` denominado(a) ${parameter.name.name}` : ''}`
         );
-        contents = `**${routineKind} ${routine.name.name}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(' e ')}` : ''}`;
+        contents = `**${routineKind} ${routine.name.name.trim()}**${routine.qualifier ? ` ${routine.qualifier}` : ''}${parameters.length > 0 ? `\n\nParâmetros: ${parameters.join(' e ')}` : ''}`;
       }
     }
   }
