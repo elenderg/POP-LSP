@@ -12,7 +12,7 @@ const wrappedExpressionOperators = new Set([
 const routineSeparators = new Set([
     'à', 'às', 'ao', 'aos', 'para', 'em', 'no', 'na', 'nos', 'nas',
     'num', 'numa', 'nuns', 'numas', 'dum', 'duma', 'duns', 'dumas',
-    'deste', 'desta', 'destes', 'destas', 'com', 'por', 'contendo',
+    'deste', 'desta', 'destes', 'destas', 'por', 'contendo',
     'usando', 'dado', 'dada', 'dados', 'dadas', 'desde', 'sob', 'sobre'
 ]);
 function formatDocument(source, parsedDocument) {

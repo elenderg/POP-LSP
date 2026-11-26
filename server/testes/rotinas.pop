@@ -2150,12 +2150,10 @@ Rotina para que se desassocie um ponteiro:
 
 Rotina para que se permute um par de números com um segundo par de números:
   Permute
-    o número X deste par de números
-  com
+    o número X deste par de números com
     o número X deste segundo par de números.
   Permute
-    o número Y deste par de números
-  com
+    o número Y deste par de números com
     o número Y deste segundo par de números.
 
 Rotina para que se permute um ponteiro com um segundo ponteiro;
@@ -2166,8 +2164,7 @@ Rotina para que se permute um número com um segundo número:
 
 Rotina para que se permute umas listas com umas outras listas:
   Permute
-    a lista inicial destas listas
-  com
+    a lista inicial destas listas com
     a lista inicial destas outras listas.
   Permute a lista final destas listas com a lista final destas outras listas.
 
@@ -3354,7 +3351,8 @@ Rotina para que se obtenha o modo do console:
     Escreva
       "Erro ao obter o modo do Console. "
       junto com "Verifique se você possui permissões de Administrador. "
-      junto com "Se você estiver usando o console do NppExec, é seguro ignorar esta mensagem."
+      junto
+      com "Se você estiver usando o console do NppExec, é seguro ignorar esta mensagem."
       junto com o texto CRLF
     para
       STDOUT.
@@ -8081,8 +8079,7 @@ Rotina para que se pinte um console:
   Salve o contexto do dispositivo atual.
   Cubra somente fora dessa tela deste console .
   Pinte
-    a tela deste console
-  com
+    a tela deste console com
     a cor da borda deste console e
     a cor de preenchimento deste console.
   Atribua a cor branca à cor da canetinha desta caixa de texto deste console.
@@ -8123,8 +8120,7 @@ Rotina para que se pinte uma flecha estilizada uns twips em comprimento com uma 
   Restaure o contexto.
   Vire para 1/8.
   Pinte
-    uma segunda espiral regressivamente começando
-  com
+    uma segunda espiral regressivamente começando com
     os twips
     dividido por 4.
   Restaure o contexto.
@@ -8466,8 +8462,7 @@ Rotina para que se pinte uma linha de texto em uma caixa de texto:
   Pinte
     a working string desta linha de texto
   na
-    caixa
-  com
+    caixa com
     a cor da canetinha desta caixa de texto e
     a fonte desta caixa de texto e
     o alinhamento desta caixa de texto.
@@ -8482,8 +8477,7 @@ Rotina para que se pinte uma linha de texto em uma caixa de texto (edição):
   Pinte
     a working string desta linha de texto
   na
-    caixa
-  com
+    caixa com
     a cor da canetinha desta caixa de texto e
     a fonte desta caixa de texto e
     o alinhamento desta caixa de texto.
@@ -8553,20 +8547,20 @@ Rotina para que se pinte uma estrela usando uma point contagem e um tamanho:
 Rotina para que se pinte uma string sob a esquerda de uma caixa;
 Rotina para que se pinte uma string sob o lado esquerdo de uma caixa:
   Pinte
-    a string sob
+    a string
+  sob
     o lado esquerdo dessa
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte padrão.
 
 Rotina para que se pinte uma string sob a esquerda de uma caixa com uma cor;
 Rotina para que se pinte uma string sob o lado esquerdo de uma caixa com uma cor:
   Pinte
-    a string sob
+    a string
+  sob
     o lado esquerdo dessa
-    caixa
-  com
+    caixa com
     a cor e
     a fonte padrão.
 
@@ -8575,8 +8569,7 @@ Rotina para que se pinte uma string sob o lado esquerdo de uma caixa com uma cor
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor e
     a fonte e
     "à esquerda".
@@ -8584,30 +8577,30 @@ Rotina para que se pinte uma string sob o lado esquerdo de uma caixa com uma cor
 Rotina para que se pinte uma string sob a esquerda de uma caixa com uma fonte;
 Rotina para que se pinte uma string sob o lado esquerdo de uma caixa com uma fonte:
   Pinte
-    a string sob
+    a string
+  sob
     o lado esquerdo dessa
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte.
 
 Rotina para que se pinte uma string sob a direita de uma caixa;
 Rotina para que se pinte uma string sob o lado direito de uma caixa:
   Pinte
-    a string sob
+    a string
+  sob
     o lado direito dessa
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte padrão.
 
 Rotina para que se pinte uma string sob a direita de uma caixa com uma cor;
 Rotina para que se pinte uma string sob o lado direito de uma caixa com uma cor:
   Pinte
-    a string sob
+    a string
+  sob
     o lado direito dessa
-    caixa
-  com
+    caixa com
     a cor e
     a fonte padrão.
 
@@ -8616,8 +8609,7 @@ Rotina para que se pinte uma string sob o lado direito de uma caixa com uma cor 
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor e
     a fonte e
     "à direita".
@@ -8625,10 +8617,10 @@ Rotina para que se pinte uma string sob o lado direito de uma caixa com uma cor 
 Rotina para que se pinte uma string sob a direita de uma caixa com uma fonte;
 Rotina para que se pinte uma string sob o lado direito de uma caixa com uma fonte:
   Pinte
-    a string sob
+    a string
+  sob
     o lado direito dessa
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte.
 
@@ -8639,8 +8631,7 @@ Rotina para que se pinte uma string em uma caixa:
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte padrão e
     "à esquerda".
@@ -8654,8 +8645,7 @@ Rotina para que se pinte uma string em uma caixa sobre um número com uma cor e u
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor e
     a fonte e
     o alinhamento.
@@ -8664,8 +8654,7 @@ Rotina para que se pinte uma string em uma caixa com um alinhamento:
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte padrão e
     o alinhamento.
@@ -8674,8 +8663,7 @@ Rotina para que se pinte uma string em uma caixa com uma cor:
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor e
     a fonte padrão e
     "à esquerda".
@@ -8684,8 +8672,7 @@ Rotina para que se pinte uma string em uma caixa com uma cor e um alinhamento:
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor e
     a fonte padrão e
     o alinhamento.
@@ -8699,10 +8686,10 @@ Rotina para que se pinte uma string em uma caixa com uma cor e uma fonte e um al
     a fonte e
     o alinhamento.
   Pinte
-    a string sob
+    a string
+  sob
     o canto superior esquerdo desta caixa
-    mais o deslocamento de coordenadas
-  com
+    mais o deslocamento de coordenadas com
     a cor e
     a fonte.
 
@@ -8710,8 +8697,7 @@ Rotina para que se pinte uma string em uma caixa com uma fonte e um alinhamento:
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte e
     o alinhamento.
@@ -8721,8 +8707,7 @@ Rotina para que se pinte uma string no centro de uma caixa:
     a string
   no
     centro dessa
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte padrão.
 
@@ -8731,8 +8716,7 @@ Rotina para que se pinte uma string no centro de uma caixa com uma cor:
     a string
   no
     centro dessa
-    caixa
-  com
+    caixa com
     a cor e
     a fonte padrão.
 
@@ -8740,8 +8724,7 @@ Rotina para que se pinte uma string no centro de uma caixa com uma cor e uma fon
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor e
     a fonte e
     "centralizado".
@@ -8751,8 +8734,7 @@ Rotina para que se pinte uma string no centro de uma caixa com uma fonte:
     a string
   no
     centro dessa
-    caixa
-  com
+    caixa com
     a cor preta e
     a fonte.
 
@@ -9167,9 +9149,9 @@ Rotina para que se preencha uma elipse sobre uma localização com uma cor:
 
 Rotina para que se preencha uma string com um byte usando uma contagem:
   Reaponte o caractere inicial desta string usando a contagem.
-  Preencha bytes
-  com
-    o byte começando sob
+  Preencha bytes com
+    o byte começando
+  sob
     o caractere inicial desta string pela
     contagem.
   Atribua
@@ -12372,8 +12354,7 @@ Rotina para que se pinte umas alternativas em uma caixa:
     Pinte
       o nome desta alternativa
     na
-      caixa desta alternativa
-    com
+      caixa desta alternativa com
       a cor deste contexto.
   Reitere.
 
@@ -13113,8 +13094,7 @@ Rotina para que se normalize uma seleção:
     Retorne.
   Se a âncora de coluna desta seleção for maior do que o cursor da coluna desta seleção,
     Permute
-      a âncora de coluna desta seleção
-    com
+      a âncora de coluna desta seleção com
       o cursor da coluna desta seleção.
 
 Rotina para que se normalize uma caixa de texto:
@@ -13125,8 +13105,7 @@ Rotina para que se normalize uma caixa de texto:
 Rotina para que se normalize um linha reta vertical:
   Se a localização final desta linha reta for menor do que a localização inicial desta linha reta,
     Permute
-      a localização final desta linha reta
-    com
+      a localização final desta linha reta com
       a localização inicial desta linha reta.
   Retorne.
 
@@ -15478,8 +15457,7 @@ Rotina para que se envie um mensagem desde um remetente para um destinatário com
   para
     o destinatário
   desde
-    o remetente
-  com
+    o remetente com
     o assunto via
     o servidor SMTP.
 
@@ -15698,17 +15676,20 @@ Rotina para que se pule palavra characters em um subtexto:
 
 Rotina para que se lance um percorredor sobre um segundo percorredor:
   Lance
-    o segmento final deste percorredor sobre
+    o segmento final deste percorredor
+  sobre
     o segmento final deste segundo percorredor.
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
 
 Rotina para que se lance um percorredor sobre uma string:
   Lance a cópia da string original deste percorredor sobre a string.
   Lance o segmento final deste percorredor sobre a string.
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
 
 Rotina para que se lance um subtexto sobre qualquer trecho selecionado em uma linha de texto em uma caixa de texto:
@@ -16008,7 +15989,8 @@ Rotina para que se subdivida umas listas em umas listas denominadas listas anter
     as listas
   em
     as listas anteriores e
-    as listas posteriores sob
+    as listas posteriores
+  sob
     a lista.
 
 Rotina para que se subdivida umas listas em umas listas denominadas listas anteriores e umas listas denominadas listas posteriores sob uma lista:
@@ -18210,7 +18192,8 @@ Rotina para que se obtenha um OutlineTextmetric usando uma fonte:
 Rotina para que se mova um percorredor (catálogo dicionário léxico rules):
   Ignore os caracteres ignoráveis no início no segmento final deste percorredor.
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
   Itere.
     Se o segmento final deste percorredor estiver em branco,
@@ -18237,7 +18220,8 @@ Rotina para que se mova um percorredor (strings com aspas):
 Rotina para que se mova um percorredor (spell checking rules):
   Ignore os bytes não-alfanuméricos no segmento final deste percorredor. \ pula o #
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
   Itere.
     Se o segmento final deste percorredor estiver em branco,
@@ -18252,7 +18236,8 @@ Rotina para que se mova um percorredor (spell checking rules):
 
 Rotina para que se mova um percorredor (usando diretrizes de arquivos de texto):
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
   Itere.
     Se o segmento final deste percorredor estiver em branco,
@@ -18273,7 +18258,8 @@ Rotina para que se mova um percorredor (usando diretrizes de arquivos de texto):
 
 Rotina para que se mova um percorredor (word wrapping rules):
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
   Se o segmento final deste percorredor estiver em branco,
     Retorne.
@@ -18295,7 +18281,8 @@ Rotina para que se mova um percorredor (word wrapping rules):
 Rotina para que se mova um percorredor usando uma caixa (word wrapping rules):
   Ignore a quebra de linha inicial no segmento final deste percorredor.
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
   Se o segmento final deste percorredor estiver em branco,
     Retorne.
@@ -18330,7 +18317,8 @@ Rotina para que se mova um percorredor usando uma caixa (word wrapping rules):
 
 Rotina para que se mova um percorredor usando um byte denominado byte separador:
   Posicione
-    o segmento inicial deste percorredor sobre
+    o segmento inicial deste percorredor
+  sobre
     o segmento final deste percorredor.
   Itere.
     Se o segmento final deste percorredor estiver em branco,
@@ -18708,8 +18696,7 @@ Rotina para que se escreva uma string com uma fonte e um tamanho e uma cor e uma
   Pinte
     a string
   na
-    caixa
-  com
+    caixa com
     a cor e
     a fonte e
     "centralizado".
@@ -22663,8 +22650,7 @@ Rotina para que se atribua o topo lado de uma caixa para uma linha reta horizont
 
 Rotina para que se atribua o topo de uma caixa para uma linha reta:
   Faça
-    a linha reta
-  com
+    a linha reta com
     o canto superior esquerdo desta caixa e
     o canto superior direito desta caixa.
 
@@ -23097,8 +23083,7 @@ Rotina para que se atribua a base lado de uma caixa para um linha reta horizonta
 
 Rotina para que se atribua a base de uma caixa para uma linha reta:
   Faça
-    a linha reta
-  com
+    a linha reta com
     o canto inferior esquerdo desta caixa e
     o canto inferior direito desta caixa.
 
@@ -24189,8 +24174,7 @@ Rotina para que se pinte uma caixa arredondada com uma cor da borda e uma cor de
     Retorne.
   Se o raio desta caixa arredondada for 0,
     Pinte
-      a caixa arredondada tal como uma caixa
-    com
+      a caixa arredondada tal como uma caixa com
       a cor da borda e
       a cor de preenchimento (modo pdf);
     Retorne.
@@ -24273,8 +24257,7 @@ Rotina para que se pinte uma caixa arredondada com uma cor da borda e uma cor de
 Rotina para que se pinte uma caixa arredondada com uma cor da borda e uma cor de preenchimento:
   Se a sinalizador de páginas deste pdf state estiver ativo,
     Pinte
-      a caixa arredondada
-    com
+      a caixa arredondada com
       a cor da borda e
       a cor de preenchimento (modo pdf);
     Retorne.
@@ -24394,7 +24377,8 @@ Rotina para que se pinte uma imagem (modo pdf):
   \Exclui o objeto Graphics especificado.
    O gpGraphic. [*graphics]
   Pinte
-    o gpBitmap sob
+    o gpBitmap
+  sob
     o canto superior esquerdo desta caixa desta imagem (modo pdf).
   Processe "gdiplus.dll" "GdipDisposeImage" com
   \Descarta o objeto Image especificado.
@@ -24692,7 +24676,8 @@ Rotina para que se converta um gpBitmap para um trecho (modo pdf):
     Obtenha
       um ponteiro RGB
     desde
-      o BitmapData sob
+      o BitmapData
+    sob
       o número da linha e
       o número de coluna.
     Acrescente o espectro vermelho deste ponteiro RGB para o trecho.
@@ -24783,8 +24768,7 @@ Rotina para que se converta uma definição da fonte para pdf em units:
     o tamanho UPM desta definição da fonte e
     a fonte desta definição da fonte.
   Permute
-    a coordenada Y1 desta caixa de fonte desta definição da fonte
-  com
+    a coordenada Y1 desta caixa de fonte desta definição da fonte com
     a coordenada Y2 desta caixa de fonte desta definição da fonte.
   Converta as larguras de fonte desta definição da fonte para pdf em units.
 
@@ -25281,8 +25265,10 @@ Rotina para que se pinte uma imagem:
     para
       StdOut.
   Pinte
-    a imagem sobre
-    o gpGraphic sob
+    a imagem
+  sobre
+    o gpGraphic
+  sob
     a coordenada X1 desta caixa intacta desta imagem e
     a coordenada Y1 desta caixa intacta desta imagem.
   Processe "gdiplus.dll" "GdipDeleteGraphics" com
