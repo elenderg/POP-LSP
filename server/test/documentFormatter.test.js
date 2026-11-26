@@ -62,14 +62,16 @@ test('capitalizes conditional statements and wraps argument lists before the fir
 
   const formatted = formatDocument(source);
   assert.ok(formatted.includes([
-    'Faça outra coisa com',
+    'Faça outra coisa',
+    '  com',
     '    o primeiro número e',
     '    o segundo número e',
     '    o terceiro número e',
     '    o quarto número.'
   ].join('\r\n')));
   assert.ok(formatted.includes([
-    'Processe "lib.dll" "func" com',
+    'Processe "lib.dll" "func"',
+    '  com',
     '    1 e',
     '    2 e',
     '    3 e',
@@ -94,9 +96,14 @@ test('keeps short arguments separated by a routine preposition on one line', () 
 test('wraps statements above four arguments or column 80 and rejoins shorter input', () => {
   const source = [
     'Um número é uma estrutura.',
+    'Um deslocamento vertical é um número.',
     'para que se faça algo com um primeiro número e um segundo número e um terceiro número e um quarto número:',
     '  retorne.',
     'para que se faça outra coisa com um primeiro número e um segundo número e um terceiro número e um quarto número e um quinto número:',
+    '  retorne.',
+    'para que se adicione um deslocamento vertical para um segundo deslocamento vertical:',
+    '  retorne.',
+    'para que se subtraia um deslocamento vertical desde um segundo deslocamento vertical:',
     '  retorne.',
     'Rotina para que se teste:',
     '  Faça algo com',
@@ -105,6 +112,8 @@ test('wraps statements above four arguments or column 80 and rejoins shorter inp
     '    3 e',
     '    4.',
     '  Faça outra coisa com 1 e 2 e 3 e 4 e 5.',
+    '  Adicione o deslocamento vertical inferior mais o superior deslocamento vertical dividido por 2 para o deslocamento vertical.',
+    '  Subtraia o deslocamento vertical inferior mais o deslocamento vertical superior dividido por 2 desde o deslocamento vertical.',
     '  Atribua ',
     '    o número para',
     '    o byte.'
@@ -113,12 +122,29 @@ test('wraps statements above four arguments or column 80 and rejoins shorter inp
   const formatted = formatDocument(source);
   assert.ok(formatted.includes('  Faça algo com 1 e 2 e 3 e 4.'), formatted);
   assert.ok(formatted.includes([
-    '  Faça outra coisa com',
+    '  Faça outra coisa',
+    '  com',
     '    1 e',
     '    2 e',
     '    3 e',
     '    4 e',
     '    5.'
+  ].join('\r\n')), formatted);
+  assert.ok(formatted.includes([
+    '  Adicione',
+    '    o deslocamento vertical inferior',
+    '    mais o superior deslocamento vertical',
+    '    dividido por 2',
+    '  para',
+    '    o deslocamento vertical.'
+  ].join('\r\n')), formatted);
+  assert.ok(formatted.includes([
+    '  Subtraia',
+    '    o deslocamento vertical inferior',
+    '    mais o deslocamento vertical superior',
+    '    dividido por 2',
+    '  desde',
+    '    o deslocamento vertical.'
   ].join('\r\n')), formatted);
   assert.ok(formatted.includes('  Atribua o número para o byte.'), formatted);
   assert.equal(formatDocument(formatted), formatted);
@@ -144,9 +170,21 @@ test('wraps a two-argument statement only when its end column exceeds 80', () =>
   );
   assert.ok(beyondLimit.includes([
     '  Atribua',
-    `    "${'x'.repeat(81 - 2 - prefix.length - suffix.length)}" para`,
+    `    "${'x'.repeat(81 - 2 - prefix.length - suffix.length)}"`,
+    '  para',
     '    o byte.'
   ].join('\r\n')), beyondLimit);
+});
+
+test('keeps wrapped statement lines within the absolute column limit', () => {
+  const longOperand = `o ${Array(14).fill('número').join(' ')}`;
+  const source = [
+    'Rotina para que se teste:',
+    `  Atribua ${longOperand} para o byte.`
+  ].join('\r\n');
+  const formatted = formatDocument(source);
+
+  assert.ok(formatted.split(/\r?\n/u).every(line => line.length <= 80), formatted);
 });
 
 test('preserves block comments after statements inside conditionals', () => {
