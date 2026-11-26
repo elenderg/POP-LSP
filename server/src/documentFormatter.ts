@@ -42,7 +42,7 @@ const wrappedExpressionOperators = new Set([
 const routineSeparators = new Set([
   'à', 'às', 'ao', 'aos', 'para', 'em', 'no', 'na', 'nos', 'nas',
   'num', 'numa', 'nuns', 'numas', 'dum', 'duma', 'duns', 'dumas',
-  'deste', 'desta', 'destes', 'destas', 'por', 'contendo',
+  'deste', 'desta', 'destes', 'destas', 'com', 'por', 'contendo',
   'usando', 'dado', 'dada', 'dados', 'dadas', 'desde', 'sob', 'sobre'
 ]);
 
@@ -787,7 +787,8 @@ function getStatementSyntax(
         process.arguments,
         breaks,
         baseIndentBreaks,
-        process.range.start
+        process.range.start,
+        true
       );
     }
     if (process.returnVariable) {
@@ -894,7 +895,8 @@ function addArgumentSeparators(
   argumentsList: { range: SourceRange }[],
   breaks: number[],
   baseIndentBreaks: number[],
-  prefixStart?: number
+  prefixStart?: number,
+  keepComInline = false
 ): void {
   const firstArgument = argumentsList[0];
   if (!firstArgument) {
@@ -904,7 +906,8 @@ function addArgumentSeparators(
     masked,
     { start: prefixStart ?? firstArgument.range.start, end: firstArgument.range.start },
     breaks,
-    baseIndentBreaks
+    baseIndentBreaks,
+    keepComInline
   );
   for (let index = 1; index < argumentsList.length; index++) {
     addRoutineSeparatorBreaks(
@@ -914,7 +917,8 @@ function addArgumentSeparators(
         end: argumentsList[index].range.start
       },
       breaks,
-      baseIndentBreaks
+      baseIndentBreaks,
+      keepComInline
     );
   }
 }
@@ -939,10 +943,14 @@ function addRoutineSeparatorBreaks(
   masked: string,
   range: SourceRange,
   breaks: number[],
-  baseIndentBreaks: number[]
+  baseIndentBreaks: number[],
+  keepComInline = false
 ): void {
   for (const token of wordTokens(masked.slice(range.start, range.end))) {
-    if (!routineSeparators.has(token.text)) {
+    if (
+      !routineSeparators.has(token.text) ||
+      keepComInline && token.text === 'com'
+    ) {
       continue;
     }
     const offset = range.start + token.start;
