@@ -1055,7 +1055,16 @@ test('excludes the current document base routines from contextual candidates', a
         'Função para que se atribua o valor duma coisa para um número: Retorne.',
         'Rotina para que se faça algo: Retorne.',
         'Rotina para que se teste um número:',
-        '  Se o número for um segundo número, retorne.'
+        '  Se o número for um segundo número, retorne.',
+        '  Preserve o número.',
+        '  Itere.',
+        '    Pare.',
+        '  Reitere.',
+        '  Processe "biblioteca.dll" "função.dll".',
+        '  Decodifique $DEADBEEF.',
+        '  Empilhe 123.',
+        '  Empilhe o número.',
+        '  Retorne.'
       ].join('\n');
       writeWindows1252(filePath, source);
 
@@ -1119,6 +1128,48 @@ test('excludes the current document base routines from contextual candidates', a
             position
           });
           assert.match(hover.result?.contents?.value ?? '', new RegExp(expected));
+        }
+
+        const routineStart = source.indexOf('Rotina para que se teste');
+        for (const [needle, expected] of [
+          ['Itere.', ['inicia um laço de repetição']],
+          ['Reitere.', ['início do laço de repetição atual']],
+          ['Pare.', ['abandona o laço de repetição atual']],
+          ['Retorne.', ['devolve o controle de execução']],
+          ['Processe', [
+            'Processe "biblioteca.dll" "função.dll".',
+            'Processe o ponteiro.'
+          ]],
+          ['Decodifique', [
+            'Decodifique $DEADBEEF.',
+            'Decodifique $BebaCafe.'
+          ]],
+          ['Empilhe', [
+            'empilha na pilha (*stack*) um valor de 1, 2 ou 4 bytes',
+            'Empilhe 123.',
+            'Empilhe a variável.'
+          ]],
+          ['Preserve', [
+            'cópia temporária do parâmetro',
+            'Preserve o identificador.'
+          ]]
+        ]) {
+          const offset = source.indexOf(needle, routineStart);
+          const position = {
+            line: source.slice(0, offset).split('\n').length - 1,
+            character: offset - source.lastIndexOf('\n', offset) - 1
+          };
+          const hover = await client.request('textDocument/hover', {
+            textDocument: { uri },
+            position
+          });
+          const contents = hover.result?.contents?.value ?? '';
+          for (const expectedText of expected) {
+            assert.ok(
+              contents.includes(expectedText),
+              `Expected hover for ${needle} to include "${expectedText}", received: ${contents}`
+            );
+          }
         }
 
         await client.request('shutdown', null);

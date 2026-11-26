@@ -1197,6 +1197,98 @@ connection.onDocumentFormatting(params => profileRequest('formatting', () => {
             end: document.positionAt(original.length)
         }, formatted)];
 }));
+function getReservedInstructionHover(node, source, offset) {
+    if (!node) {
+        return undefined;
+    }
+    let keyword;
+    let value;
+    if (node.loopInstruction) {
+        keyword = {
+            iterate: 'itere',
+            repeat: 'reitere',
+            break: 'pare'
+        }[node.loopInstruction.kind];
+        value = {
+            iterate: 'A instrução *Itere* inicia um laço de repetição. Quando o laço começa na primeira linha do corpo da rotina, a instrução *Itere* pode ser omitida.',
+            repeat: 'A instrução *Reitere* direciona o fluxo de execução de volta ao início do laço de repetição atual.',
+            break: 'A instrução *Pare* abandona o laço de repetição atual e transfere a execução para a primeira linha após o bloco de repetição.'
+        }[node.loopInstruction.kind];
+    }
+    else if (node.returnStatement?.kind === 'return') {
+        keyword = 'retorne';
+        value = 'A instrução *Retorne* abandona a rotina atual e devolve o controle de execução à linha seguinte da rotina que a chamou.';
+    }
+    else if (node.kind === 'process') {
+        keyword = 'processe';
+        value = [
+            'A instrução *Processe* invoca funções externas (como funções exportadas por DLLs) ou indiretas (por meio de ponteiros).',
+            '',
+            '**Invocação de função externa**',
+            '',
+            '```',
+            'Processe "biblioteca.dll" "função.dll".',
+            '```',
+            '',
+            '**Invocação de função indireta**',
+            '',
+            '```',
+            'Processe o ponteiro.',
+            '```'
+        ].join('\n');
+    }
+    else if (node.simpleInstruction?.kind === 'decode') {
+        keyword = 'decodifique';
+        value = [
+            'A instrução *Decodifique* acrescenta trechos de código hexadecimal diretamente ao corpo da rotina.',
+            '',
+            '**Exemplos**',
+            '',
+            '```',
+            'Decodifique $DEADBEEF.',
+            'Decodifique $BebaCafe.',
+            '```'
+        ].join('\n');
+    }
+    else if (node.simpleInstruction?.kind === 'push') {
+        keyword = 'empilhe';
+        value = [
+            'A instrução *Empilhe* empilha na pilha (*stack*) um valor de 1, 2 ou 4 bytes.',
+            '',
+            '**Exemplos**',
+            '',
+            '```',
+            'Empilhe 123.',
+            'Empilhe a variável.',
+            '```'
+        ].join('\n');
+    }
+    else if (node.preservedParameter) {
+        keyword = 'preserve';
+        value = [
+            'A instrução *Preserve* cria uma cópia temporária do parâmetro ou da variável para permitir modificações sem alterar o conteúdo original do símbolo.',
+            '',
+            '**Exemplo**',
+            '',
+            '```',
+            'Preserve o identificador.',
+            '```'
+        ].join('\n');
+    }
+    if (!keyword || !value) {
+        return undefined;
+    }
+    const statement = source.slice(node.range.start, node.range.end);
+    const match = /^\s*(\p{L}+)/u.exec(statement);
+    if (!match || match[1].toLocaleLowerCase('pt-BR') !== keyword) {
+        return undefined;
+    }
+    const start = node.range.start + match[0].length - match[1].length;
+    const end = start + match[1].length;
+    return offset >= start && offset < end
+        ? { value, start, end }
+        : undefined;
+}
 connection.onHover(params => profileRequest('hover', async (requestId) => {
     const document = documents.get(params.textDocument.uri);
     const parsedDocument = document && parsedDocuments.get(document.uri);
@@ -1204,7 +1296,18 @@ connection.onHover(params => profileRequest('hover', async (requestId) => {
         return undefined;
     }
     const analysis = (0, analysisModel_1.getDocumentAnalysis)(parsedDocument, document.getText().length, documentAnalysisProfiler(requestId, document.uri));
-    const reference = analysis.findReferenceAt(document.offsetAt(params.position));
+    const offset = document.offsetAt(params.position);
+    const instructionHover = getReservedInstructionHover(analysis.getNodeAt(offset), document.getText(), offset);
+    if (instructionHover) {
+        return {
+            contents: { kind: node_1.MarkupKind.Markdown, value: instructionHover.value },
+            range: {
+                start: document.positionAt(instructionHover.start),
+                end: document.positionAt(instructionHover.end)
+            }
+        };
+    }
+    const reference = analysis.findReferenceAt(offset);
     const symbol = reference && analysis.getSymbol(reference);
     if (!reference || !symbol) {
         return undefined;
