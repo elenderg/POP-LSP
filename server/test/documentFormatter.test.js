@@ -70,7 +70,8 @@ test('capitalizes conditional statements and wraps argument lists before the fir
     '    o quarto número.'
   ].join('\r\n')));
   assert.ok(formatted.includes([
-    'Processe "lib.dll" "func" com',
+    'Processe "lib.dll" "func"',
+    '  com',
     '    1 e',
     '    2 e',
     '    3 e',

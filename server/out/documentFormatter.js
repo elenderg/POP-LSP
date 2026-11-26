@@ -10,10 +10,17 @@ const wrappedExpressionOperators = new Set([
     'junto com'
 ]);
 const routineSeparators = new Set([
-    'à', 'às', 'ao', 'aos', 'para', 'em', 'no', 'na', 'nos', 'nas',
-    'num', 'numa', 'nuns', 'numas', 'dum', 'duma', 'duns', 'dumas',
-    'deste', 'desta', 'destes', 'destas', 'com', 'por', 'contendo',
-    'usando', 'dado', 'dada', 'dados', 'dadas', 'desde', 'sob', 'sobre'
+    'à', 'ao', 'aos', 'às',
+    'com', 'contendo',
+    'dada', 'dadas', 'dado', 'dados',
+    'desde',
+    'desta', 'destas', 'deste', 'destes',
+    'dum', 'duma', 'dumas', 'duns',
+    'em', 'na', 'nas', 'no', 'nos',
+    'num', 'numa', 'numas', 'nuns',
+    'para', 'pela', 'pelas', 'pelo', 'pelos', 'por',
+    'sob', 'sobre',
+    'usando'
 ]);
 function formatDocument(source, parsedDocument) {
     const parsed = parsedDocument ?? (0, typeParser_1.parseTypeDeclarations)(source);
@@ -594,7 +601,7 @@ function getStatementSyntax(source, routine, statement, masked) {
             for (const argument of process.arguments) {
                 addExpressionOperatorBreaks(masked, argument.range, breaks);
             }
-            addArgumentSeparators(masked, process.arguments, breaks, baseIndentBreaks, process.range.start, true);
+            addArgumentSeparators(masked, process.arguments, breaks, baseIndentBreaks, process.range.start);
         }
         if (process.returnVariable) {
             returning = wordTokens(masked.slice(process.range.start, process.range.end))
@@ -664,17 +671,17 @@ function addArgumentBreaks(argumentsList, breaks) {
         breaks.push(next.range.start);
     }
 }
-function addArgumentSeparators(masked, argumentsList, breaks, baseIndentBreaks, prefixStart, keepComInline = false) {
+function addArgumentSeparators(masked, argumentsList, breaks, baseIndentBreaks, prefixStart) {
     const firstArgument = argumentsList[0];
     if (!firstArgument) {
         return;
     }
-    addRoutineSeparatorBreaks(masked, { start: prefixStart ?? firstArgument.range.start, end: firstArgument.range.start }, breaks, baseIndentBreaks, keepComInline);
+    addRoutineSeparatorBreaks(masked, { start: prefixStart ?? firstArgument.range.start, end: firstArgument.range.start }, breaks, baseIndentBreaks);
     for (let index = 1; index < argumentsList.length; index++) {
         addRoutineSeparatorBreaks(masked, {
             start: argumentsList[index - 1].range.end,
             end: argumentsList[index].range.start
-        }, breaks, baseIndentBreaks, keepComInline);
+        }, breaks, baseIndentBreaks);
     }
 }
 function addExpressionOperatorBreaks(masked, range, breaks) {
@@ -688,10 +695,9 @@ function addExpressionOperatorBreaks(masked, range, breaks) {
         }
     }
 }
-function addRoutineSeparatorBreaks(masked, range, breaks, baseIndentBreaks, keepComInline = false) {
+function addRoutineSeparatorBreaks(masked, range, breaks, baseIndentBreaks) {
     for (const token of wordTokens(masked.slice(range.start, range.end))) {
-        if (!routineSeparators.has(token.text) ||
-            keepComInline && token.text === 'com') {
+        if (!routineSeparators.has(token.text)) {
             continue;
         }
         const offset = range.start + token.start;

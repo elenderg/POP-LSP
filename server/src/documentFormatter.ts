@@ -40,10 +40,17 @@ const wrappedExpressionOperators = new Set([
   'junto com'
 ]);
 const routineSeparators = new Set([
-  'à', 'às', 'ao', 'aos', 'para', 'em', 'no', 'na', 'nos', 'nas',
-  'num', 'numa', 'nuns', 'numas', 'dum', 'duma', 'duns', 'dumas',
-  'deste', 'desta', 'destes', 'destas', 'com', 'por', 'contendo',
-  'usando', 'dado', 'dada', 'dados', 'dadas', 'desde', 'sob', 'sobre'
+  'à', 'ao', 'aos', 'às',
+  'com', 'contendo',
+  'dada', 'dadas', 'dado', 'dados',
+  'desde',
+  'desta', 'destas', 'deste', 'destes',
+  'dum', 'duma', 'dumas', 'duns',
+  'em', 'na', 'nas', 'no', 'nos',
+  'num', 'numa', 'numas', 'nuns',
+  'para', 'pela', 'pelas', 'pelo', 'pelos', 'por',
+  'sob', 'sobre',
+  'usando'
 ]);
 
 export function formatDocument(
@@ -787,8 +794,7 @@ function getStatementSyntax(
         process.arguments,
         breaks,
         baseIndentBreaks,
-        process.range.start,
-        true
+        process.range.start
       );
     }
     if (process.returnVariable) {
@@ -895,8 +901,7 @@ function addArgumentSeparators(
   argumentsList: { range: SourceRange }[],
   breaks: number[],
   baseIndentBreaks: number[],
-  prefixStart?: number,
-  keepComInline = false
+  prefixStart?: number
 ): void {
   const firstArgument = argumentsList[0];
   if (!firstArgument) {
@@ -906,8 +911,7 @@ function addArgumentSeparators(
     masked,
     { start: prefixStart ?? firstArgument.range.start, end: firstArgument.range.start },
     breaks,
-    baseIndentBreaks,
-    keepComInline
+    baseIndentBreaks
   );
   for (let index = 1; index < argumentsList.length; index++) {
     addRoutineSeparatorBreaks(
@@ -917,8 +921,7 @@ function addArgumentSeparators(
         end: argumentsList[index].range.start
       },
       breaks,
-      baseIndentBreaks,
-      keepComInline
+      baseIndentBreaks
     );
   }
 }
@@ -943,14 +946,10 @@ function addRoutineSeparatorBreaks(
   masked: string,
   range: SourceRange,
   breaks: number[],
-  baseIndentBreaks: number[],
-  keepComInline = false
+  baseIndentBreaks: number[]
 ): void {
   for (const token of wordTokens(masked.slice(range.start, range.end))) {
-    if (
-      !routineSeparators.has(token.text) ||
-      keepComInline && token.text === 'com'
-    ) {
+    if (!routineSeparators.has(token.text)) {
       continue;
     }
     const offset = range.start + token.start;
