@@ -1,0 +1,106 @@
+Rotina para que se finalize os cursors:
+
+Rotina para que se finalize as fontes:
+
+Rotina para que se finalize gdi+:
+
+Rotina para que se finalize o contexto de dispositivo de memória:
+
+Rotina para que se finalize a área de impressão:
+
+Rotina para que se finalize um sintetizador de voz:
+
+Rotina para que se finalize winsock:
+
+Rotina para que se desmanche algumas mensagens:
+
+Rotina para que se inicialize o CGI:
+
+Rotina para que se inicialize as cores:
+
+Rotina para que se finalize o CGI:
+
+Rotina para que se finalize um contexto:
+
+Rotina para que se inicialize as fontes:
+
+Rotina para que se inicialize gdi+:
+
+Rotina para que se zere um sinalizador;
+Rotina para que se limpe um sinalizador;
+\Rotina para que se redefina um sinalizador;
+Rotina para que se inative um sinalizador;
+Rotina para que se desative um sinalizador;
+Rotina para que se desligue um sinalizador:
+
+Rotina para que se exiba a contagem de elementos presentes no heap;
+Rotina para que se finalize após execução:
+
+Rotina para que se finalize os contextos de dispositivo:
+
+Rotina para que se finalize a janela do programa:
+
+Rotina para que se desmanche todos os eventos:
+
+Rotina para que se desmanche uma fila de eventos:
+
+Rotina para que se inicialize o terminal:
+
+Rotina para que se inicialize os contextos de dispositivo:
+
+Rotina para que se inicialize um contexto:
+
+Rotina para que se inicialize os cursors:
+
+Rotina para que se inicialize os cursores (seta do mouse):
+
+Rotina para que se inicialize os cursores (cursor de mão):
+
+Rotina para que se inicialize os cursores (cursor de digitação):
+
+Rotina para que se inicialize o contexto de dispositivo de memória:
+
+Rotina para que se inicialize o módulo:
+
+Rotina para que se inicialize o mouse:
+
+Rotina para que se inicialize a área de impressão:
+
+Rotina para que se inicialize a tela:
+
+Rotina para que se inicialize o canvas da tela:
+
+Rotina para que se inicialize um sintetizador de voz:
+
+Rotina para que se inicialize a janela do programa:
+
+Rotina para que se inicialize a infraestrutura WinSock:
+
+Rotina para que se reinicie um temporizador:
+
+Rotina para que se restaure um canvas:
+
+Rotina para que se restaure um contexto:
+
+Rotina para que se restaure uma janela do programa:
+
+Rotina para que se finalize os componentes;
+Rotina para que se feche este programa;
+Rotina para que se feche o nosso programa;
+Rotina para que se feche nosso programa;
+Rotina para que se feche tudo;
+Rotina para que se desligue:
+
+Rotina para que se desligue o cgi:
+
+Rotina para que se enquadre a seleção atual em uma caixa de texto:
+
+Rotina para que se carregue tudo;
+Rotina para que se carregue as bibliotecas;
+Rotina para que se carregue as bibliotecas padrão;
+Rotina para que se carregue as bibliotecas padrão do sistema;
+Rotina para que se inicialize tudo;
+Rotina para que se inicialize os componentes:
+
+Rotina para que se obtenha o ponto de entrada do aplicativo;
+Rotina para que se inicialize antes da execução:

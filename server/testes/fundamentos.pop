@@ -1,0 +1,203 @@
+para que se execute o programa:
+
+Rotina para que se atribua uma word para uma segunda word:
+
+Rotina para que se atribua uma word para uma word big-endian unsigned:
+
+Rotina para que se atribua uma word para um byte:
+
+Rotina para que se atribua uma word para eax:
+
+Rotina para que se atribua uma word para um número:
+
+Rotina para que se atribua um número para uma word:
+
+Rotina para que se atribua um número para um byte:
+
+Rotina para que se atribua um sinalizador para um segundo sinalizador;
+Rotina para que se atribua um sinalizador para um número;
+Rotina para que se atribua um ponteiro para um número;
+Rotina para que se atribua um ponteiro para um segundo ponteiro;
+Rotina para que se atribua um número para um sinalizador;
+Rotina para que se atribua um número para um ponteiro;
+Rotina para que se atribua um número para um segundo número:
+
+Rotina para que se atribua um sinalizador para eax;
+Rotina para que se atribua um ponteiro para eax;
+Rotina para que se atribua um número para eax:
+
+Rotina para que se atribua eax para um byte:
+
+Rotina para que se atribua eax para um sinalizador;
+Rotina para que se atribua eax para um ponteiro;
+Rotina para que se atribua eax para um número:
+
+Rotina para que se atribua eax para uma word:
+
+Rotina para que se atribua um byte para uma word:
+
+Rotina para que se atribua um byte para um segundo byte:
+
+Rotina para que se atribua um byte para eax:
+
+Rotina para que se atribua um byte para um número:
+
+Rotina para que se substitua um byte usando uma tabela de tradução:
+
+Rotina para que se preencha bytes com um byte começando sob um ponteiro por uma quantidade de bytes:
+
+Rotina para que se copie bytes desde um ponteiro para um segundo ponteiro por uma quantidade de bytes:
+
+Rotina para que se atribua um número e um segundo número para um par de números:
+
+Rotina para que se atribua um par de números para um segundo par de números:
+
+Rotina para que se atribua um número sobre um segundo número em uma fração;
+Rotina para que se atribua um número e um segundo número para uma fração:
+
+Rotina para que se atribua um número para uma fração:
+
+Rotina para que se atribua um número para um par de números:
+
+Rotina para que se atribua uma fração para uma segunda fração:
+
+Rotina para que se atribua um par de números fracionários para um segundo par de números fracionários:
+
+Rotina para que se atribua um byte e um número para uma fração:
+
+Rotina para que se mova uma elipse para baixo uns twips:
+
+Rotina para que se mova uma elipse usando um par de números:
+
+Rotina para que se mova uma elipse usando uns x-twips e uns y-twips:
+
+Rotina para que se mova uma elipse para a esquerda uns twips:
+
+Rotina para que se mova uma elipse para a direita uns twips:
+
+Rotina para que se mova uma elipse para cima uns twips:
+
+Rotina para que se mova um vértice usando uns x-twips e uns y-twips:
+
+Rotina para que se mova um vértice para baixo uns twips:
+
+Rotina para que se mova um vértice usando um par de números:
+
+Rotina para que se ande uns twips para baixo;
+Rotina para que se ande para baixo uns twips;
+Rotina para que se mova uns twips para baixo;
+Rotina para que se mova para baixo uns twips:
+
+Rotina para que se ande uns twips para a esquerda;
+Rotina para que se ande para a esquerda uns twips;
+Rotina para que se mova uns twips para a esquerda;
+Rotina para que se mova para a esquerda uns twips:
+
+Rotina para que se ande uns twips para a direita;
+Rotina para que se ande para a direita uns twips;
+Rotina para que se mova uns twips para a direita;
+Rotina para que se mova para a direita uns twips:
+
+Rotina para que se ande uns twips para cima;
+Rotina para que se ande para cima uns twips;
+Rotina para que se mova uns twips para cima;
+Rotina para que se mova para cima uns twips:
+
+Rotina para que se mova para a direita uns twips e para baixo uns outros twips;
+Rotina para que se mova uns twips para a direita e uns outros twips para baixo:
+
+Rotina para que se mova para a direita uns twips e para cima uns outros twips;
+Rotina para que se mova uns twips para a direita e uns outros twips para cima:
+
+Rotina para que se mova para a esquerda uns twips e para baixo uns outros twips;
+Rotina para que se mova uns twips para a esquerda e para baixo uns outros twips;
+Rotina para que se mova para a esquerda uns twips e uns outros twips para baixo;
+Rotina para que se mova uns twips para a esquerda e uns outros twips para baixo:
+
+Rotina para que se mova para a esquerda uns twips e para cima uns outros twips;
+Rotina para que se mova uns twips para a esquerda e para cima uns outros twips;
+Rotina para que se mova para a esquerda uns twips e uns outros twips para cima;
+Rotina para que se mova uns twips para a esquerda e uns outros twips para cima:
+
+Rotina para que se atribua um número uma proporção para uma fração:
+
+Rotina para que se atribua um número uma proporção para uma segunda proporção:
+
+Função para que se atribua o módulo duma fração para uma segunda fração:
+
+Rotina para que se avance um byte limitando-o para um segundo byte e um terceiro byte:
+
+Rotina para que se aumente um número;
+Rotina para que se incremente um número;
+Rotina para que se avance um número:
+
+Rotina para que se avance um número limitando-o para um segundo número e um terceiro número:
+
+Rotina para que se copie um evento para um segundo evento:
+
+Rotina para que se copie um vértice Para um segundo vértice:
+
+Rotina para que se copie uns vértices Para uns segundo vértices:
+
+Rotina para que se mova um índice sobre um número:
+
+Rotina para que se ande uns quadrados;
+Rotina para que se mova uns quadrados:
+
+Rotina para que se ande uns quadrados na diagonal;
+Rotina para que se mova uns quadrados na diagonal:
+
+Rotina para que se mova para a esquerda uma janela do programa;
+Rotina para que se mova uma janela do programa para a esquerda:
+
+Rotina para que se mova para a direita uma janela do programa;
+Rotina para que se mova uma janela do programa para a direita:
+
+Rotina para que se atribua um grupo data-hora para uma segunda grupo data-hora:
+
+Rotina para que se atribua um número para uma word big-endian unsigned:
+
+Rotina para que se atribua um número sobre a stack:
+
+Função para que se atribua o módulo dum número para um segundo número:
+
+Rotina para que se atribua um OutlineTextmetric para uma segunda OutlineTextmetric:
+
+Função para que se atribua o módulo dum par de números para um segundo par de números:
+
+Rotina para que se atribua uma seleção para uma segunda seleção:
+
+Rotina para que se atribua um SOCKADDR para um segundo SOCKADDR:
+
+Rotina para que se atribua o grupo data-hora do system para um grupo data-hora:
+
+Rotina para que se atribua o último erro deste sistema para um número:
+
+Rotina para que se atribua a contagem de intervalos deste sistema para uns intervalos:
+
+Função para que se atribua os intervalos dum temporizador para uns intervalos:
+
+Rotina para que se atribua um segmento inicial sobre a stack:
+
+Rotina para que se atribua masking tape debaixo de uma figura geométrica:
+
+Função para que se atribua o GpRect dum GpImage para um GpRect:
+
+Função para que se atribua a altura dum GpImage para uma altura:
+
+Função para que se atribua a largura dum GpImage para uma largura:
+
+Rotina para que se atribua um GpRect para um segundo GpRect:
+
+Rotina para que se atribua uma elipse para uma segunda elipse:
+
+Rotina para que se mova um vértice uns twips para a esquerda;
+Rotina para que se mova um vértice para a esquerda uns twips:
+
+Rotina para que se mova um vértice para a direita uns twips;
+Rotina para que se mova um vértice uns twips para a direita:
+
+Rotina para que se mova um vértice para cima uns twips:
+
+Rotina para que se ande uns twips;
+Rotina para que se mova uns twips:

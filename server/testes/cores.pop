@@ -1,0 +1,255 @@
+Rotina para que se avance um percorredor:
+
+Rotina para que se recue um percorredor:
+
+Função para que se determine se uma cor e uma segunda cor estão clear:
+
+Função para que se determine se uma cor é transparente;
+Função para que se determine se uma cor é clear:
+
+Função para que se determine se uma cor é uma segunda cor:
+
+Função para que se determine se uma cor é alguma cor escura;
+Função para que se determine se uma cor é escura:
+
+Função para que se determine se uma cor é alguma cor clara;
+Função para que se determine se uma cor é clara:
+
+Função para que se determine se uma cor é alguma cor normal;
+Função para que se determine se uma cor é normal:
+
+Função para que se determine se uma cor é alguma cor muito escura;
+Função para que se determine se uma cor é muito escura:
+
+Função para que se determine se uma cor é alguma cor muito clara;
+Função para que se determine se uma cor é muito clara:
+
+Função para que se determine se uma cor é alguma cor muitíssimo escura;
+Função para que se determine se uma cor é muitíssimo escura:
+
+Função para que se determine se uma cor é alguma cor muitíssimo clara;
+Função para que se determine se uma cor é muitíssimo clara:
+
+Rotina para que se imagine uma cor desde uma matiz e um saturação e um luminosidade;
+Rotina para que se faça uma cor desde uma matiz e um saturação e um luminosidade:
+
+Rotina para que se escolha aleatoriamente uma cor do arco-íris:
+
+Rotina para que se use uma cor:
+
+Rotina para que se defina uma cor como uma outra cor;
+Rotina para que se coloque uma outra cor em uma cor;
+Rotina para que se substitua uma cor por uma outra cor;
+Rotina para que se troque uma cor para uma outra cor;
+Rotina para que se altere uma cor para uma outra cor;
+Rotina para que se modifique uma cor para uma outra cor;
+Rotina para que se mude uma cor para uma outra cor:
+
+Rotina para que se avance um percorredor até encontrar o próximo espaço;
+Rotina para que se avance um percorredor até o próximo espaço:
+
+Rotina para que se recue um percorredor até o próximo espaço;
+Rotina para que se recue um percorredor até encontrar o próximo espaço:
+
+Rotina para que se recue um percorredor por um número:
+
+Rotina para que se avance um percorredor por um número:
+
+Rotina para que se modifique a matiz do contexto por uns pontos osmosianos;
+Rotina para que se altere a matiz do contexto por uns pontos osmosianos;
+Rotina para que se mude a matiz do contexto por uns pontos osmosianos:
+
+Rotina para que se modifique uma matiz por uns pontos osmosianos;
+Rotina para que se altere uma matiz por uns pontos osmosianos;
+Rotina para que se mude uma matiz por uns pontos osmosianos:
+
+Rotina para que se limpe uma cor:
+
+Rotina para que se limpe um percorredor:
+
+Rotina para que se escureça a tela;
+Rotina para que se apague a tela;
+Rotina para que se limpe a tela:
+
+Rotina para que se pinte a tela com uma cor; \ pinte a tela com uma só cor, etc
+Rotina para que se limpe a tela usando uma cor:
+
+Rotina para que se branqueie a tela;
+Rotina para que se pinte a tela de branco;
+Rotina para que se limpe a tela usando a cor branca:
+
+Rotina para que se converta uma cor para um código da cor:
+
+Rotina para que se converta uma cor para um espaço de cor RGB:
+
+Rotina para que se converta um código da cor para uma cor:
+
+Rotina para que se converta um código da cor para um espaço de cor RGB:
+
+Rotina para que se crie o hBrush de um canvas usando uma cor:
+
+Rotina para que se crie o hPen de um canvas usando uma cor:
+
+Rotina para que se corte um número pela metade:
+
+Rotina para que se produza o relatório de erros usando uma cor;
+Rotina para que se produza o relatório de falhas usando uma cor;
+Rotina para que se produza o relatório de panes usando uma cor;
+Rotina para que se produza o relatório de bugs usando uma cor;
+Rotina para que se produza o relatório de informações usando uma cor:
+
+Rotina para que se produza o relatório de panes usando um espaço de cor RGB;
+Rotina para que se produza o relatório de falhas usando um espaço de cor RGB;
+Rotina para que se produza o relatório de erros usando um espaço de cor RGB;
+Rotina para que se produza o relatório de bugs usando um espaço de cor RGB;
+Rotina para que se produza o relatório de informações usando um espaço de cor RGB:
+
+Função para que se determine se uma string está escrita incorretamente;
+Função para que se determine se uma string está escrito incorretamente:
+
+Rotina para que se preencha uma caixa com uma cor:
+
+Rotina para que se preencha uma elipse sobre uma localização com uma cor:
+
+Rotina para que se obtenha uma cor usando uma localização:
+
+Rotina para que se modifique a cor usando uma caixa de texto e uma cor:
+
+Rotina para que se clareie uma cor por um quantia:
+
+Rotina para que se clareie uma cor por uns percentual;
+Rotina para que se clareie uma cor aproximadamente uns percentual;
+Rotina para que se clareie uma cor por aproximadamente uns percentual;
+Rotina para que se clareie uma cor uns percentual:
+
+Rotina para que se clareie o current cor aproximadamente uns percentual:
+
+Rotina para que se clareie uma matiz por uns degraus:
+
+Rotina para que se clareie uma matiz por uns pontos osmosianos:
+
+Rotina para que se mova a âncora para o lado esquerdo para algum non-alfanumérico byte em uma caixa de texto:
+
+Rotina para que se normalize uma matiz:
+
+Rotina para que se contorne uma caixa com uma cor:
+
+Rotina para que se transcreva uma cor sem passar pra próxima linha:
+
+Rotina para que se transcreva stroke e preencha usando uma cor denominada cor da borda e uma cor denominada cor de preenchimento:
+
+Rotina para que se inverta uma cor:
+
+Rotina para que se inverta a tonalidade de uma cor:
+
+Rotina para que se reverta uma cor:
+
+Rotina para que se defina o código da cor de um canvas usando uma cor:
+
+Rotina para que se lance um percorredor sobre um segundo percorredor:
+
+Rotina para que se lance um percorredor sobre uma string:
+
+Rotina para que se comece com uma cor:
+
+Rotina para que se aguarde a ocorrência de um evento;
+Rotina para que se aguarde um evento;
+Rotina para que se aguarde por um evento;
+Rotina para que se desenfileire um evento:
+
+Rotina para que se escreva com cores invertidas uma string para StdOut;
+Rotina para que se escreva uma string com cores invertidas para StdOut:
+
+Rotina para que se escreva com cores invertidas uma string na nova linha de texto para StdOut;
+Rotina para que se escreva uma string com cores invertidas na nova linha de texto para StdOut:
+
+Rotina para que se mova um percorredor (catálogo dicionário léxico rules):
+
+Rotina para que se mova um percorredor (strings com aspas):
+
+Rotina para que se mova um percorredor (spell checking rules):
+
+Rotina para que se mova um percorredor (usando diretrizes de arquivos de texto):
+
+Rotina para que se mova um percorredor (word wrapping rules):
+
+Rotina para que se mova um percorredor usando uma caixa (word wrapping rules):
+
+Rotina para que se mova um percorredor usando um byte denominado byte separador:
+
+Rotina para que se atribua um percorredor para um segundo percorredor:
+
+Rotina para que se escreva uma string sob uma localização com uma cor:
+
+Rotina para que se escreva uma string em uma caixa com uma cor:
+
+Rotina para que se transcreva setcolor usando uma cor denominada cor da borda e uma cor denominada cor de preenchimento:
+
+Rotina para que se atribua uma matiz e uma saturação e uma luminosidade para uma cor:
+
+Rotina para que se permute uma cor com uma segunda cor:
+
+Rotina para que se atribua uma cor para uma segunda cor:
+
+Rotina para que se escolha aleatoriamente uma cor muito escura;
+Rotina para que se escolha aleatoriamente uma cor bem escura:
+
+Rotina para que se escolha aleatoriamente uma cor muito clara;
+Rotina para que se escolha aleatoriamente uma cor bem clara:
+
+Rotina para que se escolha aleatoriamente uma cor escuríssima;
+Rotina para que se escolha aleatoriamente uma cor muitísssimo escura:
+
+Rotina para que se escolha aleatoriamente uma cor claríssima:
+
+Rotina para que se escolha aleatoriamente uma cor pastel:
+
+Rotina para que se redefina as cores do arco-íris:
+
+Rotina para que se escolha aleatoriamente um tom de cor vistoso:
+
+Rotina para que se escolha aleatoriamente uma cor vistosa;
+Rotina para que se escolha aleatoriamente um tom de cor vivo;
+Rotina para que se escolha aleatoriamente uma cor viva;
+Rotina para que se escolha aleatoriamente um tom de cor vívido:
+
+Rotina para que se escolha aleatoriamente uma cor vívida:
+
+Rotina para que se escolha aleatoriamente uma cor clara:
+
+Rotina para que se escolha aleatoriamente um brilho entre um percentual e um segundo percentual;
+Rotina para que se varie uma luminosidade entre um percentual e um segundo percentual;
+Rotina para que se escolha aleatoriamente uam luminosidade entre um percentual e um segundo percentual:
+
+Rotina para que se escolha aleatoriamente uma cor amarronzada:
+
+Rotina para que se escolha aleatoriamente uma cor amarronzada aproximadamente um percentual:
+
+Rotina para que se escolha aleatoriamente uma cor:
+
+Rotina para que se escolha aleatoriamente uma cor entre uma segunda cor e uma terceira cor:
+
+Rotina para que se escolha aleatoriamente uma cor parecida com uma segunda cor;
+Rotina para que se escolha aleatoriamente uma cor semelhante para uma segunda cor;
+Rotina para que se escolha aleatoriamente uma cor similar para uma segunda cor:
+
+Rotina para que se escolha aleatoriamente um tom de cor escuro:
+
+Rotina para que se escolha aleatoriamente uma cor escura:
+
+Rotina para que se escolha aleatoriamente um tom de cor esverdeado;
+Rotina para que se escolha aleatoriamente uma cor esverdeada:
+
+Rotina para que se escolha aleatoriamente uma cor esverdeada aproximadamente um percentual:
+
+Rotina para que se escureça uma cor em um quantia;
+Rotina para que se escureça uma cor por um quantia:
+
+Rotina para que se escureça uma cor em uns percentual;
+Rotina para que se escureça uma cor aproximadamente uns percentual;
+Rotina para que se escureça uma cor em aproximadamente uns percentual;
+Rotina para que se escureça uma cor uns percentual:
+
+Rotina para que se escureça a current cor aproximadamente uns percentual:
+
+Rotina para que se escolha aleatoriamente uma cor vibrante:

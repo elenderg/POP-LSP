@@ -1,0 +1,63 @@
+Rotina para que se mostre olá mundo no console:
+
+Rotina para que se obtenha o Número Identificador do Fluxo de Entrada Padrão:
+
+Rotina para que se prepare o Console:
+
+Rotina para que se defina o CodePage do Console:
+
+Rotina para que se obtenha o modo do console:
+
+Rotina para que se crie um console:
+
+Rotina para que se execute um evento usando um console:
+
+Rotina para que se execute um evento usando um console (tecla backspace):
+
+Rotina para que se execute um evento usando um console (seta pra baixo):
+
+Rotina para que se execute um evento usando um console (tecla End):
+
+Rotina para que se execute um evento usando um console (tecla Enter):
+
+Rotina para que se execute um evento usando um console (tecla Home):
+
+Rotina para que se execute um evento usando um console (pressionamento de tecla):
+
+Rotina para que se execute um evento usando um console (tecla Page Down):
+
+Rotina para que se execute um evento usando um console (tecla Page Up):
+
+Rotina para que se execute um evento usando um console (atualização de tela):
+
+Rotina para que se execute um evento usando um console (clique direito):
+
+Rotina para que se execute um evento usando um console (exibir cursor do mouse):
+
+Rotina para que se execute um evento usando um console (seta pra cima):
+
+Rotina para que se execute os eventos enfileirados usando um console:
+
+Rotina para que se role um console usando um evento:
+
+Rotina para que se mostre um console:
+
+Rotina para que se escreva um número para StdOut:
+
+Rotina para que se escreva um byte para o console do NppExec;
+Rotina para que se escreva um byte para o console do Notepad++;
+Rotina para que se escreva um byte para StdOut:
+
+Rotina para que se escreva um número sobre um console:
+
+Rotina para que se obtenha um sinalizador desde um console;
+Rotina para que se leia um sinalizador desde um console:
+
+Rotina para que se obtenha uma fração desde um console;
+Rotina para que se leia uma fração desde um console:
+
+Rotina para que se obtenha um número desde um console;
+Rotina para que se leia um número desde um console:
+
+Rotina para que se obtenha um byte desde um console;
+Rotina para que se leia um byte desde um console:

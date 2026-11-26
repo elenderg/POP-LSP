@@ -1,0 +1,99 @@
+Função para que se determine se uma tecla é alguma tecla de dígito:
+
+Função para que se determine se uma tecla é alguma tecla de letra:
+
+Função para que se determine se uma tecla é algum tecla modificadora:
+
+Função para que se determine se uma tecla é algum tecla imprimível:
+
+Função para que se determine se uma tecla é algum pad tecla:
+
+Função para que se determine se uma tecla é alguma tecla de símbolo:
+
+Função para que se determine se uma tecla está sendo pressionado; [ou botão do mouse] 
+Função para que se determine se uma tecla [específica] está sendo pressionada:
+
+Rotina para que se aguarde por uma tecla para go para baixo:
+
+Rotina para que se aguarde por uma tecla para come back para cima:
+
+Função para que se determine se uma tecla está para cima:
+
+Rotina para que se aguarde por uma tecla para come para cima:
+
+Função para que se determine se uma tecla está para baixo:
+
+Função para que se determine se uma tecla é alguma tecla do tipo WM_CHAR:
+
+Função para que se determine se uma tecla está ligada;
+Função para que se determine se uma tecla está alternada;
+Função para que se determine se uma tecla está ativada:
+
+Função para que se determine se uma tecla com um lParam é alguma tecla de cancelamento ou tecla modificadora:
+
+Função para que se determine se o botão esquerdo do mouse está para baixo:
+
+Rotina para que se execute algum WM_CREATE com uma janela do programa:
+
+Rotina para que se oculte o cursor:
+
+Rotina para que se converta um lParam para uma tecla:
+
+Função para que se determine se um evento é algum atalho de tecla:
+
+Rotina para que se aguarde até que pressionemos uma tecla;
+Rotina para que se aguarde até pressionarmos uma tecla;
+Rotina para que se espere até pressionarmos uma tecla;
+Rotina para que se aguarde por uma tecla;
+Rotina para que se espere por uma tecla;
+Rotina para que se aguarde o pressionamento de uma tecla;
+Rotina para que se aguarde pelo pressionamento de uma tecla;
+Rotina para que se aguarde uma tecla ser pressionada;
+Rotina para que se espere uma tecla ser pressionada;
+Rotina para que se aguarde uma tecla:
+
+Função para que se determine se o mouse foi arrastado desde uma localização usando uma malha quadriculada:
+
+Função para que se determine se o mouse está em uma caixa:
+
+Função para que se determine se o usuário clicou sobre umas alternativas;
+Função para que se determine se o usuário clicou em umas alternativas:
+
+Rotina para que se execute algum WM_ACTIVATE com um wParam:
+
+Rotina para que se execute algum WM_ACTIVATE com um wParam (activate):
+
+Rotina para que se execute algum WM_ACTIVATE com um wParam (deactivate):
+
+Rotina para que se execute algum WM_CHAR com um wParam e um lParam:
+
+Rotina para que se execute algum WM_DESTROY:
+
+Rotina para que se execute algum WM_LBUTTONDBLCLK com um lParam:
+
+Rotina para que se execute algum WM_LBUTTONDOWN com um lParam:
+
+Rotina para que se execute algum WM_PAINT com uma janela do programa:
+
+Rotina para que se execute algum WM_RBUTTONDBLCLK com um lParam:
+
+Rotina para que se execute algum WM_RBUTTONDOWN com um lParam:
+
+Rotina para que se execute algum WM_SETCURSOR:
+
+Rotina para que se execute algum WM_SYSKEYDOWN com um wParam e um lParam;
+Rotina para que se execute algum WM_KEYDOWN com um wParam e um lParam:
+
+Rotina para que se execute um evento usando um terminal (tecla backspace):
+
+Rotina para que se execute um evento usando um terminal (tecla Enter):
+
+Rotina para que se execute um evento usando um terminal (pressionamento de tecla):
+
+Rotina para que se execute um evento usando um terminal (exibir cursor do mouse):
+
+Rotina para que se mostre um cursor:
+
+Rotina para que se atualize o cursor:
+
+Função para que se atribua a localização deste mouse para uma localização:

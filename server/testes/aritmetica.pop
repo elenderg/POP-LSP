@@ -1,0 +1,260 @@
+Rotina para que se arredonde para cima um número usando a potência imediata de dois;
+Rotina para que se arredonde para cima um número usando a potência significativa de dois;
+Rotina para que se arredonde para cima um número usando a potência próxima de dois;
+Rotina para que se arredonde para cima um número usando a potência de dois;
+Rotina para que se arredonde um número para cima usando a potência imediata de dois;
+Rotina para que se arredonde um número para cima usando a próxima potência de dois;
+Rotina para que se arredonde um número para cima usando a potência de dois:
+
+Rotina para que se negate um número;
+Rotina para que se inverta o sinal de um número:
+
+Função para que se determine se uns número[s] são negativos;
+Função para que se determine se um número é negativo:
+
+Função para que se determine se um número é positivo:
+
+Função para que se determine se um par de números é um segundo par de números:
+
+Função para que se determine se um par de números é um número:
+
+Função para que se determine se um par de números é um número e um segundo número:
+
+Função para que se determine se um número está entre um segundo número e um terceiro número:
+
+Função para que se determine se um contador está ultrapassando um número:
+
+Função para que se determine se um número é ímpar:
+
+Função para que se determine se um número é par:
+
+Rotina para que se divida um par de números por um segundo par de números:
+
+Rotina para que se divida um par de números por um número:
+
+Rotina para que se divida um par de números por um número e um segundo número:
+
+Rotina para que se multiplique um par de números por um segundo par de números:
+
+Rotina para que se multiplique um par de números por um número:
+
+Rotina para que se multiplique um par de números por um número e um segundo número:
+
+Rotina para que se adicione um número e um segundo número para um par de números:
+
+Rotina para que se adicione um número para um par de números:
+
+Rotina para que se subtraia uma fração desde uma segunda fração:
+
+Rotina para que se subtraia um número e um segundo número desde um par de números:
+
+Rotina para que se subtraia um número desde uma fração:
+
+Rotina para que se subtraia um número desde um par de números:
+
+Rotina para que se subtraia um par de números desde um segundo par de números:
+
+Rotina para que se negate um par de números:
+
+Rotina para que se inverta o sinal de um par de números:
+
+Rotina para que se negate uma fração;
+Rotina para que se inverta o sinal de uma fração:
+
+Função para que se determine se um número é uniformemente divisível por um segundo número:
+
+Função para que se determine se um número é um múltiplo de um segundo número;
+Função para que se determine se um número é um múltiplo em um segundo número:
+
+Função para que se determine se um número é primo;
+Função para que se determine se um número é prime:
+
+Rotina para que se calcule um valor da diferença entre um par de números e um segundo par de números:
+
+Rotina para que se obtenha novos números aleatórios;
+Rotina para que se semeie o gerador de números aleatórios:
+
+Rotina para que se reverta um número;
+Rotina para que se troque o sinal relativo para um número;
+Rotina para que se troque o sinal de um número;
+Rotina para que se inverta um número:
+
+Rotina para que se simplifique uma fração;
+Rotina para que se reduza uma fração:
+
+Rotina para que se eleve um número para um segundo número:
+
+Rotina para que se escolha aleatoriamente um número:
+
+Rotina para que se multiplique uma fração por um número:
+
+Rotina para que se adicione uma fração para uma segunda fração:
+
+Rotina para que se adicione um nome para umas alternativas:
+
+Rotina para que se adicione um número para um segundo número e um terceiro número para um quarto número:
+
+Rotina para que se adicione um par de números para um segundo par de números:
+
+Rotina para que se adicione um quora para um terminal:
+
+Rotina para que se adicione um número para uma fração:
+
+Rotina para que se redefina uma fração;
+Rotina para que se zere uma fração;
+Rotina para que se limpe uma fração:
+
+Rotina para que se zere um número;
+Rotina para que se limpe um número:
+
+Rotina para que se limpe um par de números:
+
+Rotina para que se converta um código binário Para um número:
+
+Rotina para que se converta uma fração para um numeral misto:
+
+Rotina para que se converta um numeral misto para uma fração:
+
+Rotina para que se remova o sinal desde uma fração;
+Rotina para que se de-sign uma fração:
+
+Rotina para que se remova o sinal desde um número;
+Rotina para que se de-sign um número:
+
+Rotina para que se  remova o sinal desde um par de números;
+Rotina para que se de-sign um par de números:
+
+Rotina para que se produza o relatório de erros usando uma fração;
+Rotina para que se produza o relatório de falhas usando uma fração;
+Rotina para que se produza o relatório de panes usando uma fração;
+Rotina para que se produza o relatório de bugs usando uma fração;
+Rotina para que se produza o relatório de informações usando uma fração:
+
+Rotina para que se produza o relatório de falhas usando um número;
+Rotina para que se produza o relatório de panes usando um número;
+Rotina para que se produza o relatório de erros usando um número;
+Rotina para que se produza o relatório de bugs usando um número;
+Rotina para que se produza o relatório de informações usando um número:
+
+Rotina para que se produza o relatório de erros usando um número e um segundo número;
+Rotina para que se produza o relatório de falhas usando um número e um segundo número;
+Rotina para que se produza o relatório de panes usando um número e um segundo número;
+Rotina para que se produza o relatório de bugs usando um número e um segundo número;
+Rotina para que se produza o relatório de informações usando um número e um segundo número:
+
+Rotina para que se produza o relatório de falhas usando um par de números;
+Rotina para que se produza o relatório de panes usando um par de números;
+Rotina para que se produza o relatório de erros usando um par de números;
+Rotina para que se produza o relatório de bugs usando um par de números;
+Rotina para que se produza o relatório de informações usando um par de números:
+
+Função para que se determine se uma fração é um número:
+
+Função para que se determine se uma fração é uma segunda fração:
+
+Função para que se determine se uma fração é maior que uma segunda fração;
+Função para que se determine se uma fração é maior do que uma segunda fração:
+
+Função para que se determine se uma fração é maior ou igual a uma segunda fração;
+Função para que se determine se uma fração é maior do que ou igual a uma segunda fração:
+
+Função para que se determine se uma fração é menor que uma segunda fração;
+Função para que se determine se uma fração é menor do que uma segunda fração:
+
+Função para que se determine se uma fração é menor do que ou igual a uma segunda fração;
+Função para que se determine se uma fração é menor que ou igual a uma segunda fração;
+Função para que se determine se uma fração é igual ou menor do que uma segunda fração;
+Função para que se determine se uma fração é igual ou menor que uma segunda fração;
+Função para que se determine se uma fração é menor ou igual a uma segunda fração:
+
+Função para que se determine se uma fração é negativa:
+
+Função para que se determine se um numeral misto é um número:
+
+Rotina para que se divida uma fração por uma segunda fração:
+
+Rotina para que se divida uma fração por um número:
+
+Rotina para que se divida um número por uma fração:
+
+Rotina para que se duplique o valor de um número;
+Rotina para que se duplique um número;
+Rotina para que se dobre o valor de um número;
+Rotina para que se dobre um número;
+Rotina para que se double um número:
+
+Rotina para que se encontre uma raiz quadrada em um número:
+
+Rotina para que se inverta verticalmente uma fração:
+
+Rotina para que se calcule um valor da diferença entre um par de números e um segundo par de números usando uma malha quadriculada de par de números:
+
+Rotina para que se delimite um número para um segundo número e um terceiro número:
+
+Rotina para que se simplifique uma fração e uma segunda fração;
+Rotina para que se normalize uma fração e uma segunda fração:
+
+Função para que se determine se um par de números é menor do que um segundo par de números:
+
+Rotina para que se escolha aleatoriamente um número dentre uma quantia em um segundo número:
+
+Rotina para que se arredonde um número para um segundo número:
+
+Rotina para que se arredonde um par de números para um número:
+
+Rotina para que se arredonde um par de números para um segundo par de números:
+
+Rotina para que se arredonde um número usando o múltiplo de um segundo número;
+Rotina para que se arredonde um número usando o múltiplo significativo de um segundo número;
+Rotina para que se arredonde um número usando o múltiplo imediato de um segundo número:
+
+Rotina para que se arredonde para baixo um número usando o múltiplo imediato de um segundo número;
+Rotina para que se arredonde para baixo um número usando o múltiplo de um segundo número;
+Rotina para que se arredonde para baixo um número usando o múltiplo significativo de um segundo número;
+Rotina para que se arredonde um número para baixo usando o múltiplo significativo de um segundo número;
+Rotina para que se arredonde um número para baixo usando o múltiplo imediato de um segundo número:
+
+Rotina para que se arredonde para cima um número usando o múltiplo de um segundo número;
+Rotina para que se arredonde um número para cima usando o múltiplo de um segundo número;
+Rotina para que se arredonde para cima um número usando o múltiplo significativo de um segundo número;
+Rotina para que se arredonde um número para cima usando o múltiplo significativo de um segundo número;
+Rotina para que se arredonde para cima um número usando o múltiplo imediato de um segundo número;
+Rotina para que se arredonde um número para cima usando o múltiplo imediato de um segundo número:
+
+Rotina para que se arredonde um par de números usando o múltiplo de um segundo par de números;
+Rotina para que se arredonde um par de números usando o múltiplo significativo de um segundo par de números;
+Rotina para que se arredonde um par de números usando o múltiplo imediato de um segundo par de números:
+
+Rotina para que se arredonde um par de números usando o múltiplo de um número;
+Rotina para que se arredonde um par de números usando o múltiplo significativo de um número;
+Rotina para que se arredonde um par de números usando o múltiplo imediato de um número:
+
+Rotina para que se fale um número:
+
+Rotina para que se vire uma fração igual a um número sobre um segundo número:
+
+Rotina para que se vire uma fração;
+Rotina para que se vire para uma fração:
+
+Rotina para que se vire pra esquerda uma fração igual a um número sobre um segundo número;
+Rotina para que se vire para a esquerda uma fração igual a um número sobre um segundo número:
+
+Rotina para que se vire uma fração para a esquerda;
+Rotina para que se vire para a esquerda uma fração:
+
+Rotina para que se vire pra direita uma fração igual a um número sobre um segundo número;
+Rotina para que se vire para a direita uma fração igual a um número sobre um segundo número:
+
+Rotina para que se vire para a direita uma fração:
+
+Rotina para que se vire para a direita uma fração uns percentual:
+
+Rotina para que se escreva uma fração:
+
+Rotina para que se escreva um número:
+
+Rotina para que se escolha aleatoriamente uma letra do alfabeto:
+
+Rotina para que se escreva um número para o fluxo de saída:
+
+Rotina para que se escolha aleatoriamente uma orientação:

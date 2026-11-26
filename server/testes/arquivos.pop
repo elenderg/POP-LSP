@@ -1,0 +1,62 @@
+Função para que se determine se um endereço completo é do tipo arquivo:
+
+Função para que se determine se um endereço completo é do tipo pasta:
+
+Rotina para que se feche um arquivo:
+
+Rotina para que se crie um endereço completo no sistema de arquivos:
+
+Rotina para que se crie um endereço completo no sistema de arquivos (pasta):
+
+Rotina para que se crie um endereço completo no sistema de arquivos (arquivo):
+
+Função para que se determine se um endereço completo está vazia no sistema de arquivos;
+Função para que se determine se um endereço completo estão vazias no sistema de arquivos;
+Função para que se determine se um endereço completo estão vazios no sistema de arquivos;
+Função para que se determine se um endereço completo está vazio no sistema de arquivos:
+
+Função para que se determine se um endereço completo está no sistema de arquivos:
+
+Rotina para que se destrua um endereço completo no sistema de arquivos:
+
+Rotina para que se destrua um endereço completo no sistema de arquivos (pasta):
+
+Rotina para que se destrua uma endereço completo no sistema de arquivos (arquivo):
+
+Rotina para que se duplique um endereço completo para uma segunda endereço completo no sistema de arquivos:
+
+Rotina para que se duplique um endereço completo para um segundo endereço completo no sistema de arquivos (pasta):
+
+Rotina para que se duplique um endereço completo para um segundo endereço completo no sistema de arquivos (arquivo):
+
+Rotina para que se extraia um endereço da pasta desde um endereço completo:
+
+Rotina para que se extraia um nome do diretório desde um endereço completo:
+
+Rotina para que se extraia um nome da pasta desde um endereço completo:
+
+Rotina para que se extraia um nome do arquivo desde um endereço completo:
+
+Rotina para que se extraia um nome do arquivo s/ extensão desde um endereço completo:
+
+Rotina para que se obtenha uma contagem de itens em um endereço completo no sistema de arquivos:
+
+Rotina para que se obtenha um tamanho usando um endereço completo no sistema de arquivos:
+
+Rotina para que se obtenha um tamanho usando um endereço completo no sistema de arquivos (pasta):
+
+Rotina para que se obtenha um tamanho usando um endereço completo no sistema de arquivos (arquivo):
+
+Rotina para que se execute um arquivo de som;
+Rotina para que se reproduza um arquivo de som;
+Rotina para que se toque um arquivo de som:
+
+Rotina para que se execute um arquivo de som e espere;
+Rotina para que se reproduza um arquivo de som e espere;
+Rotina para que se toque um arquivo de som e espere:
+
+Rotina para que se rename um endereço completo para um segundo endereço completo no sistema de arquivos:
+
+Rotina para que se abra um arquivo usando um endereço completo e uns milissegundos:
+
+Rotina para que se abra um arquivo usando um endereço completo:

@@ -14,7 +14,28 @@ const {
   parseTypeDeclarations
 } = require('../out/typeParser.js');
 
-const fileNames = ['Tipos.pop', 'VariaveisGlobais.pop', 'rotinas.pop'];
+const fileNames = [
+  'tipos.pop',
+  'variaveis.pop',
+  'fundamentos.pop',
+  'aritmetica.pop',
+  'condicoes.pop',
+  'memoria-baixo-nivel.pop',
+  'strings.pop',
+  'listas.pop',
+  'arquivos.pop',
+  'rede.pop',
+  'console.pop',
+  'windows-mensagens.pop',
+  'graficos.pop',
+  'cores.pop',
+  'fontes.pop',
+  'pdf.pop',
+  'geometria.pop',
+  'mouse-teclado.pop',
+  'imagens.pop',
+  'inicializacao-utilidades.pop'
+];
 const directory = process.argv[2];
 const selectedFileNames = process.argv.slice(3);
 
