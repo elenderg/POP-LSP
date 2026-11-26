@@ -896,7 +896,7 @@ Um IStream object é uma estrutura com
 
 Um IStream VTable é um ponteiro para um IStream VTable conjunto.
   \Uma VTable (tabela de método virtual) é uma tabela de ponteiros de função.
-  \O VTable é como o COM vincula uma chamada de método à sua implementação em tempo de execução. N
+  \O VTable é como o COM vincula uma chamada de método à sua implementação em tempo de execução.
   \Não por coincidência, vtables são a forma como a maioria dos compiladores C ++ implementa métodos virtuais.
 Um IStream VTable conjunto é uma estrutura com
   \ iUnknown

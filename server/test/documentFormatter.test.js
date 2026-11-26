@@ -130,21 +130,21 @@ test('wraps statements above four arguments or column 80 and rejoins shorter inp
   assert.ok(formatted.includes([
     '  Adicione',
     '      o deslocamento vertical inferior',
-    '  mais',
+    '    mais',
     '      o superior deslocamento vertical',
-    '  dividido por',
+    '    dividido por',
     '      2',
-    '  para',
+    '    para',
     '      o deslocamento vertical.'
   ].join('\r\n')), formatted);
   assert.ok(formatted.includes([
     '  Subtraia',
     '      o deslocamento vertical inferior',
-    '  mais',
+    '    mais',
     '      o deslocamento vertical superior',
-    '  dividido por',
+    '    dividido por',
     '      2',
-    '  desde',
+    '    desde',
     '      o deslocamento vertical.'
   ].join('\r\n')), formatted);
   assert.ok(formatted.includes('  Atribua o número para o byte.'), formatted);
@@ -172,7 +172,7 @@ test('wraps a two-argument statement only when its end column exceeds 80', () =>
   assert.ok(beyondLimit.includes([
     '  Atribua',
     `      "${'x'.repeat(81 - 2 - prefix.length - suffix.length)}"`,
-    '  para',
+    '    para',
     '      o byte.'
   ].join('\r\n')), beyondLimit);
 });
@@ -211,23 +211,23 @@ test('adds one continuation level for statements containing separators and opera
   assert.ok(first.includes([
     '  Faça algo com',
     '      o número',
-    '  usando',
+    '    usando',
     '      o segundo número',
-    '  para',
+    '    para',
     '      o terceiro número',
-    '  retornando',
+    '    retornando',
     '      o quarto número.'
   ].join('\r\n')), first);
   assert.ok(second.includes([
     '  Adicione',
     '      o número',
-    '  mais',
+    '    mais',
     '      o segundo número',
-    '  vezes',
+    '    vezes',
     '      o terceiro número',
-    '  dividido pelo',
+    '    dividido pelo',
     '      quarto número',
-    '  para',
+    '    para',
     '      o quinto número.'
   ].join('\r\n')), second);
   assert.equal(formatDocument(first), first);
@@ -268,7 +268,7 @@ test('preserves block comments after statements inside conditionals', () => {
     '    0 [wMsgFilterMax] e',
     '    1 [wRemoveMsg = PM_REMOVE]'
   ].join('\r\n')), formatted);
-  assert.ok(formatted.includes('    Retornando\r\n        um número.'));
+  assert.ok(formatted.includes('      Retornando\r\n        um número.'));
   assert.ok(formatted.includes('\\ Valida a área do cliente dentro de um retângulo.'));
   assert.doesNotMatch(formatted, /^\s*\]\s*$/mu);
   assert.equal(formatDocument(formatted), formatted);

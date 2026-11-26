@@ -376,13 +376,15 @@ function formatStatement(raw, trimmed, indent, sourceOffset, syntax) {
         const before = trimmed.slice(0, returningStart).trim();
         const after = trimmed.slice(returningEnd).trim();
         const lines = before
-            ? wrapExpression(before, indent, syntax.breaks.filter(offset => offset < syntax.returning), textOffset, syntax.baseIndentBreaks.filter(offset => offset < syntax.returning), indent, 0, 1 + Number(syntax.deeperContinuationIndent))
+            ? wrapExpression(before, indent, syntax.breaks.filter(offset => offset < syntax.returning), textOffset, syntax.markerBreaks.filter(offset => offset < syntax.returning), indent, 0, 1 + Number(syntax.deeperContinuationIndent))
             : [];
-        lines.push(`${spaces(indent)}Retornando`);
+        const returningIndent = indent +
+            Number(syntax.deeperContinuationIndent);
+        lines.push(`${spaces(returningIndent)}Retornando`);
         if (after) {
             const afterOffset = textOffset + returningEnd + (trimmed.slice(returningEnd).length -
                 trimmed.slice(returningEnd).trimStart().length);
-            lines.push(...wrapExpression(after, indent, syntax.breaks.filter(offset => offset > syntax.returning), afterOffset, syntax.baseIndentBreaks.filter(offset => offset > syntax.returning), indent, 1 + Number(syntax.deeperContinuationIndent), 2 + Number(syntax.deeperContinuationIndent)));
+            lines.push(...wrapExpression(after, indent, syntax.breaks.filter(offset => offset > syntax.returning), afterOffset, syntax.markerBreaks.filter(offset => offset > syntax.returning), indent, 1 + Number(syntax.deeperContinuationIndent), 2 + Number(syntax.deeperContinuationIndent)));
         }
         return moveLeadingConjunctions(lines);
     }
@@ -390,7 +392,7 @@ function formatStatement(raw, trimmed, indent, sourceOffset, syntax) {
         const lines = [spaces(indent) + replaceIndentTabs(trimmed)];
         return moveLeadingConjunctions(lines);
     }
-    const lines = wrapExpression(trimmed, indent, syntax.breaks, textOffset, syntax.baseIndentBreaks, indent, 0, 1 + Number(syntax.deeperContinuationIndent));
+    const lines = wrapExpression(trimmed, indent, syntax.breaks, textOffset, syntax.markerBreaks, indent, 0, 1 + Number(syntax.deeperContinuationIndent));
     return moveLeadingConjunctions(lines);
 }
 function moveLeadingConjunctions(lines) {
@@ -460,13 +462,13 @@ function findLineCommentStart(line) {
     }
     return -1;
 }
-function wrapExpression(text, indent, absoluteBreaks, sourceOffset, baseIndentBreaks = [], baseIndent = indent, firstIndentOffset = 0, continuationIndentOffset = 1) {
+function wrapExpression(text, indent, absoluteBreaks, sourceOffset, markerBreaks = [], baseIndent = indent, firstIndentOffset = 0, continuationIndentOffset = 1) {
     const breaks = [...new Set(absoluteBreaks)]
         .map(offset => offset - sourceOffset)
         .filter(offset => offset > 0 && offset < text.length)
         .sort((first, second) => first - second);
     const lines = [];
-    const baseIndentBreakSet = new Set(baseIndentBreaks);
+    const markerBreakSet = new Set(markerBreaks);
     const appendSegment = (rawSegment, start) => {
         const hasComment = containsComment(rawSegment);
         const segment = hasComment
@@ -478,8 +480,8 @@ function wrapExpression(text, indent, absoluteBreaks, sourceOffset, baseIndentBr
         const continuationIndent = indent + continuationIndentOffset;
         let lineIndent = start === 0
             ? indent + firstIndentOffset
-            : baseIndentBreakSet.has(sourceOffset + start)
-                ? baseIndent
+            : markerBreakSet.has(sourceOffset + start)
+                ? baseIndent + 1
                 : continuationIndent;
         let remaining = segment;
         while (!hasComment && lineIndent * 2 + remaining.length > 80) {
@@ -557,7 +559,7 @@ function firstWordToken(source, range) {
 }
 function getStatementSyntax(source, routine, statement, masked) {
     const breaks = [];
-    const baseIndentBreaks = [];
+    const markerBreaks = [];
     const deeperContinuationIndent = hasRoutineSeparator(masked, statement) ||
         hasWrappedExpressionOperator(masked, statement);
     let returning;
@@ -566,9 +568,9 @@ function getStatementSyntax(source, routine, statement, masked) {
             const argumentCount = countExpressionOperands(assignment.expression) + 1;
             if (shouldWrapArguments(source, statement, argumentCount)) {
                 breaks.push(assignment.expression.range.start);
-                collectExpressionBreaks(assignment.expression, breaks, baseIndentBreaks);
+                collectExpressionBreaks(assignment.expression, breaks, markerBreaks);
                 breaks.push(assignment.target.range.start);
-                addRoutineSeparatorBreaks(masked, { start: assignment.expression.range.end, end: assignment.target.range.start }, breaks, baseIndentBreaks);
+                addRoutineSeparatorBreaks(masked, { start: assignment.expression.range.end, end: assignment.target.range.start }, breaks, markerBreaks);
             }
         }
     }
@@ -577,9 +579,9 @@ function getStatementSyntax(source, routine, statement, masked) {
             const argumentCount = countExpressionOperands(output.expression) + 1;
             if (shouldWrapArguments(source, statement, argumentCount)) {
                 breaks.push(output.expression.range.start);
-                collectExpressionBreaks(output.expression, breaks, baseIndentBreaks);
+                collectExpressionBreaks(output.expression, breaks, markerBreaks);
                 breaks.push(output.destination.range.start);
-                addRoutineSeparatorBreaks(masked, { start: output.expression.range.end, end: output.destination.range.start }, breaks, baseIndentBreaks);
+                addRoutineSeparatorBreaks(masked, { start: output.expression.range.end, end: output.destination.range.start }, breaks, markerBreaks);
             }
         }
     }
@@ -588,9 +590,9 @@ function getStatementSyntax(source, routine, statement, masked) {
             if (shouldWrapArguments(source, statement, call.arguments.length)) {
                 addArgumentBreaks(call.arguments, breaks);
                 for (const argument of call.arguments) {
-                    addExpressionOperatorBreaks(masked, argument.range, breaks, baseIndentBreaks);
+                    addExpressionOperatorBreaks(masked, argument.range, breaks, markerBreaks);
                 }
-                addArgumentSeparators(masked, call.arguments, breaks, baseIndentBreaks);
+                addArgumentSeparators(masked, call.arguments, breaks, markerBreaks);
             }
         }
     }
@@ -601,9 +603,9 @@ function getStatementSyntax(source, routine, statement, masked) {
         if (shouldWrapArguments(source, statement, process.arguments.length)) {
             addArgumentBreaks(process.arguments, breaks);
             for (const argument of process.arguments) {
-                addExpressionOperatorBreaks(masked, argument.range, breaks, baseIndentBreaks);
+                addExpressionOperatorBreaks(masked, argument.range, breaks, markerBreaks);
             }
-            addArgumentSeparators(masked, process.arguments, breaks, baseIndentBreaks);
+            addArgumentSeparators(masked, process.arguments, breaks, markerBreaks);
         }
         if (process.returnVariable) {
             returning = wordTokens(masked.slice(process.range.start, process.range.end))
@@ -616,7 +618,7 @@ function getStatementSyntax(source, routine, statement, masked) {
     }
     return {
         breaks,
-        baseIndentBreaks,
+        markerBreaks,
         deeperContinuationIndent,
         returning
     };
@@ -639,10 +641,10 @@ function shouldWrapArguments(source, statement, argumentCount) {
     const singleLineText = normalizeStatementWhitespace(source.slice(statement.start, statement.end));
     return statement.start - lineStart + singleLineText.length > 80;
 }
-function collectExpressionBreaks(expression, breaks, baseIndentBreaks) {
+function collectExpressionBreaks(expression, breaks, markerBreaks) {
     if (expression.kind !== 'binary') {
         if (expression.kind === 'unary') {
-            collectExpressionBreaks(expression.operand, breaks, baseIndentBreaks);
+            collectExpressionBreaks(expression.operand, breaks, markerBreaks);
         }
         return;
     }
@@ -651,10 +653,10 @@ function collectExpressionBreaks(expression, breaks, baseIndentBreaks) {
         breaks.push(operatorStart);
         breaks.push(expression.operatorRange.end);
         breaks.push(expression.right.range.start);
-        baseIndentBreaks.push(operatorStart);
+        markerBreaks.push(operatorStart);
     }
-    collectExpressionBreaks(expression.left, breaks, baseIndentBreaks);
-    collectExpressionBreaks(expression.right, breaks, baseIndentBreaks);
+    collectExpressionBreaks(expression.left, breaks, markerBreaks);
+    collectExpressionBreaks(expression.right, breaks, markerBreaks);
 }
 function findOperator(source, start, end, operator) {
     if (operator === '/') {
@@ -689,21 +691,21 @@ function addArgumentBreaks(argumentsList, breaks) {
         breaks.push(next.range.start);
     }
 }
-function addArgumentSeparators(masked, argumentsList, breaks, baseIndentBreaks) {
+function addArgumentSeparators(masked, argumentsList, breaks, markerBreaks) {
     for (let index = 1; index < argumentsList.length; index++) {
         addRoutineSeparatorBreaks(masked, {
             start: argumentsList[index - 1].range.end,
             end: argumentsList[index].range.start
-        }, breaks, baseIndentBreaks);
+        }, breaks, markerBreaks);
     }
 }
-function addExpressionOperatorBreaks(masked, range, breaks, baseIndentBreaks) {
+function addExpressionOperatorBreaks(masked, range, breaks, markerBreaks) {
     for (const operator of wrappedExpressionOperators) {
         let searchStart = range.start;
         let operatorStart = findOperator(masked, searchStart, range.end, operator);
         while (operatorStart !== undefined) {
             breaks.push(operatorStart);
-            baseIndentBreaks.push(operatorStart);
+            markerBreaks.push(operatorStart);
             const operatorEnd = findOperatorEnd(masked, operatorStart, range.end, operator);
             breaks.push(operatorEnd);
             const operandStart = skipWhitespace(masked, operatorEnd, range.end);
@@ -731,14 +733,14 @@ function hasRoutineSeparator(source, range) {
 function hasWrappedExpressionOperator(source, range) {
     return [...wrappedExpressionOperators].some(operator => findOperator(source, range.start, range.end, operator) !== undefined);
 }
-function addRoutineSeparatorBreaks(masked, range, breaks, baseIndentBreaks) {
+function addRoutineSeparatorBreaks(masked, range, breaks, markerBreaks) {
     for (const token of wordTokens(masked.slice(range.start, range.end))) {
         if (!routineSeparators.has(token.text)) {
             continue;
         }
         const offset = range.start + token.start;
         breaks.push(offset);
-        baseIndentBreaks.push(offset);
+        markerBreaks.push(offset);
     }
 }
 function containsRange(outer, inner) {
