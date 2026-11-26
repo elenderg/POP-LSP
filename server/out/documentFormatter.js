@@ -20,7 +20,7 @@ const routineSeparators = new Set([
     'num', 'numa', 'numas', 'nuns',
     'para', 'pela', 'pelas', 'pelo', 'pelos', 'por',
     'sob', 'sobre',
-    'usando'
+    'usando', 'retornando'
 ]);
 function formatDocument(source, parsedDocument) {
     const parsed = parsedDocument ?? (0, typeParser_1.parseTypeDeclarations)(source);
@@ -376,13 +376,13 @@ function formatStatement(raw, trimmed, indent, sourceOffset, syntax) {
         const before = trimmed.slice(0, returningStart).trim();
         const after = trimmed.slice(returningEnd).trim();
         const lines = before
-            ? wrapExpression(before, indent, syntax.breaks.filter(offset => offset < syntax.returning), textOffset, syntax.baseIndentBreaks.filter(offset => offset < syntax.returning), indent)
+            ? wrapExpression(before, indent, syntax.breaks.filter(offset => offset < syntax.returning), textOffset, syntax.baseIndentBreaks.filter(offset => offset < syntax.returning), indent, 0, 1 + Number(syntax.deeperContinuationIndent))
             : [];
         lines.push(`${spaces(indent)}Retornando`);
         if (after) {
             const afterOffset = textOffset + returningEnd + (trimmed.slice(returningEnd).length -
                 trimmed.slice(returningEnd).trimStart().length);
-            lines.push(...wrapExpression(after, indent + 1, syntax.breaks.filter(offset => offset > syntax.returning), afterOffset, syntax.baseIndentBreaks.filter(offset => offset > syntax.returning), indent));
+            lines.push(...wrapExpression(after, indent, syntax.breaks.filter(offset => offset > syntax.returning), afterOffset, syntax.baseIndentBreaks.filter(offset => offset > syntax.returning), indent, 1 + Number(syntax.deeperContinuationIndent), 2 + Number(syntax.deeperContinuationIndent)));
         }
         return moveLeadingConjunctions(lines);
     }
@@ -390,7 +390,7 @@ function formatStatement(raw, trimmed, indent, sourceOffset, syntax) {
         const lines = [spaces(indent) + replaceIndentTabs(trimmed)];
         return moveLeadingConjunctions(lines);
     }
-    const lines = wrapExpression(trimmed, indent, syntax.breaks, textOffset, syntax.baseIndentBreaks, indent);
+    const lines = wrapExpression(trimmed, indent, syntax.breaks, textOffset, syntax.baseIndentBreaks, indent, 0, 1 + Number(syntax.deeperContinuationIndent));
     return moveLeadingConjunctions(lines);
 }
 function moveLeadingConjunctions(lines) {
@@ -460,7 +460,7 @@ function findLineCommentStart(line) {
     }
     return -1;
 }
-function wrapExpression(text, indent, absoluteBreaks, sourceOffset, baseIndentBreaks = [], baseIndent = indent) {
+function wrapExpression(text, indent, absoluteBreaks, sourceOffset, baseIndentBreaks = [], baseIndent = indent, firstIndentOffset = 0, continuationIndentOffset = 1) {
     const breaks = [...new Set(absoluteBreaks)]
         .map(offset => offset - sourceOffset)
         .filter(offset => offset > 0 && offset < text.length)
@@ -475,11 +475,12 @@ function wrapExpression(text, indent, absoluteBreaks, sourceOffset, baseIndentBr
         if (!segment) {
             return;
         }
+        const continuationIndent = indent + continuationIndentOffset;
         let lineIndent = start === 0
-            ? indent
+            ? indent + firstIndentOffset
             : baseIndentBreakSet.has(sourceOffset + start)
                 ? baseIndent
-                : indent + 1;
+                : continuationIndent;
         let remaining = segment;
         while (!hasComment && lineIndent * 2 + remaining.length > 80) {
             const breakAt = wordTokens(maskProtectedText(remaining))
@@ -492,7 +493,7 @@ function wrapExpression(text, indent, absoluteBreaks, sourceOffset, baseIndentBr
             }
             lines.push(`${spaces(lineIndent)}${remaining.slice(0, breakAt).trimEnd()}`);
             remaining = remaining.slice(breakAt).trimStart();
-            lineIndent = indent + 1;
+            lineIndent = continuationIndent;
         }
         lines.push(`${spaces(lineIndent)}${remaining}`);
     };
@@ -557,13 +558,15 @@ function firstWordToken(source, range) {
 function getStatementSyntax(source, routine, statement, masked) {
     const breaks = [];
     const baseIndentBreaks = [];
+    const deeperContinuationIndent = hasRoutineSeparator(masked, statement) ||
+        hasWrappedExpressionOperator(masked, statement);
     let returning;
     for (const assignment of routine.assignments) {
         if (containsRange(statement, assignment.range)) {
             const argumentCount = countExpressionOperands(assignment.expression) + 1;
             if (shouldWrapArguments(source, statement, argumentCount)) {
                 breaks.push(assignment.expression.range.start);
-                collectExpressionBreaks(assignment.expression, masked, breaks);
+                collectExpressionBreaks(assignment.expression, breaks, baseIndentBreaks);
                 breaks.push(assignment.target.range.start);
                 addRoutineSeparatorBreaks(masked, { start: assignment.expression.range.end, end: assignment.target.range.start }, breaks, baseIndentBreaks);
             }
@@ -574,7 +577,7 @@ function getStatementSyntax(source, routine, statement, masked) {
             const argumentCount = countExpressionOperands(output.expression) + 1;
             if (shouldWrapArguments(source, statement, argumentCount)) {
                 breaks.push(output.expression.range.start);
-                collectExpressionBreaks(output.expression, masked, breaks);
+                collectExpressionBreaks(output.expression, breaks, baseIndentBreaks);
                 breaks.push(output.destination.range.start);
                 addRoutineSeparatorBreaks(masked, { start: output.expression.range.end, end: output.destination.range.start }, breaks, baseIndentBreaks);
             }
@@ -585,9 +588,8 @@ function getStatementSyntax(source, routine, statement, masked) {
             if (shouldWrapArguments(source, statement, call.arguments.length)) {
                 addArgumentBreaks(call.arguments, breaks);
                 for (const argument of call.arguments) {
-                    addExpressionOperatorBreaks(masked, argument.range, breaks);
+                    addExpressionOperatorBreaks(masked, argument.range, breaks, baseIndentBreaks);
                 }
-                addRoutineSeparatorBreaks(masked, call.name.range, breaks, baseIndentBreaks);
                 addArgumentSeparators(masked, call.arguments, breaks, baseIndentBreaks);
             }
         }
@@ -599,9 +601,9 @@ function getStatementSyntax(source, routine, statement, masked) {
         if (shouldWrapArguments(source, statement, process.arguments.length)) {
             addArgumentBreaks(process.arguments, breaks);
             for (const argument of process.arguments) {
-                addExpressionOperatorBreaks(masked, argument.range, breaks);
+                addExpressionOperatorBreaks(masked, argument.range, breaks, baseIndentBreaks);
             }
-            addArgumentSeparators(masked, process.arguments, breaks, baseIndentBreaks, process.range.start);
+            addArgumentSeparators(masked, process.arguments, breaks, baseIndentBreaks);
         }
         if (process.returnVariable) {
             returning = wordTokens(masked.slice(process.range.start, process.range.end))
@@ -612,7 +614,12 @@ function getStatementSyntax(source, routine, statement, masked) {
             }
         }
     }
-    return { breaks, baseIndentBreaks, returning };
+    return {
+        breaks,
+        baseIndentBreaks,
+        deeperContinuationIndent,
+        returning
+    };
 }
 function countExpressionOperands(expression) {
     if (expression.kind === 'binary') {
@@ -632,26 +639,37 @@ function shouldWrapArguments(source, statement, argumentCount) {
     const singleLineText = normalizeStatementWhitespace(source.slice(statement.start, statement.end));
     return statement.start - lineStart + singleLineText.length > 80;
 }
-function collectExpressionBreaks(expression, masked, breaks) {
+function collectExpressionBreaks(expression, breaks, baseIndentBreaks) {
     if (expression.kind !== 'binary') {
         if (expression.kind === 'unary') {
-            collectExpressionBreaks(expression.operand, masked, breaks);
+            collectExpressionBreaks(expression.operand, breaks, baseIndentBreaks);
         }
         return;
     }
-    const operatorStart = wrappedExpressionOperators.has(expression.operator)
-        ? findOperator(masked, expression.left.range.end, expression.right.range.start, expression.operator)
-        : undefined;
-    if (operatorStart !== undefined) {
+    if (wrappedExpressionOperators.has(expression.operator)) {
+        const operatorStart = expression.operatorRange.start;
         breaks.push(operatorStart);
+        breaks.push(expression.operatorRange.end);
+        breaks.push(expression.right.range.start);
+        baseIndentBreaks.push(operatorStart);
     }
-    collectExpressionBreaks(expression.left, masked, breaks);
-    collectExpressionBreaks(expression.right, masked, breaks);
+    collectExpressionBreaks(expression.left, breaks, baseIndentBreaks);
+    collectExpressionBreaks(expression.right, breaks, baseIndentBreaks);
 }
 function findOperator(source, start, end, operator) {
     if (operator === '/') {
         const index = source.indexOf('/', start);
         return index !== -1 && index < end ? index : undefined;
+    }
+    if (operator === 'dividido por') {
+        const tokens = wordTokens(source.slice(start, end));
+        for (let index = 0; index < tokens.length - 1; index++) {
+            if (tokens[index].text === 'dividido' &&
+                ['por', 'pelo', 'pela', 'pelos', 'pelas'].includes(tokens[index + 1].text)) {
+                return start + tokens[index].start;
+            }
+        }
+        return undefined;
     }
     const expected = operator.split(/\s+/u);
     const tokens = wordTokens(source.slice(start, end));
@@ -671,12 +689,7 @@ function addArgumentBreaks(argumentsList, breaks) {
         breaks.push(next.range.start);
     }
 }
-function addArgumentSeparators(masked, argumentsList, breaks, baseIndentBreaks, prefixStart) {
-    const firstArgument = argumentsList[0];
-    if (!firstArgument) {
-        return;
-    }
-    addRoutineSeparatorBreaks(masked, { start: prefixStart ?? firstArgument.range.start, end: firstArgument.range.start }, breaks, baseIndentBreaks);
+function addArgumentSeparators(masked, argumentsList, breaks, baseIndentBreaks) {
     for (let index = 1; index < argumentsList.length; index++) {
         addRoutineSeparatorBreaks(masked, {
             start: argumentsList[index - 1].range.end,
@@ -684,16 +697,39 @@ function addArgumentSeparators(masked, argumentsList, breaks, baseIndentBreaks, 
         }, breaks, baseIndentBreaks);
     }
 }
-function addExpressionOperatorBreaks(masked, range, breaks) {
+function addExpressionOperatorBreaks(masked, range, breaks, baseIndentBreaks) {
     for (const operator of wrappedExpressionOperators) {
         let searchStart = range.start;
         let operatorStart = findOperator(masked, searchStart, range.end, operator);
         while (operatorStart !== undefined) {
             breaks.push(operatorStart);
-            searchStart = operatorStart + operator.length;
+            baseIndentBreaks.push(operatorStart);
+            const operatorEnd = findOperatorEnd(masked, operatorStart, range.end, operator);
+            breaks.push(operatorEnd);
+            const operandStart = skipWhitespace(masked, operatorEnd, range.end);
+            if (operandStart < range.end) {
+                breaks.push(operandStart);
+            }
+            searchStart = operatorEnd;
             operatorStart = findOperator(masked, searchStart, range.end, operator);
         }
     }
+}
+function findOperatorEnd(source, start, end, operator) {
+    if (operator === '/') {
+        return start + 1;
+    }
+    const tokens = wordTokens(source.slice(start, end));
+    const operatorWordCount = operator.split(/\s+/u).length;
+    const endTokenIndex = operator === 'dividido por' ? 1 : operatorWordCount - 1;
+    const endToken = tokens[endTokenIndex];
+    return endToken ? start + endToken.end : start + operator.length;
+}
+function hasRoutineSeparator(source, range) {
+    return wordTokens(source.slice(range.start, range.end)).some(token => routineSeparators.has(token.text));
+}
+function hasWrappedExpressionOperator(source, range) {
+    return [...wrappedExpressionOperators].some(operator => findOperator(source, range.start, range.end, operator) !== undefined);
 }
 function addRoutineSeparatorBreaks(masked, range, breaks, baseIndentBreaks) {
     for (const token of wordTokens(masked.slice(range.start, range.end))) {
