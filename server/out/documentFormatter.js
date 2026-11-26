@@ -13,7 +13,7 @@ const routineSeparators = new Set([
     'à', 'às', 'ao', 'aos', 'para', 'em', 'no', 'na', 'nos', 'nas',
     'num', 'numa', 'nuns', 'numas', 'dum', 'duma', 'duns', 'dumas',
     'deste', 'desta', 'destes', 'destas', 'com', 'por', 'contendo',
-    'usando', 'dado', 'dada', 'dados', 'dadas', 'desde'
+    'usando', 'dado', 'dada', 'dados', 'dadas', 'desde', 'sob', 'sobre'
 ]);
 function formatDocument(source, parsedDocument) {
     const parsed = parsedDocument ?? (0, typeParser_1.parseTypeDeclarations)(source);
