@@ -1052,6 +1052,11 @@ test('excludes the current document base routines from contextual candidates', a
         'Um segundo número é um número.',
         'Um ponteiro é uma estrutura com 4 bytes.',
         'Uma coisa é uma estrutura com um número denominado valor.',
+        'Uma lista estruturada é uma estrutura.',
+        'Uma lista é um ponteiro para uma lista estruturada.',
+        'Uma linha de texto é uma estrutura.',
+        'O resultado é uma linha de texto.',
+        'A lista atual é uma lista.',
         'Função para que se determine se um número é um segundo número: Diga sim.',
         'Função para que se atribua o valor duma coisa para um número: Retorne.',
         'Rotina para que se faça algo: Retorne.',
@@ -1066,6 +1071,23 @@ test('excludes the current document base routines from contextual candidates', a
         '  Decodifique $DEADBEEF.',
         '  Empilhe 123.',
         '  Empilhe o número.',
+        '  Atribua a primeira linha de texto desta lista atual para o resultado.',
+        '  Atribua a última linha de texto desta lista atual para o resultado.',
+        '  Atribua a próxima linha de texto desta lista atual para o resultado.',
+        '  Atribua a linha de texto anterior desta lista atual para o resultado.',
+        ...['o', 'a', 'os', 'as', 'este', 'esta', 'estes', 'estas'].map(word =>
+          `  Escreva ${word} valor para StdOut.`
+        ),
+        ...['um', 'uma', 'uns', 'umas', 'esse', 'essa', 'esses', 'essas'].map(word =>
+          `  Escreva ${word} valor para StdOut.`
+        ),
+        ...['deste', 'desta', 'destes', 'destas', 'dum', 'duma', 'duns', 'dumas'].map(word =>
+          `  Escreva o nome ${word} cliente para StdOut.`
+        ),
+        '  Escreva o endereçamento dum byte para StdOut.',
+        '  Escreva a magnitude dum byte para StdOut.',
+        '  Escreva "este" para StdOut.',
+        '  \\ magnitude',
         '  Retorne.'
       ].join('\n');
       writeWindows1252(filePath, source);
@@ -1198,6 +1220,70 @@ test('excludes the current document base routines from contextual candidates', a
               `Expected hover for ${needle} to include "${expectedText}", received: ${contents}`
             );
           }
+        }
+
+        const keywordHoverChecks = [
+          ...['o', 'a', 'os', 'as', 'este', 'esta', 'estes', 'estas'].map(word => [
+            `Escreva ${word} valor`,
+            word,
+            'Declarar uma variável global'
+          ]),
+          ...['um', 'uma', 'uns', 'umas', 'esse', 'essa', 'esses', 'essas'].map(word => [
+            `Escreva ${word} valor`,
+            word,
+            'declarar um novo tipo'
+          ]),
+          ...['deste', 'desta', 'destes', 'destas'].map(word => [
+            `Escreva o nome ${word} cliente`,
+            word,
+            'acessar um campo de lista ou estrutura'
+          ]),
+          ...['dum', 'duma', 'duns', 'dumas'].map(word => [
+            `Escreva o nome ${word} cliente`,
+            word,
+            'criar um tipo estruturado'
+          ]),
+          ['Escreva o endereçamento dum byte', 'endereçamento', 'obter o endereço'],
+          ['Escreva a magnitude dum byte', 'magnitude', 'tamanho (em bytes)'],
+          ['Atribua a primeira linha de texto', 'primeira', 'acessar campos de listas'],
+          ['Atribua a última linha de texto', 'última', 'acessar campos de listas'],
+          ['Atribua a próxima linha de texto', 'próxima', 'acessar campos de listas'],
+          ['Atribua a linha de texto anterior', 'anterior', 'acessar campos de listas']
+        ];
+        for (const [needle, word, expected] of keywordHoverChecks) {
+          const phraseOffset = source.indexOf(needle, routineStart);
+          const wordOffset = needle.startsWith('Escreva ') && word.length === 1
+            ? 'Escreva '.length
+            : needle.indexOf(word);
+          const offset = phraseOffset + wordOffset;
+          const position = {
+            line: source.slice(0, offset).split('\n').length - 1,
+            character: offset - source.lastIndexOf('\n', offset) - 1
+          };
+          const hover = await client.request('textDocument/hover', {
+            textDocument: { uri },
+            position
+          });
+          assert.ok(
+            hover.result?.contents?.value?.includes(expected),
+            `Expected hover for ${word} to include "${expected}", received: ${hover.result?.contents?.value}`
+          );
+        }
+
+        for (const [needle, relativeOffset] of [
+          ['"este"', 1],
+          ['\\ magnitude', 2]
+        ]) {
+          const offset = source.indexOf(needle, routineStart) + relativeOffset;
+          const position = {
+            line: source.slice(0, offset).split('\n').length - 1,
+            character: offset - source.lastIndexOf('\n', offset) - 1
+          };
+          const hover = await client.request('textDocument/hover', {
+            textDocument: { uri },
+            position
+          });
+          assert.equal(hover.result, null);
         }
 
         await client.request('shutdown', null);

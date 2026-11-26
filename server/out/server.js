@@ -1289,6 +1289,87 @@ function getReservedInstructionHover(node, source, offset) {
         ? { value, start, end }
         : undefined;
 }
+const definiteArticleHover = 'Os artigos e pronomes *o*, *a*, *os*, *as*, *este*, *esta*, *estes* e *estas* são utilizados para:\n\n1. Declarar uma variável global.\n2. Fazer referência a um parâmetro, tipo ou variável global declarado anteriormente.\n\n**Exemplos**\n\n```pop\nO valor é um byte.\nIncremente o valor.\n```';
+const indefiniteArticleHover = 'Os artigos e pronomes *um*, *uma*, *uns*, *umas*, *esse*, *essa*, *esses* e *essas* são utilizados para declarar um novo tipo.\n\n**Exemplos**\n\n```pop\nUm valor é um byte.\nIncremente um valor.\nRotina para que se faça algo com um byte denominado valor:\n```';
+const languageKeywordHovers = new Map([
+    ...['o', 'a', 'os', 'as', 'este', 'esta', 'estes', 'estas'].map(word => [word, definiteArticleHover]),
+    ...['um', 'uma', 'uns', 'umas', 'esse', 'essa', 'esses', 'essas'].map(word => [word, indefiniteArticleHover]),
+    [
+        'endereçamento',
+        'A keyword *endereçamento* é utilizada para se obter o endereço de um tipo ou variável.\n\n**Exemplos**\n\n```pop\no endereçamento dum byte.\no endereçamento deste número.\n```'
+    ],
+    [
+        'magnitude',
+        'A keyword *magnitude* é utilizada para se obter o tamanho (em bytes) de um tipo ou variável.\n\n**Exemplos**\n\n```pop\na magnitude dum byte.\na magnitude deste número.\n```'
+    ],
+    ...['deste', 'desta', 'destes', 'destas'].map(word => [
+        word,
+        'Os operadores *deste*, *desta*, *destes* e *destas* são utilizados para se acessar um campo de lista ou estrutura.\n\n**Exemplos**\n\n```pop\no nome deste cliente.\no caractere inicial desta string.\na primeira aba destas abas.\no próximo item destes itens.\n```'
+    ]),
+    ...['dum', 'duma', 'duns', 'dumas'].map(word => [
+        word,
+        'Os operadores *dum*, *duma*, *duns* e *dumas* são utilizados para criar um tipo estruturado (lista ou estrutura) e acessar seu campo em seguida.\n\n**Exemplos**\n\n```pop\no nome dum cliente.\no caractere inicial duma string.\na primeira aba dumas abas.\no próximo item duns itens.\n```'
+    ])
+]);
+const listFieldOperatorWords = new Set([
+    'primeiro', 'primeira', 'próximo', 'próxima', 'anterior', 'último', 'última'
+]);
+const listFieldOperatorHover = 'Os operadores *primeiro*, *primeira*, *próximo*, *próxima*, *anterior*, *último* e *última* são utilizados para se acessar campos de listas.\n\n**Exemplos**\n\n```pop\nA primeira aba destas abas.\nO primeiro item destes itens.\nA próxima aba destas abas.\nA última aba destas abas.\nA aba anterior destas abas.\n```';
+function getLanguageKeywordHover(parsedDocument, source, offset) {
+    const comments = parsedDocument.commentRanges ?? [];
+    let lower = 0;
+    let upper = comments.length;
+    while (lower < upper) {
+        const middle = Math.floor((lower + upper) / 2);
+        if (comments[middle].start <= offset) {
+            lower = middle + 1;
+        }
+        else {
+            upper = middle;
+        }
+    }
+    const comment = comments[lower - 1];
+    if (comment && offset < comment.end) {
+        return undefined;
+    }
+    const lineStart = source.lastIndexOf('\n', offset - 1) + 1;
+    let inString = false;
+    for (let index = lineStart; index < offset; index++) {
+        if (source[index] !== '"') {
+            continue;
+        }
+        if (inString && source[index + 1] === '"') {
+            index++;
+        }
+        else {
+            inString = !inString;
+        }
+    }
+    if (inString) {
+        return undefined;
+    }
+    const isLetter = (character) => character !== undefined && /[\p{L}\p{M}]/u.test(character);
+    if (!isLetter(source[offset])) {
+        return undefined;
+    }
+    let start = offset;
+    let end = offset + 1;
+    while (isLetter(source[start - 1])) {
+        start--;
+    }
+    while (isLetter(source[end])) {
+        end++;
+    }
+    const word = source.slice(start, end).toLocaleLowerCase('pt-BR');
+    let value = languageKeywordHovers.get(word);
+    if (!value &&
+        listFieldOperatorWords.has(word) &&
+        parsedDocument.routines.some(routine => routine.listSpecialFieldAccesses.some(access => access.reference.range.start <= start &&
+            access.reference.range.end >= end))) {
+        value = listFieldOperatorHover;
+    }
+    return value ? { value, start, end } : undefined;
+}
 function getDerivedTypeHoverDetails(type) {
     const details = [
         type.kind === 'scalar' ? 'Tipo escalar derivado.' : 'Tipo derivado.',
@@ -1323,6 +1404,16 @@ connection.onHover(params => profileRequest('hover', async (requestId) => {
             range: {
                 start: document.positionAt(instructionHover.start),
                 end: document.positionAt(instructionHover.end)
+            }
+        };
+    }
+    const keywordHover = getLanguageKeywordHover(parsedDocument, document.getText(), offset);
+    if (keywordHover) {
+        return {
+            contents: { kind: node_1.MarkupKind.Markdown, value: keywordHover.value },
+            range: {
+                start: document.positionAt(keywordHover.start),
+                end: document.positionAt(keywordHover.end)
             }
         };
     }
