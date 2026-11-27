@@ -377,32 +377,37 @@ Rotina para que se transforme no backend Windows x64 um fragmento em código hexa
   Acrescente $E9 e o endereço deste próximo fragmento deste terceiro fragmento para o fragmento.
   \ jmp rel32 (deslocamento relativo ao próximo RIP)
 
-\ O prólogo salva RBP e estabelece o frame de pilha de 64 bits.
+\ O prologo estabelece o frame, armazena os argumentos de registrador nas home slots
+\ e reserva uma area local compat?vel com o alinhamento de chamadas Windows x64.
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (etapa preliminar):
   Acrescente $55 para o código deste fragmento. \ push rbp
   Acrescente $488BEC para o código deste fragmento. \ mov rbp, rsp
-  Atribua o tamanho local desta rotina utilizada atualmente para um número.
-  Adicione 7 para o número.
-  Divida o número por 8.
-  Se o número não for 0,
-    Acrescente $B9 e o número \ mov ecx, quantidade de slots locais de 8 bytes;
-    \ -> configura o loop que irá liberar espaço suficiente na pilha para as variáveis locais da rotina
+  Obtenha a quantidade de parâmetros Windows x64 usando a rotina utilizada atualmente.
+  Se a quantidade de parâmetros Windows x64 for maior do que 0,
+    Acrescente $48894D10 para o código deste fragmento. \ mov [rbp+16], rcx
+  Se a quantidade de parâmetros Windows x64 for maior do que 1,
+    Acrescente $48895518 para o código deste fragmento. \ mov [rbp+24], rdx
+  Se a quantidade de parâmetros Windows x64 for maior do que 2,
+    Acrescente $4C894520 para o código deste fragmento. \ mov [rbp+32], r8
+  Se a quantidade de parâmetros Windows x64 for maior do que 3,
+    Acrescente $4C894D28 para o código deste fragmento. \ mov [rbp+40], r9
+  Obtenha o tamanho da área local Windows x64 usando a rotina utilizada atualmente.
+  Divida o tamanho por 8.
+  Se o tamanho não for 0,
+    Acrescente $B9 e o tamanho \ mov ecx, quantidade de slots locais de 8 bytes;
     e $6A00FFC975FA
     \ push 0 (8 bytes); dec ecx; jnz back to push (-6 bytes)
     para o código deste fragmento.
   Se o sinalizador de compatibilidade desta rotina utilizada atualmente estiver ativo,
-    Acrescente $535657 para o código deste fragmento. \ push rbx, rsi, rdi (registradores preservados)
+    Acrescente $535657 para o código deste fragmento. \ push rbx, rsi, rdi
 
-\ O epílogo restaura RSP, RBP e os registradores preservados.
-\ RESTAURA RBP; a limpeza de argumentos ainda usa a convenção interna legada.
-\ POPPING OS PARÂMETROS ASSIM QUE ISSO OCORRE
+\ A chamada e caller-cleanup: o epilogo restaura o frame e usa RET simples.
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (etapa conclusiva):
   Se o sinalizador de compatibilidade desta rotina utilizada atualmente estiver ativo,
     Acrescente $5F5E5B para o código deste fragmento. \ pop rdi; pop rsi; pop rbx
   Acrescente $4889EC para o código deste fragmento. \ mov rsp, rbp
   Acrescente $5D para o código deste fragmento. \ pop rbp
-  Acrescente $C2 e o tamanho do parâmetro desta rotina utilizada atualmente para o código deste fragmento.
-  \ ret imm16 + limpeza da convenção interna; não segue caller-cleanup da ABI Windows x64
+  Acrescente $C3 para o código deste fragmento. \ ret
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (empilhamento de valor):
   Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
@@ -493,3 +498,230 @@ Rotina para que se transforme no backend Windows x64 um fragmento em código hexa
   Obtenha um endereço usando a rotina deste fragmento.
   Acrescente $488D05 e o endereço para o fragmento. \ lea rax, [rip + rel32]
   Acrescente $488902 para o código deste fragmento. \ mov qword ptr [rdx], rax
+
+\ Estas variantes preservam as rotinas x86. O pipeline x64 deve seleciona-las
+\ no deslocamento e enderecamento antes de ativar a geracao PE32+.
+\ O parser deve gravar a contagem de argumentos nas chamadas externas; os
+\ despachantes atuais ainda nao encaminham para as variantes ABI Windows x64.
+Rotina para que se alinhem os parâmetros em uma rotina Windows x64:
+  Se a rotina for inexistente, retorne.
+  Se o sinalizador de compilação desta rotina não estiver ativo, retorne.
+  Limpe o tamanho do parâmetro desta rotina.
+  Atribua 0 para o índice do parâmetro Windows x64.
+  Itere.
+    Obtenha um parâmetro desde os parâmetros desta rotina.
+    Se o parâmetro for inexistente, retorne.
+    Se o sinalizador de compatibilidade desta rotina estiver ativo,
+      Ative o sinalizador de passagem por-valor deste parâmetro.
+    Se o índice do parâmetro Windows x64 for 0,
+      Atribua 16 ao deslocamento deste parâmetro.
+    Se o índice do parâmetro Windows x64 não for 0,
+      Atribua o deslocamento do parâmetro anterior deste parâmetro mais 8 ao deslocamento deste parâmetro.
+    Adicione 8 para o tamanho do parâmetro desta rotina.
+    Adicione 1 para o índice do parâmetro Windows x64.
+  Reitere.
+
+Rotina para que se alinhem as variáveis locais em uma rotina Windows x64:
+  Se a rotina for inexistente, retorne.
+  Se o sinalizador de compilação desta rotina não estiver ativo, retorne.
+  Limpe o tamanho local desta rotina.
+  Itere.
+    Obtenha uma variável local desde as variáveis locais desta rotina.
+    Se a variável local for inexistente, retorne.
+    Se a variável local anterior desta variável local não for inexistente,
+      Atribua o deslocamento desta variável local anterior desta variável local ao deslocamento desta variável local.
+    Atribua a quantidade de caracteres deste tipo desta variável local para a quantidade de caracteres.
+    Se a categoria desta variável local for "variável temporária de compilação",
+      Atribua 8 para a quantidade de caracteres.
+    Arredonde a quantidade de caracteres para cima usando o múltiplo imediato de 8.
+    Subtraia a quantidade de caracteres desde o deslocamento desta variável local.
+    Adicione a quantidade de caracteres para o tamanho local desta rotina.
+  Reitere.
+
+Função para que se determine o tamanho da área local Windows x64 usando uma rotina:
+  Atribua o tamanho local desta rotina para a área local Windows x64.
+  Se o sinalizador de compatibilidade desta rotina estiver ativo,
+    Adicione 8 para a área local Windows x64.
+  Arredonde a área local Windows x64 para cima usando o múltiplo imediato de 16.
+  Se o sinalizador de compatibilidade desta rotina estiver ativo,
+    Subtraia 8 desde a área local Windows x64.
+  Diga a área local Windows x64.
+
+Função para que se determine a quantidade de parâmetros Windows x64 usando uma rotina:
+  Atribua 0 para a quantidade de parâmetros Windows x64.
+  Itere.
+    Obtenha um parâmetro desde os parâmetros desta rotina.
+    Se o parâmetro for inexistente, diga a quantidade de parâmetros Windows x64.
+    Adicione 1 para a quantidade de parâmetros Windows x64.
+  Reitere.
+
+Função para que se determine a área de saída Windows x64 usando uma quantidade de argumentos:
+  Atribua 32 para a área de saída Windows x64.
+  Atribua a quantidade de argumentos para o total de argumentos Windows x64.
+  Se o total de argumentos Windows x64 for maior do que 4,
+    Subtraia 4 desde o total de argumentos Windows x64 para os argumentos na pilha.
+    Multiplique os argumentos na pilha por 8.
+    Adicione os argumentos na pilha para a área de saída Windows x64.
+  Se o total de argumentos Windows x64 não for maior do que 4,
+    Atribua o total de argumentos Windows x64 para a paridade dos argumentos.
+    Divida a paridade dos argumentos por 2.
+    Multiplique a paridade dos argumentos por 2.
+    Se a paridade dos argumentos não for o total de argumentos Windows x64,
+      Adicione 8 para a área de saída Windows x64.
+  Diga a área de saída Windows x64.
+
+Função para que se determine o tamanho de preparação da chamada Windows x64 usando uma quantidade de argumentos:
+  Atribua 7 para o tamanho de preparação da chamada Windows x64.
+  Atribua a quantidade de argumentos para o total de argumentos Windows x64.
+  Se o total de argumentos Windows x64 for maior do que 4,
+    Atribua 4 para a quantidade de argumentos em registradores.
+    Subtraia 4 desde o total de argumentos Windows x64 para os argumentos na pilha.
+    Multiplique os argumentos na pilha por 16.
+    Multiplique a quantidade de argumentos em registradores por 8.
+    Adicione os argumentos na pilha para o tamanho de preparação da chamada Windows x64.
+    Adicione a quantidade de argumentos em registradores para o tamanho de preparação da chamada Windows x64.
+    Diga o tamanho de preparação da chamada Windows x64.
+  Multiplique o total de argumentos Windows x64 por 8.
+  Adicione o total de argumentos Windows x64 para o tamanho de preparação da chamada Windows x64.
+  Diga o tamanho de preparação da chamada Windows x64.
+
+Rotina para que se preparem os argumentos da chamada Windows x64 usando um fragmento e uma quantidade de argumentos:
+  Obtenha a área de saída Windows x64 usando a quantidade de argumentos.
+  Atribua a área de saída Windows x64 para a área de chamada Windows x64.
+  Acrescente $4881EC e a área de chamada Windows x64 para o código deste fragmento. \ sub rsp, shadow space, argumentos de pilha e alinhamento
+  Se a quantidade de argumentos for maior do que 0,
+    Atribua a área de chamada Windows x64 para o deslocamento do argumento Windows x64.
+    Acrescente $488B8C24 e o deslocamento do argumento Windows x64 para o código deste fragmento. \ mov rcx, [rsp+offset]
+  Se a quantidade de argumentos for maior do que 1,
+    Atribua a área de chamada Windows x64 mais 8 para o deslocamento do argumento Windows x64.
+    Acrescente $488B9424 e o deslocamento do argumento Windows x64 para o código deste fragmento. \ mov rdx, [rsp+offset]
+  Se a quantidade de argumentos for maior do que 2,
+    Atribua a área de chamada Windows x64 mais 16 para o deslocamento do argumento Windows x64.
+    Acrescente $4C8B8424 e o deslocamento do argumento Windows x64 para o código deste fragmento. \ mov r8, [rsp+offset]
+  Se a quantidade de argumentos for maior do que 3,
+    Atribua a área de chamada Windows x64 mais 24 para o deslocamento do argumento Windows x64.
+    Acrescente $4C8B8C24 e o deslocamento do argumento Windows x64 para o código deste fragmento. \ mov r9, [rsp+offset]
+  Atribua a quantidade de argumentos para o total de argumentos Windows x64.
+  Se o total de argumentos Windows x64 for maior do que 4,
+    Subtraia 4 desde o total de argumentos Windows x64 para os argumentos na pilha.
+    Atribua 0 para o índice do argumento na pilha Windows x64.
+    Itere.
+      Se o índice do argumento na pilha Windows x64 for igual aos argumentos na pilha, pare.
+      Atribua a área de chamada Windows x64 mais 32 para o deslocamento de origem do argumento Windows x64.
+      Adicione o índice do argumento na pilha Windows x64 multiplicado por 8 ao deslocamento de origem do argumento Windows x64.
+      Atribua 32 mais o índice do argumento na pilha Windows x64 multiplicado por 8 ao deslocamento de destino do argumento Windows x64.
+      Acrescente $488B8424 e o deslocamento de origem do argumento Windows x64 para o código deste fragmento.
+      Acrescente $48898424 e o deslocamento de destino do argumento Windows x64 para o código deste fragmento.
+      Adicione 1 para o índice do argumento na pilha Windows x64.
+    Reitere.
+
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Interna ABI Windows x64):
+  Obtenha a quantidade de parâmetros Windows x64 usando a rotina deste fragmento.
+  Preparem os argumentos da chamada Windows x64 usando o fragmento e a quantidade de parâmetros Windows x64.
+  Obtenha o tamanho de preparação da chamada Windows x64 usando a quantidade de parâmetros Windows x64.
+  Atribua o endereço desta rotina deste fragmento para o endereço de destino da chamada Windows x64.
+  Atribua o endereço deste fragmento mais o tamanho de preparação da chamada Windows x64 mais 5 para o endereço de retorno da chamada Windows x64.
+  Subtraia o endereço de retorno da chamada Windows x64 desde o endereço de destino da chamada Windows x64.
+  Acrescente $E8 e o endereço de destino da chamada Windows x64 para o código deste fragmento. \ call rel32 depois do setup da ABI
+  Obtenha a área de saída Windows x64 usando a quantidade de parâmetros Windows x64.
+  Multiplique a quantidade de parâmetros Windows x64 por 8.
+  Adicione a quantidade de parâmetros Windows x64 para a área de saída Windows x64.
+  Acrescente $4881C4 e a área de saída Windows x64 para o código deste fragmento. \ add rsp, shadow space + argumentos empilhados
+
+Rotina para que se associe uma contagem de argumentos Windows x64 a uma chamada externa:
+  Adicione um fragmento usando a etiqueta de demanda externa e a função.
+  Atribua a quantidade de argumentos Windows x64 ao número deste fragmento.
+
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Externa ABI Windows x64):
+  Atribua o número deste fragmento para a quantidade de argumentos Windows x64.
+  Preparem os argumentos da chamada Windows x64 usando o fragmento e a quantidade de argumentos Windows x64.
+  Obtenha o tamanho de preparação da chamada Windows x64 usando a quantidade de argumentos Windows x64.
+  Atribua o endereço desta função deste fragmento para o endereço de destino da chamada Windows x64.
+  Atribua o endereço deste fragmento mais o tamanho de preparação da chamada Windows x64 mais 6 para o endereço de retorno da chamada Windows x64.
+  Subtraia o endereço de retorno da chamada Windows x64 desde o endereço de destino da chamada Windows x64.
+  Acrescente $FF15 e o endereço de destino da chamada Windows x64 para o código deste fragmento. \ call qword ptr [rip+rel32] na IAT
+  Obtenha a área de saída Windows x64 usando a quantidade de argumentos Windows x64.
+  Multiplique a quantidade de argumentos Windows x64 por 8.
+  Adicione a quantidade de argumentos Windows x64 para a área de saída Windows x64.
+  Acrescente $4881C4 e a área de saída Windows x64 para o código deste fragmento. \ caller cleanup
+
+Função para que se determine o tamanho do prólogo Windows x64 de uma rotina:
+  Atribua 4 para o tamanho do prólogo Windows x64.
+  Obtenha a quantidade de parâmetros Windows x64 usando a rotina.
+  Se a quantidade de parâmetros Windows x64 for maior do que 0,
+    Adicione 4 para o tamanho do prólogo Windows x64.
+  Se a quantidade de parâmetros Windows x64 for maior do que 1,
+    Adicione 4 para o tamanho do prólogo Windows x64.
+  Se a quantidade de parâmetros Windows x64 for maior do que 2,
+    Adicione 4 para o tamanho do prólogo Windows x64.
+  Se a quantidade de parâmetros Windows x64 for maior do que 3,
+    Adicione 4 para o tamanho do prólogo Windows x64.
+  Obtenha o tamanho da área local Windows x64 usando a rotina.
+  Se a área local Windows x64 for maior do que 0,
+    Adicione 11 para o tamanho do prólogo Windows x64.
+  Se o sinalizador de compatibilidade da rotina estiver ativo,
+    Adicione 3 para o tamanho do prólogo Windows x64.
+  Diga o tamanho do prólogo Windows x64.
+
+Função para que se determine o tamanho do epílogo Windows x64 de uma rotina:
+  Atribua 5 para o tamanho do epílogo Windows x64.
+  Se o sinalizador de compatibilidade da rotina estiver ativo,
+    Adicione 3 para o tamanho do epílogo Windows x64.
+  Diga o tamanho do epílogo Windows x64.
+
+Função para que se determine o tamanho total da chamada interna Windows x64 usando uma quantidade de argumentos:
+  Obtenha o tamanho de preparacao da chamada Windows x64 usando a quantidade de argumentos.
+  Adicione 12 para o tamanho de preparacao da chamada Windows x64. \ call rel32 + add rsp, imm32
+  Diga o tamanho de preparacao da chamada Windows x64.
+
+Função para que se determine o tamanho total da chamada externa Windows x64 usando uma quantidade de argumentos:
+  Obtenha o tamanho de preparacao da chamada Windows x64 usando a quantidade de argumentos.
+  Adicione 13 para o tamanho de preparacao da chamada Windows x64. \ call [rip+rel32] + add rsp, imm32
+  Diga o tamanho de preparacao da chamada Windows x64.
+
+\ As copias abaixo usam IMAGE_THUNK_DATA64: cada entrada da IAT ocupa 8 bytes.
+\ O IMAGE_IMPORT_DESCRIPTOR continua contendo campos RVA de 32 bits.
+Rotina para que se enderecem umas DLLs Windows x64 usando um endereço:
+  Atribua o endereço ao endereço do cabeçalho usado atualmente.
+  Atribua a contagem destas DLLs para uma contagem.
+  Adicione 1 para a contagem.
+  Multiplique a contagem pela magnitude dum cabeçalho da DLL.
+  Atribua o endereço do cabeçalho usado atualmente mais a contagem ao endereço pré-calculado atual.
+  Obtenha uma segunda contagem usando as DLLs (todas as funcoes mais os marcadores).
+  Multiplique a segunda contagem por 8.
+  Atribua o endereço pré-calculado atual mais a segunda contagem ao endereço do nome usado atualmente.
+  Itere.
+    Obtenha uma DLL desde as DLLs.
+    Se a DLL for inexistente, pare.
+    Enderece a DLL Windows x64.
+  Reitere.
+  Atribua o endereço do nome usado atualmente menos o endereço para um número.
+  Adicione o número para o endereço.
+
+Rotina para que se enderece uma DLL Windows x64:
+  Atribua o endereço do nome usado atualmente ao endereço do nome desta DLL.
+  Atribua o endereço do cabeçalho usado atualmente ao endereço do cabeçalho desta DLL.
+  Atribua o endereço do nome usado atualmente ao endereço do nome deste cabeçalho da DLL desta DLL.
+  Atribua a quantidade de caracteres deste nome desta DLL mais 1 para um número.
+  Arredonde o número para cima usando o múltiplo imediato de 2.
+  Adicione o número para o endereço do nome usado atualmente.
+  Adicione a magnitude dum cabeçalho da DLL para o endereço do cabeçalho usado atualmente.
+  Atribua o endereço pré-calculado atual ao primeiro endereço thunk de memoria deste cabeçalho da DLL desta DLL.
+  Enderece as funções Windows x64 desta DLL.
+  Adicione 8 para o endereço pré-calculado atual.
+
+Rotina para que se enderecem umas funções Windows x64 de uma DLL:
+  Itere.
+    Obtenha uma função desde as funcoes desta DLL.
+    Se a função for inexistente, retorne.
+    Enderece a função Windows x64.
+  Reitere.
+
+Rotina para que se enderece uma função Windows x64:
+  Atribua o endereço do nome usado atualmente ao endereço do nome desta função.
+  Atribua a quantidade de caracteres deste nome desta função mais 3 para um número.
+  Arredonde o número para cima usando o múltiplo imediato de 2.
+  Adicione o número para o endereço do nome usado atualmente.
+  Atribua o endereço pré-calculado atual ao endereço thunk desta função.
+  Atribua o image base mais o endereço pré-calculado atual ao endereço desta função.
+  Adicione 8 para o endereço pré-calculado atual.

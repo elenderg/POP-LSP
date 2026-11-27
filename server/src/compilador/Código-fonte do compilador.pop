@@ -516,16 +516,16 @@ Rotina para que se faça tudo:
 Rotina para que se compile uma string denominada path usando uma string denominada flags:
   Escreva "path: " junto com o path junto com o texto CRLF para StdOut.
   Escreva "flags:" junto com as flags junto com o texto CRLF  junto com o texto CRLF para Stdout.
-  Se as flags forem "para: Windows x86",
+  Se as flags forem "para Windows x86",
     Compile o path;
     Retorne.
-  Se as flags forem "para: Windows x64",
+  Se as flags forem "para Windows x64",
     Compile o path (Windows x64);
     Retorne.
-  Se as flags forem "para: Linux x86",
+  Se as flags forem "para Linux x86",
     Compile o path (Linux x86);
     Retorne.
-  Se as flags forem "para: Linux x64",
+  Se as flags forem "para Linux x64",
     Compile o path (Linux x64);
     Retorne.
   Se as flags estiverem em branco,

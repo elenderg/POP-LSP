@@ -1225,8 +1225,6 @@ Uma WNDCLASS é uma estrutura com \Contém informações de classe de janela.
   \ Um identificador para um pequeno ícone associado à classe da janela.
   \ Se este membro for NULL, o sistema pesquisa o recurso de ícone especificado pelo membro hIcon para um ícone do tamanho apropriado para usar como o ícone pequeno.
 
-
-
 Uma janela do programa é um número identificador.
 
 Uma requisição WinHTTP é uma lista com
