@@ -17,6 +17,12 @@ mapped-region metadata, and link-time
 are not called by the compiler pipeline and do not constitute a complete
 executable writer.
 
+The Linux process-entry sketch reads `e_entry` from an ELF32 header and models
+the i386 initial stack (`argc`, `argv`, `envp`, and `auxv`). It does not emit an
+`_start` stub, decode the kernel stack, initialize a language runtime, or
+provide a process heap; Windows-only ghosting and process-heap APIs have no
+Linux equivalent in this path.
+
 ## Current architecture and constraints
 
 - The current code generator emits x86 instructions and contains Windows-specific
@@ -178,6 +184,10 @@ file-offset/virtual-address region fields, and the three listed static
 relocation formulas. The helper
 explicitly refuses to apply `R_386_JMP_SLOT`, which belongs to the dynamic
 loader.
+
+The entry-point and initial-stack routines are scaffolding only: they are
+target-named to avoid colliding with the Windows standard-library hooks while
+source loading is still not target-specific.
 
 Not implemented: integrated ELF layout and file writing, final address
 assignment/alignment, complete and validated dynamic metadata, Linux

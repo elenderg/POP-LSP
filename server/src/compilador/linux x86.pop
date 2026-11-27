@@ -512,3 +512,38 @@ Um slot GOT PLT ELF32 é um endereço.
 Uma entrada PLT inicial ELF32 é um texto hexadecimal.
 Uma entrada PLT ELF32 é um texto hexadecimal.
 Um cabecalho ELF32 é um cabeçalho ELF32.
+
+\ Linux i386 starts at e_entry with ESP pointing to argc, followed by argv,
+\ a NULL pointer, envp, another NULL pointer, then Elf32_auxv_t pairs.
+Uma entrada auxiliar ELF32 Linux x86 é uma estrutura com
+  Um número denominado tipo,
+  Um número denominado valor.
+
+Um contexto de entrada Linux x86 é uma estrutura com
+  Um endereço denominado pilha inicial,
+  Um número denominado argc,
+  Um endereço denominado argv,
+  Um endereço denominado envp,
+  Um endereço denominado auxv.
+
+\ e_entry is selected by the linker; it is not queried through a Linux API.
+Rotina para que se obtenha o ponto de entrada ELF32 Linux x86 usando um cabeçalho ELF32 denominado cabeçalho e retornando um endereço denominado ponto de entrada:
+  Atribua o e_entry deste cabeçalho ao ponto de entrada.
+
+\ The startup stub must decode argc/argv/envp/auxv from the initial ESP and
+\ pass those values here. Keep pointers distinct from the 32-bit argc value.
+Rotina para que se configure um contexto de entrada Linux x86 denominado contexto usando um endereço denominado pilha inicial e um número denominado argc e um endereço denominado argv e um endereço denominado envp e um endereço denominado auxv:
+  Atribua a pilha inicial ao pilha inicial deste contexto.
+  Atribua o argc ao argc deste contexto.
+  Atribua o argv ao argv deste contexto.
+  Atribua o envp ao envp deste contexto.
+  Atribua o auxv ao auxv deste contexto.
+
+\ Linux has no Win32 process-heap handle or GUI ghosting API. The kernel and,
+\ when present, the ELF interpreter have already performed process loading and
+\ dynamic relocations before e_entry. Heap setup belongs to the selected
+\ runtime (for example libc malloc or a deliberate brk/mmap allocator); do not
+\ take ownership of brk while a libc allocator may be active.
+Rotina para que se inicialize antes da execução do aplicativo Linux x86:
+  \ This remains a scaffold until the Linux _start stub and runtime are integrated.
+  Retorne.
