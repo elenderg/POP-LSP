@@ -1,157 +1,99 @@
-# Auditoria técnica inicial do compilador Português Puro
+# Auditoria e plano do backend x64
 
-Este documento registra a auditoria dos dois arquivos presentes em `server/src/compilador`.
+## Escopo e estado real
 
-## Estado encontrado
+Esta auditoria separa a implementação do compilador escrito em Português Puro dos auxiliares TypeScript do servidor. O backend executado pelo usuário é o fonte `.pop`; os auxiliares TypeScript não são chamados pelo pipeline desse compilador.
 
-O compilador é escrito em Português Puro e não é executado pela implementação TypeScript do LSP. Os arquivos .pop são a implementação-fonte do compilador, cujo executável está disponível em `c:\compilador.exe`.
+| Componente | Estado verificado |
+|---|---|
+| Compilador `.pop` Windows x86 | Backend PE32 existente |
+| Compilador `.pop` Windows x64 | Ainda rejeitado explicitamente; não gera executáveis AMD64 |
+| Auxiliar TypeScript `peImage.ts` | Constrói imagens PE32/PE32+ com imports por nome e correções de chamadas à IAT |
+| Auxiliares TypeScript `x64Encoder.ts` | Codificadores de instruções e preparação de chamadas; não integrados ao compilador `.pop` |
+| Linux x86/x64 | Não implementados |
 
-Consequentemente, não é tecnicamente seguro afirmar que o backend descrito abaixo pode ser compilado ou executado neste checkout.
+O sucesso de um teste de `peImage.ts` não significa que o compilador Português Puro gere programas x64.
 
-## Backend existente de 32 bits
+## Auditoria do backend `.pop` x86
 
-- Gera fragmentos intermediários com 22 etiquetas.
-- Produz texto hexadecimal diretamente a partir de cada fragmento.
-- Usa `EAX` como acumulador de resultados.
-- Usa `EDX` como registrador temporário de endereços e valores.
-- Usa `EBP` como ponteiro da base do frame.
-- Usa `ESP` como ponteiro da pilha.
-- Usa `PUSH`/`POP`, `CALL rel32`, `JMP rel32`, `MOV`, `LEA` e instruções relacionadas.
-- Passa parâmetros internamente pela pilha.
-- O primeiro parâmetro fica em `EBP+8`, o segundo em `EBP+12`, seguindo 4 bytes por argumento.
-- Preserva `EBX`, `ESI` e `EDI` em callbacks marcados como compatíveis.
-- Usa `RET imm16` no epílogo para limpar os parâmetros empilhados.
-- Trata parâmetros como referências por padrão.
-- Permite apenas tipos de 1, 2 ou 4 bytes em vários caminhos de empilhamento e armazenamento.
-- Usa o tipo lógico `número` como inteiro de 32 bits.
-- Define `ponteiro` como estrutura de 4 bytes.
+### Fluxo de código e endereços
 
-## Formato PE32 existente
+O IR usa fragmentos lógicos com etiquetas para chamadas internas/externas, chamadas indiretas, desvios, prólogo/epílogo, carga e gravação de valores, entre outras operações. O código de cada fragmento é construído como texto hexadecimal e depois convertido em bytes para a seção de código.
 
-- Cabeçalho DOS de 64 bytes com ponteiro PE em 0x100.
-- Assinatura PE `PE\0\0`.
-- COFF machine I386 `0x014C`.
-- Optional Header PE32 magic `0x010B`.
-- Tres seções `.idata`, `.data` e `.text`.
-- Alinhamento de seção e arquivo baseado em 4096 bytes.
-- Import Directory e IAT ligadas às DLLs catalogadas pelo compilador.
-- Chamadas externas produzidas como `FF15` com endereço absoluto do IAT.
-- EntryPoint calculado como RVA da rotina de inicialização.
-- `ImageBase` fixa em `0x00400000`.
+- Chamadas internas usam `E8 rel32`; saltos e retornos entre fragmentos usam `E9 rel32`; o desvio condicional observado usa `0F 84 rel32`.
+- O deslocamento relativo é calculado a partir do endereço seguinte à instrução. O endereço de cada fragmento é obtido a partir do tamanho codificado, com comprimentos de opcode mantidos explicitamente nas rotinas de endereçamento.
+- Chamadas externas usam `FF 15 addr32`, com o endereço absoluto da entrada da IAT.
+- Globais e literais são endereçados por imediato absoluto de 32 bits; variáveis locais e temporárias usam deslocamentos em relação a `EBP`.
+- A implementação de fragmentos contém opcodes x86 explícitos. As rotinas de análise, resolução de nomes e construção do IR são em grande parte independentes da ISA, mas o endereçamento dos fragmentos, as larguras de campos e a serialização PE não são.
 
-## Convenção externa observada
+### Convenção de chamada x86 observada
 
-Chamadas externas usam `Processe "dll.dll" "Função" com ...`, mas os argumentos são empilhados pela convenção interna. Isso não implementa automaticamente a ABI Windows x64. No backend x64, funções externas exigiriam:
+- `EAX` é o acumulador/retorno; `EDX` carrega endereços e valores temporários; `ECX` é usado, entre outros usos, na inicialização de locais.
+- O prólogo usa `push ebp; mov ebp,esp`; locais são reservados em unidades de 4 bytes. O primeiro parâmetro está em `[EBP+8]`, o próximo em `[EBP+12]`.
+- Os argumentos são transmitidos pela pilha. O padrão da linguagem é passar parâmetros por referência; existe um sinalizador de passagem por valor usado em parâmetros de callbacks.
+- O epílogo restaura `EBP` e emite `RET imm16`; portanto, a rotina chamada remove os argumentos da pilha. Chamadas externas usam `CALL [IAT]`, sem metadado explícito de convenção por função.
+- `EBX`, `ESI` e `EDI` são preservados apenas no caminho de rotina marcado como compatível. Não há alocador geral de registradores.
+- Os caminhos de empilhamento/armazenamento escalar reconhecem tamanhos de 1, 2 e 4 bytes. O número tem 4 bytes; o ponteiro é definido com 4 bytes.
 
-- registradores `RCX`, `RDX`, `R8`, `R9` para os quatro primeiros argumentos inteiros/ponteiros;
-- `XMM0`–`XMM3` para os quatro primeiros argumentos de ponto flutuante, ainda não representados por tipos primitivos;
-- shadow space de pelo menos 32 bytes;
-- pilha alinhada a 16 bytes antes de `CALL`;
-- argumentos adicionais empilhados acima do shadow space;
-- `RAX` como retorno inteiro/ponteiro e `XMM0` para retorno real;
-- preservação dos registradores não voláteis `RBX`, `RBP`, `RDI`, `RSI`, `R12`–`R15`;
-- preservação de `XMM6`–`XMM15`;
-- correções ABI para callbacks.
+Isso não pode ser reaproveitado como ABI x64. No Windows x64, os quatro primeiros argumentos inteiros/ponteiros usam `RCX`, `RDX`, `R8` e `R9`; os seguintes ocupam slots na pilha, com 32 bytes de shadow space. O chamador mantém `RSP` alinhado a 16 bytes antes de `CALL` e limpa a própria área de argumentos. Retornos inteiros e ponteiros usam `RAX`. `RAX`, `RCX`, `RDX`, `R8`–`R11` e `XMM0`–`XMM5` são voláteis; `RBX`, `RBP`, `RDI`, `RSI`, `R12`–`R15` e `XMM6`–`XMM15` são não voláteis. Argumentos/retornos de ponto flutuante usam registradores XMM conforme a posição do argumento. O backend atual não implementa essas regras.
 
-## Dependências x86 identificadas
+### Formato PE do compilador `.pop`
 
-- Estruturas PE32 e campos `BaseOfData`.
-- `DWORD` implícito em vários buffers e deslocamentos.
-- Ponteiros definidos como 4 bytes.
-- Contagem de locais dividida por 4.
-- Frame em `EBP`.
-- Retorno `RET imm16`.
-- Instruções hard-coded com `EAX`, `EDX`, `EBX`, `ESI` e `EDI`.
-- Relativos `E8`/`E9` e endereços absolutos de IAT.
-- Carregamento e gravação apenas para 1, 2 e 4 bytes em vários fragmentos.
+O fonte do compilador define uma estrutura única para o cabeçalho PE32 e inicializa:
 
-## Implementação adicionada
+- `Machine=0x014C` (I386), Optional Header de `0xE0` bytes e Magic `0x010B` (PE32).
+- `ImageBase=0x00400000`, `BaseOfData` presente e campos de ponteiro/stack/heap de 32 bits.
+- Três seções: imports, dados e código; alinhamentos de seção e arquivo de 4096 bytes.
+- Import descriptors e thunks com endereços de 32 bits; nenhuma tabela de relocação é construída. As referências absolutas dependem da imagem ser carregada na base fixa.
 
-Foi criada uma infraestrutura auxiliar separada do backend .pop:
+PE32+ requer uma estrutura distinta: `Machine=0x8664`, Optional Header de `0xF0`, Magic `0x020B`, ausência de `BaseOfData`, `ImageBase` e campos de stack/heap de 64 bits, thunks de importação de 64 bits e referências de código compatíveis com RIP-relative ou relocations. Alterar apenas o `Machine` ou o Magic não produziria um backend AMD64 funcional.
 
-- seleção explícita de destino x86/x64;
-- definição de tamanho de ponteiro sem alterar o tamanho do tipo `número`;
-- encoders x64 para `MOV RAX, imm64` e `SUB RSP, imm32`;
-- construtor de imagem PE32 e PE32+;
-- testes de headers PE32/PE32+, machine type e encoder.
+## Tipos e API do Windows
 
-## Limitações conhecidas
+Na biblioteca padrão, `ponteiro` ocupa 4 bytes e `número` ocupa 4 bytes; há estruturas pontuais com 8 bytes, como `FILETIME`, mas não há um tipo geral de inteiro/pointer-size de 64 bits nem rotinas gerais de aritmética qword. A biblioteca define layouts de estruturas e declara imports diretamente com `Processe`; os nomes canônicos `DWORD`, `SIZE_T`, `ULONG_PTR`, `WPARAM` e similares não são a base uniforme das assinaturas. Isso exige uma auditoria das assinaturas e do layout das estruturas antes de reutilizá-las em x64: `DWORD`, `LONG`, `UINT` e `INT` permanecem 32-bit; `HANDLE`, `SIZE_T`, `SSIZE_T`, `ULONG_PTR`, `LONG_PTR`, `WPARAM`, `LPARAM` e `LRESULT` acompanham a largura de ponteiro.
 
-- Não existe um backend x64 integrado ao compilador `.pop`.
-- Não existem operações x64 completas para todos os tipos e aritmética de 64 bits.
-- Não existem imports PE32+ integrados ao parser/gerador existente.
-- A seleção na implementação `.pop` ainda é parcial: usa `/` como separador antes de `para:`.
-- Não existe validação por execução em Windows de 64 bits.
-- Valores de 64 bits ainda não são um tipo da linguagem neste checkout.
-- Esta infraestrutura não deve ser apresentada como substituto funcional do compilador original.
+Inventário de imports únicos na biblioteca padrão (as declarações/argumentos atuais estão nos usos de `Processe` em [Biblioteca padrão.pop](<./compilador/Biblioteca padrão.pop>)):
 
-## Validação adicional realizada
+- `advapi32.dll` (9): CryptAcquireContextA, CryptCreateHash, CryptDecrypt, CryptDeriveKey, CryptDestroyHash, CryptDestroyKey, CryptEncrypt, CryptHashData, CryptReleaseContext.
+- `comdlg32.dll` (1): PrintDlgExA.
+- `gdi32.dll` (58): AddFontMemResourceEx, BeginPath, BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateFontA, CreatePen, CreatePolygonRgn, CreateRoundRectRgn, CreateSolidBrush, DPtoLP, DeleteDC, DeleteObject, Ellipse, EndDoc, EndPage, EndPath, ExtSelectClipRgn, GetCharABCWidthsA, GetCharacterPlacementA, GetClipRgn, GetCurrentObject, GetDeviceCaps, GetFontData, GetOutlineTextMetricsA, GetPixel, GetStockObject, GetTextExtentPoint32A, GetTextMetricsA, LPtoDP, LineTo, MoveToEx, PathToRegion, Polygon, PtInRegion, Rectangle, RemoveFontMemResourceEx, ResetDCA, RestoreDC, RoundRect, SaveDC, SelectClipRgn, SelectObject, SetBkColor, SetBkMode, SetGraphicsMode, SetMapMode, SetPixelV, SetPolyFillMode, SetTextCharacterExtra, SetTextColor, SetViewportExtEx, SetViewportOrgEx, SetWindowExtEx, SetWindowOrgEx, StartDocA, StartPage, TextOutA.
+- `gdiplus.dll` (21): GdipBitmapLockBits, GdipBitmapUnlockBits, GdipCloneBitmapAreaI, GdipCreateBitmapFromScan0, GdipCreateBitmapFromStream, GdipCreateFromHDC, GdipCreateImageAttributes, GdipDeleteGraphics, GdipDisposeImage, GdipDisposeImageAttributes, GdipDrawImageRectRectI, GdipGetDC, GdipGetImageGraphicsContext, GdipGetImageHeight, GdipGetImageWidth, GdipImageRotateFlip, GdipReleaseDC, GdipSetImageAttributesColorMatrix, GdipSetPageUnit, GdiplusShutdown, GdiplusStartup.
+- `kernel32.dll` (49): AllocConsole, Beep, CloseHandle, CopyFileA, CreateDirectoryA, CreateFileA, CreateProcessA, CreateThread, DeleteFileA, FileTimeToSystemTime, FindClose, FindFirstFileA, FindNextFileA, FreeConsole, GetConsoleMode, GetDriveTypeA, GetEnvironmentVariableA, GetFileAttributesA, GetFileAttributesExA, GetFileSize, GetLastError, GetLocalTime, GetModuleFileNameA, GetModuleHandleA, GetProcAddress, GetProcessHeap, GetStdHandle, GetTempPathA, GetTickCount, GetVolumeInformationA, GlobalAlloc, GlobalFree, GlobalLock, GlobalUnlock, HeapAlloc, HeapFree, HeapReAlloc, LoadLibraryA, MoveFileA, MulDiv, ReadFile, RemoveDirectoryA, SetConsoleOutputCP, SetFileAttributesA, SetFilePointer, Sleep, TerminateProcess, WaitForSingleObject, WriteFile.
+- `ole32.dll` (5): CLSIDFromString, CoCreateInstance, CoInitializeEx, CoUninitialize, CreateStreamOnHGlobal.
+- `shlwapi.dll` (2): ColorHLSToRGB, ColorRGBToHLS.
+- `user32.dll` (40): BeginPaint, ClipCursor, CloseClipboard, CreateCursor, CreateWindowExA, DefWindowProcA, DestroyCursor, DestroyWindow, DisableProcessWindowsGhosting, DispatchMessageA, DrawFocusRect, EmptyClipboard, EndPaint, GetAsyncKeyState, GetClipboardData, GetCursorPos, GetDC, GetForegroundWindow, GetKeyState, GetMessageA, GetSystemMetrics, GetWindowRect, IsClipboardFormatAvailable, MapVirtualKeyA, MessageBeep, MessageBoxA, MoveWindow, OpenClipboard, PeekMessageA, PostMessageA, PostQuitMessage, RegisterClassExA, ScreenToClient, SetClipboardData, SetCursor, SetFocus, ShowCursor, ShowWindow, TranslateMessage, ValidateRect.
+- `winhttp.dll` (8): WinHttpCloseHandle, WinHttpConnect, WinHttpOpen, WinHttpOpenRequest, WinHttpReadData, WinHttpReceiveResponse, WinHttpSendRequest, WinHttpqueryDataAvailable.
+- `wininet.dll` (5): InternetCloseHandle, InternetCrackUrlA, InternetOpenA, InternetOpenUrlA, InternetReadFile.
+- `winmm.dll` (1): PlaySound.
+- `ws2_32.dll` (10): WSACleanup, WSAGetLastError, WSAStartup, closesocket, connect, inet_ntoa, recv, send, setsockopt, socket.
 
-- A ambiguidade da biblioteca padrão que bloqueava a autocompilação foi corrigida no repositório.
-- `C:\compilador.exe C:\POP-LSP\server\src\compilador` recompilou o próprio compilador com sucesso.
-- O executável resultante foi identificado como PE32/I386: Machine `0x14C`, Magic `0x10B`.
-- Um projeto mínimo com biblioteca padrão foi compilado, executado e terminou com código de saída `0`.
-- Esse mesmo projeto produziu um PE32 com três seções, entry point e `ImageBase` compatíveis com o backend existente.
-- A suíte completa do servidor passou 109 testes; o primeiro teste integrado apresentou uma falha não reproduzível e passou integralmente quando executado isoladamente.
-- Um projeto amplo em `server/testes` parou em `graficos.pop` por um erro sintático preexistente em qualificador iniciado sem parêntese.
+O compilador-fonte também importa `GetCommandLineA` e `GetCurrentDirectoryA` de `kernel32.dll`; `SetConsoleOutputCP` já aparece na biblioteca padrão. A lista identifica 211 imports únicos combinados, mas ainda não é uma validação ABI, parâmetro por parâmetro, de cada assinatura.
 
-## Estado após integração no fonte do compilador
+## Auxiliares TypeScript: mudanças e limites
 
-- Foi adicionado um sinalizador global do destino x64 no fonte `.pop`.
-- O cabeçalho COFF passou a selecionar AMD64 `0x8664` quando esse sinalizador estiver ativo.
-- O campo `SizeOfOptionalHeaderInBytes` passou a usar `0x00F0` para x64.
-- O Optional Header passou a selecionar Magic `0x020B` para PE32+.
-- O alinhamento de variáveis locais passou a aceitar alinhamento de 8 bytes no destino x64.
-- O backend continua mantendo o caminho PE32/I386 como padrão e os testes confirmaram `0x14C`/`0x10B`.
-- A linha de comando agora extrai `path` e `flags` usando `/ para:`; Windows x86 encaminha para o pipeline existente.
-- O backend x64 não gera código AMD64 completo nesta versão. Em particular, continuam pendentes o frame/prologue, ABI Windows x64, shadow space, IAT RIP-relative, operações de 64 bits e a estrutura PE32+ completa.
+`peImage.ts` é uma ferramenta isolada que recebe bytes de código já gerados; ela não compila `.pop` nem é chamada pelo executável do compilador. Agora:
 
-## Estado atual da seleção no fonte `.pop`
+- Constrói PE32 e PE32+ com `.text` e, quando há imports, `.idata`.
+- Cria descriptors, ILT/IAT de 4 bytes em x86 e 8 bytes em x64, imports por nome e diretórios de importação/IAT.
+- Corrige chamadas `FF 15` para IAT: endereço absoluto em x86 e deslocamento RIP-relative em x64.
+- Usa Optional Header PE32+ com machine AMD64 e flags COFF sem `IMAGE_FILE_32BIT_MACHINE`; corrige os offsets de stack/heap/NumberOfRvaAndSizes PE32.
 
-- O delimitador atual é `/`, seguido de `para:`; por exemplo, `compile C:\meu projeto\ / para: Windows x86`.
-- Sem flags, o caminho padrão continua usando o pipeline existente.
-- `Windows x86` encaminha para o backend atual.
-- `Windows x64`, `Linux x86` e `Linux x64` informam explicitamente que ainda não estão implementados.
-- A opção `--x64` não é aceita; o uso de `para:` atualmente exige o separador `/` antes da palavra-chave.
+`x64Encoder.ts` contém codificadores independentes. A preparação de chamadas inteiras/ponteiros assume argumentos qword previamente empilhados em ordem de origem; calcula shadow space, alinhamento, copia argumentos além de quatro para a área de saída e deixa a limpeza a cargo do chamador. `x64Epilogue` emite `RET` simples. Isso ainda não implementa preservação de todos os registradores não voláteis, XMM, callbacks, agregados ou integração com fragmentos.
 
-## Limitação arquitetural efetiva
+Validação deste auxiliar: os testes focados verificam PE32/PE32+, diretórios e IAT, chamadas x86 absolutas e x64 RIP-relative e os encoders. No Windows, foram executados executáveis mínimos PE32/I386 e PE32+/AMD64 que chamam `kernel32!ExitProcess`, ambos com código 0. Outro executável AMD64 usou os helpers para chamar `FormatMessageA` com sete argumentos e `ExitProcess`; o retorno indicou sucesso. Isso valida apenas a camada auxiliar, não o compilador `.pop`.
 
-A imagem PE32+ produzida por esta etapa não contém ainda um backend AMD64 completo. O gerador continua produzindo instruções x86 nos fragmentos existentes e não implementa a ABI Windows x64. Portanto, o PE32+ atual é uma etapa de integração/header, não um executável AMD64 validado para execução.
+## Plano de integração no compilador `.pop`
 
-## Implementação posterior do backend AMD64
+1. Manter a rotina x86 e suas saídas como baseline; criar estado de destino explícito e uma estrutura PE64 separada, sem alargar os tipos PE32 existentes.
+2. Definir o layout alvo de tipos e estruturas: número continua 32-bit; ponteiros e tipos Windows pointer-sized passam a 64-bit no alvo x64; aplicar alinhamento/padding Windows nas estruturas ABI.
+3. Implementar codificação AMD64 dos fragmentos: frame, locais e parâmetros, aritmética de números de 32-bit, carga/gravação de ponteiros de 64-bit, chamadas internas, desvios e endereços RIP-relative.
+4. Implementar uma convenção x64 consistente para rotinas da linguagem e callbacks; para chamadas externas, passar os quatro primeiros argumentos em registradores, reservar shadow space, alinhar RSP, encaminhar argumentos adicionais e preservar registradores não voláteis utilizados.
+5. Integrar imports PE32+ e a seleção `para: Windows x64` ao pipeline `.pop`; manter `para: Windows x86`/sem flags no backend PE32 existente. Recusar explicitamente destinos que ainda não têm backend.
+6. Adicionar testes graduais: compilar o compilador, executar regressões x86, inspecionar cabeçalhos, rodar programas x64 com operações/rotinas e, por fim, testar a biblioteca padrão e chamadas Windows representativas.
 
-- Foram adicionados encoders testáveis para o frame AMD64:
-  - `push rbp`
-  - `mov rbp,rsp`
-  - `sub rsp,imm32`
-  - `mov rsp,rbp`
-  - `pop rbp`
-  - `ret imm16`
-- Foram adicionados encoders para a ABI Windows x64 em chamadas externas:
-  - shadow space de 32 bytes;
-  - preparação de `RCX`, `RDX`, `R8` e `R9`;
-  - limpeza da pilha após chamadas;
-  - operações básicas de memória e 64 bits.
-- Foram adicionados tipos e rotinas da biblioteca padrão:
-  - `endereço amplo` com 8 bytes;
-  - `número amplo` com 8 bytes;
-  - atribuição, limpeza, soma, subtração e multiplicação de valores amplos.
-- Os testes focados compilam e passam para o frame AMD64, ABI externa e operações de 64 bits.
-- O formato PE32+ auxiliar continua sendo construído separadamente no TypeScript.
+### Funcionalidades ainda pendentes
 
-## Limitações restantes
-
-- A integração desses encoders ao fluxo completo dos fragmentos `.pop` ainda precisa ser concluída.
-- A seleção pelo CLI não deve ser considerada normalizada até o recorte da opção não destruir o caminho do projeto.
-- O IAT PE32+ completo, os deslocamentos RIP-relative e as correções de endereçamento das DLLs ainda não estão vinculados ao gerador `.pop`.
-- O backend `.pop` não deve ser descrito como AMD64 executável antes de executar um programa simples em Windows x64.
-
-## Estado da sintaxe natural de destino
-
-- O parser preserva espaços no caminho e separa as flags no `/` antes de `para:`.
-- Formas atuais:
-  - `compile C:\meu projeto\ / para: Windows x86`
-  - `compile C:\meu projeto\ / para: Windows x64`
-  - `compile C:\meu projeto\ / para: Linux x86`
-  - `compile C:\meu projeto\ / para: Linux x64`
-- A forma sem `/` ainda não é reconhecida.
+- O fonte `.pop` não gera código AMD64 nem PE32+; `Windows x64` ainda retorna diagnóstico de não implementação.
+- Não há tipo-alvo de ponteiro de 64 bits nem operações gerais de inteiros de 64 bits na biblioteca padrão.
+- As 212 funções importadas ainda precisam de verificação de assinaturas e layout de estruturas conforme Windows x64; callbacks e `XMM` não foram implementados.
+- Os auxiliares TypeScript não estão integrados à compilação da linguagem e não devem ser usados para afirmar suporte x64 do compilador.

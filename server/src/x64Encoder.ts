@@ -51,45 +51,81 @@ export function x64Prologue(localBytes: number): Buffer {
   return result;
 }
 
-export function x64Epilogue(parameterBytes: number): Buffer {
-  if (!Number.isInteger(parameterBytes) || parameterBytes < 0 || parameterBytes > 0xffff) {
-    throw new RangeError('Parameter area size is outside the RET immediate range');
+export function x64Epilogue(): Buffer {
+  return Buffer.from([0x48, 0x89, 0xec, 0x5d, 0xc3]);
+}
+
+function externalCallAllocationBytes(argumentCount: number): number {
+  if (!Number.isInteger(argumentCount) || argumentCount < 0) {
+    throw new RangeError('Argument count must be a non-negative integer');
   }
-  if (parameterBytes === 0) {
-    return Buffer.from([0x48, 0x89, 0xec, 0x5d, 0xc3]);
+  const stackArgumentCount = Math.max(0, argumentCount - 4);
+  const shadowAndArguments = 32 + stackArgumentCount * 8;
+  const alignmentPadding = stackArgumentCount === 0 && argumentCount % 2 !== 0 ? 8 : 0;
+  const allocation = shadowAndArguments + alignmentPadding;
+  if (allocation > 0x7fffffff) {
+    throw new RangeError('External-call stack area exceeds the signed 32-bit range');
   }
-  const result = Buffer.alloc(7);
-  result.set([0x48, 0x89, 0xec, 0x5d, 0xc2], 0);
-  result.writeUInt16LE(parameterBytes, 5);
+  return allocation;
+}
+
+function movRaxFromRsp(displacement: number): Buffer {
+  const result = Buffer.alloc(8);
+  result.set([0x48, 0x8b, 0x84, 0x24]);
+  result.writeUInt32LE(displacement, 4);
   return result;
 }
 
-export function x64ExternalCallSetup(argumentCount: number): Buffer {
-  if (!Number.isInteger(argumentCount) || argumentCount < 0) {
-    throw new RangeError('Argument count must be a non-negative integer');
+function movRspFromRax(displacement: number): Buffer {
+  const result = Buffer.alloc(8);
+  result.set([0x48, 0x89, 0x84, 0x24]);
+  result.writeUInt32LE(displacement, 4);
+  return result;
+}
+
+function movArgumentFromRsp(register: number, displacement: number): Buffer {
+  const rex = register < 8 ? 0x48 : 0x4c;
+  const modRmReg = register & 7;
+  const result = Buffer.alloc(8);
+  result.set([rex, 0x8b, 0x84 | (modRmReg << 3), 0x24]);
+  result.writeUInt32LE(displacement, 4);
+  return result;
+}
+
+function stackAdjustment(opcode: number, byteCount: number): Buffer {
+  if (byteCount <= 127) {
+    return Buffer.from([0x48, 0x83, opcode, byteCount]);
   }
-  const instructions: number[] = [0x48, 0x83, 0xec, 0x20];
-  if (argumentCount >= 1) instructions.push(0x48, 0x8b, 0x4c, 0x24, 0x20);
-  if (argumentCount >= 2) instructions.push(0x48, 0x8b, 0x54, 0x24, 0x28);
-  if (argumentCount >= 3) instructions.push(0x4c, 0x8b, 0x44, 0x24, 0x30);
-  if (argumentCount >= 4) instructions.push(0x4c, 0x8b, 0x4c, 0x24, 0x38);
-  return Buffer.from(instructions);
+  const result = Buffer.alloc(7);
+  result.set([0x48, 0x81, opcode]);
+  result.writeUInt32LE(byteCount, 3);
+  return result;
+}
+
+// Expects qword arguments at [RSP], in source order, with RSP aligned before they were pushed.
+export function x64ExternalCallSetup(argumentCount: number): Buffer {
+  const allocation = externalCallAllocationBytes(argumentCount);
+  const instructions: Buffer[] = [stackAdjustment(0xec, allocation)];
+  const stackArgumentCount = Math.max(0, argumentCount - 4);
+  for (let index = 0; index < stackArgumentCount; index += 1) {
+    const sourceOffset = allocation + 32 + index * 8;
+    const destinationOffset = 32 + index * 8;
+    instructions.push(movRaxFromRsp(sourceOffset), movRspFromRax(destinationOffset));
+  }
+  const argumentRegisters = [1, 2, 8, 9];
+  for (let index = 0; index < Math.min(argumentCount, argumentRegisters.length); index += 1) {
+    instructions.push(movArgumentFromRsp(argumentRegisters[index], allocation + index * 8));
+  }
+  return Buffer.concat(instructions);
 }
 
 export function x64ExternalCallCleanup(argumentCount: number): Buffer {
-  if (!Number.isInteger(argumentCount) || argumentCount < 0) {
-    throw new RangeError('Argument count must be a non-negative integer');
+  const allocation = externalCallAllocationBytes(argumentCount);
+  const cleanupBytes = allocation + argumentCount * 8;
+  if (!Number.isSafeInteger(cleanupBytes) || cleanupBytes > 0x7fffffff) {
+    throw new RangeError('External-call cleanup exceeds the signed 32-bit range');
   }
-  const result = Buffer.alloc(7);
-  result.set([0x48, 0x83, 0xc4, 0x20], 0);
-  const pushedBytes = argumentCount * 8;
-  if (pushedBytes === 0) {
-    return result.subarray(0, 4);
-  }
-  const cleanup = Buffer.alloc(7);
-  cleanup.set([0x48, 0x81, 0xc4]);
-  cleanup.writeUInt32LE(pushedBytes, 3);
-  return Buffer.concat([result.subarray(0, 4), cleanup]);
+  return stackAdjustment(0xc4, cleanupBytes);
 }
 
 export function x64MoveRaxFromAddressMemory(): Buffer {
@@ -130,7 +166,7 @@ export function x64SubRaxImm32(value: number): Buffer {
   }
   const result = Buffer.alloc(6);
   result.set([0x48, 0x2d]);
-  result.writeUInt32LE(value, 2);
+  result.writeInt32LE(value, 2);
   return result;
 }
 
