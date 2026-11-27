@@ -1080,8 +1080,10 @@ Rotina para que se converta uma caixa para uma string:
   Acrescente " " para a string.
   Acrescente a coordenada Y2 desta caixa para a string.
 
-Rotina para que se converta um byte para uma cifra binária:
-  Atribua o byte à cifra binária tal como um byte denominado novo byte.
+\Um novo byte é um byte.
+
+Rotina para que se converta um novo byte para uma cifra binária:
+  Atribua o novo byte à cifra binária tal como um byte denominado novo byte.
   Uppercase a cifra binária.
   Se a cifra binária for maior do que o número nove,
     \ 57

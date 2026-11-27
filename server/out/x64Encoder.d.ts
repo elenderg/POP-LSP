@@ -1,0 +1,17 @@
+export declare function movRaxImm64(value: bigint): Buffer;
+export declare function subRsp32(shadowAndLocals: number): Buffer;
+export declare function callRipRelative(displacement: number): Buffer;
+export declare function x64Prologue(localBytes: number): Buffer;
+export declare function x64Epilogue(parameterBytes: number): Buffer;
+export declare function x64ExternalCallSetup(argumentCount: number): Buffer;
+export declare function x64ExternalCallCleanup(argumentCount: number): Buffer;
+export declare function x64MoveRaxFromAddressMemory(): Buffer;
+export declare function x64MoveAddressFromRax(): Buffer;
+export declare function x64PushQwordFromAddress(): Buffer;
+export declare function x64PushRax(): Buffer;
+export declare function x64AddRaxImm32(value: number): Buffer;
+export declare function x64SubRaxImm32(value: number): Buffer;
+export declare function x64AddRaxRbx(): Buffer;
+export declare function x64SubRaxRbx(): Buffer;
+export declare function x64ImulRaxRbx(): Buffer;
+export declare function x64CompareRaxRbx(): Buffer;

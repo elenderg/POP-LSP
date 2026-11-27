@@ -1648,8 +1648,7 @@ Rotina para que se obtenha um número de coluna usando uma linha de texto e uma l
     usando
       a linha de texto e
       a localização e
-      a caixa de texto (para obter um número de coluna usando uma linha de
-      texto).
+      a caixa de texto (para obter um número de coluna usando uma linha de texto).
   Itere.
     Se o caractere final deste subtexto é o caractere final desta string desta linha de texto,
       Pare.
