@@ -393,8 +393,6 @@ O compilador é uma estrutura com
   Um trecho exe,
   Um trecho de listagem.
 
-O sinalizador da arquitetura x64 é um sinalizador.
-
 O catálogo de variáveis globais é um catálogo.
 As variáveis globais são umas variáveis globais.
 A image base é um endereço igual a 4194304 [$00400000].
@@ -484,11 +482,13 @@ Rotina para que se faça tudo:
   Processe "kernel32.dll" "SetConsoleOutputCP" com o codepage retornando um número denominado status de erro.
   Se o status de erro for 0 [NULL], 
     Escreva em vermelho "Código de Erro #001. Erro ao definir o CodePage do Console para STDOUT." junto com o texto CRLF para STDOUT.
-  Obtenha uma string desde os argumentos da linha de comando.
-  Se a string estiver em branco,
+  \Obtenha uma string desde os argumentos da linha de comando.
+  Extraia uma string denominada path e uma string denominada flags desde os argumentos da linha de comando.
+  Se o path estiver em branco,
     Obtenha um endereço da pasta usando o diretório de trabalho atual;
-    Atribua o endereço da pasta para a string;
-    Elimine os resíduos na string.
+    Atribua o endereço da pasta para a path;
+    Elimine os resíduos no path.
+    Escreva "path: " junto com o path junto com o texto CRLF para StdOut.
     \ Escreva "|-----------------------------------------------------------------------------------------------------------------------|" junto com o texto CRLF para StdOut;
     \ Escreva "| "junto com o Esc junto com "[33m" 
     \ junto com "Aviso. Para utilizar este compilador, você deve informar o PATH do projeto através da linha de comando." 
@@ -499,18 +499,55 @@ Rotina para que se faça tudo:
     \ Escreva "|                                                                                                                       |" junto com o texto CRLF para StdOut;
     \ Escreva "|-----------------------------------------------------------------------------------------------------------------------|" junto com o texto CRLF para StdOut;
     \ Retorne.
-  Se o conteúdo deste caractere final desta string não for a barra invertida, 
-    Acrescente a barra invertida para a string.
-  Se a string não estiver no sistema de arquivos, 
-    Escreva em vermelho "Código de Erro #002. O diretório '" junto com a string seguido de "' não foi encontrado." junto com o texto CRLF para StdOut;
+  Se o conteúdo deste caractere final deste path não for a barra invertida, 
+    Acrescente a barra invertida para o path.
+  Se o path não estiver no sistema de arquivos, 
+    Escreva em vermelho "Código de Erro #002. O diretório '" junto com o path seguido de "' não foi encontrado." junto com o texto CRLF para StdOut;
     Retorne.
-  Escreva em verde "Compilando o diretório '" junto com a string seguido de "' …" para StdOut. \ #0
+  Escreva em verde "Compilando o diretório '" junto com o path seguido de "' …" para StdOut. \ #0
   Escreva o texto CRLF para StdOut.
-  Compile a string. \ tratar aqui
+  \Compile a string.
+  Compile o path usando as flags.
   Se existir algum problema de compilação, 
     Exiba o erro de compilação; 
     Retorne.
   Escreva "Tempo de compilação: " junto com a string deste temporizador deste compilador seguido de " ms" junto com o texto CRLF para StdOut.
+
+Rotina para que se compile uma string denominada path usando uma string denominada flags:
+  Escreva "path: " junto com o path junto com o texto CRLF para StdOut.
+  Escreva "flags:" junto com as flags junto com o texto CRLF  junto com o texto CRLF para Stdout.
+  Se as flags forem "para: Windows x86",
+    Compile o path;
+    Retorne.
+  Se as flags forem "para: Windows x64",
+    Compile o path (Windows x64);
+    Retorne.
+  Se as flags forem "para: Linux x86",
+    Compile o path (Linux x86);
+    Retorne.
+  Se as flags forem "para: Linux x64",
+    Compile o path (Linux x64);
+    Retorne.
+  Se as flags estiverem em branco,
+    Compile o path;
+    Retorne.
+  Atribua "Destino de compilação inválido. Use Windows x86, Windows x64, Linux x86 ou Linux x64." para a mensagem de erro deste compilador.
+  Ative o sinalizador de erros deste compilador.
+
+Rotina para que se compile uma string denominada path (Windows x86):
+  Compile o path.
+
+Rotina para que se compile uma string denominada path (Windows x64):
+  Atribua "A geração de executáveis Windows x64 ainda não está implementada." para a mensagem de erro deste compilador.
+  Ative o sinalizador de erros deste compilador.
+
+Rotina para que se compile uma string denominada path (Linux x86):
+  Atribua "A geração de executáveis Linux x86 ainda não está implementada." para a mensagem de erro deste compilador.
+  Ative o sinalizador de erros deste compilador.
+
+Rotina para que se compile uma string denominada path (Linux x64):
+  Atribua "A geração de executáveis Linux x64 ainda não está implementada." para a mensagem de erro deste compilador.
+  Ative o sinalizador de erros deste compilador.
 
 Rotina para que se obtenha uma string desde os argumentos da linha de comando:
   Processe "kernel32.dll" "GetCommandLineA" 
@@ -528,6 +565,35 @@ Rotina para que se obtenha uma string desde os argumentos da linha de comando:
     Atribua o subtexto para a string.
     Elimine os resíduos na string.
   \Reitere. 
+
+
+Rotina para que se extraia uma string denominada path e uma string denominada flags desde os argumentos da linha de comando:
+  Processe "kernel32.dll" "GetCommandLineA" 
+    Retornando um endereço do caractere.
+  Converta o endereço do caractere para uma string denominada argumentos.
+  Escreva em verde "argumentos: " junto com os argumentos junto com o texto CRLF junto com o texto CRLF para StdOut.
+  Lance um subtexto sobre os argumentos.  
+  Atribua o subtexto para uma string denominada path c/ flags.
+  Subdivida o path c/ flags em um subtexto denominado subtexto path e um subtexto denominado subtexto flags usando a barra inclinada.
+  Escreva em verde "path  c/ flags: " junto com o path c/ flags junto com o texto CRLF junto com o texto CRLF para StdOut.
+  Atribua o subtexto path para o path. 
+  Atribua o subtexto flags para as flags.
+  Se o path estiver em branco,
+    Atribua o path c/ flags para o subtexto path.
+  Se as flags não estiverem em branco,
+    Atribua o path para o subtexto path.
+  Atribua o subtexto path para o path.
+  Atribua o subtexto path para o subtexto.
+  Itere.
+    Se o subtexto estiver em branco, 
+      Limpe o path; 
+      Retorne. 
+    Se o conteúdo deste caractere inicial deste subtexto não for o caractere de espaço, 
+      Adicione 1 para o caractere inicial deste subtexto; 
+      Reitere.
+    Atribua o subtexto para o path.
+    Elimine os resíduos no path.
+    Elimine os resíduos nas flags.
 
 Rotina para que se compile um endereço da pasta:
   Compile o endereço da pasta (inicialização). \ #001
@@ -7402,25 +7468,16 @@ Rotina para que se inicialize um Cabeçalho PE:
 
 Rotina para que se inicialize um Cabeçalho PE (cabeçalho padrão):
   Atribua 17744 [$00004550] ao Signature deste Cabeçalho PE. \ -> 50 45 00 00
-  Se o sinalizador da arquitetura x64 estiver ativo,
-    Atribua 34404 [$8664] ao MachineType deste Cabeçalho PE.
-  Se o sinalizador da arquitetura x64 não estiver ativo,
-    Atribua 332 [$014C] ao MachineType deste Cabeçalho PE.
+  Atribua 332 [$014C] ao MachineType deste Cabeçalho PE. \ IMAGE_FILE_MACHINE_I386 
   Atribua 3 [$0003] ao NumberOfSections deste Cabeçalho PE. \ IMAGE_SCN_ALIGN_4BYTES
   Atribua 0 ao TimeStamp deste Cabeçalho PE.
   Atribua 0 ao PointerToSymbolTable deste Cabeçalho PE.
   Atribua 0 ao NumberOfSymbols deste Cabeçalho PE.
-  Se o sinalizador da arquitetura x64 estiver ativo,
-    Atribua 240 [$00F0] ao SizeOfOptionalHeaderInBytes deste Cabeçalho PE.
-  Se o sinalizador da arquitetura x64 não estiver ativo,
-    Atribua 224 [$00E0] ao SizeOfOptionalHeaderInBytes deste Cabeçalho PE.
+  Atribua 224 [$00E0] ao SizeOfOptionalHeaderInBytes deste Cabeçalho PE. \ IMAGE_SCN_ALIGN_8192BYTES
   Atribua 33166 [$818E] às Characteristics deste Cabeçalho PE.
 
 Rotina para que se inicialize um Cabeçalho PE (cabeçalho opcional):
-  Se o sinalizador da arquitetura x64 estiver ativo,
-    Atribua 523 [$020B] ao MagicNumber deste Cabeçalho PE.
-  Se o sinalizador da arquitetura x64 não estiver ativo,
-    Atribua 267 [$010B] ao MagicNumber deste Cabeçalho PE.
+  Atribua 267 [$010B] ao MagicNumber deste Cabeçalho PE.
   \The magic number for PE32+ executables is $020B [523]
   Atribua a quantidade de caracteres desta Região de Código ao SizeOfCodeInFile deste Cabeçalho PE.
   Atribua a quantidade de caracteres desta Região de Dados ao SizeOfInitializedDataInFile deste Cabeçalho PE.

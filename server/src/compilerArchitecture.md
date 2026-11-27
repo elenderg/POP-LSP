@@ -80,7 +80,7 @@ Foi criada uma infraestrutura auxiliar separada do backend .pop:
 - Não existe um backend x64 integrado ao compilador `.pop`.
 - Não existem operações x64 completas para todos os tipos e aritmética de 64 bits.
 - Não existem imports PE32+ integrados ao parser/gerador existente.
-- Não existe seleção de arquitetura na interface de linha de comando da implementação `.pop`.
+- A seleção na implementação `.pop` ainda é parcial: usa `/` como separador antes de `para:`.
 - Não existe validação por execução em Windows de 64 bits.
 - Valores de 64 bits ainda não são um tipo da linguagem neste checkout.
 - Esta infraestrutura não deve ser apresentada como substituto funcional do compilador original.
@@ -103,19 +103,16 @@ Foi criada uma infraestrutura auxiliar separada do backend .pop:
 - O Optional Header passou a selecionar Magic `0x020B` para PE32+.
 - O alinhamento de variáveis locais passou a aceitar alinhamento de 8 bytes no destino x64.
 - O backend continua mantendo o caminho PE32/I386 como padrão e os testes confirmaram `0x14C`/`0x10B`.
-- A seleção da arquitetura pela linha de comando não foi integrada nesta etapa: os métodos novos de parsing encontraram incompatibilidades entre tipos `string`/`subtexto` no próprio compilador.
+- A linha de comando agora extrai `path` e `flags` usando `/ para:`; Windows x86 encaminha para o pipeline existente.
 - O backend x64 não gera código AMD64 completo nesta versão. Em particular, continuam pendentes o frame/prologue, ABI Windows x64, shadow space, IAT RIP-relative, operações de 64 bits e a estrutura PE32+ completa.
 
-## Implementação adicional de seleção e tipos
+## Estado atual da seleção no fonte `.pop`
 
-- `C:\compilador.exe C:\projeto --x64` ativa a seleção do destino x64.
-- `C:\compilador.exe C:\projeto --architecture=x64` possui suporte equivalente.
-- O padrão continua sendo x86/PE32.
-- Quando `--x64` é usado, o COFF Machine passa a ser `0x8664`.
-- O Optional Header recebe Magic `0x20B` e tamanho `0x00F0`.
-- Foi adicionada a estrutura `Um endereço amplo é uma estrutura com 8 bytes`.
-- Foram adicionadas rotinas básicas de zerar e copiar endereços amplos.
-- A prova com o projeto amplo em `server/testes` produziu PE32+ com Machine AMD64 e Magic PE32+.
+- O delimitador atual é `/`, seguido de `para:`; por exemplo, `compile C:\meu projeto\ / para: Windows x86`.
+- Sem flags, o caminho padrão continua usando o pipeline existente.
+- `Windows x86` encaminha para o backend atual.
+- `Windows x64`, `Linux x86` e `Linux x64` informam explicitamente que ainda não estão implementados.
+- A opção `--x64` não é aceita; o uso de `para:` atualmente exige o separador `/` antes da palavra-chave.
 
 ## Limitação arquitetural efetiva
 
@@ -148,3 +145,13 @@ A imagem PE32+ produzida por esta etapa não contém ainda um backend AMD64 comp
 - A seleção pelo CLI não deve ser considerada normalizada até o recorte da opção não destruir o caminho do projeto.
 - O IAT PE32+ completo, os deslocamentos RIP-relative e as correções de endereçamento das DLLs ainda não estão vinculados ao gerador `.pop`.
 - O backend `.pop` não deve ser descrito como AMD64 executável antes de executar um programa simples em Windows x64.
+
+## Estado da sintaxe natural de destino
+
+- O parser preserva espaços no caminho e separa as flags no `/` antes de `para:`.
+- Formas atuais:
+  - `compile C:\meu projeto\ / para: Windows x86`
+  - `compile C:\meu projeto\ / para: Windows x64`
+  - `compile C:\meu projeto\ / para: Linux x86`
+  - `compile C:\meu projeto\ / para: Linux x64`
+- A forma sem `/` ainda não é reconhecida.

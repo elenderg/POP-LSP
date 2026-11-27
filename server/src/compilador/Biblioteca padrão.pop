@@ -16,8 +16,6 @@ Um caractere final é um ponteiro para um byte.
 
 [PONTEIROS]
 Um ponteiro é uma estrutura com 4 bytes. \ 32 bits
-Um endereço amplo é uma estrutura com 8 bytes.
-Um número amplo é uma estrutura com 8 bytes.
 Uma word big-endian unsigned é uma estrutura com 2 bytes.
 
 [WORD]
@@ -3861,8 +3859,8 @@ Rotina para que se converta uma caixa para uma string:
   Acrescente " " para a string.
   Acrescente a coordenada Y2 desta caixa para a string.
 
-Rotina para que se converta um novo byte para uma cifra binária:
-  Atribua o novo byte à cifra binária tal como um byte.
+Rotina para que se converta um byte para uma cifra binária:
+  Atribua o byte à cifra binária tal como um byte.
   Uppercase a cifra binária.
   Se a cifra binária for maior do que o número nove, \ 57
     Subtraia 7 desde a cifra binária.
@@ -20864,43 +20862,6 @@ Rotina para que se arredonde um número para cima usando a potência de dois:
   Decodifique $D320. \ shl [eax],ecx
 
 Rotina para que se redefina um ponteiro;
-Rotina para que se esvazie um endereço amplo:
-  Decodifique $488B8508000000.
-  Decodifique $48C700000000000000.
-
-Rotina para que se atribua um endereço amplo para um segundo endereço amplo:
-  Decodifique $488B8508000000.
-  Decodifique $488B00.
-  Decodifique $488B9D0C000000.
-  Decodifique $488903.
-
-Rotina para que se esvazie um número amplo:
-  Decodifique $488B8508000000.
-  Decodifique $48C700000000000000.
-
-Rotina para que se atribua um número amplo para um segundo número amplo:
-  Decodifique $488B8508000000.
-  Decodifique $488B00.
-  Decodifique $488B9D0C000000.
-  Decodifique $488903.
-
-Rotina para que se adicione um número amplo para um segundo número amplo:
-  Decodifique $488B8508000000.
-  Decodifique $488B00.
-  Decodifique $488B9D0C000000.
-  Decodifique $480103.
-
-Rotina para que se subtraia um número amplo desde um segundo número amplo:
-  Decodifique $488B8508000000.
-  Decodifique $488B00.
-  Decodifique $488B9D0C000000.
-  Decodifique $482903.
-
-Rotina para que se multiplique um número amplo por um segundo número amplo:
-  Decodifique $488B8508000000.
-  Decodifique $488B00.
-  Decodifique $488B9D0C000000.
-  Decodifique $480FAF03.
 Rotina para que se esvazie um ponteiro:
   Decodifique $8B8508000000. \ mov eax,[ebp+8] ; -> salva o ponteiro (ebp+8) no registrador eax
   Decodifique $C70000000000. \ mov [eax],0 ; -> zera o registrador eax
