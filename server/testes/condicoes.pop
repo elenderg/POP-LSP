@@ -1,0 +1,294 @@
+
+\Função para que se determine se uma bandeira está vermelha/verde;
+\Função para que se determine se um sinalizador está dormente;
+\Função para que se determine se uma bandeira está levantada;
+\Função para que se determine se uma bandeira está sendo mostrada;
+\Função para que se determine se uma bandeira está sendo exibida;
+\Função para que se determine se um semáforo está verde/vermelho;
+\Função para que se determine se um alarme está tocando;
+\Função para que se determine se um alarme está soando;
+\Função para que se determine se um alarme soou;
+\Função para que se determine se um alarme já soou;
+\Função para que se determine se um alarme está disparando;
+\Função para que se determine se um alarme disparou;
+\Função para que se determine se um alarme está alarmando;
+\Função para que se determine se um sinalizador já está ativado;
+\Função para que se determine se um sinalizador foi ativado anteriomente;
+\Função para que se determine se um sinalizador já foi ativado anteriomente;
+\Função para que se determine se um sinalizador está presente;
+\Função para que se determine se um sinalizador está em vigor;
+Função para que se determine se um sinalizador está ligado; \foi ligado também funciona
+Função para que se determine se um sinalizador está ativo;
+Função para que se determine se um sinalizador está ativado:
+  Se o sinalizador for 1,
+    Diga sim.
+  Diga não.
+
+Rotina para que se ative um sinalizador;
+Rotina para que se dispare um sinalizador; \ era "dispare um alarme"
+Rotina para que se ligue um sinalizador:
+  Atribua 1 ao sinalizador.
+
+Função para que se determine se uma seleção é uma segunda seleção:
+  Se a âncora desta seleção não for a âncora desta segunda seleção,
+    Diga não.
+  Se o cursor de texto desta seleção não for o cursor de texto desta segunda seleção,
+    Diga não.
+  Diga sim.
+
+Rotina para que se destrua um soquete:
+  Processe "ws2_32.dll" "closesocket" com
+  \ Fecha um soquete existente.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winsock/nf-winsock-closesocket
+    O soquete. [s]
+
+Rotina para que se limpe uma seleção:
+  Limpe a âncora desta seleção.
+  Limpe o cursor de texto desta seleção.
+
+Rotina para que se crie o dicionário léxico:
+  Aloque memória para o dicionário léxico.
+  Crie o catálogo deste dicionário léxico usando 4027.
+
+Rotina para que se crie um quora:
+  Aloque memória para o quora.
+
+Rotina para que se crie uma referência:
+  Aloque memória para a referência.
+  \ soquete = encaixe
+
+Função para que se determine se uma valor da diferença está dentre uma malha quadriculada:
+  Preserve o valor da diferença.
+  Remova o sinal desde o valor da diferença.
+  Se o número X deste valor da diferença for maior do que ou igual ao número X desta malha quadriculada,
+    Diga não.
+  Se o número Y deste valor da diferença for maior do que ou igual ao número Y desta malha quadriculada,
+    Diga não.
+  Diga sim.
+
+Rotina para que se destrua um Sessão Criptografada:
+  Se a Sessão Criptografada for inexistente,
+    Retorne.
+  Processe "advapi32.dll" "CryptDestroyKey" com
+  \ Libera a chave criptográfica de uma sessão criptografada
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wincrypt/nf-wincrypt-cryptdestroykey
+    A hCryptKey desta Sessão Criptografada. [hKey]
+  Processe "advapi32.dll" "CryptDestroyHash" com
+  \ Destrói o objeto hash referenciado pelo parâmetro hHash.
+  \\ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wincrypt/nf-wincrypt-cryptdestroyhash
+    O hCryptHash desta Sessão Criptografada. [hHash]
+  Processe "advapi32.dll" "CryptReleaseContext" com
+  \ Libera o identificador de um provedor de serviços criptográficos (CSP) e um contêiner de chave.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wincrypt/nf-wincrypt-cryptreleasecontext
+  \Importante: Esta API está obsoleta. O softwares deveriam começar a usar APIs de criptografia de última geração. A Microsoft pode remover esta API em versões futuras.
+    O hCryptProv desta Sessão Criptografada [hProv] e
+    0. [dwFlags]
+  Desaloque a Sessão Criptografada.
+
+Rotina para que se encontre uma díade usando umas díades e um nome:
+  Esvazie a díade.
+  Itere.
+    Obtenha a díade desde as díades.
+    Se a díade for inexistente,
+      Retorne.
+    Se o nome deste díade for o nome,
+      Retorne.
+  Reitere.
+
+Rotina para que se encontre um valor da díade usando umas díades e um nome:
+  Encontre uma díade usando as díades e o nome.
+  Se a díade for inexistente,
+    Limpe o valor da díade;
+    Retorne.
+  Atribua o valor da díade deste díade ao valor da díade.
+
+Rotina para que se encontre um valor da díade usando as variáveis de ambiente e um nome:
+  Preserve o nome.
+  Anexe o caractere NULL após o nome.
+  Atribua 32767 para uma quantidade de caracteres. \ tamanho máximo da variável de ambiente
+  Reaponte o caractere inicial deste valor da díade usando a quantidade de
+      caracteres.
+  Processe "kernel32.dll" "GetEnvironmentVariableA"
+  com
+  \ Recupera o conteúdo da variável especificada do bloco de ambiente do processo de chamada.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/processenv/nf-processenv-getenvironmentvariablea
+      O caractere inicial deste nome [lpName] e
+      O caractere inicial deste valor da díade [lpBuffer] e
+      A quantidade de caracteres [nSize]
+    Retornando
+      a quantidade de caracteres.
+  Atribua
+      o caractere inicial deste valor da díade
+    mais
+      a quantidade de caracteres
+    menos
+      1
+    ao
+      caractere final deste valor da díade.
+
+Rotina para que se obtenha umas rotinas da função AddrInfo:
+  Limpe o erro do fluxo de entrada/saída.
+  Atribua "ws2_32.dll" para uma nome de dll.
+  Processe "kernel32.dll" "LoadLibraryA"
+  com
+  \ Carrega o módulo especificado no espaço de endereço do processo de chamada.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya
+      O caractere inicial desta nome de dll [lpLibFileName]
+    Retornando
+      um número identificador.
+  Se o número identificador for 0,
+    Atribua
+        "A função LoadLibraryA da biblioteca ws2_32.dll retornou um erro. Não foi possível obter o identificador do módulo a ser carregado."
+      ao
+        erro do fluxo de entrada/saída;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Retorne.
+  Atribua "getaddrinfo" para uma nome de função.
+  Processe "kernel32.dll" "GetProcAddress"
+  com
+  \ Recupera o endereço de uma função ou variável exportada da biblioteca de vínculo dinâmico (DLL) especificada.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress
+      O número identificador [hModule] e
+      o caractere inicial deste nome de função [lpProcName]
+    Retornando
+      um ponteiro.
+  Se o ponteiro for inexistente,
+    Atribua
+        "Erro. Este compilador é compatível com Windows XP ou superior."
+      ao
+        erro do fluxo de entrada/saída;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Retorne.
+  Atribua
+      o ponteiro
+    ao
+      ponteiro da função GetAddrInfo destas rotinas da função AddrInfo.
+  Atribua "freeaddrinfo" para um nome de processo.
+  Processe "kernel32.dll" "GetProcAddress" com
+      O número identificador [hModule] e
+      o caractere inicial deste nome de processo [lpProcName]
+    Retornando
+      o ponteiro.
+  Se o ponteiro for inexistente,
+    Atribua
+        "Erro. Este compilador é compatível apenas com o Windows XP ou versões superiores."
+      ao
+        erro do fluxo de entrada/saída;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Retorne.
+  Atribua
+      o ponteiro
+    ao
+      ponteiro da função FreeAddrInfo destas rotinas da função AddrInfo.
+
+Rotina para que se obtenha uma letra desde o alfabeto:
+  Atribua a próxima letra à letra.
+  Avance a próxima letra limitando-a para o 'A' maiúsculo e o Z maiúsculo.
+  Adicione 1 para a próxima letra.
+  Se a próxima letra for maior do que o Z maiúsculo,
+    Atribua o 'A' maiúsculo à próxima letra.
+
+Rotina para que se carregue o dicionário léxico:
+  Se o dicionário léxico não for inexistente,
+    Retorne.
+  Extraia um endereço da pasta desde o endereço completo deste módulo.
+  Itere.
+    Se o endereço da pasta estiver em branco,
+      Retorne.
+    Atribua o endereço da pasta seguido de "dicionário léxico\" para um endereço
+        completo.
+    Se o endereço completo estiver no sistema de arquivos,
+      Carregue o dicionário léxico usando o endereço completo;
+      Retorne.
+    Extraia o endereço da pasta desde o endereço da pasta.
+  Reitere.
+
+Rotina para que se normalize um ângulo:
+  Divida o ângulo por 3600 usando um quociente e o ângulo.
+
+Rotina para que se normalize uma orientação:
+  Divida a orientação por 3840 usando um quociente e um resto.
+  Atribua o resto à orientação.
+  Se a orientação for menor do que 0,
+    Adicione 3840 para a orientação.
+
+Rotina para que se normalize uma seleção:
+  Se a âncora de linha desta seleção for menor do que o número de linhas do cursor desta seleção,
+    Retorne.
+  Se a âncora de linha desta seleção for maior do que o número de linhas do cursor desta seleção,
+    Permute a âncora desta seleção com o cursor de texto desta seleção;
+    Retorne.
+  Se a âncora de coluna desta seleção for maior do que o cursor da coluna desta seleção,
+    Permute a âncora de coluna desta seleção com o cursor da coluna desta
+        seleção.
+
+Rotina para que se memorize a posição atual:
+  Salve o contexto.
+
+Rotina para que se reenfileire um evento:
+  Copie o evento para um segundo evento.
+  Enfileire o segundo evento.
+
+Rotina para que se redefina o alfabeto:
+  Atribua o 'A' maiúsculo ao próxima letra.
+
+Rotina para que se redefina uma contagem:
+  Atribua 0 à contagem.
+
+Rotina para que se redefina o drawing origem:
+  Defina o drawing origem para o zero localização.
+
+Rotina para que se redefina um sinalizador:
+  Desative o sinalizador.
+
+Rotina para que se zere um temporizador;
+Rotina para que se resete um temporizador;
+Rotina para que se redefina um temporizador:
+  Atribua 0 à contagem deste temporizador.
+  Atribua 0 aos intervalos iniciais deste temporizador.
+  Atribua 0 aos intervalos totais deste temporizador.
+
+Rotina para que se reverta um sinalizador;
+Rotina para que se inverta um sinalizador:
+  Se o sinalizador for 1,
+    Atribua 0 ao sinalizador;
+    Retorne.
+  Atribua 1 ao sinalizador.
+
+Rotina para que se aguarde uns milissegundos;
+Rotina para que se espere uns milissegundos;
+Rotina para que se pause uns milissegundos;
+Rotina para que se espere por uns milissegundos;
+Rotina para que se pause por uns milissegundos;
+Rotina para que se aguarde por uns milissegundos:
+  Se os milissegundos forem menor do que ou igual a 0,
+    Retorne.
+  Processe "kernel32.dll" "Sleep" com
+  \ Suspende a execução do thread atual até que o intervalo de tempo delimite expire.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/synchapi/nf-synchapi-sleep
+    Os milissegundos. [dwMilliseconds]
+
+Rotina para que se escreva um sinalizador:
+  Converta o sinalizador para uma string.
+  Escreva a string.
+
+Rotina para que se obtenha a Bíblia;
+Rotina para que se abra a Bíblia;
+Rotina para que se carregue a Bíblia;
+Rotina para que se leia a Bíblia:
+  Se a Bíblia não for inexistente,
+    Retorne.
+  Extraia um endereço da pasta desde o endereço completo deste módulo.
+  Itere.
+    Se o endereço da pasta estiver em branco,
+      Retorne.
+    Atribua o endereço da pasta seguido de "Bíblia.txt" para um endereço
+        completo.
+    Se o endereço completo estiver no sistema de arquivos,
+      Leia a Bíblia usando o endereço completo;
+      Retorne.
+    Extraia o endereço da pasta desde o endereço da pasta.
+  Reitere.
+
+Rotina para que se use um tamanho da letra:
+  Atribua o tamanho da letra à tamanho da letra deste contexto.

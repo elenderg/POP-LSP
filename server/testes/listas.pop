@@ -1,0 +1,336 @@
+Função para que se determine se umas listas estão vazios;
+Função para que se determine se umas listas estão vazias;
+Função para que se determine se umas listas está vazia;
+Função para que se determine se umas listas está vazio:
+  Se a lista inicial destas listas for inexistente,
+    Diga sim.
+  Diga não.
+
+Rotina para que se permute umas listas com umas outras listas:
+  Permute
+      a lista inicial destas listas
+    com
+      a lista inicial destas outras listas.
+  Permute a lista final destas listas com a lista final destas outras listas.
+
+Rotina para que se obtenha uma lista a partir de umas listas;
+Rotina para que se pegue uma lista de umas listas;
+Rotina para que se pegue uma lista desde umas listas;
+Rotina para que se obtenha uma lista de umas listas;
+Rotina para que se obtenha uma lista desde umas listas:
+  Se  as listas estiverem vazias,
+    Esvazie a lista;
+    Retorne.
+  Se a lista for inexistente,
+    Atribua a lista inicial destas listas à lista;
+    Retorne.
+  Atribua a lista posterior desta lista à lista.
+
+Rotina para que se obtenha uma lista desde umas listas (regressivamente):
+  Se  as listas estiverem vazias,
+    Esvazie a lista;
+    Retorne.
+  Se a lista for inexistente,
+    Atribua a lista final destas listas à lista;
+    Retorne.
+  Atribua o lista anterior desta lista à lista.
+
+Rotina para que se acrescente umas listas para umas outras listas:
+  Itere.
+    Atribua a lista inicial destas listas para uma lista.
+    Se a lista for inexistente,
+      Retorne.
+    Remova a lista desde as listas.
+    Acrescente a lista para as outras listas.
+  Reitere.
+  \acrescente
+  \adicione
+  \anexe
+  \coloque
+  \insira
+  \inclua
+  \posponha
+
+Rotina para que se limpe umas listas:
+  Esvazie a lista inicial destas listas.
+  Esvazie a lista final destas listas.
+
+Rotina para que se crie um catálogo usando uma contagem de recipientes:
+  Aloque memória para o catálogo.
+  Atribua a contagem de recipientes à contagem de recipientes deste catálogo.
+  Atribua o magnitude dum conjunto de recipientes para uma largura.
+  Atribua a contagem de recipientes deste catálogo vezes a largura para um
+      número.
+  Associe o primeiro recipiente deste catálogo usando o número.
+  Atribua
+      o primeiro recipiente deste catálogo
+    mais
+      o número
+    menos
+      a largura
+    ao
+      último recipiente deste catálogo.
+
+Função para que se determine se um catálogo está vazia;
+Função para que se determine se um catálogo estão vazias;
+Função para que se determine se um catálogo estão vazios;
+Função para que se determine se um catálogo está vazio:
+  Se o catálogo for inexistente,
+    Diga sim.
+  Itere.
+    Obtenha um recipiente usando o catálogo.
+    Se o recipiente for inexistente,
+      Diga sim.
+    Se as referências deste recipiente não estiverem vazios,
+      Diga não.
+  Reitere.
+
+Rotina para que se destrua um catálogo:
+  Se o catálogo for inexistente,
+    Retorne.
+  Itere.
+    Obtenha um recipiente usando o catálogo.
+    Se o recipiente for inexistente,
+      Pare.
+    Destrua as referências deste recipiente.
+  Reitere.
+  Desassocie o primeiro recipiente deste catálogo.
+  Desaloque o catálogo.
+
+Rotina para que se obtenha um recipiente usando um recipiente# e um catálogo:
+  \ Se o catálogo for inexistente, esvazie o recipiente;    \ para deixar o compilador mais rápido
+  \Retorne. 
+  Atribua o primeiro recipiente deste catálogo ao recipiente.
+  Adicione
+      o recipiente#
+    vezes
+      a magnitude dum conjunto de recipientes
+    para
+      o recipiente.
+
+Rotina para que se obtenha um recipiente usando um catálogo:
+  \Se o catálogo for inexistente, esvazie o recipiente;  Retorne. \ para deixar o compilador mais rápido
+  Se o recipiente for inexistente,
+    Atribua o primeiro recipiente deste catálogo ao recipiente;
+    Retorne.
+  Se o recipiente for o último recipiente deste catálogo,
+    Esvazie o recipiente;
+    Retorne.
+  Adicione a magnitude dum conjunto de recipientes para o recipiente.
+
+Rotina para que se insira uma lista em umas listas depois de uma segunda lista;
+Rotina para que se insira uma lista em umas listas após uma segunda lista:
+  Se a lista for inexistente,
+    Retorne.
+  Se a segunda lista for inexistente,
+    Anteponha a lista para as listas;
+    Retorne.
+  Insira a lista para as listas antes dessa lista posterior desta segunda lista.
+
+Rotina para que se insira uma lista em umas listas antes de uma segunda lista:
+  Se a lista for inexistente,
+    Retorne.
+  Se as listas estiverem vazias,
+    Acrescente a lista para as listas;
+    Retorne.
+  Se a segunda lista for inexistente,
+    Acrescente a lista para as listas;
+    Retorne.
+  Se a segunda lista for a lista inicial destas listas,
+    Anteponha a lista para as listas;
+    Retorne.
+  Atribua a lista para uma nova lista.
+  Atribua a segunda lista para uma lista anterior.
+  Atribua
+      a nova lista
+    à
+      lista posterior desta lista anterior desta lista anterior.
+  Atribua a lista anterior à lista posterior desta nova lista.
+  Atribua
+      a lista anterior desta lista anterior
+    à
+      lista anterior desta nova lista.
+  Atribua a nova lista à lista anterior desta lista anterior.
+
+Rotina para que se insira umas listas em umas outras listas depois de uma lista;
+Rotina para que se insira umas listas em umas outras listas após uma lista:
+  Se a lista for inexistente,
+    Anteponha as listas para a outras listas;
+    Retorne.
+  Insira as listas ao outras listas antes dessa lista posterior desta lista.
+
+Rotina para que se insira umas listas em umas outras listas antes de um lista:
+  Preserve a lista.
+  Itere.
+    Atribua a lista inicial destas listas para uma segunda lista.
+    Se a segunda lista for inexistente,
+      Retorne.
+    Remova a segunda lista desde as listas.
+    Insira a segunda lista ao outras listas antes dessa lista.
+  Reitere.
+
+Rotina para que se mova uma lista desde umas listas para umas outras listas:
+  Se a lista for inexistente,
+    Retorne.
+  Preserve a lista.
+  Remova a lista desde as listas.
+  Acrescente a lista para a outras listas.
+
+Rotina para que se mova umas listas para umas outras listas:
+  Atribua a lista inicial destas listas ao lista inicial destas outras listas.
+  Atribua a lista final destas listas à lista final destas outras listas.
+  Limpe as listas.
+
+Rotina para que se anteponha uma lista em umas listas:
+  Se a lista for inexistente,
+    Retorne.
+  Atribua a lista inicial destas listas à lista posterior desta lista.
+  Se as listas não estiverem vazias,
+    Atribua a lista à lista anterior desta lista inicial destas listas.
+  Se as listas estiverem vazias,
+    Atribua a lista à lista final destas listas.
+  Atribua a lista à lista inicial destas listas.
+
+Rotina para que se anteponha umas listas para umas outras listas:
+    Atribua a lista final destas listas para uma lista.
+    Se a lista for inexistente,
+      Retorne.
+    Remova a lista desde as listas.
+    Anteponha a lista para a outras listas.
+  Reitere.
+
+Função para que se atribua a contagem dum catálogo para uma contagem:
+  Atribua 0 à contagem.
+  Se o catálogo for inexistente,
+    Retorne.
+  Itere.
+    Obtenha um recipiente usando o catálogo.
+    Se o recipiente for inexistente,
+      Retorne.
+    Adicione a contagem destes referências deste recipiente para a contagem.
+  Reitere.
+
+Função para que se atribua a used contagem de recipientes dum catálogo para uma contagem:
+  Atribua 0 à contagem.
+  Se o catálogo for inexistente,
+    Retorne.
+  Itere.
+    Obtenha um recipiente usando o catálogo.
+    Se o recipiente for inexistente,
+      Retorne.
+    Se as referências deste recipiente estiverem vazios,
+      Reitere.
+    Adicione 1 para a contagem.
+  Reitere.
+
+Rotina para que se acrescente uma lista para umas listas:
+  Se a lista for inexistente,
+    Retorne.
+  Atribua a lista final destas listas à lista anterior desta lista.
+  Se as listas não estiverem vazias,
+    Atribua a lista à lista posterior desta lista final destas listas.
+  Se as listas estiverem vazias,
+    Atribua a lista à lista inicial destas listas.
+  Atribua a lista à lista final destas listas.
+
+Rotina para que se atribua umas listas para umas outras listas:
+  Atribua a lista inicial destas listas à lista inicial destas outras listas.
+  Atribua a lista final destas listas à lista final destas outras listas.
+
+Função para que se atribua a quantidade dumas listas para uma contagem;
+Função para que se atribua a contagem dumas listas para uma contagem:
+  Atribua 0 à contagem.
+  Itere.
+    Obtenha uma lista desde as listas.
+    Se a lista for inexistente,
+      Retorne.
+    Adicione 1 para a contagem.
+  Reitere.
+
+Rotina para que se remova uma lista de umas listas;
+Rotina para que se remova uma lista desde umas listas:
+  Se a lista for inexistente,
+    Retorne.
+  Se a lista for a lista inicial destas listas,
+    Atribua a lista posterior desta lista à lista inicial destas listas.
+  Se a lista for a lista final destas listas,
+    Atribua a lista anterior desta lista à lista final destas listas.
+  Se o lista posterior desta lista não for inexistente,
+    Atribua
+        a lista anterior desta lista
+      à
+        lista anterior desta lista posterior desta lista.
+  Se o lista anterior desta lista não for inexistente,
+    Atribua
+        o lista posterior desta lista
+      à
+        lista posterior desta lista anterior desta lista.
+  Esvazie a lista posterior desta lista.
+  Esvazie a lista anterior desta lista.
+
+Rotina para que se inverta umas listas:
+
+Rotina para que se reverta umas listas:
+  Permute as listas com umas outras listas.
+  Itere.
+    Atribua a lista final destas outras listas para uma lista.
+    Se a lista for inexistente,
+      Retorne.
+    Mova a lista desde a outras listas para as listas.
+  Reitere.
+
+Rotina para que se subdivida umas listas em umas listas denominadas listas anteriores e umas listas denominadas listas posteriores:
+  Se as listas estiverem vazias,
+    Limpe as listas anteriores;
+    Limpe as listas posteriores;
+    Retorne.
+  Atribua a contagem destas listas dividido por 2 para uma contagem.
+  Itere.
+    Obtenha uma lista desde as listas.
+    Se a contagem for 0,
+      Pare.
+    Subtraia 1 desde a contagem.
+  Reitere.
+  Subdivida
+      as listas
+    em
+      as listas anteriores e
+      as listas posteriores
+    sob
+      a lista.
+
+Rotina para que se subdivida umas listas em umas listas denominadas listas anteriores e umas listas denominadas listas posteriores sob uma lista:
+  Limpe as listas anteriores.
+  Limpe as listas posteriores.
+  Se a lista for inexistente,
+    Permute as listas com as listas anteriores;
+    Retorne.
+  Se o lista anterior desta lista for inexistente,
+    Permute as listas com as listas anteriores;
+    Retorne.
+  Atribua
+      a lista inicial destas listas
+    ao
+      lista inicial destas listas anteriores.
+  Atribua o lista anterior desta lista à lista final destas listas anteriores.
+  Esvazie a lista posterior deste lista anterior desta lista.
+  Atribua a lista ao lista inicial destas listas posteriores.
+  Esvazie o lista anterior desta lista.
+  Atribua a lista final destas listas à lista final destas listas posteriores.
+  Limpe as listas.
+
+Rotina para que se adicione um nome para umas alternativas:
+  Aloque memória para uma alternativa.
+  Atribua o nome ao nome desta alternativa.
+  Acrescente a alternativa para as alternativas.
+  \Coloque a alternativa no final das alternativas.
+
+Rotina para que se adicione um quora para um terminal:
+  Crie o quora.
+  Acrescente o quora para o quora deste terminal.
+  Se o terminal não estiver preenchido,
+    Retorne.
+  Atribua o primeiro quora destes quoras deste terminal para um
+      quora descartável.
+  Remova o quora descartável desde os quoras deste terminal.
+  Destrua o quora descartável.

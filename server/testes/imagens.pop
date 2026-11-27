@@ -1,0 +1,581 @@
+Rotina para que se destrua um GpImage:
+  Se o GpImage for inexistente,
+    Retorne.
+  Processe "gdiplus.dll" "GdipDisposeImage" com o GpImage. [*image]
+  \ Descarta o objeto Image
+  Esvazie o GpImage.
+
+Rotina para que se destrua um GpImageAttributes:
+  \ destrua/descarte
+  Se o GpImageAttributes for inexistente,
+    Retorne.
+  Processe "gdiplus.dll" "GdipDisposeImageAttributes" com o GpImageAttributes. [*imageattr]
+  Esvazie o GpImageAttributes.
+
+Rotina para que se destrua uma imagem:
+  Se a imagem for inexistente,
+    Retorne.
+  Destrua o gpBitmap desta imagem.
+  Desaloque a imagem.
+
+Função para que se determine se uma localização está em uma imagem:
+  Se a imagem for inexistente,
+    Diga não.
+  Se a localização estiver na caixa desta imagem,
+    Diga sim.
+  Diga não.
+
+Rotina para que se centralize uma imagem no meio da tela;
+Rotina para que se centralize uma imagem na tela:
+  Se a imagem for inexistente,
+    Retorne.
+  Centralize a imagem na caixa desta tela (horizontalmente).
+  Centralize a imagem na caixa desta tela (verticalmente).
+  \ unclear why this does not get called properly when hoja apaisada is replaced with  caja ***
+
+Rotina para que se centralize uma imagem no centro de uma caixa;
+Rotina para que se centralize uma imagem no meio de uma caixa;
+Rotina para que se centralize uma imagem em uma caixa:
+  Se a imagem for inexistente,
+    Retorne.
+  Centralize a imagem na caixa (horizontalmente).
+  Centralize a imagem na caixa (verticalmente).
+
+Rotina para que se centralize uma imagem em uma caixa (horizontalmente):
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua a coordenada X deste centro desta caixa menos a coordenada X deste
+      centro desta caixa desta imagem para um
+      número.
+  Arredonde
+      o número
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a imagem usando o número e 0.
+
+Rotina para que se centralize uma imagem em uma caixa (verticalmente):
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua a coordenada Y deste centro desta caixa menos a coordenada Y deste
+      centro desta caixa desta imagem para um
+      número.
+  Arredonde
+      o número
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a imagem usando 0 e o número.
+
+Rotina para que se copie um gpBitmap Para um segundo gpBitmap:
+  \verificar
+  Se o gpBitmap for inexistente,
+    Esvazie o segundo gpBitmap;
+    Retorne.
+  Processe "gdiplus.dll" "GdipCloneBitmapAreaI" com
+  \ Cria um clone de um objeto Bitmap a partir das coordenadas e formato especificados
+  \ Documentação: ->https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusheaders/nf-gdiplusheaders-bitmap-clone(int_int_int_int_pixelformat)
+    0 [x] e \ A coordenada x do canto superior esquerdo do retângulo deste bitmap
+    0 [y] e \ A coordenada y do canto superior esquerdo do retângulo deste bitmap
+    A largura deste gpBitmap [width] e \ A largura do retângulo deste bitmap
+    A altura deste gpBitmap [height] e \ A altura do retângulo
+    0 [format = PixelFormatDontCare] e \O formato de pixel do novo bitmap. O valor 0 não especifica o formato do pixel.
+    \ Consulte https://learn.microsoft.com/pt-br/windows/win32/gdiplus/-gdiplus-constant-image-pixel-format-constants
+    \ 2498570 = PixelFormat32bppARGB e 925707 = PixelFormat32bppPARGB
+    O gpBitmap [*srcBitmap] e \ objeto Bitmap de origem.
+    O endereçamento deste segundo gpBitmap. [**dstBitmap]
+  \ O objeto Bitmap clonado.
+
+Rotina para que se copie uma imagem Para uma segunda imagem:
+  Se a imagem for inexistente,
+    Esvazie a segunda imagem;
+    Retorne.
+  Aloque memória para a segunda imagem.
+  Atribua a caixa desta imagem à caixa desta segunda imagem.
+  Atribua a caixa intacta desta imagem à caixa intacta desta segunda imagem.
+  Atribua
+      o sinalizador de escala de cinza desta imagem
+    ao
+      sinalizador de escala de cinza desta segunda imagem.
+  Atribua
+      o espelhamento horizontal desta imagem
+    ao
+      espelhamento horizontal desta segunda imagem.
+  Atribua
+      o ângulo de rotação desta imagem
+    ao
+      ângulo de rotação desta segunda imagem.
+  Atribua
+      os dados hexadecimais desta imagem
+    aos
+      dados hexadecimais desta segunda imagem.
+  Copie o gpBitmap desta imagem ao gpBitmap desta segunda imagem.
+
+Rotina para que se crie um gpBitmap usando um trecho:
+  Limpe o erro do fluxo de entrada/saída.
+  Processe "kernel32.dll" "GlobalAlloc"
+  com
+  \ Aloca a partir do heap um número especificado de bytes
+ \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winbase/nf-winbase-globalalloc
+      2 [uFlags GMEM_MOVEABLE] e
+      A quantidade de caracteres deste trecho [dwBytes]
+    Retornando
+      um número identificador.
+  Processe "kernel32.dll" "GlobalLock"
+  com
+  \ Bloqueia um objeto de memória global
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winbase/nf-winbase-globallock
+      O número identificador [hMem]
+    Retornando
+      um ponteiro.
+  Copie bytes desde
+      o caractere inicial deste trecho
+    para
+      o ponteiro
+    pela
+      quantidade de caracteres deste trecho.
+  Processe "kernel32.dll" "GlobalUnlock" com  \Diminui a contagem de bloqueios associada para um objeto de memória
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winbase/nf-winbase-globalunlock
+    O número identificador. [hMem]
+  Processe "ole32.dll" "CreateStreamOnHGlobal" com
+  \A função CreateStreamOnHGlobal cria um objeto de fluxo
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/combaseapi/nf-combaseapi-createstreamonhglobal
+    O número identificador [hGlobal] e
+    1 [fDeleteOnRelease = TRUE] e
+    O endereçamento dum IStream. [*ppstm]
+  Processe "gdiplus.dll" "GdipCreateBitmapFromStream"
+  com
+  \Cria um objeto Bitmapbaseado em um um stream.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/objidl/nn-objidl-istream
+  \ https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusheaders/nf-gdiplusheaders-bitmap-bitmap(istream_bool)
+      O IStream [stream] e
+      O endereçamento deste gpBitmap [**bitmap]
+    Retornando
+      um número.
+  Se o número não for 0,
+    Atribua
+        "Não sei como processar este tipo de imagem."
+      ao
+        erro do fluxo de entrada/saída;
+    Escreva o erro do fluxo de entrada/saída junto com o texto CRLF para StdOut;
+    Esvazie o gpBitmap.
+  Processe o Release deste VTable deste IStream com o IStream. \ monet?
+
+Rotina para que se crie um GpImageAttributes (escala de cinza):
+  Processe "gdiplus.dll" "GdipCreateImageAttributes" com
+  \ Contém informações sobre como as cores de bitmap e metarquivo são manipuladas durante a renderização.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/gdiplus/-gdiplus-imageattributes-flat
+  \ https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusimageattributes/nl-gdiplusimageattributes-imageattributes
+    O endereçamento destes GpImageAttributes. [**imageattr]
+  Processe "gdiplus.dll" "GdipSetImageAttributesColorMatrix" com
+    O GpImageAttributes [ imageattr] e
+   0 [tipo = ColorAdjustTypeDefault] e
+   1 [enableFlag] e
+   o caractere inicial desta matriz de tons de cinza [colorMatrix] e
+   0 [grayMatrix] e
+   0 [flags = ColorMatrixFlagsDefault].
+
+Rotina para que se crie uma imagem:
+  Aloque memória para a imagem.
+
+Rotina para que se crie uma imagem usando um trecho:
+  Crie um gpBitmap usando o trecho.
+  Se o gpBitmap for inexistente,
+    Esvazie a imagem;
+    Retorne.
+  Aloque memória para a imagem.
+  Atribua o trecho ao dados hexadecimais desta imagem.
+  Atribua o gpBitmap ao gpBitmap desta imagem.
+  Ajuste a imagem (extraindo as caixas do gpBitmap).
+
+Rotina para que se crie uma imagem usando um gpBitmap:
+  Se o gpBitmap for inexistente,
+    Esvazie a imagem;
+    Retorne.
+  Aloque memória para a imagem.
+  Atribua o gpBitmap ao gpBitmap desta imagem.
+  Ajuste a imagem (extraindo as caixas do gpBitmap).
+
+Rotina para que se crie uma imagem usando uma URL:
+  Leia a URL para um trecho.
+  Crie a imagem usando o trecho.
+
+Função para que se determine se uma localização está sobre uma imagem:
+  Se a imagem for inexistente,
+    Diga não.
+  Se a localização estiver sobre a caixa desta imagem,
+    Diga sim.
+  Diga não.
+
+Rotina para que se extraia uma imagem usando uma caixa:
+  Atribua a largura desta caixa dividido pela quantidade de twips/pixel para uma
+      largura.
+  Atribua a altura desta caixa dividido pela quantidade de twips/pixel para uma
+      altura.
+  Processe "gdiplus.dll" "GdipCreateBitmapFromScan0" com
+  \ Cria um objeto Bitmap com base em uma matriz de bytes junto com informações de tamanho e formato.
+  \ Documentação: -> https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-bitmap-flat
+    A largura [width] e
+    A altura [height] e
+    0 [stride] e
+    137224 [0x21808 format = PixelFormat24bppRGB] e
+    0 [scan0] e
+    O endereçamento dum gpBitmap. [*bitmap]
+  Processe "gdiplus.dll" "GdipGetImageGraphicsContext" com
+  \ Usada para criar um objeto Graphics associado para um objeto de imagem.
+    O gpBitmap [*image] e
+    O endereçamento dum gpGraphic. [**graphics]
+  Processe "gdiplus.dll" "GdipGetDC" com
+  \ Usada para encontrar o identificador do contexto do dispositivo associado ao gráfico.
+    O gpGraphic [graphics] e
+    O endereçamento dum bitmap canvas. [hdc]
+  Normalize o bitmap canvas.
+  Processe "gdi32.dll" "BitBlt" com
+  \ Executa uma transferência de bloco de bits dos dados de cor
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-bitblt
+    O bitmap canvas [hdc] e
+    0 [x] e
+    0 [y] e
+    A largura desta caixa [cx] e
+    A altura desta caixa [cy] e
+    o contexto do dispositivo atual  [hdcSrc] e
+    a coordenada X1 desta caixa [x1] e
+    a coordenada Y1 desta caixa [y1] e
+    13369376 [0xCC0020 rop = SRCCOPY].
+  Processe "gdiplus.dll" "GdipReleaseDC" com
+  \ Libera o identificador de contexto de dispositivo
+    O gpGraphic [graphics] e
+    O bitmap canvas. [hdc]
+  Processe "gdiplus.dll" "GdipDeleteGraphics" com
+  \ Exclui o objeto Graphics especificado.
+    O gpGraphic. [*graphics]
+  Crie a imagem usando o gpBitmap.
+  Atribua a caixa à caixa desta imagem.
+  Atribua a caixa à caixa intacta desta imagem.
+
+Rotina para que se inverta verticalmente o gpBitmap em uma imagem:
+  Se a imagem for inexistente,
+    Retorne.
+  Inverta o espelhamento horizontal desta imagem.
+  Adicione 1800 [180,0] para o ângulo de rotação desta imagem.
+  Normalize o ângulo de rotação desta imagem.
+  Inverta verticalmente o gpBitmap desta imagem.
+
+Rotina para que se inverta verticalmente um GpImage:
+  Processe "gdiplus.dll" "GdipImageRotateFlip" com
+  \Gira e/ou inverte uma imagem.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusheaders/nf-gdiplusheaders-image-rotateflip
+    O GpImage [*image] e
+    6 [rfType = RotateNoneFlipY ou Rotate180FlipX]. \ faz rotação de 180 graus seguida por uma inversão horizontal.  é 4 na rotina "inverta horizontalmente um GpImage"
+  \ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusimaging/ne-gdiplusimaging-rotatefliptype
+
+Rotina para que se inverta verticalmente uma imagem:
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua
+      a coordenada Y deste centro desta caixa desta imagem
+    menos
+      a coordenada Y deste centro desta caixa intacta desta imagem
+    ao
+      número Y dum par de números.
+  Multiplique o número Y deste par de números por 2.
+  Mova a caixa intacta desta imagem usando o par de números.
+  Inverta verticalmente o gpBitmap na imagem.
+
+Rotina para que se lock um gpBitmap usando um BitmapData (espaço de cor RGB de 24 bits):
+  Atribua o GpRect deste gpBitmap para um GpRect.
+  Processe "gdiplus.dll" "GdipBitmapLockBits" com
+  \ Bloqueia uma parte retangular dum bitmap e fornece um buffer temporário que você pode usar para ler ou gravar dados de pixel em um formato especificado.
+  \ Documentação: -. https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusheaders/nf-gdiplusheaders-bitmap-lockbits
+   O gpBitmap [bitmap] e
+   o endereçamento deste GpRect [*rect] e
+   3 [flags = ImageLockModeRead + ImageLockModeWrite] e
+   \ Consulte https://learn.microsoft.com/pt-br/windows/desktop/api/gdiplusimaging/ne-gdiplusimaging-imagelockmode
+   137224 [format = PixelFormat24bppRGB] e
+   o endereçamento deste BitmapData. [lockedBitmapData]
+
+Rotina para que se inverta horizontalmente o gpBitmap em uma imagem:
+  Se a imagem for inexistente,
+    Retorne.
+  Inverta o espelhamento horizontal desta imagem.
+  Inverta horizontalmente o gpBitmap desta imagem.
+
+Rotina para que se inverta horizontalmente um GpImage:
+  Processe "gdiplus.dll" "GdipImageRotateFlip" com
+  \ Gira e vira a imagem.
+  \ https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusheaders/nf-gdiplusheaders-image-rotateflip
+    O GpImage [*image] e
+    4 [rotateFlipType = RotateNoneFlipX]. \ Inverte a imagem horizontalmente.  é 6 na rotina "inverta verticalmente um GpImage"
+  \Elemento da enumeração RotateFlipType que especifica o tipo de rotação e o tipo de inversão.
+  \ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusimaging/ne-gdiplusimaging-rotatefliptype
+
+Rotina para que se inverta horizontalmente uma imagem:
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua
+      a coordenada X deste centro desta caixa desta imagem
+    menos
+      a coordenada X deste centro desta caixa intacta desta imagem
+    ao
+      número X dum par de números.
+  Multiplique o número X deste par de números por 2.
+  Mova a caixa intacta desta imagem usando o par de números.
+  Inverta horizontalmente o gpBitmap na imagem.
+
+Rotina para que se mova uma imagem para baixo uns twips:
+  Mova a imagem usando 0 e os twips.
+
+Rotina para que se mova uma imagem usando um par de números:
+  Mova
+      a imagem
+    usando
+      o número X deste par de números e
+      o número Y deste par de números.
+
+Rotina para que se mova uma imagem usando uns x-twips e uns y-twips:
+  Se a imagem for inexistente,
+    Retorne.
+  Mova a caixa desta imagem usando o x-twips e o y-twips.
+  Mova a caixa intacta desta imagem usando o x-twips e o y-twips.
+
+Rotina para que se mova uma imagem uns twips para a esquerda;
+Rotina para que se mova uma imagem para a esquerda uns twips:
+  Mova a imagem usando - os twips e 0.
+
+Rotina para que se mova uma imagem para a direita uns twips:
+  Mova a imagem usando os twips e 0.
+
+Rotina para que se mova uma imagem para uma localização:
+  Se a imagem for inexistente,
+    Retorne.
+  Calcule um
+      valor da diferença entre
+      a localização e
+      o canto superior esquerdo desta caixa desta imagem.
+  Mova a imagem usando o valor da diferença.
+
+Rotina para que se mova uma imagem para cima uns twips:
+  Mova a imagem usando 0 e - os twips.
+
+Rotina para que se redimensione cuidadosamente uma imagem usando um par de números racionais;
+Rotina para que se redimensione cuidadosamente uma imagem usando um par de números fracionários:
+  [Redimensiona sem perder qualidade]
+  Se a imagem for inexistente,
+    Retorne.
+  Mova
+      a caixa intacta desta imagem
+    usando
+      o par de números fracionários e
+      o canto superior esquerdo desta caixa desta imagem.
+  Redimensione
+      a caixa intacta desta imagem
+    usando
+      o par de números fracionários.
+  Redimensione a caixa desta imagem usando o par de números fracionários.
+  Se a coordenada X2 desta imagem for menor do que a coordenada X1 desta imagem,
+    Inverta horizontalmente o gpBitmap na imagem.
+  Se a coordenada Y2 desta imagem for menor do que a coordenada Y1 desta imagem,
+    Inverta verticalmente o gpBitmap na imagem.
+
+Rotina para que se redimensione cuidadosamente uma imagem usando um twip par de números:
+  [Redimensiona sem perder qualidade]
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua a caixa desta imagem para uma caixa.
+  Redimensione a caixa usando o twip par de números.
+  Faça uma par de números fracionários usando a caixa e a caixa desta imagem.
+  Redimensione cuidadosamente [sem perder qualidade] a imagem usando o par de números fracionários.
+
+Rotina para que se normalize uma imagem:
+  Se a imagem for inexistente,
+    Retorne.
+  Normalize a caixa desta imagem.
+  Normalize a caixa intacta desta imagem.
+
+Rotina para que se atribua uma imagem sobre uma localização;
+Rotina para que se centralize uma imagem sobre uma localização:
+  Se a imagem for inexistente,
+    Retorne.
+  Calcule um
+      valor da diferença entre
+      a localização e
+      o centro desta caixa desta imagem.
+  Arredonde
+      o valor da diferença
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a imagem usando o valor da diferença.
+
+Rotina para que se redimensione uma imagem para uma largura por uma altura:
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua a largura dividido pela quantidade de twips/pixel para uma largura
+      denominada
+      largura do pixel.
+  Atribua a altura dividido pela quantidade de twips/pixel para uma altura
+      denominada
+      altura do pixel.
+  Processe "gdiplus.dll" "GdipCreateBitmapFromScan0" com
+  \Cria um objeto Bitmap com base em uma matriz de bytes junto com informações de tamanho e formato.
+    A largura do pixel [width] e 
+    A altura do pixel [height] e
+    0 [stride] e
+    137224 [0x21808 = format = PixelFormat24bppRGB] e \ Consulte https://learn.microsoft.com/pt-br/windows/desktop/gdiplus/-gdiplus-constant-image-pixel-format-constants
+    0 [*scan0] e \
+    O endereçamento dum gpBitmap. [*bitmap]
+  \
+  Processe "gdiplus.dll" "GdipGetImageGraphicsContext" com
+  \ Cria um objeto Graphics associado para um objeto Image.
+    O gpBitmap [*image] e \ Consulte https://learn.microsoft.com/pt-br/windows/desktop/api/gdiplusheaders/nl-gdiplusheaders-image
+    O endereçamento dum gpGraphic. [**graphics]
+  Processe "gdiplus.dll" "GdipDrawImageRectRectI" com
+  \ Desenha uma imagem em um local especificado.
+   O gpGraphic [*graphics] e
+   O gpBitmap desta imagem [*image] \ https://learn.microsoft.com/pt-br/windows/desktop/api/gdiplusheaders/nl-gdiplusheaders-image
+   [*destPoints] e \ https://learn.microsoft.com/pt-br/windows/desktop/api/gdiplustypes/nl-gdiplustypes-point
+   0 [dstx] e 0 [dsty] [/*destPoints] [count] e
+   A largura do pixel [dstwidth ] e 
+   A altura do pixel [dstheight][/count] e
+   0 [srcx] e 0 [srcy] e
+   A largura deste gpBitmap desta imagem menos 1 [srcwidth] e
+   A altura deste gpBitmap desta imagem menos 1 [srcheight] e
+   2 [srcUnit = UnitPixel] e
+   nil [*imageAttributes] e \ https://learn.microsoft.com/pt-br/windows/desktop/api/gdiplusimageattributes/nl-gdiplusimageattributes-imageattributes
+   nil [callback] e 0. [*callbackData]
+  Processe "gdiplus.dll" "GdipDeleteGraphics" com
+  \ Exclui o objeto Graphics especificado.
+   O gpGraphic. [*graphics]
+  Destrua o gpBitmap desta imagem.
+  Atribua o gpBitmap ao gpBitmap desta imagem.
+  Ajuste a imagem (extraindo as caixas do gpBitmap).
+  Limpe os dados hexadecimais desta imagem.
+
+Rotina para que se rotacione um GpImage:
+  Se o GpImage for inexistente,
+    Retorne.
+  Processe "gdiplus.dll" "GdipImageRotateFlip" com
+  \ Gira e/ou inverte a imagem.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusheaders/nf-gdiplusheaders-image-rotateflip
+    O GpImage  [*image] e 1 [Rotate90FlipNone]. \ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/gdiplusimaging/ne-gdiplusimaging-rotatefliptype
+
+Rotina para que se rotacione um GpImage usando um ângulo:
+  \ o ângulo pode ser 0, 900, 1800, 2700
+  Se o GpImage for inexistente,
+    Retorne.
+  Atribua 0 [RotateNoneFlipNone] para um número.
+  Se o ângulo for 900,
+    Atribua 1 [Rotate90FlipNone] ao número.
+  Se o ângulo for 1800,
+    Atribua 2 [Rotate180FlipNone ] ao número.
+  Se o ângulo for 2700,
+    Atribua 3 [Rotate270FlipNone ] ao número.
+  Processe "gdiplus.dll" "GdipImageRotateFlip" com
+    O GpImage  [*image] e
+    O número.
+
+Rotina para que se rotacione uma imagem:
+  Se a imagem for inexistente,
+    Retorne.
+  Adicione 900 para o ângulo de rotação desta imagem.
+  Se o espelhamento horizontal desta imagem estiver ativo,
+    Adicione 1800 para o ângulo de rotação desta imagem.
+  Normalize o ângulo de rotação desta imagem.
+  Rotacione a caixa desta imagem.
+  Rotacione a caixa intacta desta imagem.
+  Atribua
+      o centro desta caixa desta imagem
+    para uma localização denominada
+      centro.
+  Atribua
+      o centro desta caixa intacta desta imagem
+    para uma localização denominada
+      segundo centro.
+  Atribua
+      a coordenada Y deste centro
+    menos
+      a coordenada Y desta segundo centro
+    mais
+      a coordenada X deste centro
+    ao
+      número X dum twip par de números.
+  Subtraia
+      a coordenada X deste segundo centro
+    desde
+      o número X deste twip par de números.
+  Atribua
+      a coordenada Y deste centro
+    mais
+      a coordenada X desta segundo centro
+    menos
+      a coordenada X deste centro
+    ao
+      número Y deste twip par de números.
+  Subtraia
+      a coordenada Y deste segundo centro
+    desde
+      o número Y deste twip par de números.
+  Mova a caixa intacta desta imagem usando o twip par de números.
+  Rotacione o gpBitmap desta imagem.
+
+Rotina para que se redimensione proporcionalmente uma imagem usando uma proporção;
+Rotina para que se redimensione proporcionalmente uma imagem usando uma fração:
+  Se a imagem for inexistente,
+    Retorne.
+  Se a fração for 1/1,
+    Retorne.
+  Redimensione proporcionalmente a caixa desta imagem usando a fração.
+  Redimensione proporcionalmente a caixa intacta desta imagem usando a fração.
+
+Rotina para que se redimensione proporcionalmente uma imagem para um percentual:
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua o percentual / 100 para uma fração.
+  Redimensione proporcionalmente a imagem usando a fração.
+
+Rotina para que se atribua um endereço completo para uma imagem;
+Rotina para que se carregue um endereço completo para uma imagem;
+Rotina para que se leia um endereço completo para uma imagem:
+  Leia o endereço completo para um trecho.
+  Se o erro do fluxo de entrada/saída não estiver em branco,
+    Esvazie a imagem;
+    Retorne.
+  Crie a imagem usando o trecho.
+
+Rotina para que se ajuste uma imagem (extraindo as caixas do gpBitmap):
+  Se a imagem for inexistente,
+    Retorne.
+  Atribua 0 à coordenada X1 desta caixa desta imagem.
+  Atribua 0 à coordenada Y1 desta caixa desta imagem.
+  Atribua
+      a largura deste gpBitmap desta imagem
+    menos
+      1
+    vezes
+      a quantidade de twips/pixel
+    à
+      coordenada X2 desta caixa desta imagem.
+  Atribua
+      a altura deste gpBitmap desta imagem
+    menos
+      1
+    vezes
+      a quantidade de twips/pixel
+    à
+      coordenada Y2 desta caixa desta imagem.
+  Atribua a caixa desta imagem à caixa intacta desta imagem.
+
+Função para que se atribua o GpRect dum GpImage para um GpRect:
+  Atribua 0 ao x deste GpRect.
+  Atribua 0 ao y deste GpRect.
+  Atribua a largura desta GpImage à largura deste GpRect.
+  Atribua a altura desta GpImage à altura deste GpRect.
+
+Rotina para que se desbloqueie um gpBitmap usando um BitmapData:
+  Processe "gdiplus.dll" "GdipBitmapUnlockBits" com
+  \ Desbloqueia uma parte deste bitmap que foi bloqueado anteriormente por uma chamada para GdipBitmapLockBits.
+    O gpBitmap [bitmap] e \ Ponteiro para o objeto Bitmap.
+    O endereçamento deste BitmapData. [lockedBitmapData]
+  \ Ponteiro para uma estrutura BitmapData que foi passada anteriormente para GdipBitmapLockBits.
+  \GdipBitmapLockBits e GdipBitmapUnlockBits devem ser usados como um par.
+  \Uma chamada para GdipBitmapLockBits estabelece um buffer temporário que você pode usar para ler ou gravar dados de pixel em um formato especificado.
+  \Depois de gravar no buffer temporário, uma chamada para GdipBitmapUnlockBits copia os dados de pixel do buffer para o objeto Bitmap.
+  \Se o formato de pixel do buffer temporário for diferente do formato de pixel do objeto Bitmap, os dados de pixel são convertidos apropriadamente.
+

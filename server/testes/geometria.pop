@@ -1,0 +1,2289 @@
+Rotina para que se escolha aleatoriamente uns twips entre uns segundo twips e uns terceiro twips; \ precisa de tudo isso? ***
+Rotina para que se escolha aleatoriamente um número entre uns twips e uns outros twips;
+Rotina para que se escolha aleatoriamente um número desde um segundo número para um terceiro número;
+Rotina para que se defina um número para algo entre um segundo número e um terceiro número;
+Rotina para que se escolha aleatoriamente um número entre um segundo número e um terceiro número:
+  Atribua o endereçamento desta semente aleatória para EAX.
+  \ atribui address of randseed para ecx
+  Decodifique $8BC8. \ mov ecx,eax
+  \ calcule zero based max
+  Decodifique $8B8510000000. \ mov eax,[ebp+16] \ o max
+  Decodifique $8B00. \ mov eax,[eax]
+  Decodifique $8B9D0C000000. \ mov ebx,[ebp+12] \ o min
+  Decodifique $2B03. \ sub eax,[ebx]
+  Decodifique $40. \ inc eax
+  \ ajuste randseed
+  Decodifique $691105840808. \ imul edx,[ecx],134775813
+  Decodifique $42. \ inc edx
+  Decodifique $8911. \ mov [ecx],edx
+  \ mul adjusted randseed for the zero based max
+  Decodifique $F7E2. \ mul edx
+  \ adicione o min para um zero base o número
+  Decodifique $0313. \ adicione edx,[ebx] o min
+  \ store o result
+  Decodifique $8B9D08000000. \ mov ebx,[ebp+08] \ o número aleatório
+  Decodifique $8913. \ mov [ebx],edx
+  Atribua o número aleatório ao número deste contexto.
+
+Função para que se determine se uma caixa é uma segunda caixa:
+  Se a coordenada X1 desta caixa não for a coordenada X1 desta segunda caixa,
+    Diga não.
+  Se a coordenada Y1 desta caixa não for a coordenada Y1 desta segunda caixa,
+    Diga não.
+  Se a coordenada X2 desta caixa não for a coordenada X2 desta segunda caixa,
+    Diga não.
+  Se a coordenada Y2 desta caixa não for a coordenada Y2 desta segunda caixa,
+    Diga não.
+  Diga sim.
+
+Função para que se determine se uma caixa está em uma segunda caixa;
+Função para que se determine se uma caixa está dentro de uma segunda caixa:
+  Se a coordenada X1 desta caixa for menor do que a coordenada X1 desta segunda caixa,
+    Diga não.
+  Se a coordenada Y1 desta caixa for menor do que a coordenada Y1 desta segunda caixa,
+    Diga não.
+  Se a coordenada X2 desta caixa for maior do que a coordenada X2 desta segunda caixa,
+    Diga não.
+  Se a coordenada Y2 desta caixa for maior do que a coordenada Y2 desta segunda caixa,
+    Diga não.
+  Diga sim.
+
+Função para que se determine se uma caixa está tocando uma segunda caixa:
+  Se a coordenada X2 desta segunda caixa for menor do que a coordenada X1 desta caixa,
+    Diga não.
+  Se a coordenada Y2 desta segunda caixa for menor do que a coordenada Y1 desta caixa,
+    Diga não.
+  Se a coordenada X1 desta segunda caixa for maior do que a coordenada X2 desta caixa,
+    Diga não.
+  Se a coordenada Y1 desta segunda caixa for maior do que a coordenada Y2 desta caixa,
+    Diga não.
+  Diga sim.
+
+Função para que se determine se uma localização está para o lado direito de uma caixa:
+  Se a coordenada X desta localização for maior do que a coordenada X2 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está acima de uma caixa:
+  Se a coordenada Y desta localização for menor do que a coordenada Y1 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está debaixo de uma caixa:
+  Se a coordenada Y desta localização for maior do que a coordenada Y2 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está para a esquerda de uma caixa;
+Função para que se determine se uma localização está para o lado esquerdo de uma caixa:
+  Se a coordenada X desta localização for menor do que a coordenada X1 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está para a direita ou para a esquerda de uma caixa;
+Função para que se determine se uma localização está para a esquerda ou para a direita de uma caixa;
+Função para que se determine se uma localização está no lado direito ou no lado esquerdo de uma caixa;
+Função para que se determine se uma localização está no lado esquerdo ou no lado direito de uma caixa:
+  Se a localização estiver ao lado esquerdo dessa caixa,
+    Diga sim.
+  Se a localização estiver ao lado direito dessa caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está dentro de uma caixa;
+Função para que se determine se uma localização está dentre uma caixa;
+Função para que se determine se uma localização está em uma caixa:
+  Se a coordenada X desta localização for menor do que a coordenada X1 desta caixa,
+    Diga não.
+  Se a coordenada Y desta localização for menor do que a coordenada Y1 desta caixa,
+    Diga não.
+  Se a coordenada X desta localização for maior do que a coordenada X2 desta caixa,
+    Diga não.
+  Se a coordenada Y desta localização for maior do que a coordenada Y2 desta caixa,
+    Diga não.
+  Diga sim.
+
+Função para que se determine se uma localização está tocando uma caixa:
+  Se a localização estiver na caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos acima de uma caixa:
+  Se a coordenada Y desta localização deste contexto for menor do que a coordenada Y1 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos acima de uma coordenada:
+  Se a coordenada Y desta localização deste contexto for menor do que a coordenada,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos em cima ou em baixo de uma caixa:
+  Se a coordenada Y desta localização deste contexto for menor do que a coordenada Y1 desta caixa,
+    Diga sim.
+  Se a coordenada Y desta localização deste contexto for maior do que a coordenada Y2 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos acima de uma localização:
+  Se a coordenada Y desta localização deste contexto for menor do que a coordenada Y desta localização,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos debaixo de uma caixa:
+  Se a coordenada Y desta localização deste contexto for maior do que a coordenada Y2 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos debaixo de uma coordenada:
+  Se a coordenada Y desta localização deste contexto for maior do que a coordenada,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos debaixo de uma localização:
+  Se a coordenada Y desta localização deste contexto for maior do que a coordenada Y desta localização,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos no lado esquerdo de uma caixa;
+Função para que se determine se estamos na esquerda de uma caixa;
+Função para que se determine se estamos lado esquerdo de uma caixa:
+  Se a coordenada X desta localização deste contexto for menor do que a coordenada X1 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos na esquerda ou na direita de uma caixa;
+Função para que se determine se estamos no lado esquerdo ou no lado direito de uma caixa:
+  Se a coordenada X desta localização deste contexto for menor do que a coordenada X1 desta caixa,
+    Diga sim.
+  Se a coordenada X desta localização deste contexto for maior do que a coordenada X2 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos em uma caixa:
+  Se a localização deste contexto estiver na caixa,
+    Diga sim.
+  Diga não.
+
+Rotina para que se expanda uma caixa para include uma segunda caixa:
+  Se a coordenada X1 desta segunda caixa for menor do que a coordenada X1 desta caixa,
+    Atribua a coordenada X1 desta segunda caixa à coordenada X1 desta caixa.
+  Se a coordenada Y1 desta segunda caixa for menor do que a coordenada Y1 desta caixa,
+    Atribua a coordenada Y1 desta segunda caixa à coordenada Y1 desta caixa.
+  Se a coordenada X2 desta segunda caixa for maior do que a coordenada X2 desta caixa,
+    Atribua a coordenada X2 desta segunda caixa à coordenada X2 desta caixa.
+  Se a coordenada Y2 desta segunda caixa for maior do que a coordenada Y2 desta caixa,
+    Atribua a coordenada Y2 desta segunda caixa à coordenada Y2 desta caixa.
+
+Rotina para que se imagine uma caixa com uma coordenada X1 e uma coordenada Y1 e uma coordenada X2 e uma coordenada Y2;
+Rotina para que se faça uma caixa com uma coordenada X1 e uma coordenada Y1 e uma coordenada X2 e uma coordenada Y2:
+  Atribua
+      a coordenada X1 e
+      a coordenada Y1 e
+      a coordenada X2 e
+      a coordenada Y2
+    ao
+      caixa.
+
+Rotina para que se imagine uma caixa com uma localização e uma segunda localização;
+Rotina para que se faça uma caixa com uma localização e uma segunda localização:
+  Atribua a localização e a segunda localização para a caixa.
+
+Rotina para que se imagine uma localização com uma coordenada X e uma coordenada Y;
+Rotina para que se faça uma localização com uma coordenada X e uma coordenada Y:
+  Atribua a coordenada X e a coordenada Y à localização.
+
+Rotina para que se imagine uma caixa arredondada com uma coordenada X1 e uma coordenada Y1 e uma coordenada X2 e uma coordenada Y2 e um raio;
+Rotina para que se faça uma caixa arredondada com uma coordenada X1 e uma coordenada Y1 e uma coordenada X2 e uma coordenada Y2 e um raio:
+  Atribua
+      a coordenada X1 e
+      a coordenada Y1 e
+      a coordenada X2 e
+      a coordenada Y2 e
+      o raio
+    para
+      a caixa arredondada.
+
+Rotina para que se imagine uma caixa arredondada com uma localização e uma segunda localização e um raio;
+Rotina para que se faça uma caixa arredondada com uma localização e uma segunda localização e um raio:
+  Atribua
+      a localização e
+      a segunda localização e
+      o raio
+    para
+      a caixa arredondada.
+
+Função para que se atribua o centro duma caixa para uma localização:
+  Atribua
+      a coordenada X1 desta caixa
+    mais
+      a coordenada X2 desta caixa
+    à
+      coordenada X desta localização.
+  Atribua
+      a coordenada Y1 desta caixa
+    mais
+      a coordenada Y2 desta caixa
+    à
+      coordenada Y desta localização.
+  Divida a localização por 2.
+
+Função para que se atribua o centro inferior duma caixa para uma localização:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização.
+  Atribua a coordenada Y2 desta caixa à coordenada Y desta localização.
+
+Rotina para que se imagine uma caixa arredondada desde uma caixa e um raio;
+Rotina para que se faça uma caixa arredondada desde uma caixa e um raio:
+  Atribua a caixa e o raio para a caixa arredondada.
+
+Rotina para que se imagine uma caixa arredondada uns twips por uns outros twips;
+Rotina para que se faça uma caixa arredondada uns twips por uns outros twips com um raio:
+  Atribua 0 à coordenada X1 desta caixa arredondada.
+  Atribua 0 à coordenada Y1 desta caixa arredondada.
+  Atribua os twips à coordenada X2 desta caixa arredondada.
+  Atribua os outros twips à coordenada Y2 desta caixa arredondada.
+  Atribua o raio ao raio desta caixa arredondada.
+
+Rotina para que se mova uma caixa usando uns x-twips e uns y-twips:
+  Adicione o x-twips para a coordenada X1 desta caixa.
+  Adicione o y-twips para a coordenada Y1 desta caixa.
+  Adicione o x-twips para a coordenada X2 desta caixa.
+  Adicione o y-twips para a coordenada Y2 desta caixa.
+
+Rotina para que se mova uma caixa uns twips para a esquerda;
+Rotina para que se mova uma caixa para a esquerda uns twips:
+  Mova a caixa usando - os twips e 0.
+
+Rotina para que se mova uma caixa para a esquerda para uma coordenada:
+  Mova a caixa para a esquerda a coordenada X1 desta caixa menos a coordenada.
+
+Rotina para que se mova uma caixa para o lado esquerdo de uma segunda caixa;
+Rotina para que se mova uma caixa para a esquerda de uma segunda caixa:
+  Mova
+      a caixa
+    para a esquerda
+      a coordenada X1 desta caixa
+    menos
+      a coordenada X1 desta segunda caixa.
+
+Rotina para que se mova uma caixa para o lado direito de uma segunda caixa:
+  Mova
+      a caixa
+    para a direita
+      a coordenada X2 desta segunda caixa
+    menos
+      a coordenada X2 desta caixa.
+
+Rotina para que se mova uma caixa uns twip para direita;
+Rotina para que se mova uma caixa uns twip para a direita;
+Rotina para que se mova uma caixa para a direita uns twips:
+  Mova a caixa usando os twips e 0.
+
+Rotina para que se mova uma caixa para o topo de uma segunda caixa:
+  Mova
+      a caixa
+    para cima
+      a coordenada Y1 desta caixa
+    menos
+      a coordenada Y1 desta segunda caixa.
+
+Rotina para que se mova uma caixa uns twips para cima;
+Rotina para que se mova uma caixa para cima uns twips:
+  Mova a caixa usando 0 e - os twips.
+
+Rotina para que se mova uma caixa uns twips para baixo;
+Rotina para que se mova uma caixa para baixo uns twips:
+  Mova a caixa usando 0 e os twips.
+
+Rotina para que se mova uma caixa usando um par de números:
+  Mova
+      a caixa
+    usando
+      o número X deste par de números e
+      o número Y deste par de números.
+
+Rotina para que se mova uma caixa para a base de uma segunda caixa:
+  Mova
+      a caixa
+    para baixo
+      a coordenada Y2 desta segunda caixa
+    menos
+      a coordenada Y2 desta caixa.
+
+Rotina para que se mova para o meio de uma caixa;
+Rotina para que se comece no meio de uma caixa;
+Rotina para que se mova para o centro de uma caixa;
+Rotina para que se comece no centro de uma caixa:
+  Atribua o centro desta caixa à localização deste contexto.
+
+Rotina para que se mova para o centro;
+Rotina para que se comece no centro:
+  Atribua o centro desta caixa deste contexto à localização deste contexto.
+
+Rotina para que se mova uma localização usando uns x-twips e uns y-twips:
+  Adicione o x-twips para a coordenada X desta localização.
+  Adicione o y-twips para a coordenada Y desta localização.
+
+Rotina para que se mova para uma localização:
+  Atribua a localização à localização deste contexto.
+
+Rotina para que se mova uma localização para uma segunda localização:
+  Atribua a segunda localização à localização.
+
+Rotina para que se mova uma localização usando um par de números:
+  Mova
+      a localização
+    usando
+      o número X deste par de números e
+      o número Y deste par de números.
+
+Rotina para que se mova uma localização uns twips para baixo;
+Rotina para que se mova uma localização para baixo uns twips:
+  Mova a localização usando 0 e os twips.
+
+Rotina para que se mova uma localização uns twips para a esquerda;
+Rotina para que se mova uma localização para a esquerda uns twips:
+  Mova a localização usando - os twips e 0.
+
+Rotina para que se mova uma localização para a direita uns twips;
+Rotina para que se mova uma localização uns twips para a direita:
+  Mova a localização usando os twips e 0.
+
+Rotina para que se mova uma localização uns twips para a direita e uns outros twips para baixo:
+  Adicione os twips para a coordenada X desta localização.
+  Adicione os outros twips para a coordenada Y desta localização.
+
+Rotina para que se mova uma localização uns twips para cima;
+Rotina para que se mova uma localização para cima uns twips:
+  Mova a localização usando 0 e - os twips.
+
+Função para que se determine se uma localização está fora de uma caixa:
+  Se a localização estiver dentro dessa caixa,
+    Diga não.
+  Diga sim.
+
+Função para que se determine se estamos fora de uma caixa:
+  Se a localização deste contexto estiver fora dessa caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos no lado direito de uma caixa:
+  Se a coordenada X desta localização deste contexto for maior do que a coordenada X2 desta caixa,
+    Diga sim.
+  Diga não.
+
+Rotina para que se enlarge uma caixa por uns twips:
+  Subtraia os twips desde o canto superior esquerdo desta caixa.
+  Adicione os twips para o canto inferior direito desta caixa.
+
+Rotina para que se encontre um região da tela usando uma malha quadriculada e uma localização:
+  Atribua
+      a coordenada X desta localização
+    dividido pelo
+      número X desta malha quadriculada
+    vezes
+      o número X desta malha quadriculada
+    à
+      coordenada X deste região da tela.
+  Atribua
+      a coordenada Y desta localização
+    dividido pelo
+      número Y desta malha quadriculada
+    vezes
+      o número Y desta malha quadriculada
+    à
+      coordenada Y deste região da tela.
+
+Rotina para que se recue uma caixa uns twips; \DESLOCA PRA DIREITA e PRA BAIXO
+Rotina para que se recue uma caixa usando uns twips:
+  \ outdent
+  Subtraia os twips desde a coordenada X1 desta caixa.
+  Subtraia os twips desde a coordenada Y1 desta caixa.
+  Adicione os twips para a coordenada X2 desta caixa.
+  Adicione os twips para a coordenada Y2 desta caixa.
+
+
+Rotina para que se obtenha um deslocamento vertical e um deslocamento horizontal usando uma orientação:
+  \ Deslocamento horizontal = distância/afastamento/distanciamento. 
+  \Deslocamento vertical = altitude/elevação/ascensão/subida
+  \ Consulte https://pt.wikipedia.org/wiki/Trigonometria_racional
+  \ A trigonometria racional evita o uso direto de funções transcendentes, como seno e cosseno, substituindo-as por seus equivalentes quadráticos.
+    Preserve a orientação.
+    Normalize a orientação.
+    Normalize a orientação original.
+    Se a orientação não for uniformemente divisível por 20,
+      Estime
+          o deslocamento vertical e
+          o deslocamento horizontal
+        usando
+          a orientação;
+      Retorne.
+    \ special cases
+    Se a orientação for 0,
+      Atribua -10000 ao deslocamento vertical;
+      Atribua -0 ao deslocamento horizontal;
+      Retorne. \ 0 graus
+    Se a orientação for 960,
+      Atribua 10000 ao deslocamento horizontal;
+      Atribua -0 ao deslocamento vertical;
+      Retorne. \ 90 graus
+    Se a orientação for 1920,
+      Atribua 10000 ao deslocamento vertical;
+      Atribua 0 ao deslocamento horizontal;
+      Retorne. \ 180 graus
+    Se a orientação for 2880,
+      Atribua -10000 ao deslocamento horizontal;
+      Atribua 0 ao deslocamento vertical;
+      Retorne. \ 270 graus
+    Se a orientação for 3840,
+      Produza o relatório de informações usando "orientação inválida";
+      Produza o relatório de informações usando a orientação;
+      Produza o relatório de informações usando a orientação original.
+    \ force it ao primeiro eighth do círculo
+    Obtenha o primeiro-oitavo equivalente dessa orientação.
+    \ encontre o primeiro eighth do círculo unsigned values
+    Se a orientação for 20,
+      Atribua 0327 ao deslocamento horizontal;
+      Atribua 9995 ao deslocamento vertical;
+      Pare. \ 1.875 degraus
+    Se a orientação for 40,
+      Atribua 0654 ao deslocamento horizontal;
+      Atribua 9979 ao deslocamento vertical;
+      Pare. \ 3.75 degraus
+    Se a orientação for 60,
+      Atribua 0980 ao deslocamento horizontal;
+      Atribua 9952 ao deslocamento vertical;
+      Pare. \ 5.625 degraus = 1/64 do caminho
+    Se a orientação for 80,
+      Atribua 1305 ao deslocamento horizontal;
+      Atribua 9914 ao deslocamento vertical;
+      Pare. \7.5 degraus
+    Se a orientação for 100,
+      Atribua 1629 ao deslocamento horizontal;
+      Atribua 9866 ao deslocamento vertical;
+      Pare. \ 9.375 degraus
+    Se a orientação for 120,
+      Atribua 1951 ao deslocamento horizontal;
+      Atribua 9808 ao deslocamento vertical;
+      Pare. \ 11.25 degraus = 2/64 do caminho
+    Se a orientação for 140,
+      Atribua 2271 ao deslocamento horizontal;
+      Atribua 9739 ao deslocamento vertical;
+      Pare. \ 13.125 degraus
+    Se a orientação for 160,
+      Atribua 2588 ao deslocamento horizontal;
+      Atribua 9659 ao deslocamento vertical;
+      Pare. \ 15 degraus
+    Se a orientação for 180,
+      Atribua 2903 ao deslocamento horizontal;
+      Atribua 9569 ao deslocamento vertical;
+      Pare. \ 16.875 degraus = 3/64 do caminho
+    Se a orientação for 200,
+      Atribua 3214 ao deslocamento horizontal;
+      Atribua 9469 ao deslocamento vertical;
+      Pare. \ 18.75 degraus
+    Se a orientação for 220,
+      Atribua 3523 ao deslocamento horizontal;
+      Atribua 9359 ao deslocamento vertical;
+      Pare. \ 20.625 degraus
+    Se a orientação for 240,
+      Atribua 3827 ao deslocamento horizontal;
+      Atribua 9239 ao deslocamento vertical;
+      Pare. \ 22.5 degraus = 4/64 do caminho
+    Se a orientação for 260,
+      Atribua 4127 ao deslocamento horizontal;
+      Atribua 9109 ao deslocamento vertical;
+      Pare. \ 24.375 degraus
+    Se a orientação for 280,
+      Atribua 4423 ao deslocamento horizontal;
+      Atribua 8969 ao deslocamento vertical;
+      Pare. \ 26.25 degraus
+    Se a orientação for 300,
+      Atribua 4714 ao deslocamento horizontal;
+      Atribua 8819 ao deslocamento vertical;
+      Pare. \ 28.125 degraus = 5/64 do caminho
+    Se a orientação for 320,
+      Atribua 5000 ao deslocamento horizontal;
+      Atribua 8660 ao deslocamento vertical;
+      Pare. \ 30 degraus
+    Se a orientação for 340,
+      Atribua 5281 ao deslocamento horizontal;
+      Atribua 8492 ao deslocamento vertical;
+      Pare. \ 31.875 degraus
+    Se a orientação for 360,
+      Atribua 5556 ao deslocamento horizontal;
+      Atribua 8315 ao deslocamento vertical;
+      Pare. \ 33.75 degraus = 6/64 do caminho
+    Se a orientação for 380,
+      Atribua 5825 ao deslocamento horizontal;
+      Atribua 8128 ao deslocamento vertical;
+      Pare. \ 35.625 degraus
+    Se a orientação for 400,
+      Atribua 6088 ao deslocamento horizontal;
+      Atribua 7934 ao deslocamento vertical;
+      Pare. \ 37.5 degraus
+    Se a orientação for 420,
+      Atribua 6344 ao deslocamento horizontal;
+      Atribua 7730 ao deslocamento vertical;
+      Pare. \ 39.375 degraus = 7/64 d o caminho
+    Se a orientação for 440,
+      Atribua 6593 ao deslocamento horizontal;
+      Atribua 7518 ao deslocamento vertical;
+      Pare. \ 41.25 degraus
+    Se a orientação for 460,
+      Atribua 6836 ao deslocamento horizontal;
+      Atribua 7299 ao deslocamento vertical;
+      Pare. \ 43.125 degraus
+    Se a orientação for 480,
+      Atribua 7071 ao deslocamento horizontal;
+      Atribua 7071 ao deslocamento vertical;
+      Pare. \ 45 degraus = 8/64 do caminho
+  Reitere.
+  \ ajuste por segunda eighths do círculo
+  Se a orientação original estiver entre 0 e 480,
+    Inverta o sinal desse deslocamento vertical;
+    Retorne. \ 1st eighth (12:00 para 1:30) -> negative
+  Se a orientação original estiver entre 480 e 960,
+    Permute o deslocamento horizontal com o deslocamento vertical;
+    Inverta o sinal desse deslocamento vertical;
+    Retorne. \ 2nd eighth (1:30 para 3:00)
+  Se a orientação original estiver entre 960 e 1440,
+    Permute o deslocamento horizontal com o deslocamento vertical;
+    Retorne. \ 3rd eighth (3:00 para 4:30)
+  Se a orientação original estiver entre 1440 e 1920,
+    Retorne. \ 4th eighth (4:30 para 6:00)
+  Se a orientação original estiver entre 1920 e 2400,
+    Inverta o sinal desse deslocamento horizontal;
+    Retorne. \ 5th eighth (6:00 para 7:30)
+  Se a orientação original estiver entre 2400 e 2880,
+    Permute o deslocamento horizontal com o deslocamento vertical;
+    Inverta o sinal desse deslocamento horizontal;
+    Retorne. \ 6th eighth (7:30 para 9:00)
+  Se a orientação original estiver entre 2880 e 3360,
+    Permute o deslocamento horizontal com o deslocamento vertical;
+    Inverta o sinal desse deslocamento horizontal;
+    Inverta o sinal desse deslocamento vertical;
+    Retorne. \ 7th eighth (9:00 para 10:30)
+  Se a orientação original estiver entre 3360 e 3840,
+    Inverta o sinal desse deslocamento horizontal;
+    Inverta o sinal desse deslocamento vertical;
+    Retorne. \ 8th eighth (10:30 para 12:00)
+
+Rotina para que se escolha uma orientação aleatória:
+  Escolha aleatoriamente uma orientação.
+
+
+
+Rotina para que se estime um deslocamento vertical e um deslocamento horizontal usando uma orientação:
+  Atribua a orientação para uma inferior orientação.
+  Arredonde a inferior orientação para baixo usando o múltiplo imediato de 20.
+  Obtenha um
+      inferior deslocamento vertical e um
+      inferior deslocamento horizontal
+    usando
+      a inferior orientação.
+  Atribua a orientação para um superior orientação.
+  Arredonde o superior orientação para cima usando o múltiplo imediato de 20.
+  Obtenha um
+      superior deslocamento vertical e um
+      superior deslocamento horizontal
+    usando
+      o superior orientação.
+  Atribua
+      o inferior deslocamento vertical
+    mais
+      o superior deslocamento vertical
+    dividido por
+      2
+    ao
+      deslocamento vertical.
+  Atribua
+      o inferior deslocamento horizontal
+    mais
+      o superior deslocamento horizontal
+    dividido por
+      2
+    ao
+      deslocamento horizontal.
+
+Rotina para que se obtenha o primeiro-oitavo equivalente de uma orientação:
+  Obtenha o primeiro-quarto equivalente dessa orientação.
+  Se a orientação for menor do que 480,
+    Retorne.
+  Subtraia 960 desde a orientação.
+  Remova o sinal desde a orientação.
+
+Rotina para que se obtenha o primeiro-quarto equivalente de uma orientação:
+    Se a orientação for menor do que 960,
+      Retorne.
+    Subtraia 960 desde a orientação.
+  Reitere.
+
+Rotina para que se adicione uns twips horizontais e uns twips verticais para a localização atual:
+  Adicione
+      os twips horizontais
+    para
+      a coordenada X desta localização deste contexto.
+  Adicione
+      os twips verticais
+    para
+      a coordenada Y desta localização deste contexto.
+  \ linha, traço, risco, traçado, listra
+
+Rotina para que se adicione uma localização para um figura geométrica:
+  Acrescente a localização para a figura geométrica.
+
+Rotina para que se ajuste uma caixa usando um número e um segundo número e um terceiro número e um quarto número:
+  Adicione o número para a coordenada X1 desta caixa.
+  Adicione o segundo número para a coordenada Y1 desta caixa.
+  Adicione o terceiro número para a coordenada X2 desta caixa.
+  Adicione o quarto número para a coordenada Y2 desta caixa.
+
+Rotina para que se centralize uma caixa sob a base de uma segunda caixa:
+  Centralize a caixa na segunda caixa (horizontalmente).
+  Atribua a altura desta caixa para uma altura.
+  Atribua a coordenada Y2 desta segunda caixa à coordenada Y2 desta caixa.
+  Atribua
+      a coordenada Y2 desta caixa
+    menos
+      a altura
+    à
+      coordenada Y1 desta caixa.
+
+Rotina para que se centralize uma caixa em uma segunda caixa (horizontalmente):
+  Atribua a coordenada X deste centro desta segunda caixa menos a coordenada X
+      deste centro desta caixa para um
+      número.
+  Arredonde
+      o número
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a caixa usando o número e 0.
+
+Rotina para que se centralize uma caixa em uma segunda caixa (verticalmente):
+  Atribua a coordenada Y deste centro desta segunda caixa menos a coordenada Y
+      deste centro desta caixa para um
+      número.
+  Arredonde
+      o número
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a caixa usando 0 e o número.
+
+Rotina para que se centralize um ponto circular sobre a localização atual:
+  Centralize o ponto circular sobre a localização deste contexto.
+
+Rotina para que se centralize uma localização em uma caixa (horizontalmente):
+  Atribua a coordenada X deste centro desta caixa menos a coordenada X desta
+      localização para um
+      número.
+  Arredonde
+      o número
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a localização usando o número e 0.
+
+Rotina para que se centralize uma localização em uma caixa (verticalmente):
+  Atribua a coordenada Y deste centro desta caixa menos a coordenada Y desta
+      localização para um
+      número.
+  Arredonde
+      o número
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a localização usando 0 e o número.
+
+Rotina para que se modifique uma caixa arredondada usando um raio;
+Rotina para que se altere uma caixa arredondada usando um raio;
+Rotina para que se mude uma caixa arredondada usando um raio:
+  Atribua o raio ao raio desta caixa arredondada.
+
+Rotina para que se limpe uma caixa:
+  Atribua
+      0 e
+      0 e
+      0 e
+      0
+    para
+      a caixa. \ usado no editor de documentos. Redefine as coordenadas da caixa
+
+Rotina para que se converta um lParam para uma localização:
+  Subdivida o lParam em uma word e uma segunda word.
+  Atribua a word à coordenada Y desta localização.
+  Atribua a segunda word à coordenada X desta localização.
+  Multiplique a localização pela quantidade de twips/pixel .
+
+Rotina para que se crie um terminal em uma caixa:
+  Aloque memória para o terminal.
+  Atribua a caixa à caixa deste terminal.
+  Atribua a cor verde à cor de saída deste terminal.
+  Atribua a cor verde claríssimo à cor de entrada deste terminal.
+
+Rotina para que se crie um vértice usando uma localização:
+  Aloque memória para o vértice.
+  Atribua a localização à localização deste vértice.
+
+Rotina para que se crie um vértice usando uma coordenada X e uma coordenada Y:
+  Aloque memória para o vértice.
+  Atribua a coordenada X à ordenada X deste vértice.
+  Atribua a coordenada Y à ordenada Y deste vértice.
+
+Rotina para que se produza o relatório de bugs usando uma caixa;
+Rotina para que se produza o relatório de falhas usando uma caixa;
+Rotina para que se produza o relatório de panes usando uma caixa;
+Rotina para que se produza o relatório de erros usando uma caixa;
+Rotina para que se produza o relatório de informações usando uma caixa:
+  Limpe um relatório.
+  Acrescente "Coordenada esquerda = " para o relatório.
+  Acrescente a coordenada X1 desta caixa para o relatório.
+  Acrescente ", Coordenada superior = " para o relatório.
+  Acrescente a coordenada Y1 desta caixa para o relatório.
+  Acrescente ", Coordenada direita = " para o relatório.
+  Acrescente a coordenada X2 desta caixa para o relatório.
+  Acrescente ", Coordenada inferior = " para o relatório.
+  Acrescente a coordenada Y2 desta caixa para o relatório.
+  Produza o relatório de informações usando o relatório.
+
+Função para que se determine se a localização atual está em cima ou em baixo de uma caixa:
+  Se a localização deste contexto estiver em cima ou em baixo dessa caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se a localização atual está no lado esquerdo ou no lado direito de uma caixa:
+  Se a localização deste contexto estiver no lado esquerdo ou no lado direito dessa caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se a localização atual está para o lado direito de uma caixa:
+  Se a coordenada X desta localização deste contexto for maior do que a coordenada X2 desta caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se a localização atual está dentre uns twips em uma caixa:
+  Se a localização deste contexto estiver dentre os twips em a caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está em cima ou em baixo de uma caixa:
+  Se a localização estiver acima dessa caixa,
+    Diga sim.
+  Se a localização estiver debaixo dessa caixa,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está em uma caixa arredondada:
+  Preserve a caixa arredondada.
+  Adicione
+      a quantidade de twips/pixel
+    para
+      a canto inferior direito desta caixa arredondada.
+  Atribua o raio desta caixa arredondada vezes 2 para um diâmetro.
+  Atribua o diâmetro para uma largura.
+  Atribua o diâmetro para uma altura.
+  Processe "gdi32.dll" "CreateRoundRectRgn"
+  com
+  \ Cria uma região retangular com cantos arredondados.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-createroundrectrgn
+      A coordenada X1 desta caixa arredondada [x1] e
+      A coordenada Y1 desta caixa arredondada [y2] e
+      A coordenada X2 desta caixa arredondada [x2] e
+      A coordenada Y2 desta caixa arredondada [y2] e
+      A largura [w] e
+      A altura [h]
+    Retornando
+      uma hRgn.
+  Processe "gdi32.dll" "PtInRegion"
+  com
+  \ Determina se um ponto está dentro de uma região
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-ptinregion
+      O hRgn [hrgn] e
+      A coordenada X desta localização [x] e
+      A coordenada Y desta localização [y]
+    Retornando
+      um número.
+  Processe "gdi32.dll" "DeleteObject" com
+  \ Exclui a região
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-deleteobject
+    O hRgn. [ho]
+  Se o número for 0,
+    Diga não.
+  Diga sim.
+  \Função para que se determine se uma localização está na parte de cima de uma caixa:
+  \Função para que se determine se uma localização está em cima de uma caixa:
+  \Função para que se determine se uma localização está acima de uma caixa:
+  \Função para que se determine se uma localização está numa caixa;
+
+Função para que se determine se uma localização está sobre uma caixa:
+  \ dentro de uma caixa
+  Atribua a caixa para uma segunda caixa.
+  Atribua 2 vezes a quantidade de twips/pixel para um número.
+  Recue a segunda caixa usando o número.
+  Se a localização não estiver na segunda caixa,
+    Diga não.
+  Atribua a caixa para um terceira caixa.
+  Atribua 3 vezes a quantidade de twips/pixel para um segundo número.
+  Encolha a terceira caixa usando o segundo número.
+  Se a localização estiver na terceira caixa,
+    Diga não.
+  Diga sim.
+
+Função para que se determine se uma localização está sobre uma caixa arredondada:
+  Atribua a caixa arredondada para uma segunda caixa arredondada.
+  Atribua 2 vezes a quantidade de twips/pixel para um número.
+  Recue a segunda caixa arredondada usando o número.
+  Se a localização não estiver na segunda caixa arredondada,
+    Diga não.
+  Atribua a caixa arredondada para uma terceira caixa arredondada.
+  Atribua 3 vezes a quantidade de twips/pixel para um segundo número.
+  Encolha a terceira caixa arredondada usando o segundo número.
+  Se a localização estiver na terceira caixa arredondada,
+    Diga não.
+  Diga sim.
+
+Função para que se determine se uma localização está dentre uma malha quadriculada em uma segunda localização:
+  Calcule um valor da diferença entre a segunda localização e a localização.
+  Se o valor da diferença está dentre a malha quadriculada,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está dentre uns twips em uma segunda localização:
+  Atribua os twips e os twips para uma malha quadriculada.
+  Se a localização estiver dentre a malha quadriculada em a segunda localização,
+    Diga sim.
+  Diga não.
+
+Função para que se determine se uma localização está dentre uns twips em uma caixa:
+  Preserve a caixa.
+  Recue a caixa usando os twips.
+  Se a localização estiver dentre a caixa [recuada],
+    Diga sim.
+  Diga não.
+
+Função para que se determine se estamos dentre uns twips em uma caixa:
+  Se a localização deste contexto estiver dentre os twips em a caixa,
+    Diga sim.
+  Diga não.
+
+Rotina para que se apague o interior de uma caixa;
+Rotina para que se limpe dentro de uma caixa:
+  Pinte a caixa com a cor preta e a cor branca.
+
+Rotina para que se encontre uma alternativa usando uma localização:
+  Comece com nada na alternativa.
+  Itere.
+    Obtenha a [primeiro/próximo] alternativa desde as alternativas.
+    Se o alternativa estiver sumido do mapa,
+      Retorne.
+    Se a localização estiver na caixa desta alternativa,
+      Pare.
+  Reitere.
+
+Rotina para que se obtenha um centro localização usando uma localização e uma segunda localização:
+  Atribua a localização e a segunda localização para uma linha reta.
+  Atribua o centro desta linha reta ao centro. \ calculated field
+
+Rotina para que se obtenha uma distância entre uma localização e uma segunda localização (valores aproximados):
+  Atribua a coordenada X desta localização menos a coordenada X desta segunda
+      localização para um
+      número.
+  Remova o sinal desde o número.
+  Atribua a coordenada Y desta localização menos a coordenada Y desta segunda
+      localização para um
+      segundo número.
+  Remova o sinal desde o segundo número.
+  Atribua o número vezes o número à distância.
+  Adicione o segundo número vezes o segundo número para a distância.
+  Encontre uma raiz quadrada em a distância.
+  Atribua o raiz quadrada à distância.
+  Se a tecla D/d estiver sendo pressionada,
+    Produza o relatório de informações usando a distância.
+
+Rotina para que se obtenha uma distância entre uma localização e uma segunda localização (trigonometria racional):
+  Atribua a coordenada X desta localização menos a coordenada X desta segunda
+      localização para um
+      número.
+  Remova o sinal desde o número.
+  Atribua a coordenada Y desta localização menos a coordenada Y desta segunda
+      localização para um
+      segundo número.
+  Remova o sinal desde o segundo número.
+  Atribua o número à distância.
+  Se o segundo número for maior do que o número,
+    Atribua o segundo número à distância.
+
+Rotina para que se imagine uma caixa uns twips por uns outros twips;
+Rotina para que se faça uma caixa uns twips por uns outros twips:
+  Atribua 0 à coordenada X1 desta caixa.
+  Atribua 0 à coordenada Y1 desta caixa.
+  Atribua os twips à coordenada X2 desta caixa.
+  Atribua os outros twips à coordenada Y2 desta caixa.
+  \Rotina para que se imagine uma caixa uns twips por uns outros twips;
+  \Rotina para que se faça uma caixa uns twips por uns outros twips:
+  \Atribua 0 e 0 e os outros twips e os twips para a caixa.
+
+Rotina para que se imagine uma caixa uns twips menores do que uma segunda caixa;
+Rotina para que se faça uma caixa uns twips menores do que uma segunda caixa:
+  Atribua a segunda caixa para a caixa.
+  Encolha a caixa pelos twips dividido por 2.
+
+Rotina para que se imagine uma caixa uns twips menores do que uma segunda caixa sobre cada lado:
+  Atribua a segunda caixa para a caixa.
+  Encolha a caixa pelos twips.
+
+Rotina para que se imagine um ponto circular aproximadamente uns twips em largura;
+Rotina para que se faça um ponto circular aproximadamente uns twips em largura;
+Rotina para que se faça um ponto circular uns twips em largura:
+  Faça o ponto circular os twips pelo twips.
+
+Rotina para que se imagine um ponto circular entre uns twips e uns outros twips em largura;
+Rotina para que se faça um ponto circular entre uns twips e uns outros twips em largura:
+  Escolha aleatoriamente uns terceiro twips entre os twips e os outros twips.
+  Faça o ponto circular o terceiro twips em largura.
+
+Rotina para que se intersect uma caixa com uma segunda caixa usando uma terceira caixa:
+  \ caixas does not touch
+  Limpe a terceira caixa.
+  Se a coordenada X1 desta caixa for maior do que a coordenada X2 desta segunda caixa,
+    Retorne.
+  Se a coordenada Y1 desta caixa for maior do que a coordenada Y2 desta segunda caixa,
+    Retorne.
+  Se a coordenada X2 desta caixa for menor do que a coordenada X1 desta segunda caixa,
+    Retorne.
+  Se a coordenada Y2 desta caixa for menor do que a coordenada Y1 desta segunda caixa,
+    Retorne.
+  \ caixas touch
+  Atribua a caixa para a terceira caixa.
+  Se a coordenada X1 desta caixa for menor do que a coordenada X1 desta segunda caixa,
+    Atribua
+        a coordenada X1 desta segunda caixa
+      à
+        coordenada X1 desta terceira caixa.
+  Se a coordenada Y1 desta caixa for menor do que a coordenada Y1 desta segunda caixa,
+    Atribua
+        a coordenada Y1 desta segunda caixa
+      à
+        coordenada Y1 desta terceira caixa.
+  Se a coordenada X2 desta caixa for maior do que a coordenada X2 desta segunda caixa,
+    Atribua
+        a coordenada X2 desta segunda caixa
+      à
+        coordenada X2 desta terceira caixa.
+  Se a coordenada Y2 desta caixa for maior do que a coordenada Y2 desta segunda caixa,
+    Atribua
+        a coordenada Y2 desta segunda caixa
+      à
+        coordenada Y2 desta terceira caixa.
+
+Rotina para que se delimite uma caixa para uma segunda caixa:
+  Delimite
+      a coordenada X1 desta caixa
+    para
+      a coordenada X1 desta segunda caixa e
+      a coordenada X2 desta segunda caixa.
+  Delimite
+      a coordenada Y1 desta caixa
+    para
+      a coordenada Y1 desta segunda caixa e
+      a coordenada Y2 desta segunda caixa.
+  Delimite
+      a coordenada X2 desta caixa
+    para
+      a coordenada X1 desta segunda caixa e
+      a coordenada X2 desta segunda caixa.
+  Delimite
+      a coordenada Y2 desta caixa
+    para
+      a coordenada Y1 desta segunda caixa e
+      a coordenada Y2 desta segunda caixa.
+
+Rotina para que se delimite uma localização para uma caixa:
+  Se a coordenada X desta localização for menor do que a coordenada X1 desta caixa,
+    Atribua a coordenada X1 desta caixa à coordenada X desta localização.
+  Se a coordenada Y desta localização for menor do que a coordenada Y1 desta caixa,
+    Atribua a coordenada Y1 desta caixa à coordenada Y desta localização.
+  Se a coordenada X desta localização for maior do que a coordenada X2 desta caixa,
+    Atribua a coordenada X2 desta caixa à coordenada X desta localização.
+  Se a coordenada Y desta localização for maior do que a coordenada Y2 desta caixa,
+    Atribua a coordenada Y2 desta caixa à coordenada Y desta localização.
+
+Rotina para que se localize uma caixa usando um par de números:
+  Preserve o par de números.
+  Inverta o sinal desse par de números.
+  Mova a caixa usando o par de números.
+
+Rotina para que se localize uma localização usando um par de números:
+  Preserve o par de números.
+  Inverta o sinal desse par de números.
+  Mova a localização usando o par de números.
+
+Rotina para que se faça um par de números racionais usando uma caixa e uma segunda caixa;
+Rotina para que se faça uma par de números fracionários usando uma caixa e uma segunda caixa:
+  Atribua
+      o x-extent desta caixa
+    à
+      numerador desta fração deste par de números fracionários.
+  Atribua
+      o x-extent desta segunda caixa
+    ao
+      denominador desta fração deste par de números fracionários.
+  Atribua
+      o y-extent desta caixa
+    ao
+      numerador desta segunda fração deste par de números fracionários.
+  Atribua
+      o y-extent desta segunda caixa
+    ao
+      denominador desta segunda fração deste par de números fracionários.
+
+Rotina para que se cubra internamente uma caixa:
+  Crie uma hRgn usando a caixa.
+  Cubra internamente o hRgn.
+  Destrua o hRgn.
+
+Rotina para que se cubra internamente uma caixa arredondada:
+  Crie uma hRgn usando a caixa arredondada.
+  Cubra internamente o hRgn.
+  Destrua o hRgn.
+
+Rotina para que se cubra somente dentro de uma caixa:
+  Exponha tudo.
+  Cubra internamente a caixa.
+
+Rotina para que se cubra somente dentro de uma caixa arredondada:
+  Exponha tudo.
+  Cubra internamente a caixa arredondada.
+
+Rotina para que se cubra somente fora de uma caixa:
+  Exponha tudo.
+  Cubra externamente a caixa.
+
+Rotina para que se cubra somente fora de uma caixa arredondada:
+  Exponha tudo.
+  Cubra externamente a caixa arredondada.
+
+Rotina para que se cubra externamente uma caixa:
+  Crie uma hRgn usando a caixa.
+  Cubra externamente o hRgn.
+  Destrua o hRgn.
+
+Rotina para que se cubra externamente uma caixa arredondada:
+  Crie uma hRgn usando a caixa arredondada.
+  Cubra externamente o hRgn.
+  Destrua o hRgn.
+
+Rotina para que se normalize uma caixa:
+  Se a coordenada X2 desta caixa for menor do que a coordenada X1 desta caixa,
+    Permute a coordenada X1 desta caixa com a coordenada X2 desta caixa.
+  Se a coordenada Y2 desta caixa for menor do que a coordenada Y1 desta caixa,
+    Permute a coordenada Y1 desta caixa com a coordenada Y2 desta caixa.
+
+Rotina para que se atribua um terminal no meio de uma caixa;
+Rotina para que se centralize um terminal em uma caixa:
+  Preserve a caixa.
+  Encolha a caixa 24 px. \ Sugestão: Mova a caixa 24 px para a direita.
+  Atribua a caixa à caixa deste terminal.
+
+Rotina para que se atualize a tela usando uma caixa:
+  Processe "gdi32.dll" "BitBlt" com
+  \ Executa uma transferência de bloco de bits dos dados de cor
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-bitblt
+    O canvas da tela [hdc] e
+    A coordenada X1 desta caixa [x] e
+    A coordenada Y1 desta caixa [y] e
+    A largura desta caixa [cx] e
+    A altura desta caixa [cy] e
+    O contexto do dispositivo atual [hdcSrc] e
+    A coordenada X1 desta caixa [x1] e
+    A coordenada Y1 desta caixa [y1] e
+   13369376. [rop = SRCCOPY]
+
+Rotina para que se redimensione uma caixa usando um par de números racionais;
+Rotina para que se redimensione uma caixa usando uma par de números fracionários:
+  Atribua o x-extent desta caixa para uma largura.
+  Atribua o y-extent desta caixa para uma altura.
+  Redimensione proporcionalmente
+      a largura
+    usando
+      a fração deste par de números fracionários.
+  Redimensione proporcionalmente
+      a altura
+    usando
+      a segunda fração deste par de números fracionários.
+  Atribua
+      a coordenada X1 desta caixa
+    mais
+      a largura
+    à
+      coordenada X2 desta caixa.
+  Atribua a coordenada Y1 desta caixa mais a altura à coordenada Y2 desta caixa.
+
+Rotina para que se redimensione uma caixa usando um twip par de números:
+  Adicione
+      o número X deste twip par de números
+    para
+      a coordenada X2 desta caixa.
+  Adicione
+      o número Y deste twip par de números
+    para
+      a coordenada Y2 desta caixa.
+
+Rotina para que se rotacione uma caixa:
+  Atribua o centro desta caixa para uma localização denominada centro.
+  Atribua a caixa para uma segunda caixa.
+  Atribua
+      a coordenada Y deste centro
+    menos
+      a coordenada Y1 desta segunda caixa
+    mais
+      a coordenada X deste centro
+    à
+      coordenada X2 desta caixa.
+  Atribua
+      a coordenada X1 desta segunda caixa
+    menos
+      a coordenada X deste centro
+    mais
+      a coordenada Y deste centro
+    à
+      coordenada Y1 desta caixa.
+  Atribua
+      a coordenada Y deste centro
+    menos
+      a coordenada Y2 desta segunda caixa
+    mais
+      a coordenada X deste centro
+    à
+      coordenada X1 desta caixa.
+  Atribua
+      a coordenada X2 desta segunda caixa
+    menos
+      a coordenada X deste centro
+    mais
+      a coordenada Y deste centro
+    à
+      coordenada Y2 desta caixa.
+
+Rotina para que se rotacione uma localização em direção para uma localização denominada centro:
+  Atribua a localização para uma segunda localização.
+  Atribua
+      a coordenada Y deste centro
+    menos
+      a coordenada Y desta segunda localização
+    mais
+      a coordenada X deste centro
+    à
+      coordenada X desta localização.
+  Atribua
+      a coordenada X desta segunda localização
+    menos
+      a coordenada X deste centro
+    mais
+      a coordenada Y deste centro
+    à
+      coordenada Y desta localização.
+
+Rotina para que se redimensione proporcionalmente uma caixa usando uma proporção;
+Rotina para que se redimensione proporcionalmente uma caixa usando uma fração:
+  Se a fração for 1/1,
+    Retorne.
+  Redimensione proporcionalmente a coordenada X1 desta caixa usando a fração.
+  Redimensione proporcionalmente a coordenada Y1 desta caixa usando a fração.
+  Redimensione proporcionalmente a coordenada X2 desta caixa usando a fração.
+  Redimensione proporcionalmente a coordenada Y2 desta caixa usando a fração.
+
+Rotina para que se redimensione proporcionalmente uma caixa para um percentual:
+  Atribua o percentual / 100 para uma fração.
+  Redimensione proporcionalmente a caixa usando a fração.
+
+Rotina para que se redimensione proporcionalmente uma fração usando uma segunda fração;
+Rotina para que se multiplique uma fração por uma segunda fração:
+  Multiplique o numerador desta fração pelo numerador desta segunda fração.
+  Multiplique o denominador desta fração pelo denominador desta segunda fração.
+  Reduza a fração.
+
+Rotina para que se redimensione proporcionalmente um par de números usando uma proporção;
+Rotina para que se redimensione proporcionalmente um par de números usando uma fração:
+  Se a fração for 1/1,
+    Retorne.
+  Redimensione proporcionalmente
+      o número X deste par de números
+    usando
+      a fração.
+  Redimensione proporcionalmente
+      o número Y deste par de números
+    usando
+      a fração.
+
+Rotina para que se redimensione proporcionalmente um par de números usando um par de números racionais;
+Rotina para que se redimensione proporcionalmente um par de números usando uma par de números fracionários:
+  Redimensione proporcionalmente
+      o número X deste par de números
+    usando
+      a fração deste par de números fracionários.
+  Redimensione proporcionalmente
+      o número Y deste par de números
+    usando
+      a segunda fração deste par de números fracionários.
+
+Rotina para que se redimensione proporcionalmente um par de números para um percentual:
+  Atribua o percentual / 100 para uma fração.
+  Redimensione proporcionalmente o par de números usando a fração.
+
+Rotina para que se redimensione proporcionalmente uma caixa arredondada usando uma proporção;
+Rotina para que se redimensione proporcionalmente uma caixa arredondada usando uma fração:
+  Se a fração for 1/1,
+    Retorne.
+  Redimensione proporcionalmente
+      a caixa arredondada tal como uma caixa
+    usando
+      a fração.
+  Redimensione proporcionalmente o raio desta caixa arredondada usando a fração.
+
+Rotina para que se redimensione proporcionalmente uma caixa arredondada para um percentual:
+  Atribua o percentual / 100 para uma fração.
+  Redimensione proporcionalmente a caixa arredondada usando a fração.
+
+Rotina para que se redimensione proporcionalmente um vértice usando uma proporção;
+Rotina para que se redimensione proporcionalmente um vértice usando uma fração:
+  Se o vértice for inexistente,
+    Retorne.
+  Se a fração for 1/1,
+    Retorne.
+  Redimensione proporcionalmente a ordenada X deste vértice usando a fração.
+  Redimensione proporcionalmente a ordenada Y deste vértice usando a fração.
+
+Rotina para que se defina o drawing origem para uma localização:
+  Processe "gdi32.dll" "GetDeviceCaps"
+  com
+  \ Recupera informações específicas do dispositivo para o dispositivo especificado.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-getdevicecaps
+      O contexto do dispositivo atual [hdc] e
+      112 [index = PhysicalOffsetX]
+    Retornando
+      o número X dum par de números.
+  Processe "gdi32.dll" "GetDeviceCaps" com
+      O contexto do dispositivo atual e
+      113 [PhysicalOffsetY ]
+    Retornando
+      o número Y deste par de números.
+  Inverta o sinal desse par de números.
+  Se o contexto do dispositivo atual não for a área de impressão,
+    Limpe o par de números.
+  Processe "gdi32.dll" "SetViewportOrgEx" com
+  \ Especifica qual ponto do dispositivo mapeia para a origem da janela (0,0).
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setviewportorgex
+    O contexto do dispositivo atual [hdc] e
+    O número X deste par de números [x] e
+    O número Y deste par de números  [y] e
+    nil. [lppt]
+  \ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/windef/ns-windef-point
+  Preserve a localização.
+  Processe "gdi32.dll" "LPtoDP" com
+  \ Converte coordenadas lógicas em coordenadas de dispositivo.
+  \ https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-lptodp
+    O contexto do dispositivo atual [hDC] e
+    O endereçamento desta localização [lppt] e
+    1. [c]
+  Processe "gdi32.dll" "SetViewportOrgEx" com
+      O contexto do dispositivo atual e
+      A coordenada X desta localização e
+      A coordenada Y desta localização e
+      nil.
+
+Rotina para que se encolha uma caixa por uns twips; \indent
+Rotina para que se encolha uma caixa uns twips;
+Rotina para que se encolha uma caixa uns twips sobre cada lado;
+Rotina para que se encolha uma caixa usando uns twips:
+  Adicione os twips para a coordenada X1 desta caixa.
+  Adicione os twips para a coordenada Y1 desta caixa.
+  Subtraia os twips desde a coordenada X2 desta caixa.
+  Subtraia os twips desde a coordenada Y2 desta caixa.
+
+Rotina para que se comece aleatoriamente em uma caixa:
+  Escolha aleatoriamente a localização deste contexto na caixa.
+
+Rotina para que se comece sob o canto inferior esquerdo de uma caixa voltada para o east:
+  Atribua o canto inferior esquerdo desta caixa à localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o canto inferior esquerdo de uma caixa voltada para o north:
+  Atribua o canto inferior esquerdo desta caixa à localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o canto inferior esquerdo de uma caixa voltada para o south:
+  Atribua o canto inferior esquerdo desta caixa à localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o canto inferior esquerdo de uma caixa voltada para o west:
+  Atribua o canto inferior esquerdo desta caixa à localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob o canto base direito de uma caixa voltada para o east:
+  Atribua o canto inferior direito desta caixa à localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o canto base direito de uma caixa voltada para o north:
+  Atribua o canto inferior direito desta caixa à localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o canto base direito de uma caixa voltada para o south:
+  Atribua o canto inferior direito desta caixa à localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o canto base direito de uma caixa voltada para o west:
+  Atribua o canto inferior direito desta caixa à localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob o meio da base de uma caixa;
+Rotina para que se comece no meio da base de uma caixa;
+Rotina para que se comece sob o centro da base de uma caixa;
+Rotina para que se comece no centro da base de uma caixa:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y2 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+
+Rotina para que se comece sob o meio da base de uma caixa voltada para o east;
+Rotina para que se comece no meio da base de uma caixa voltada para o east;
+Rotina para que se comece sob o centro da base de uma caixa voltada para o east;
+Rotina para que se comece no centro da base de uma caixa voltada para o east:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y2 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o meio da base de uma caixa voltada para o north;
+Rotina para que se comece no meio da base de uma caixa voltada para o north;
+Rotina para que se comece sob o centro da base de uma caixa voltada para o north;
+Rotina para que se comece no centro da base de uma caixa voltada para o north:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y2 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o meio da base de uma caixa voltada para o south;
+Rotina para que se comece no meio da base de uma caixa voltada para o south;
+Rotina para que se comece sob o centro da base de uma caixa voltada para o south;
+Rotina para que se comece no centro da base de uma caixa voltada para o south:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y2 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o meio da base de uma caixa voltada para o west;
+Rotina para que se comece no meio da base de uma caixa voltada para o west;
+Rotina para que se comece sob o centro da base de uma caixa voltada para o west;
+Rotina para que se comece no centro da base de uma caixa voltada para o west:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y2 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob o meio do lado esquerdo de uma caixa voltada para o east;
+Rotina para que se comece no meio do lado esquerdo de uma caixa voltada para o east;
+Rotina para que se comece sob o centro do lado esquerdo de uma caixa voltada para o east;
+Rotina para que se comece no centro do lado esquerdo de uma caixa voltada para o east:
+  Atribua
+      a coordenada X1 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o meio do lado esquerdo de uma caixa voltada para o north;
+Rotina para que se comece no meio do lado esquerdo de uma caixa voltada para o north;
+Rotina para que se comece sob o centro do lado esquerdo de uma caixa voltada para o north;
+Rotina para que se comece no centro do lado esquerdo de uma caixa voltada para o north:
+  Atribua
+      a coordenada X1 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o meio do lado esquerdo de uma caixa voltada para o south;
+Rotina para que se comece no meio do lado esquerdo de uma caixa voltada para o south;
+Rotina para que se comece sob o centro do lado esquerdo de uma caixa voltada para o south;
+Rotina para que se comece no centro do lado esquerdo de uma caixa voltada para o south:
+  Atribua
+      a coordenada X1 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o meio do lado esquerdo de uma caixa voltada para o west;
+Rotina para que se comece no meio do lado esquerdo de uma caixa voltada para o west;
+Rotina para que se comece sob o centro do lado esquerdo de uma caixa voltada para o west;
+Rotina para que se comece no centro do lado esquerdo de uma caixa voltada para o west:
+  Atribua
+      a coordenada X1 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob o meio do lado direito de uma caixa voltada para o east;
+Rotina para que se comece no meio do lado direito de uma caixa voltada para o east;
+Rotina para que se comece sob o centro do lado direito de uma caixa voltada para o east;
+Rotina para que se comece no centro do lado direito de uma caixa voltada para o east:
+  Atribua
+      a coordenada X2 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o meio do lado direito de uma caixa voltada para o north;
+Rotina para que se comece no meio do lado direito de uma caixa voltada para o north;
+Rotina para que se comece sob o centro do lado direito de uma caixa voltada para o north;
+Rotina para que se comece no centro do lado direito de uma caixa voltada para o north:
+  Atribua
+      a coordenada X2 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o meio do lado direito de uma caixa voltada para o south;
+Rotina para que se comece no meio do lado direito de uma caixa voltada para o south;
+Rotina para que se comece sob o centro do lado direito de uma caixa voltada para o south;
+Rotina para que se comece no centro do lado direito de uma caixa voltada para o south:
+  Atribua
+      a coordenada X2 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o meio do lado direito de uma caixa voltada para o west;
+Rotina para que se comece no meio do lado direito de uma caixa voltada para o west;
+Rotina para que se comece sob o centro do lado direito de uma caixa voltada para o west;
+Rotina para que se comece no centro do lado direito de uma caixa voltada para o west:
+  Atribua
+      a coordenada X2 desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob o meio do topo de uma caixa;
+Rotina para que se comece no meio do topo de uma caixa;
+Rotina para que se comece sob o centro do topo de uma caixa;
+Rotina para que se comece no centro do topo de uma caixa:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y1 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+
+Rotina para que se comece sob o meio do topo de uma caixa voltada para o east;
+Rotina para que se comece no meio do topo de uma caixa voltada para o east;
+Rotina para que se comece sob o centro do topo de uma caixa voltada para o east;
+Rotina para que se comece no centro do topo de uma caixa voltada para o east:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y1 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o meio do topo de uma caixa voltada para o north;
+Rotina para que se comece no meio do topo de uma caixa voltada para o north;
+Rotina para que se comece sob o centro do topo de uma caixa voltada para o north;
+Rotina para que se comece no centro do topo de uma caixa voltada para o north:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y1 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o meio do topo de uma caixa voltada para o south;
+Rotina para que se comece no meio do topo de uma caixa voltada para o south;
+Rotina para que se comece sob o centro do topo de uma caixa voltada para o south;
+Rotina para que se comece no centro do topo de uma caixa voltada para o south:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y1 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o meio do topo de uma caixa voltada para o west;
+Rotina para que se comece no meio do topo de uma caixa voltada para o west;
+Rotina para que se comece sob o centro do topo de uma caixa voltada para o west;
+Rotina para que se comece no centro do topo de uma caixa voltada para o west:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y1 desta caixa
+    à
+      coordenada Y desta localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob uma localização:
+  Atribua a localização à localização deste contexto.
+
+Rotina para que se comece sob uma localização voltada para o east:
+  Atribua a localização à localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob uma localização voltada para o north:
+  Atribua a localização à localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob uma localização voltada para o south:
+  Atribua a localização à localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob uma localização voltada para o west:
+  Atribua a localização à localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob o canto superior esquerdo de uma caixa voltada para o east:
+  Atribua o canto superior esquerdo desta caixa à localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o canto superior esquerdo de uma caixa voltada para o north:
+  Atribua o canto superior esquerdo desta caixa à localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o canto superior esquerdo de uma caixa voltada para o south:
+  Atribua o canto superior esquerdo desta caixa à localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o canto superior esquerdo de uma caixa voltada para o west:
+  Atribua o canto superior esquerdo desta caixa à localização deste contexto.
+  Face west.
+
+Rotina para que se comece sob o canto superior direito de uma caixa voltada para o east:
+  Atribua o canto superior direito desta caixa à localização deste contexto.
+  Face east.
+
+Rotina para que se comece sob o canto superior direito de uma caixa voltada para o north:
+  Atribua o canto superior direito desta caixa à localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece sob o canto superior direito de uma caixa voltada para o south:
+  Atribua o canto superior direito desta caixa à localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece sob o canto superior direito de uma caixa voltada para o west:
+  Atribua o canto superior direito desta caixa à localização deste contexto.
+  Face west.
+
+Rotina para que se comece no meio de uma caixa voltada para o east;
+Rotina para que se comece sob o meio de uma caixa voltada para o east;
+Rotina para que se mova para o meio de uma caixa voltada para o east;
+Rotina para que se mova para o meio de uma caixa e face east;
+Rotina para que se comece no centro de uma caixa voltada para o east;
+Rotina para que se comece sob o centro de uma caixa voltada para o east;
+Rotina para que se mova para o centro de uma caixa voltada para o east:
+  Atribua o centro desta caixa à localização deste contexto.
+  Face east.
+
+Rotina para que se comece no meio de uma caixa voltada para o north;
+Rotina para que se comece sob o meio de uma caixa voltada para o north;
+Rotina para que se mova para o meio de uma caixa voltada para o north;
+Rotina para que se mova para o meio de uma caixa e face north;
+Rotina para que se comece no centro de uma caixa voltada para o north;
+Rotina para que se comece sob o centro de uma caixa voltada para o north;
+Rotina para que se mova para o centro de uma caixa voltada para o north:
+  Atribua o centro desta caixa à localização deste contexto.
+  Vire para cima.
+
+Rotina para que se comece no meio de uma caixa voltada para o north menos uns pontos osmosianos;
+Rotina para que se comece no centro de uma caixa voltada para o north menos uns pontos osmosianos:
+  Atribua o centro desta caixa à localização deste contexto.
+  Vire para cima.
+  Vire para a esquerda o pontos osmosianos.
+
+Rotina para que se comece no meio de uma caixa voltada para o south;
+Rotina para que se comece sob o meio de uma caixa voltada para o south;
+Rotina para que se mova para o meio de uma caixa voltada para o south;
+Rotina para que se mova para o meio de uma caixa e vire para baixo;
+Rotina para que se comece no centro de uma caixa voltada para o south;
+Rotina para que se comece sob o centro de uma caixa voltada para o south;
+Rotina para que se mova para o centro de uma caixa voltada para o south;
+Rotina para que se mova para o centro de uma caixa e vire para baixo:
+  Atribua o centro desta caixa à localização deste contexto.
+  Vire para baixo.
+
+Rotina para que se comece no meio de uma caixa voltada para o west;
+Rotina para que se comece sob o meio de uma caixa voltada para o west;
+Rotina para que se mova para o meio de uma caixa voltada para o west;
+Rotina para que se mova para o meio de uma caixa e face west;
+Rotina para que se comece no centro de uma caixa voltada para o west;
+Rotina para que se comece sob o centro de uma caixa voltada para o west;
+Rotina para que se mova para o centro de uma caixa voltada para o west:
+  Atribua o centro desta caixa à localização deste contexto.
+  Face west.
+
+Rotina para que se comece uns twips acima do meio da base de uma caixa:
+  \ incomplete open of these
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y2 desta caixa
+    menos
+      os twips
+    à
+      coordenada Y desta localização deste contexto.
+
+Rotina para que se comece uns twips para baixo desde uma localização;
+Rotina para que se comece uns twips debaixo de uma localização:
+  Atribua
+      a coordenada X desta localização
+    à
+      coodenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y desta localização
+    mais
+      os twips
+    à
+      coodenada Y desta localização deste contexto.
+
+Rotina para que se comece uns twips desde o centro de uma caixa:
+  Atribua o centro desta caixa à localização deste contexto.
+  Mova os twips.
+
+Rotina para que se comece uns twips para o lado esquerdo e uns outros twips para baixo desde uma localização;
+Rotina para que se comece uns twips para a esquerda e uns outros twips para baixo desde uma localização:
+  Atribua
+      a coordenada X desta localização
+    menos
+      os twips
+    à
+      coodenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y desta localização
+    mais
+      os outros twips
+    à
+      coodenada Y desta localização deste contexto.
+
+Rotina para que se comece uns twips para o lado esquerdo e uns outros twips para cima desde uma localização;
+Rotina para que se comece uns twips para a esquerda e uns outros twips para cima desde uma localização:
+  Atribua
+      a coordenada X desta localização
+    menos
+      os twips
+    à
+      coodenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y desta localização
+    menos
+      os outros twips
+    à
+      coodenada Y desta localização deste contexto.
+
+Rotina para que se comece uns twips para o lado esquerdo de uma localização;
+Rotina para que se comece uns twips para a esquerda de uma localização:
+  Atribua
+      a coordenada X desta localização
+    menos
+      os twips
+    à
+      coodenada X desta localização deste contexto.
+
+Rotina para que se comece uns twips para o lado direito e uns outros twips para baixo desde uma localização:
+  Atribua
+      a coordenada X desta localização
+    mais
+      os twips
+    à
+      coodenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y desta localização
+    mais
+      os outros twips
+    à
+      coodenada Y desta localização deste contexto.
+
+Rotina para que se comece uns twips para o lado direito e uns outros twips para cima desde uma localização:
+  Atribua
+      a coordenada X desta localização
+    mais
+      os twips
+    à
+      coodenada X desta localização deste contexto.
+  Atribua
+      a coordenada Y desta localização
+    menos
+      os outros twips
+    à
+      coodenada Y desta localização deste contexto.
+
+Rotina para que se comece uns twips para cima desde uma coordenada:
+  Atribua
+      a coordenada
+    menos
+      os twips
+    à
+      coodenada Y desta localização deste contexto.
+
+Rotina para que se comece uns twips para cima desde uma localização;
+Rotina para que se comece uns twips acima de uma localização:
+  Atribua
+      a coordenada Y desta localização
+    à
+      coodenada Y desta localização deste contexto.
+  Subtraia os twips desde a coordenada Y desta localização deste contexto.
+
+Rotina para que se exponha conteúdo de uma caixa:
+  Crie uma hRgn usando a caixa.
+  Exponha conteúdo desse hRgn.
+  Destrua o hRgn.
+
+Rotina para que se exponha conteúdo de uma caixa arredondada:
+  Crie uma hRgn usando a caixa arredondada.
+  Exponha conteúdo desse hRgn.
+  Destrua o hRgn.
+
+Rotina para que se exponha exterior de uma caixa:
+  Crie uma hRgn usando a caixa.
+  Exponha exterior desse hRgn.
+  Destrua o hRgn.
+
+Rotina para que se exponha exterior de uma caixa arredondada:
+  Crie uma hRgn usando a caixa arredondada.
+  Exponha exterior desse hRgn.
+  Destrua o hRgn.
+
+Rotina para que se escreva uns quoras em uma caixa:
+  \Pinte a caixa com a cor vermelha e a cor vermelha. \ temp ***
+  Atribua a caixa para uma caixa denominada quora caixa.
+  Atribua
+      a coordenada Y1 desta quora caixa
+    mais
+      24 pixels
+    à
+      coordenada Y2 desta quora caixa.
+  Itere.
+    Obtenha um quora desde o quoras.
+    Se o quora for inexistente,
+      Pare.
+    \Pinte o quora caixa com a cor amarela. \ temp ***
+    Escreva a string deste quora no quora caixa com a cor deste quora.
+    Mova o quora caixa para baixo 24 px.
+  Reitere.
+
+Rotina para que se zero uma caixa:
+  \ pra que se limpe as propriedades de uma caixa
+  \ "limpe uma caixa pinta a caixa de preto"
+  Atribua 0 à coordenada X1 desta caixa.
+  Atribua 0 à coordenada Y1 desta caixa.
+  Atribua 0 à coordenada X2 desta caixa.
+  Atribua 0 à coordenada Y2 desta caixa.
+
+Rotina para que se use um tamanho da letra em  uns twips:
+  Atribua os twips ao tamanho da letra.
+  Atribua os twips à tamanho da letra deste contexto.
+
+Rotina para que se escolha aleatoriamente um tamanho da letra entre uns twips e uns outros twips:
+  Escolha aleatoriamente um número aleatório entre os twips e os outros twips.
+  Atribua o número aleatório ao tamanho da letra.
+  Atribua o número aleatório à tamanho da letra deste contexto.
+  [OPERAÇÕES COM FORMAS GEOMÉTRICAS]
+
+Rotina para que se atribua uma localização e uma segunda localização e um raio para uma caixa arredondada:
+  Atribua a localização ao canto superior esquerdo desta caixa arredondada.
+  Atribua
+      a segunda localização
+    à
+      canto inferior direito desta caixa arredondada.
+  Atribua o raio ao raio desta caixa arredondada.
+
+Rotina para que se atribua uma localização e uma segunda localização para uma caixa:
+  Atribua a localização ao canto superior esquerdo desta caixa.
+  Atribua a segunda localização ao canto inferior direito desta caixa.
+
+Rotina para que se atribua uma localização no meio de uma caixa;
+Rotina para que se centralize uma localização em uma caixa:
+  Centralize a localização na caixa (horizontalmente).
+  Centralize a localização na caixa (verticalmente).
+
+Rotina para que se atribua uma caixa arredondada para uma segunda caixa arredondada:
+  Atribua
+      a coordenada X1 desta caixa arredondada
+    à
+      coordenada X1 desta segunda caixa arredondada.
+  Atribua
+      a coordenada Y1 desta caixa arredondada
+    à
+      coordenada Y1 desta segunda caixa arredondada.
+  Atribua
+      a coordenada X2 desta caixa arredondada
+    à
+      coordenada X2 desta segunda caixa arredondada.
+  Atribua
+      a coordenada Y2 desta caixa arredondada
+    à
+      coordenada Y2 desta segunda caixa arredondada.
+  Atribua
+      o raio desta caixa arredondada
+    ao
+      raio desta segunda caixa arredondada.
+
+Rotina para que se atribua uma coordenada X1 e uma coordenada Y1 e uma coordenada X2 e uma coordenada Y2 e um raio para uma caixa arredondada:
+  Atribua a coordenada X1 à coordenada X1 desta caixa arredondada.
+  Atribua a coordenada Y1 à coordenada Y1 desta caixa arredondada.
+  Atribua a coordenada X2 à coordenada X2 desta caixa arredondada.
+  Atribua a coordenada Y2 à coordenada Y2 desta caixa arredondada.
+  Atribua o raio ao raio desta caixa arredondada.
+
+Rotina para que se atribua uma coordenada X1 e uma coordenada Y1 e uma coordenada X2 e uma coordenada Y2 para uma caixa:
+  Atribua a coordenada X1 à coordenada X1 desta caixa.
+  Atribua a coordenada Y1 à coordenada Y1 desta caixa.
+  Atribua a coordenada X2 à coordenada X2 desta caixa.
+  Atribua a coordenada Y2 à coordenada Y2 desta caixa.
+
+Rotina para que se atribua uma caixa e um raio para uma caixa arredondada:
+  Atribua a coordenada X1 desta caixa à coordenada X1 desta caixa arredondada.
+  Atribua a coordenada Y1 desta caixa à coordenada Y1 desta caixa arredondada.
+  Atribua a coordenada X2 desta caixa à coordenada X2 desta caixa arredondada.
+  Atribua a coordenada Y2 desta caixa à coordenada Y2 desta caixa arredondada.
+  Atribua o raio ao raio desta caixa arredondada.
+
+Rotina para que se centralize uma caixa no centro de uma segunda caixa;
+Rotina para que se centralize uma caixa em uma segunda caixa:
+  Centralize a caixa na segunda caixa (horizontalmente).
+  Centralize a caixa na segunda caixa (verticalmente).
+
+Rotina para que se centralize uma caixa no meio da tela;
+Rotina para que se centralize uma caixa na tela;
+Rotina para que se centralize uma caixa sobre a tela:
+  Centralize a caixa na caixa desta tela.
+
+Rotina para que se atribua uma caixa para uma segunda caixa:
+  Atribua a coordenada X1 desta caixa à coordenada X1 desta segunda caixa.
+  Atribua a coordenada Y1 desta caixa à coordenada Y1 desta segunda caixa.
+  Atribua a coordenada X2 desta caixa à coordenada X2 desta segunda caixa.
+  Atribua a coordenada Y2 desta caixa à coordenada Y2 desta segunda caixa.
+
+Rotina para que se atribua uma caixa sobre uma localização;
+Rotina para que se centralize uma caixa sobre uma localização:
+  Calcule um valor da diferença entre a localização e o centro desta caixa.
+  Arredonde
+      o valor da diferença
+    usando o múltiplo imediato dessa
+      quantidade de twips/pixel .
+  Mova a caixa usando o valor da diferença.
+
+Rotina para que se atribua uma caixa uns twips por uns outros twips no centro de uma segunda caixa;
+Rotina para que se centralize uma caixa uns twips por uns outros twips em uma segunda caixa:
+  Faça a caixa os twips pelo outros twips.
+  Centralize a caixa na segunda caixa.
+  \Rotina para que se atribua o centro inferior duma caixa para uma localização:
+  \ Atribua a coordenada X deste centro desta caixa à coordenada X desta localização.
+  \ Atribua a coordenada Y2 desta caixa à coordenada Y desta localização.
+
+Função para que se atribua o centro superior duma caixa para uma localização:
+  Atribua
+      a coordenada X deste centro desta caixa
+    à
+      coordenada X desta localização.
+  Atribua a coordenada Y1 desta caixa à coordenada Y desta localização.
+
+Função para que se atribua a altura duma caixa para uma altura:
+  \ OK
+  Atribua a coordenada Y2 desta caixa à altura.
+  Subtraia a coordenada Y1 desta caixa desde a altura.
+  Adicione a quantidade de twips/pixel para a altura.
+
+Função para que se atribua a canto inferior esquerdo duma caixa para uma localização:
+  Atribua a coordenada X1 desta caixa à coordenada X desta localização.
+  Atribua a coordenada Y2 desta caixa à coordenada Y desta localização.
+
+Função para que se atribua o centro esquerdo duma caixa para uma localização:
+  Atribua a coordenada X1 desta caixa à coordenada X desta localização.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização.
+
+Função para que se atribua o centro direito duma caixa para uma localização:
+  Atribua a coordenada X2 desta caixa à coordenada X desta localização.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    à
+      coordenada Y desta localização.
+
+Função para que se atribua o canto superior direito duma caixa para uma localização:
+  Atribua a coordenada X2 desta caixa à coordenada X desta localização.
+  Atribua a coordenada Y1 desta caixa à coordenada Y desta localização.
+
+Função para que se atribua a largura duma caixa para uma largura:
+  Atribua a coordenada X2 desta caixa para a largura.
+  Subtraia a coordenada X1 desta caixa desde a largura.
+  Adicione a quantidade de twips/pixel para a largura.
+
+Função para que se atribua o x-extent duma caixa para uma largura:
+  Atribua a coordenada X2 desta caixa ao largura.
+  Subtraia a coordenada X1 desta caixa desde a largura.
+
+Função para que se atribua o y-extent duma caixa para uma altura:
+  Atribua a coordenada Y2 desta caixa à altura.
+  Subtraia a coordenada Y1 desta caixa desde a altura.
+
+Rotina para que se escolha aleatoriamente uma localização no base uma fração em uma caixa:
+  Preserve a caixa.
+  Atribua a altura desta caixa vezes a fração a uns twips.
+  Atribua
+      a coordenada Y2 desta caixa
+    menos
+      os twips
+    à
+      coordenada Y1 desta caixa.
+  Escolha aleatoriamente a localização na caixa.
+
+Rotina para que se escolha aleatoriamente uma localização no interior de uma caixa:
+  Escolha aleatoriamente
+      a coordenada X desta localização entre
+      a coordenada X1 desta caixa e
+      a coordenada X2 desta caixa.
+  Escolha aleatoriamente
+      a coordenada Y desta localização entre
+      a coordenada Y1 desta caixa e
+      a coordenada Y2 desta caixa.
+  Atribua a localização à localização deste contexto.
+
+Rotina para que se escolha aleatoriamente uma localização no meio de uma fração em uma caixa:
+  Preserve a caixa.
+  Atribua a coordenada Y deste centro desta caixa para uma coordenada.
+  Atribua a altura desta caixa vezes a fração dividido por 2 para um número.
+  Atribua a coordenada menos o número à coordenada Y1 desta caixa.
+  Atribua a coordenada mais o número à coordenada Y2 desta caixa.
+  Escolha aleatoriamente a localização na caixa.
+
+Rotina para que se escolha aleatoriamente uma localização no topo half de uma caixa:
+  Preserve a caixa.
+  Atribua a coordenada Y deste centro desta caixa à coordenada Y2 desta caixa.
+  Escolha aleatoriamente a localização na caixa.
+
+Rotina para que se escolha aleatoriamente uma localização na metade de cima de uma fração em uma caixa:
+  Preserve a caixa.
+  Atribua a coordenada Y deste centro desta caixa para uma coordenada.
+  Atribua a altura desta caixa vezes a fração para um número.
+  Atribua a coordenada menos o número à coordenada Y1 desta caixa.
+  Atribua a coordenada à coordenada Y2 desta caixa.
+  Escolha aleatoriamente a localização na caixa.
+
+Rotina para que se escolha aleatoriamente uma localização em uma caixa:
+  Escolha aleatoriamente
+      a coordenada X desta localização entre
+      a coordenada X1 desta caixa e
+      a coordenada X2 desta caixa.
+  Escolha aleatoriamente
+      a coordenada Y desta localização entre
+      a coordenada Y1 desta caixa e
+      a coordenada Y2 desta caixa.
+  Atribua a localização à localização deste contexto.
+
+Rotina para que se escolha aleatoriamente uma localização em uma caixa aproximadamente uns twips acima do centro:
+  Atribua a caixa para um bounding caixa.
+  Atribua os twips dividido por 2 a uns outros twips.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    menos
+      os outros twips
+    à
+      coordenada Y2 desta bounding caixa.
+  Atribua
+      a coordenada Y2 desta bounding caixa
+    menos
+      os twips
+    à
+      coordenada Y1 desta bounding caixa.
+  Escolha aleatoriamente a localização na bounding caixa.
+
+Rotina para que se escolha aleatoriamente uma localização em uma caixa aproximadamente uns twips debaixo do centro:
+  Atribua a caixa para um bounding caixa.
+  Atribua os twips dividido por 2 a uns outros twips.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    mais
+      os outros twips
+    à
+      coordenada Y1 desta bounding caixa.
+  Atribua
+      a coordenada Y1 desta bounding caixa
+    mais
+      os twips
+    à
+      coordenada Y2 desta bounding caixa.
+  Escolha aleatoriamente a localização na bounding caixa.
+
+Rotina para que se escolha aleatoriamente uma localização em uma caixa uns twips para uns outros twips acima do centro:
+  Atribua a caixa para um bounding caixa.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    menos
+      os twips
+    à
+      coordenada Y2 desta bounding caixa.
+  Atribua
+      a coordenada Y2 desta bounding caixa
+    menos
+      os outros twips
+    à
+      coordenada Y1 desta bounding caixa.
+  Escolha aleatoriamente a localização na bounding caixa.
+
+Rotina para que se escolha aleatoriamente uma localização em uma caixa uns twips para uns outros twips debaixo do centro:
+  Atribua a caixa para um bounding caixa.
+  Atribua
+      a coordenada Y deste centro desta caixa
+    mais
+      os twips
+    à
+      coordenada Y1 desta bounding caixa.
+  Atribua
+      a coordenada Y1 desta bounding caixa
+    mais
+      os outros twips
+    à
+      coordenada Y2 desta bounding caixa.
+  Escolha aleatoriamente a localização na bounding caixa.
+
+Rotina para que se escolha aleatoriamente uma localização dentre uma distância em uma segunda localização:
+  Escolha aleatoriamente
+      a coordenada X desta localização dentre
+      a distância
+    em
+      a coordenada X desta segunda localização.
+  Escolha aleatoriamente
+      a coordenada Y desta localização dentre
+      a distância
+    em
+      a coordenada Y desta segunda localização.
+  Atribua a localização à localização deste contexto.
+
+Rotina para que se mova um vértice para uma localização:
+  Se o vértice for inexistente,
+    Retorne.
+  Atribua a localização à localização deste vértice.
+
+Rotina para que se mova uma localização aproximadamente uns twips em algum direction:
+  Escolha aleatoriamente uma
+      segunda localização dentre
+      os twips
+    em
+      a localização.
+  Atribua a segunda localização à localização.
+
+Rotina para que se mova uma caixa para o canto superior esquerdo de uma segunda caixa:
+  Mova a caixa para o canto superior esquerdo desta segunda caixa.
+
+Rotina para que se mova uma caixa para uma localização:
+  Calcule um
+      valor da diferença entre
+      a localização e
+      o canto superior esquerdo desta caixa.
+  Mova a caixa usando o valor da diferença.
+
+Rotina para que se ande uns twips para trás:
+  Dê meia volta.
+  Mova os twips.
+  Dê meia volta.
+
+Rotina para que se mova uma caixa perto do lado esquerdo de uma segunda caixa;
+Rotina para que se mova uma caixa perto da esquerda de uma segunda caixa:
+  Mova a caixa para a esquerda dessa segunda caixa.
+  Escolha aleatoriamente uma
+      quantidade de caracteres entre
+      0 e
+      a largura desta caixa
+    vezes
+      3/4.
+  Mova a caixa para a direita a quantidade de caracteres.
+
+Rotina para que se mova uma caixa usando um par de números racionais e uma localização;
+Rotina para que se mova uma caixa usando uma par de números fracionários e uma localização:
+  Calcule um
+      valor da diferença entre
+      o canto superior esquerdo desta caixa e
+      a localização.
+  Atribua o valor da diferença para uma segunda valor da diferença.
+  Redimensione proporcionalmente
+      a segunda valor da diferença
+    usando
+      o par de números fracionários.
+  Subtraia o valor da diferença desde a segunda valor da diferença.
+  Mova a caixa usando a segunda valor da diferença.
+
+Rotina para que se inicie uma folha usando uma caixa:
+  Se o sinalizador de documentos deste pdf state estiver ativo,
+    Inicie a folha usando a caixa (modo pdf);
+    Retorne.
+  Processe "kernel32.dll" "GlobalLock"
+  com
+  \ Bloqueia um objeto de memória global e aumenta a contagem de bloqueios em um.
+  \ https://learn.microsoft.com/pt-br/windows/win32/api/winbase/nf-winbase-globallock
+      O número identificador do modo de dispositivo da impressora [hMem]
+    Retornando
+      um pDevMode. \ Consulte https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/ns-wingdi-devmodea
+  Se o pDevMode for inexistente,
+    Retorne.
+  Disjuncione logicamente o dmFields deste pDevMode usando 1 [DM_ORIENTATION].
+  Atribua 1 [DMORIENT_PORTRAIT] ao dmOrientation deste pDevMode .
+  Se a largura desta caixa for maior do que a altura desta caixa,
+    Atribua 2 [DMORIENT_LANDSCAPE] ao dmOrientation deste pDevMode.
+  Processe "gdi32.dll" "ResetDCA" com
+  \ Atualiza a impressora especificada ou contexto de dispositivo (DC) usando as informações especificadas.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-resetdca
+    A área de impressão [hdc] e
+    O pDevMode. [*lpdm]
+  Processe "kernel32.dll" "GlobalUnlock" com
+  \ Diminui a contagem de bloqueios associada para um objeto de memória
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/winbase/nf-winbase-globalunlock
+    O número identificador do modo de dispositivo da impressora. [hMem]
+  Processe "gdi32.dll" "SetGraphicsMode" com
+  \ Define o modo gráfico para o contexto de dispositivo especificado.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setgraphicsmode
+    A área de impressão [hdc] e
+    2. [iMode = GM_ADVANCED]
+  Processe "gdi32.dll" "SetBkMode" com
+  \ Define o modo de mistura de plano de fundo dum contexto de dispositivo
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setbkmode
+    A área de impressão [hdc] e
+    1. [mode = TRANSPARENT]
+  Processe "gdi32.dll" "SetMapMode" com
+  \ Define o modo de mapeamento dum contexto de dispositivo
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setmapmode
+    A área de impressão [hdc] e
+    8. [iMode = MM_ANISOTROPIC ]
+  Processe "gdi32.dll" "GetDeviceCaps"
+  com
+  \ Recupera informações específicas do dispositivo para o dispositivo especificado.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-getdevicecaps
+      A área de impressão [hdc] e
+      112 [index = PhysicalOffsetX]
+    Retornando
+      o número X dum par de números.
+  Processe "gdi32.dll" "GetDeviceCaps" com
+      A área de impressão [hdc] e
+      113 [PhysicalOffsetY ]
+    Retornando
+      o número Y deste par de números.
+  Inverta o sinal desse par de números.
+  Processe "gdi32.dll" "SetViewportOrgEx" com
+  \ Especifica qual ponto DO DISPOSITIVO mapeia para a origem da janela (0,0).
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setviewportorgex
+    A área de impressão [hdc] e
+    O número X deste par de números [x] e
+    O número Y deste par de números  [y] e
+    nil. [lppt]
+  Processe "gdi32.dll" "GetDeviceCaps" com
+      A área de impressão [hdc] e
+      88 [index = LOGPIXELSX]
+    Retornando
+      o número X deste par de números.
+  Processe "gdi32.dll" "GetDeviceCaps" com
+      A área de impressão e
+      90 [index = LOGPIXELSY]
+    Retornando
+      o número Y deste par de números.
+  Processe "gdi32.dll" "SetViewportExtEx" com
+  \ Define as extensões horizontal e vertical do viewport para um contexto de dispositivo
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setviewportextex
+    A área de impressão [hdc] e
+    O número X deste par de números [x] e
+    O número Y deste par de números [y] e
+    nil. [lpsz]
+  Processe "gdi32.dll" "SetWindowOrgEx" com
+  \ Especifica qual ponto DA JANELA mapeia para a origem da janela de visualização (0,0).
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setwindoworgex
+    A área de impressão [hdc] e
+    0 [x] e
+    0 [y] e
+    nil. [lppt]
+  Processe "gdi32.dll" "SetWindowExtEx" com
+  \ define as extensões horizontal e vertical da janela para um contexto de dispositivo
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-setwindowextex
+    A área de impressão [hdc] e
+    O tpi [x] e
+    O tpi [y] e
+    nil. [lpsz]
+  Processe "gdi32.dll" "StartPage" com
+  \ Prepara o driver da impressora para aceitar dados.
+  \ Documentação: -> https://learn.microsoft.com/pt-br/windows/win32/api/wingdi/nf-wingdi-startpage
+    A área de impressão. [hdc]
+  \ O identificador do contexto do dispositivo para o trabalho de impressão.
+  Atribua a área de impressão ao contexto do dispositivo atual.
+  Processe "gdi32.dll" "GetDeviceCaps" com
+      A área de impressão [hdc] e
+      88 [index = LOGPIXELSX]
+    Retornando
+      um número.
+  Atribua a quantidade de twips/pixel ao quantidade armazenada de twips/pixel .
+  Atribua o tpi dividido pelo número à quantidade de twips/pixel .
+
