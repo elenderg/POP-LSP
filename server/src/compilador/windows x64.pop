@@ -247,251 +247,249 @@ Rotina para que se transforme no backend Windows x64 um fragmento em código hexa
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (empilhamento de endereço):
   Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
-  \ Atribui o endereço para edx
-  Acrescente $52 para o código deste fragmento. \ push edx
+  \ Atribui o endereço para rdx
+  Acrescente $52 para o código deste fragmento. \ push rdx
 
-Rotina para que se acrescente no backend Windows x64 a instrução de carregamento de endereço para um texto hexadecimal usando uma variável:
-  \ carrega o valor em edx
+Rotina para que se acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando uma variável:
+  \ RDX recebe um endereço de 64 bits.
   Se a variável for inexistente,
-    Acrescente $C7C200000000 para o texto hexadecimal; \ mov edx, 0x0
-    Retorne. 
+    Acrescente $31D2 para o código deste fragmento. \ xor edx, edx (zera RDX)
+    Retorne.
   Se a categoria desta variável for "variável global",
-    Acrescente $C7C2 e o endereço desta variável para o texto hexadecimal; 
-    \ mov edx, o endereço da variável
-    Retorne. 
+    Acrescente $488D15 e o endereço desta variável para o fragmento.
+    \ lea rdx, [rip + rel32] (endereço de dados relativo ao RIP)
+    Retorne.
   Se a categoria desta variável for "valor literal",
-    Acrescente $C7C2 e o endereço desta variável para o texto hexadecimal; 
-    \ mov edx, o endereço da variável
-    Retorne. 
+    Acrescente $488D15 e o endereço desta variável para o fragmento.
+    \ lea rdx, [rip + rel32] (endereço de dados relativo ao RIP)
+    Retorne.
   Se a categoria desta variável for "variável local",
-    Acrescente $8D95 e o deslocamento desta variável para o texto hexadecimal; 
-    \ lea edx, [ebp+ o deslocamento da variável]
-    Retorne. 
+    Acrescente $488D95 e o deslocamento desta variável para o código deste fragmento.
+    \ lea rdx, [rbp + disp32]
+    Retorne.
   Se a categoria desta variável for "variável temporária de compilação",
-    Acrescente $8B95 e o deslocamento desta variável para o texto hexadecimal; 
-    \ mov edx, [ebp+ o deslocamento da variável]
-    Retorne. 
+    Acrescente $488B95 e o deslocamento desta variável para o código deste fragmento.
+    \ mov rdx, [rbp + disp32]
+    Retorne.
   \ Se a variável não se encaixar em nenhuma dessas categorias é porque ela é um parâmetro
   Se a categoria desta variável não for "parâmetro",
-    Apresente uma mensagem de erro contendo 
-      "Código de Erro #177. A categoria da variável '" junto com o nome desta variável 
+    Apresente uma mensagem de erro contendo
+      "Código de Erro #177. A categoria da variável '" junto com o nome desta variável
       seguido de "' é diferente de 'parâmetro'." junto com o texto CRLF;
     Retorne.
   \ Se a categoria desta variável for "parâmetro",
   Se o sinalizador de passagem por-valor desta variável estiver ativo, \ Só é ativado em callbacks (do Windows) (x64)
-    Acrescente $8D95 e o deslocamento desta variável para o texto hexadecimal; 
-    \ lea edx,[ebp+ o deslocamento da variável]
-    Retorne. 
+    Acrescente $488D95 e o deslocamento desta variável para o código deste fragmento.
+    \ lea rdx, [rbp + disp32]
+    Retorne.
   \Se o sinalizador de passagem por-valor desta variável não estiver ativo,
-    Acrescente $8B95 e o deslocamento desta variável para o texto hexadecimal. 
-    \ mov edx,[ebp+ o deslocamento da variável]
+    Acrescente $488B95 e o deslocamento desta variável para o código deste fragmento.
+    \ mov rdx, [rbp + disp32]
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Interna):
   Obtenha um endereço usando a rotina deste fragmento.
-  Acrescente $E8 e o endereço para o fragmento. \ call o endereço da rotina do fragmento
+  Acrescente $E8 e o endereço para o fragmento. \ call rel32 (relativo ao próximo RIP)
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (load endereço):
   Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
-  Acrescente $8995 e o deslocamento desta segunda variável deste fragmento para o código deste fragmento. 
-  \ mov [ebp+ o deslocamento da variável do fragmento], edx
+  Acrescente $488995 e o deslocamento desta segunda variável deste fragmento para o código deste fragmento.
+  \ mov [rbp + disp32], rdx
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (increment):
   Se a variável deste fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
+    Apresente uma mensagem de erro contendo
       "Código de Erro #180. A variável '" junto com o nome desta variável deste fragmento \ Erro interno
       seguido de "' deste fragmento não foi encontrada." junto com o texto CRLF;
     Retorne.
   Se a categoria desta variável deste fragmento não for "variável temporária de compilação",
-    Apresente a mensagem de erro contendo 
+    Apresente a mensagem de erro contendo
       "Código de Erro #181. A categoria da variável '" junto com o nome desta variável deste fragmento \ Erro interno
-      seguido de "' não corresponde 'variável temporária de compilação'. Categoria detectada: '" 
+      seguido de "' não corresponde 'variável temporária de compilação'. Categoria detectada: '"
       junto com a categoria desta variável deste fragmento seguido de "'." junto com o texto CRLF;
     Retorne.
-  Acrescente 
-      $8185 e 
-      o deslocamento desta variável deste fragmento e 
-      o número deste fragmento 
-    para 
-      o código deste fragmento. 
-  \ add [ebp+ o deslocamento da variável do fragmento], o número do fragmento
+  Acrescente
+      $8185 e
+      o deslocamento desta variável deste fragmento e
+      o número deste fragmento
+    para
+      o código deste fragmento.
+  \ add dword ptr [rbp + disp32], imm32 (inteiro de 32 bits)
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de redirecionamento):
-  Acrescente $8B95 e o deslocamento desta variável deste fragmento para o código deste fragmento. 
-  \ mov edx, [ebp+ o deslocamento da variável do fragmento]
-  Acrescente $8B12 para o código deste fragmento. \ mov edx,[edx]
-  Acrescente $8995 e o deslocamento desta variável deste fragmento para o código deste fragmento. 
-  \ mov [ebp+ o deslocamento da variável do fragmento]
+  Acrescente $488B95 e o deslocamento desta variável deste fragmento para o código deste fragmento.
+  \ mov rdx, [rbp + disp32]
+  Acrescente $488B12 para o código deste fragmento. \ mov rdx, [rdx]
+  Acrescente $488995 e o deslocamento desta variável deste fragmento para o código deste fragmento.
+  \ mov [rbp + disp32], rdx
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (desvio caso resultado negativo):
   Encontre um segundo fragmento usando o fragmento e a etiqueta delimitadora de bloco condicional.
   Se o segundo fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
-      "Código de Erro #182. A variável '"  junto com o nome desta variável deste segundo fragmento 
+    Apresente uma mensagem de erro contendo
+      "Código de Erro #182. A variável '"  junto com o nome desta variável deste segundo fragmento
       junto com "' deste fragmento não foi localizada" junto com o texto CRLF; \ Erro interno
     Retorne.
-  Acrescente $83F800 para o código deste fragmento. \ cmp eax,0
-  Acrescente $0F84 e o endereço deste segundo fragmento para o fragmento. \ je + o endereço do fragmento
+  Acrescente $83F800 para o código deste fragmento. \ cmp eax, 0 (inteiro de 32 bits)
+  Acrescente $0F84 e o endereço deste segundo fragmento para o fragmento. \ je rel32
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (negação lógica):
   \ deveria ser conjunção lógica?
-  Acrescente $83F001 para o código deste fragmento. \ xor eax,1
+  Acrescente $83F001 para o código deste fragmento. \ xor eax, 1 (inteiro de 32 bits)
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de retorno):
   Encontre um segundo fragmento usando o fragmento e a etiqueta de finalização.
   Se o segundo fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
-      "Código de Erro #183. A variável '"  junto com o nome desta variável deste segundo fragmento 
+    Apresente uma mensagem de erro contendo
+      "Código de Erro #183. A variável '"  junto com o nome desta variável deste segundo fragmento
       junto com "' deste fragmento não foi localizada" junto com o texto CRLF; \ Erro interno
     Retorne.
-  Acrescente $E9 e o endereço deste segundo fragmento para o fragmento. 
-  \ jmp + o endereço do fragmento
+  Acrescente $E9 e o endereço deste segundo fragmento para o fragmento.
+  \ jmp rel32
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de repetição):
   Encontre um segundo fragmento usando o fragmento e a etiqueta de laço (regressivamente).
   Se o segundo fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
-      "Código de Erro #184. A variável '"  junto com o nome desta variável deste segundo fragmento 
+    Apresente uma mensagem de erro contendo
+      "Código de Erro #184. A variável '"  junto com o nome desta variável deste segundo fragmento
       junto com "' deste fragmento não foi localizada" junto com o texto CRLF; \ Erro interno
     Retorne.
-  Acrescente $E9 e o endereço deste segundo fragmento para o fragmento. 
-  \ jmp o endereço do fragmento
+  Acrescente $E9 e o endereço deste segundo fragmento para o fragmento.
+  \ jmp rel32
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de interrupção):
   Atribua a etiqueta de repetição para uma etiqueta.
   Encontre um segundo fragmento usando o fragmento e a etiqueta.
-  Se o segundo fragmento for inexistente, 
+  Se o segundo fragmento for inexistente,
     Atribua a etiqueta de finalização para a etiqueta. \ para interromper um loop
-  Encontre um terceiro fragmento usando 
-    o último fragmento destes fragmentos desta rotina utilizada atualmente e 
+  Encontre um terceiro fragmento usando
+    o último fragmento destes fragmentos desta rotina utilizada atualmente e
     a etiqueta (regressivamente).
   Se o terceiro fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
-      "Código de Erro #185. A variável '"  junto com o nome desta variável deste terceiro fragmento 
+    Apresente uma mensagem de erro contendo
+      "Código de Erro #185. A variável '"  junto com o nome desta variável deste terceiro fragmento
       junto com "' deste fragmento não foi localizada" junto com o texto CRLF; \ Erro interno
     Retorne.
   Se o próximo fragmento deste terceiro fragmento for inexistente,
-    Apresente a mensagem de erro contendo 
-      "Código de Erro #186. A variável '"  junto com o nome desta variável deste terceiro fragmento 
+    Apresente a mensagem de erro contendo
+      "Código de Erro #186. A variável '"  junto com o nome desta variável deste terceiro fragmento
       junto com "' deste fragmento não foi localizada" junto com o texto CRLF; \ Erro interno
     Retorne.
-  Acrescente $E9 [JMP rel32] e o endereço deste próximo fragmento deste terceiro fragmento para o fragmento. 
-  \ JMP o endereço de destino. 
-  \Salto próximo, relativo, deslocamento relativo à próxima instrução.
+  Acrescente $E9 e o endereço deste próximo fragmento deste terceiro fragmento para o fragmento.
+  \ jmp rel32 (deslocamento relativo ao próximo RIP)
 
-\ O PRÓLOGO DE TODA ROTINA DE INGLÊS SIMPLES COMEÇA SALVANDO O EBP DO CHAMADOR NA PILHA, LOGO ACIMA DO ENDEREÇO DE RETORNO.
+\ O prólogo salva RBP e estabelece o frame de pilha de 64 bits.
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (etapa preliminar):
-  Acrescente $55 para o código deste fragmento. \ push ebp
-  Acrescente $8BEC para o código deste fragmento. \ mov ebp,esp
-  Atribua o tamanho local desta rotina utilizada atualmente dividido por 4 para um número.
+  Acrescente $55 para o código deste fragmento. \ push rbp
+  Acrescente $488BEC para o código deste fragmento. \ mov rbp, rsp
+  Atribua o tamanho local desta rotina utilizada atualmente para um número.
+  Adicione 7 para o número.
+  Divida o número por 8.
   Se o número não for 0,
-    Acrescente $B9 e o número \ mov ecx,number;  
+    Acrescente $B9 e o número \ mov ecx, quantidade de slots locais de 8 bytes;
     \ -> configura o loop que irá liberar espaço suficiente na pilha para as variáveis locais da rotina
-    e $6A004975FB 
-    \ loop: 
-        \push 0; 
-        \dec ecx; 
-        \jnz loop 
-    \ é um loop que coloca zeros suficientes na pilha para inicializar as variáveis locais.
+    e $6A00FFC975FA
+    \ push 0 (8 bytes); dec ecx; jnz back to push (-6 bytes)
     para o código deste fragmento.
   Se o sinalizador de compatibilidade desta rotina utilizada atualmente estiver ativo,
-    Acrescente $535657 para o código deste fragmento. \ push ebx, esi, edi
+    Acrescente $535657 para o código deste fragmento. \ push rbx, rsi, rdi (registradores preservados)
 
-\ O EPÍLOGO DE CADA ROTINA REMOVE AS VARIÁVEIS LOCAIS, 
-\ RESTAURA O EBP E RETORNA AO CHAMADOR, 
+\ O epílogo restaura RSP, RBP e os registradores preservados.
+\ RESTAURA RBP; a limpeza de argumentos ainda usa a convenção interna legada.
 \ POPPING OS PARÂMETROS ASSIM QUE ISSO OCORRE
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (etapa conclusiva):
   Se o sinalizador de compatibilidade desta rotina utilizada atualmente estiver ativo,
-    Acrescente $5F5E5B para o código deste fragmento. \ pop edi; pop esi; pop ebx;
-  Acrescente $8BE5 para o código deste fragmento. \ mov esp,ebp -> não seria 89EC?
-  Acrescente $5D para o código deste fragmento. \ pop ebp
-  Acrescente $C2 e o tamanho do parâmetro desta rotina utilizada atualmente para o código deste fragmento. 
-  \ ret + o tamanho do parâmetro da rotina utilizada atualmente
+    Acrescente $5F5E5B para o código deste fragmento. \ pop rdi; pop rsi; pop rbx
+  Acrescente $4889EC para o código deste fragmento. \ mov rsp, rbp
+  Acrescente $5D para o código deste fragmento. \ pop rbp
+  Acrescente $C2 e o tamanho do parâmetro desta rotina utilizada atualmente para o código deste fragmento.
+  \ ret imm16 + limpeza da convenção interna; não segue caller-cleanup da ABI Windows x64
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (empilhamento de valor):
   Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
-  \ Salva o endereço em edx
+  \ Salva o endereço em rdx
   Se a variável deste fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
-      "Código de Erro #187. A variável '"  junto com o nome desta variável deste fragmento 
+    Apresente uma mensagem de erro contendo
+      "Código de Erro #187. A variável '"  junto com o nome desta variável deste fragmento
       junto com "' deste fragmento não foi localizada" junto com o texto CRLF; \ Erro interno
     Retorne.
   Se o tipo desta variável deste fragmento for inexistente,
-    Apresente a mensagem de erro contendo 
-      "Código de Erro #188. O tipo '" junto com o nome deste tipo desta variável deste fragmento 
-      seguido de "' da variável '" junto com o nome desta variável deste fragmento 
+    Apresente a mensagem de erro contendo
+      "Código de Erro #188. O tipo '" junto com o nome deste tipo desta variável deste fragmento
+      seguido de "' da variável '" junto com o nome desta variável deste fragmento
       seguido de "' deste fragmento não foi encontrado." junto com o texto CRLF;
     Retorne.
   Atribua a quantidade de caracteres deste tipo desta variável deste fragmento para uma quantidade de caracteres.
+  Se a quantidade de caracteres for 8,
+    Acrescente $FF32 para o código deste fragmento. \ push qword ptr [rdx]
+    Retorne.
   Se a quantidade de caracteres for 4,
-    Acrescente $FF32 para o código deste fragmento; \65330
-    Retorne. \ push DWORD PTR [edx]
+    Acrescente $8B02 para o código deste fragmento. \ mov eax, dword ptr [rdx] (zero-extends RAX)
+    Acrescente $50 para o código deste fragmento. \ push rax (8-byte stack slot)
+    Retorne.
   Se a quantidade de caracteres for 2,
-    Acrescente $66FF32 para o código deste fragmento; \ 6.750.002
-    Retorne. \ push WORD PTR [edx]
+    Acrescente $0FB702 para o código deste fragmento. \ movzx eax, word ptr [rdx]
+    Acrescente $50 para o código deste fragmento. \ push rax (8-byte stack slot)
+    Retorne.
   Se a quantidade de caracteres for 1,
-    Acrescente $0FB61252 para o código deste fragmento;
-    Retorne. 
-    \ movzxb edx, BYTE PTR [edx]; 
-    \ push edx
+    Acrescente $0FB602 para o código deste fragmento. \ movzx eax, byte ptr [rdx]
+    Acrescente $50 para o código deste fragmento. \ push rax (8-byte stack slot)
+    Retorne.
   \Se a quantidade de caracteres for outra, então…
-    Apresente a mensagem de erro contendo 
+    Apresente a mensagem de erro contendo
     "Código de Erro #189. Tamanho do fragmento inválido" junto com o texto CRLF. \ Erro interno
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Externa):
-  Acrescente $FF15 [call] e o endereço desta função deste fragmento para o código deste fragmento. 
-  \ Call [o endereço desta função deste fragmento ]
-  \ O código acima gera o código de máquina para uma chamada ao sistema operacional Windows.
-  \ O código op é especificado em hexadecimal ($FF15) (x64)
-  \ O restante da instrução é o endereço da função da rotina de destino, que é anexado ao código da operação
+  Acrescente $FF15 e o endereço desta função deste fragmento para o fragmento. \ call qword ptr [rip + rel32] (entrada IAT)
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (atribuição de EAX):
   Acrescente $B8 e o sinalizador deste fragmento para o código deste fragmento. \ mov eax,sinalizador
-  \ atribui endereço para edx
-
+  \ atribui endereço para rdx
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (registrador EAX):
   Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
-  \ atribui o endereço para o registrador edx
+  \ atribui o endereço para o registrador rdx
   Se a variável deste fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
+    Apresente uma mensagem de erro contendo
       "Código de Erro #190. A variável '" junto com o nome desta variável deste fragmento  \ Erro interno
       seguido de "' não foi encontrada." junto com o texto CRLF;
     Retorne.
   Se o tipo desta variável deste fragmento for inexistente,
-    Apresente a mensagem de erro contendo 
+    Apresente a mensagem de erro contendo
       "Código de Erro #191. O tipo '" junto com o nome deste tipo desta variável deste fragmento  \ Erro interno
-      seguido de "' da variável '" junto com o nome desta variável deste fragmento 
+      seguido de "' da variável '" junto com o nome desta variável deste fragmento
       seguido de "' não foi encontrado." junto com o texto CRLF;
     Retorne.
   Atribua a quantidade de caracteres deste tipo desta variável deste fragmento para uma quantidade de caracteres.
   \Se a quantidade de caracteres for 8, \ para 64 bits
-    \Acrescente $67488902  para o código deste fragmento; \ mov [edx],rax
-    \Retorne.   
+  Se a quantidade de caracteres for 8,
+    Acrescente $488902 para o código deste fragmento. \ mov qword ptr [rdx], rax
+    Retorne.
   Se a quantidade de caracteres for 4,
-    Acrescente $8902 para o código deste fragmento; \ mov [edx],eax
-    Retorne. 
+    Acrescente $8902 para o código deste fragmento; \ mov dword ptr [rdx], eax
+    Retorne.
   Se a quantidade de caracteres for 2,
-    Acrescente $668902 para o código deste fragmento; \ mov [edx],ax
-    Retorne. 
+    Acrescente $668902 para o código deste fragmento; \ mov word ptr [rdx], ax
+    Retorne.
   Se a quantidade de caracteres for 1,
-    Acrescente $8802 para o código deste fragmento; \ mov [edx],al
-    Retorne. 
-  [Se a quantidade de caracteres não for 1, 2 ou 4] 
-    Apresente a mensagem de erro contendo 
+    Acrescente $8802 para o código deste fragmento; \ mov byte ptr [rdx], al
+    Retorne.
+  [Se a quantidade de caracteres não for 1, 2 ou 4]
+    Apresente a mensagem de erro contendo
       "Código de Erro #192. O tipo '" junto com o tipo desta variável deste fragmento \ Erro interno
       seguido de "deste fragmento possui um tamanho inválido".
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Indireta):
   Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
-  Acrescente $FF12 para o código deste fragmento. \ call [edx]
+  Acrescente $FF12 para o código deste fragmento. \ call qword ptr [rdx]
 
 Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (endereço de rotina):
   Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
-  \ atribui o endereço para o registrador edx
+  \ atribui o endereço para o registrador rdx
   Se a rotina deste fragmento for inexistente,
-    Apresente uma mensagem de erro contendo 
+    Apresente uma mensagem de erro contendo
       "Código de Erro #193. Rotina não encontrada."
       junto com o texto CRLF; \ Erro interno
     Retorne.
   Obtenha um endereço usando a rotina deste fragmento.
-  Acrescente $C702 e o endereço para o código deste fragmento. \ mov [edx],the endereço
+  Acrescente $488D05 e o endereço para o fragmento. \ lea rax, [rip + rel32]
+  Acrescente $488902 para o código deste fragmento. \ mov qword ptr [rdx], rax
