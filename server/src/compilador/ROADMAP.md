@@ -7,10 +7,15 @@ dispatcher still reports that the target is unimplemented, and the active
 linker still builds PE output. No ELF has been generated or executed by this
 compiler.
 
-`linux x86.pop` currently defines ELF32 record types, fixed ELF constants,
-initializers, relocation helpers, an external-call helper for i386 `cdecl`, and
-initial PLT/GOT encoding primitives. Those primitives are not yet called by the
-compiler pipeline and do not constitute a complete executable writer.
+`linux x86.pop` defines ELF32 record types, fixed ELF constants and
+initializers, an i386 `cdecl` call helper, and initial PLT/GOT encoding
+primitives. It now also contains isolated helpers for dynamic-table sizing and
+serialization, NUL-terminated `.dynstr` strings, the null `.dynsym` entry,
+ELF header and record serialization, one-bucket SysV hash tables,
+mapped-region metadata, and link-time
+`R_386_32`/`R_386_PC32`/`R_386_RELATIVE` relocation application. These routines
+are not called by the compiler pipeline and do not constitute a complete
+executable writer.
 
 ## Current architecture and constraints
 
@@ -164,12 +169,19 @@ review.
 
 ## Current implementation boundary
 
-Implemented in `linux x86.pop`: ELF32 record definitions and initializers,
-basic ELF constants, `r_info` calculation, an i386 `cdecl` call/cleanup helper,
-and fixed-address PLT0/PLT entry byte templates.
+Implemented as standalone routines in `linux x86.pop`: ELF32 record
+definitions and initializers, basic ELF constants, `r_info` calculation, an
+i386 `cdecl` call/cleanup helper, fixed-address PLT0/PLT templates, dynamic
+table size formulas and entry writers, ELF header/record/string/null-symbol
+serialization, single-bucket SysV hash serialization, separate
+file-offset/virtual-address region fields, and the three listed static
+relocation formulas. The helper
+explicitly refuses to apply `R_386_JMP_SLOT`, which belongs to the dynamic
+loader.
 
-Not implemented: ELF file layout/writing, Linux startup/runtime, target-specific
-source selection, complete dynamic tables, final-address assignment, actual
-relocation application, pipeline integration, executable permission handling,
-or an ELF runtime test. The Linux target must remain marked unimplemented until
-the relevant exit criteria above pass.
+Not implemented: integrated ELF layout and file writing, final address
+assignment/alignment, complete and validated dynamic metadata, Linux
+startup/runtime, target-specific source selection, relocation discovery and
+application across generated code/data, pipeline integration, executable
+permissions, or ELF inspection/runtime tests. The Linux target must remain
+marked unimplemented until the relevant exit criteria above pass.

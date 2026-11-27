@@ -328,6 +328,186 @@ Rotina para que se acrescente uma entrada PLT ELF32 para um texto hexadecimal de
 \ Use these templates only after the linker assigns final virtual addresses.
 \ For PIE/ASLR, generate position-independent PLT/GOT code and the required
 \ dynamic relocations instead of embedding absolute addresses.
+
+\ ELF32 table sizing, serialization, and relocation primitives.
+Um byte ELF32 é uma estrutura com
+  Um byte denominado valor.
+
+Um dword ELF32 é uma estrutura com
+  Um número denominado valor.
+
+Uma região mapeada ELF32 é uma estrutura com
+  Um número denominado deslocamento de arquivo,
+  Um endereço denominado endereço virtual,
+  Um número denominado tamanho de arquivo,
+  Um número denominado tamanho de memória,
+  Um número denominado alinhamento,
+  Um número denominado flags.
+
+Um layout dinâmico ELF32 é uma estrutura com
+  Uma região mapeada ELF32 denominada interpretador,
+  Uma região mapeada ELF32 denominada tabela de strings dinâmica,
+  Uma região mapeada ELF32 denominada tabela de símbolos dinâmica,
+  Uma região mapeada ELF32 denominada tabela hash,
+  Uma região mapeada ELF32 denominada tabela de relocacoes PLT,
+  Uma região mapeada ELF32 denominada tabela PLT,
+  Uma região mapeada ELF32 denominada tabela GOT PLT,
+  Uma região mapeada ELF32 denominada tabela dinâmica.
+
+\ string-name bytes is the sum of all dependency and symbol name lengths,
+\ excluding their NUL terminators. The string table starts with one NUL byte.
+\ SysV hash uses one bucket; this is valid but intentionally favors simplicity
+\ over lookup speed until a measured need for more buckets.
+Rotina para que se calculem os tamanhos das tabelas dinamicas ELF32 usando um número denominado quantidade de importacoes e um número denominado quantidade de dependencias e um número denominado caracteres dos nomes e um número denominado quantidade de relocacoes gerais e um número denominado tamanho da tabela de strings e um número denominado tamanho da tabela de simbolos e um número denominado tamanho da tabela hash e um número denominado tamanho das relocacoes PLT e um número denominado tamanho da tabela PLT e um número denominado tamanho da tabela GOT PLT e um número denominado tamanho da tabela dinamica:
+  Atribua 1 mais os caracteres dos nomes mais a quantidade de importacoes mais a quantidade de dependencias ao tamanho da tabela de strings.
+  Atribua a quantidade de importacoes mais 1 ao numero de simbolos.
+  Atribua o numero de simbolos multiplicado por 16 ao tamanho da tabela de simbolos.
+  Atribua 12 mais o numero de simbolos multiplicado por 4 ao tamanho da tabela hash.
+  Atribua a quantidade de importacoes multiplicada por 8 ao tamanho das relocacoes PLT.
+  Atribua a quantidade de importacoes mais 1 ao numero de entradas PLT.
+  Multiplique o numero de entradas PLT por 16 para o tamanho da tabela PLT.
+  Atribua a quantidade de importacoes mais 3 ao numero de entradas GOT PLT.
+  Multiplique o numero de entradas GOT PLT por 4 para o tamanho da tabela GOT PLT.
+  Atribua a quantidade de dependencias mais 10 ao numero de entradas dinamicas.
+  Se a quantidade de relocacoes gerais não for 0,
+    Adicione 3 ao numero de entradas dinamicas.
+  Multiplique o numero de entradas dinamicas por 8 para o tamanho da tabela dinamica.
+
+Rotina para que se disponibilize um byte ELF32 em um trecho denominado imagem usando um número denominado valor e um endereço denominado deslocamento:
+  Atribua o valor ao valor deste byte.
+  Disponibilize bytes usando o endereçamento deste byte e 1 e a imagem e o deslocamento.
+
+Rotina para que se disponibilize um dword ELF32 em um trecho denominado imagem usando um número denominado valor e um endereço denominado deslocamento:
+  Atribua o valor ao valor deste dword.
+  Disponibilize bytes usando o endereçamento deste dword e 4 e a imagem e o deslocamento.
+
+Rotina para que se disponibilize um cabeçalho ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento:
+  Disponibilize bytes usando o endereçamento deste cabeçalho e 52 e a imagem e o deslocamento.
+  Adicione 52 para o deslocamento.
+
+Rotina para que se disponibilize uma string denominada texto em um trecho denominado imagem sob um endereço denominado deslocamento retornando um número denominado deslocamento da string:
+  Atribua o deslocamento ao deslocamento da string.
+  Atribua a quantidade de caracteres do texto para o tamanho da string.
+  Se o tamanho da string não for 0,
+    Disponibilize bytes usando o caractere inicial do texto e o tamanho da string e a imagem e o deslocamento.
+  Adicione o tamanho da string para o deslocamento.
+  Disponibilize um byte ELF32 em a imagem usando 0 e o deslocamento.
+  Adicione 1 para o deslocamento.
+
+Rotina para que se inicialize a tabela de strings dinâmica ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento:
+  Disponibilize um byte ELF32 em a imagem usando 0 e o deslocamento.
+  Adicione 1 para o deslocamento.
+
+Rotina para que se disponibilize uma entrada dinâmica ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento usando um número denominado tag e um número denominado valor:
+  Inicialize uma entrada dinâmica ELF32 denominada entrada usando o tag e o valor.
+  Disponibilize bytes usando o endereçamento desta entrada e 8 e a imagem e o deslocamento.
+  Adicione 8 para o deslocamento.
+
+\ Emit one DT_NEEDED entry per dependency, then append these fixed entries.
+Rotina para que se disponibilizem as entradas dinamicas PLT ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento usando um endereço denominado endereco GOT PLT e um endereço denominado endereco da tabela hash e um endereço denominado endereco da tabela de strings e um endereço denominado endereco da tabela de simbolos e um número denominado tamanho da tabela de strings e um número denominado tamanho das relocacoes PLT e um endereço denominado endereco das relocacoes PLT:
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 3 e o endereco GOT PLT.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 4 e o endereco da tabela hash.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 5 e o endereco da tabela de strings.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 6 e o endereco da tabela de simbolos.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 10 e o tamanho da tabela de strings.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 11 e 16.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 2 e o tamanho das relocacoes PLT.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 20 e 17.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 23 e o endereco das relocacoes PLT.
+
+Rotina para que se disponibilizem as entradas dinamicas de relocacoes gerais ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento usando um endereço denominado endereco da tabela REL e um número denominado tamanho da tabela REL:
+  Se o tamanho da tabela REL for 0, retorne.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 17 e o endereco da tabela REL.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 18 e o tamanho da tabela REL.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 19 e 8.
+
+Rotina para que se finalize a tabela dinâmica ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento usando um endereço denominado endereco da tabela REL e um número denominado tamanho da tabela REL:
+  Disponibilize as entradas dinamicas de relocacoes gerais ELF32 em a imagem sob o deslocamento usando o endereco da tabela REL e o tamanho da tabela REL.
+  Disponibilize uma entrada dinâmica ELF32 em a imagem sob o deslocamento usando 0 e 0.
+
+Rotina para que se disponibilize um símbolo dinâmico ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento:
+  Disponibilize bytes usando o endereçamento deste simbolo e 16 e a imagem e o deslocamento.
+  Adicione 16 para o deslocamento.
+
+Rotina para que se disponibilize uma relocação ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento:
+  Disponibilize bytes usando o endereçamento desta relocacao e 8 e a imagem e o deslocamento.
+  Adicione 8 para o deslocamento.
+
+Rotina para que se disponibilize um segmento de programa ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento:
+  Disponibilize bytes usando o endereçamento deste segmento e 32 e a imagem e o deslocamento.
+  Adicione 32 para o deslocamento.
+
+Rotina para que se disponibilize uma seção ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento:
+  Disponibilize bytes usando o endereçamento desta secao e 40 e a imagem e o deslocamento.
+  Adicione 40 para o deslocamento.
+
+Rotina para que se disponibilizem quatro dwords para a primeira entrada da tabela de símbolos dinâmica ELF32 em um trecho denominado imagem sob um endereço denominado deslocamento:
+  Disponibilize um dword ELF32 em a imagem usando 0 e o deslocamento.
+  Adicione 4 para o deslocamento.
+  Disponibilize um dword ELF32 em a imagem usando 0 e o deslocamento.
+  Adicione 4 para o deslocamento.
+  Disponibilize um dword ELF32 em a imagem usando 0 e o deslocamento.
+  Adicione 4 para o deslocamento.
+  Disponibilize um dword ELF32 em a imagem usando 0 e o deslocamento.
+  Adicione 4 para o deslocamento.
+
+\ Build a correct, deliberately simple SysV hash table: one bucket chains all
+\ non-null symbols in .dynsym order. symbol count excludes the mandatory null
+\ symbol at index zero.
+Rotina para que se disponibilize um cabeçalho de tabela hash ELF32 denominado cabecalho em um trecho denominado imagem sob um endereço denominado deslocamento usando um número denominado quantidade de simbolos:
+  Atribua 1 ao nbucket deste cabecalho.
+  Atribua a quantidade de simbolos mais 1 ao nchain deste cabecalho.
+  Disponibilize bytes usando o endereçamento deste cabecalho e 8 e a imagem e o deslocamento.
+  Adicione 8 para o deslocamento.
+  Atribua 1 ao primeiro simbolo.
+  Se a quantidade de simbolos for 0,
+    Atribua 0 ao primeiro simbolo.
+  Disponibilize um dword ELF32 em a imagem usando o primeiro simbolo e o deslocamento.
+  Adicione 4 para o deslocamento.
+  Atribua 0 ao indice do simbolo.
+  Itere.
+    Se o indice do simbolo for maior do que a quantidade de simbolos, retorne.
+    Atribua o indice do simbolo mais 1 ao proximo simbolo.
+    Se o indice do simbolo for 0,
+      Atribua 0 ao proximo simbolo;
+    Se o indice do simbolo for a quantidade de simbolos,
+      Atribua 0 ao proximo simbolo.
+    Disponibilize um dword ELF32 em a imagem usando o proximo simbolo e o deslocamento.
+    Adicione 4 para o deslocamento.
+    Adicione 1 para o indice do simbolo.
+  Reitere.
+
+\ Create an undefined global function symbol; st_info is STB_GLOBAL | STT_FUNC.
+Rotina para que se inicialize um símbolo dinâmico ELF32 denominado simbolo usando um número denominado deslocamento do nome:
+  Inicialize um símbolo dinâmico ELF32 denominado simbolo usando o deslocamento do nome e 0 e 0 e 18 e 0 e 0.
+
+\ Link-time relocations are applied to the file image. R_386_JMP_SLOT is
+\ loader-owned and must be represented in .rel.plt, not patched here.
+Rotina para que se aplique uma relocação ELF32 estática em um trecho denominado imagem sob um endereço denominado deslocamento de arquivo usando um número denominado tipo e um endereço denominado endereco do simbolo e um número denominado adendo e um endereço denominado endereco da relocacao e um endereço denominado base de carga:
+  Se o tipo for 7,
+    Apresente uma mensagem de erro contendo "R_386_JMP_SLOT deve ser resolvida pelo carregador ELF, não pelo vinculador." junto com o texto CRLF;
+    Retorne.
+  Se o tipo for 1,
+    Atribua o endereco do simbolo mais o adendo ao valor relocado;
+  Se o tipo for 2,
+    Atribua o endereco do simbolo mais o adendo menos o endereco da relocacao ao valor relocado;
+  Se o tipo for 8,
+    Atribua a base de carga mais o adendo ao valor relocado;
+  Se o tipo não for 1 e o tipo não for 2 e o tipo não for 8,
+    Apresente uma mensagem de erro contendo "Tipo de relocação ELF32 não suportado." junto com o texto CRLF;
+    Retorne.
+  Disponibilize um dword ELF32 em a imagem usando o valor relocado e o deslocamento de arquivo.
+
+Rotina para que se configure uma região mapeada ELF32 usando um número denominado deslocamento de arquivo e um endereço denominado endereço virtual e um número denominado tamanho e um número denominado alinhamento e uma região mapeada ELF32 denominada região:
+  Atribua o deslocamento de arquivo ao deslocamento de arquivo desta região.
+  Atribua o endereço virtual ao endereço virtual desta região.
+  Atribua o tamanho ao tamanho de arquivo desta região.
+  Atribua o tamanho ao tamanho de memória desta região.
+  Atribua o alinhamento ao alinhamento desta região.
+
+\ The caller must compute congruent p_offset/p_vaddr values before emitting
+\ PT_LOAD records; each mapped region is represented with separate file and
+\ virtual addresses to prevent accidental RVA/file-offset mixing.
 Um slot GOT PLT ELF32 é um endereço.
 Uma entrada PLT inicial ELF32 é um texto hexadecimal.
 Uma entrada PLT ELF32 é um texto hexadecimal.
