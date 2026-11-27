@@ -1,132 +1,256 @@
-Rotina para que se inicialize um cabeçalho DOS (x64):
-retorne.
+Um ponteiro amplo é uma estrutura com
+  Um número denominado parte inferior,
+  Um número denominado parte superior.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (x64):
-retorne.
+Um Cabeçalho PE32+ é uma estrutura com
+  Um número denominado Signature,
+  Uma word denominada MachineType,
+  Uma word denominada NumberOfSections,
+  Um número denominado TimeStamp,
+  Um número denominado PointerToSymbolTable,
+  Um número denominado NumberOfSymbols,
+  Uma word denominada SizeOfOptionalHeaderInBytes,
+  Uma word denominada Characteristics,
+  Uma word denominada MagicNumber,
+  Um byte denominado MajorLinkerVersion,
+  Um byte denominado MinorLinkerVersion,
+  Um número denominado SizeOfCodeInFile,
+  Um número denominado SizeOfInitializedDataInFile,
+  Um número denominado SizeOfUninitializedDataInFile,
+  Um número denominado AddressOfEntryPointInMemory,
+  Um número denominado AddressOfCodeInMemory,
+  Um ponteiro amplo denominado ImageBase,
+  Um número denominado MemoryAlignment,
+  Um número denominado FileAlignment,
+  Uma word denominada OS_MajorVersion,
+  Uma word denominada OS_MinorVersion,
+  Uma word denominada UserMajorVersion,
+  Uma word denominada UserMinorVersion,
+  Uma word denominada SubsystemMajorVersion,
+  Uma word denominada SubsystemMinorVersion,
+  Um número denominado Reserved,
+  Um número denominado SizeOfImageInMemory,
+  Um número denominado SizeOfAllHeadersInFile,
+  Um número denominado CheckSum,
+  Uma word denominada Subsystem,
+  Uma word denominada DLLCharacteristics,
+  Um ponteiro amplo denominado MaxStack,
+  Um ponteiro amplo denominado MinStack,
+  Um ponteiro amplo denominado MaxHeap,
+  Um ponteiro amplo denominado MinHeap,
+  Um número denominado LoaderFlags,
+  Um número denominado NumberOfDirectories,
+  8 bytes denominados Directory0,
+  Um número denominado ImageDirectoryEntryImportAddress,
+  Um número denominado ImageDirectoryEntryImportSize,
+  112 bytes denominados Directories2-15,
+  Um Cabeçalho de Seção PE denominado Idata Section,
+  Um Cabeçalho de Seção PE denominado Data Section,
+  Um Cabeçalho de Seção PE denominado Code Section.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (cabeçalho padrão) (x64):
-retorne.
+Rotina para que se inicialize um cabeçalho DOS para Windows x64:
+  Inicialize um cabeçalho DOS.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (cabeçalho opcional) (x64):
-retorne.
+Rotina para que se inicialize um Cabeçalho PE32+ para Windows x64:
+  Inicialize o Cabeçalho PE32+ (cabeçalho padrão) para Windows x64.
+  Inicialize o Cabeçalho PE32+ (cabeçalho opcional) para Windows x64.
+  Inicialize o Cabeçalho PE32+ (informação da versão) para Windows x64.
+  Inicialize o Cabeçalho PE32+ (diretórios) para Windows x64.
+  Inicialize o Cabeçalho PE32+ (Seção de DLLs) para Windows x64.
+  Inicialize o Cabeçalho PE32+ (seção de dados) para Windows x64.
+  Inicialize o Cabeçalho PE32+ (seção de código) para Windows x64.
 
-Função para que se atribua o tamanho do executável deste compilador para um tamanho (x64):
-retorne.
+Rotina para que se inicialize um Cabeçalho PE32+ (cabeçalho padrão) para Windows x64:
+  Atribua 17744 [$00004550] ao Signature deste Cabeçalho PE32+.
+  Atribua 34404 [$8664] ao MachineType deste Cabeçalho PE32+.
+  Atribua 3 [$0003] ao NumberOfSections deste Cabeçalho PE32+.
+  Atribua 0 ao TimeStamp deste Cabeçalho PE32+.
+  Atribua 0 ao PointerToSymbolTable deste Cabeçalho PE32+.
+  Atribua 0 ao NumberOfSymbols deste Cabeçalho PE32+.
+  Atribua 240 [$00F0] ao SizeOfOptionalHeaderInBytes deste Cabeçalho PE32+.
+  Atribua 34 [$0022] às Characteristics deste Cabeçalho PE32+.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (informação da versão) (x64):
-retorne.
+Rotina para que se inicialize um Cabeçalho PE32+ (cabeçalho opcional) para Windows x64:
+  Atribua 523 [$020B] ao MagicNumber deste Cabeçalho PE32+.
+  Atribua a quantidade de caracteres desta Região de Código ao SizeOfCodeInFile deste Cabeçalho PE32+.
+  Atribua a quantidade de caracteres desta Região de Dados ao SizeOfInitializedDataInFile deste Cabeçalho PE32+.
+  Atribua 0 ao SizeOfUninitializedDataInFile deste Cabeçalho PE32+.
+  Encontre uma rotina usando
+    "~Inicialize antes da execução e Execute o programa e Finalize após execução" e
+    o catálogo geral de rotinas.
+  Se a rotina for inexistente,
+    Apresente uma mensagem de erro contendo
+      "Código de Erro #194. A rotina de inicialização do cabeçalho PE32+ não foi encontrada no catálogo geral de rotinas."
+      junto com o texto CRLF;
+    Retorne.
+  Atribua o endereço desta rotina menos o image base ao AddressOfEntryPointInMemory deste Cabeçalho PE32+.
+  Atribua o Endereço Base desta Região de Código ao AddressOfCodeInMemory deste Cabeçalho PE32+.
+  Atribua 1073741824 [$40000000] ao valor inferior deste ImageBase deste Cabeçalho PE32+.
+  Atribua 1 ao valor superior deste ImageBase deste Cabeçalho PE32+.
+  Atribua 4096 [$00001000] ao MemoryAlignment deste Cabeçalho PE32+.
+  Atribua 4096 [$00001000] ao FileAlignment deste Cabeçalho PE32+.
+  Atribua 0 ao Reserved deste Cabeçalho PE32+.
+  Atribua o tamanho da imagem PE32+ deste compilador para um tamanho.
+  Atribua o tamanho ao SizeOfImageInMemory deste Cabeçalho PE32+.
+  Atribua 4096 [$00001000] ao SizeOfAllHeadersInFile deste Cabeçalho PE32+.
+  Atribua 0 ao CheckSum deste Cabeçalho PE32+.
+  Atribua 0 para as DLLCharacteristics deste Cabeçalho PE32+.
+  Atribua 1048576 [$00100000] ao valor inferior deste MaxStack deste Cabeçalho PE32+.
+  Atribua 0 ao valor superior deste MaxStack deste Cabeçalho PE32+.
+  Atribua 16384 [$00004000] ao valor inferior deste MinStack deste Cabeçalho PE32+.
+  Atribua 0 ao valor superior deste MinStack deste Cabeçalho PE32+.
+  Atribua 1048576 [$00100000] ao valor inferior deste MaxHeap deste Cabeçalho PE32+.
+  Atribua 0 ao valor superior deste MaxHeap deste Cabeçalho PE32+.
+  Atribua 16384 [$00004000] ao valor inferior deste MinHeap deste Cabeçalho PE32+.
+  Atribua 0 ao valor superior deste MinHeap deste Cabeçalho PE32+.
+  Atribua 0 ao LoaderFlags deste Cabeçalho PE32+.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (diretórios) (x64):
-retorne.
+Função para que se atribua o tamanho da imagem PE32+ deste compilador para um tamanho:
+  Atribua 4096 [$00001000] ao tamanho.
+  Adicione o tamanho desta seção de DLLs para o tamanho.
+  Adicione o tamanho desta região de dados para o tamanho.
+  Adicione o tamanho desta região de código para o tamanho.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (Seção de DLLs) (x64):
-retorne.
+Rotina para que se inicialize um Cabeçalho PE32+ (informação da versão) para Windows x64:
+  Atribua 0 ao MajorLinkerVersion deste Cabeçalho PE32+.
+  Atribua 0 ao MinorLinkerVersion deste Cabeçalho PE32+.
+  Atribua 4 [$0004] ao OS_MajorVersion deste Cabeçalho PE32+.
+  Atribua 0 [$0000] ao OS_MinorVersion deste Cabeçalho PE32+.
+  Atribua 0 ao UserMajorVersion deste Cabeçalho PE32+.
+  Atribua 0 ao UserMinorVersion deste Cabeçalho PE32+.
+  Atribua 4 [$0004] ao SubsystemMajorVersion deste Cabeçalho PE32+.
+  Atribua 0 [$0000] ao SubsystemMinorVersion deste Cabeçalho PE32+.
+  Atribua 3 [$0003] ao Subsystem deste Cabeçalho PE32+.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (seção de dados) (x64):
-retorne.
+Rotina para que se inicialize um Cabeçalho PE32+ (diretórios) para Windows x64:
+  Atribua 16 [$00000010] ao NumberOfDirectories deste Cabeçalho PE32+.
+  Atribua o endereço base desta seção de DLLs ao ImageDirectoryEntryImportAddress deste Cabeçalho PE32+.
+  Atribua a quantidade de caracteres desta seção de DLLs ao ImageDirectoryEntryImportSize deste Cabeçalho PE32+.
 
+Rotina para que se inicialize um Cabeçalho PE32+ (Seção de DLLs) para Windows x64:
+  Atribua "idata " para uma string.
+  Copie bytes desde o caractere inicial desta string para o endereçamento deste nome desta Idata Section deste Cabeçalho PE32+ por 6.
+  Atribua a quantidade de caracteres desta seção de DLLs ao SizeInBytes desta Idata Section deste Cabeçalho PE32+.
+  Atribua o endereço base desta seção de DLLs ao AddressInMemory desta Idata Section deste Cabeçalho PE32+.
+  Atribua a quantidade de caracteres desta seção de DLLs ao SizeInFile desta Idata Section deste Cabeçalho PE32+.
+  Atribua o endereço base desta seção de DLLs ao AddressInFile desta Idata Section deste Cabeçalho PE32+.
+  Atribua -1073741760 [$C0000040] para as Characteristics desta Idata Section deste Cabeçalho PE32+.
 
-Rotina para que se inicialize um Cabeçalho PE32+ (seção de código) (x64):
-retorne.
+Rotina para que se inicialize um Cabeçalho PE32+ (seção de dados) para Windows x64:
+  Atribua "data " para uma string.
+  Copie bytes desde o caractere inicial desta string para o endereçamento deste nome desta Data Section deste Cabeçalho PE32+ por 6.
+  Atribua a quantidade de caracteres desta região de dados ao SizeInBytes desta Data Section deste Cabeçalho PE32+.
+  Atribua o endereço base desta região de dados ao AddressInMemory desta Data Section deste Cabeçalho PE32+.
+  Atribua a quantidade de caracteres desta região de dados ao SizeInFile desta Data Section deste Cabeçalho PE32+.
+  Atribua o endereço base desta região de dados ao AddressInFile desta Data Section deste Cabeçalho PE32+.
+  Atribua -1073741760 [$C0000040] para as Characteristics desta Data Section deste Cabeçalho PE32+.
 
+Rotina para que se inicialize um Cabeçalho PE32+ (seção de código) para Windows x64:
+  Atribua "code  " para uma string.
+  Copie bytes desde o caractere inicial desta string para o endereçamento deste nome desta Code Section deste Cabeçalho PE32+ por 6.
+  Atribua a quantidade de caracteres desta Região de Código ao SizeInBytes desta Code Section deste Cabeçalho PE32+.
+  Atribua o endereço base desta Região de Código ao AddressInMemory desta Code Section deste Cabeçalho PE32+.
+  Atribua a quantidade de caracteres desta Região de Código ao SizeInFile desta Code Section deste Cabeçalho PE32+.
+  Atribua o endereço base desta Região de Código ao AddressInFile desta Code Section deste Cabeçalho PE32+.
+  Atribua -536870880 [$E0000020] para as Characteristics desta Code Section deste Cabeçalho PE32+.
 
 \------------------------------------------------------------------------------------------------------------------------------------
 
-Rotina para que se compile um endereço da pasta (transmutação): \ #014
+Rotina para que se compile em modo Windows x64 um endereço da pasta (transmutação): \ #014
   Se existir algum problema de compilação, retorne.
   Escreva em ciano "Convertendo código em instruções de máquina…" para StdOut.
   Comece o temporizador de transmutação.
-  Transforme as rotinas em código hexadecimal (x64).
+  Transforme no backend Windows x64 as rotinas em código hexadecimal.
   Suspenda o temporizador de transmutação.
 
-Rotina para que se transforme umas rotinas em código hexadecimal:
+Rotina para que se transforme no backend Windows x64 umas rotinas em código hexadecimal:
   Itere.
     Se existir algum problema de compilação, retorne.
     Obtenha uma rotina desde as rotinas.
     Se a rotina for inexistente, pare.
-    Transforme a rotina em código hexadecimal (x64).
+    Transforme no backend Windows x64 a rotina em código hexadecimal.
   Reitere.
 
-Rotina para que se transforme uma rotina em código hexadecimal:
+Rotina para que se transforme no backend Windows x64 uma rotina em código hexadecimal:
   Se existir algum problema de compilação, retorne.
   Se a rotina for inexistente, retorne.
   Se o representação de emprego desta rotina não estiver em branco, retorne.
   Se o sinalizador de compilação desta rotina não estiver ativo, retorne.
   Atribua a rotina à rotina utilizada atualmente.
-  Transforme os fragmentos desta rotina em código hexadecimal (x64).
+  Transforme no backend Windows x64 os fragmentos desta rotina em código hexadecimal.
 
-Rotina para que se transforme uns fragmentos em código hexadecimal (x64):
+Rotina para que se transforme no backend Windows x64 uns fragmentos em código hexadecimal:
   Itere.
     Se existir algum problema de compilação, retorne.
     Obtenha um fragmento desde o fragmentos.
     Se o fragmento for inexistente, retorne.
-    Transforme o fragmento em código hexadecimal (x64).
+    Transforme no backend Windows x64 o fragmento em código hexadecimal.
   Reitere.
 
-Rotina para que se transforme um fragmento em código hexadecimal (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal:
   Se existir algum problema de compilação, retorne.
   Se o fragmento for inexistente, retorne.
   Se a etiqueta deste fragmento for a etiqueta de inserção de endereço [na stack],
-    Transforme o fragmento em código hexadecimal (empilhamento de endereço) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (empilhamento de endereço);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de demanda interna,
-    Transforme o fragmento em código hexadecimal (Demanda Interna) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (Demanda Interna);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de carregamento de endereço,
-    Transforme o fragmento em código hexadecimal (load endereço) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (load endereço);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de acréscimo,
-    Transforme o fragmento em código hexadecimal (increment) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (increment);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de redirecionamento,
-    Transforme o fragmento em código hexadecimal (cláusula de redirecionamento) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (cláusula de redirecionamento);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de desvio falso,
-    Transforme o fragmento em código hexadecimal (desvio caso resultado negativo) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (desvio caso resultado negativo);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de negação lógica,
-    Transforme o fragmento em código hexadecimal (negação lógica) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (negação lógica);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de retorno,
-    Transforme o fragmento em código hexadecimal (cláusula de retorno) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (cláusula de retorno);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de repetição,
-    Transforme o fragmento em código hexadecimal (cláusula de repetição) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (cláusula de repetição);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de interrupção,
-    Transforme o fragmento em código hexadecimal (cláusula de interrupção) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (cláusula de interrupção);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta preliminar,
-    Transforme o fragmento em código hexadecimal (etapa preliminar) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (etapa preliminar);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta conclusiva,
-    Transforme o fragmento em código hexadecimal (etapa conclusiva) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (etapa conclusiva);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de inserção de valor [na stack],
-    Transforme o fragmento em código hexadecimal (empilhamento de valor) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (empilhamento de valor);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de demanda externa,
-    Transforme o fragmento em código hexadecimal (Demanda Externa) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (Demanda Externa);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de carregamento de registrador EAX,
-    Transforme o fragmento em código hexadecimal (atribuição de EAX) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (atribuição de EAX);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de obtenção do registrador EAX,
-    Transforme o fragmento em código hexadecimal (registrador EAX) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (registrador EAX);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de demanda indireta,
-    Transforme o fragmento em código hexadecimal (Demanda Indireta) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (Demanda Indireta);
     Retorne.
   Se a etiqueta deste fragmento for a etiqueta de endereço de rotina,
-    Transforme o fragmento em código hexadecimal (endereço de rotina) (x64);
+    Transforme no backend Windows x64 o fragmento em código hexadecimal (endereço de rotina);
     Retorne.
 
-Rotina para que se transforme um fragmento em código hexadecimal (empilhamento de endereço) (x64):
-  Acrescente a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento. 
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (empilhamento de endereço):
+  Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
   \ Atribui o endereço para edx
   Acrescente $52 para o código deste fragmento. \ push edx
 
-Rotina para que se acrescente a instrução de carregamento de endereço para um texto hexadecimal usando uma variável:
+Rotina para que se acrescente no backend Windows x64 a instrução de carregamento de endereço para um texto hexadecimal usando uma variável:
   \ carrega o valor em edx
   Se a variável for inexistente,
     Acrescente $C7C200000000 para o texto hexadecimal; \ mov edx, 0x0
@@ -162,42 +286,16 @@ Rotina para que se acrescente a instrução de carregamento de endereço para um te
     Acrescente $8B95 e o deslocamento desta variável para o texto hexadecimal. 
     \ mov edx,[ebp+ o deslocamento da variável]
 
-Rotina para que se transforme um fragmento em código hexadecimal (Demanda Interna) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Interna):
   Obtenha um endereço usando a rotina deste fragmento.
   Acrescente $E8 e o endereço para o fragmento. \ call o endereço da rotina do fragmento
 
-Rotina para que se obtenha um endereço usando uma rotina:
-  Se o endereço desta rotina não for 0,
-    Atribua o endereço desta rotina ao endereço;
-    Retorne.
-  Atribua -1 ao endereço desta rotina.
-  Encontre uma segunda rotina usando o representação de emprego desta rotina e o catálogo geral de rotinas.
-  Se a segunda rotina for inexistente,
-    Apresente uma mensagem de erro contendo 
-      "Código de Erro #178. A 'Rotina para que se " junto com a representação de emprego desta rotina 
-      seguido de "' não foi encontrada. (Esta rotina foi invocada utilizando palavra-chave 'Empregue') (x64)." 
-      junto com o texto CRLF e o endereço local desta rotina;
-    Retorne.
-  Se o endereço desta segunda rotina for -1,
-    Apresente a mensagem de erro contendo 
-      "Código de Erro #179. A palavra-chave 'Empregue' está fazendo uma referência recursiva. " 
-       junto com o texto CRLF e o endereço local desta rotina;
-    Retorne.
-  Obtenha o endereço usando a segunda rotina.
-  Atribua o endereço ao endereço desta rotina.
-
-Rotina para que se transforme um fragmento em código hexadecimal (load endereço) (x64):
-  Acrescente a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (load endereço):
+  Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
   Acrescente $8995 e o deslocamento desta segunda variável deste fragmento para o código deste fragmento. 
   \ mov [ebp+ o deslocamento da variável do fragmento], edx
 
-Rotina para que se acrescente um texto hexadecimal e um sinalizador para um segundo texto hexadecimal;
-Rotina para que se acrescente um texto hexadecimal e um número para um segundo texto hexadecimal:
-  Acrescente o texto hexadecimal para o segundo texto hexadecimal.
-  Converta o número para um terceiro texto hexadecimal.
-  Acrescente o terceiro texto hexadecimal para o segundo texto hexadecimal.
-
-Rotina para que se transforme um fragmento em código hexadecimal (increment) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (increment):
   Se a variável deste fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
       "Código de Erro #180. A variável '" junto com o nome desta variável deste fragmento \ Erro interno
@@ -217,21 +315,14 @@ Rotina para que se transforme um fragmento em código hexadecimal (increment) (x6
       o código deste fragmento. 
   \ add [ebp+ o deslocamento da variável do fragmento], o número do fragmento
 
-Rotina para que se acrescente um texto hexadecimal e um número e um segundo número para um segundo texto hexadecimal:
-  Acrescente o texto hexadecimal para o segundo texto hexadecimal.
-  Converta o número para um terceiro texto hexadecimal.
-  Acrescente o terceiro texto hexadecimal para o segundo texto hexadecimal.
-  Converta o segundo número para um quarto texto hexadecimal.
-  Acrescente o quarto texto hexadecimal para o segundo texto hexadecimal.
-
-Rotina para que se transforme um fragmento em código hexadecimal (cláusula de redirecionamento) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de redirecionamento):
   Acrescente $8B95 e o deslocamento desta variável deste fragmento para o código deste fragmento. 
   \ mov edx, [ebp+ o deslocamento da variável do fragmento]
   Acrescente $8B12 para o código deste fragmento. \ mov edx,[edx]
   Acrescente $8995 e o deslocamento desta variável deste fragmento para o código deste fragmento. 
   \ mov [ebp+ o deslocamento da variável do fragmento]
 
-Rotina para que se transforme um fragmento em código hexadecimal (desvio caso resultado negativo) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (desvio caso resultado negativo):
   Encontre um segundo fragmento usando o fragmento e a etiqueta delimitadora de bloco condicional.
   Se o segundo fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
@@ -241,28 +332,11 @@ Rotina para que se transforme um fragmento em código hexadecimal (desvio caso re
   Acrescente $83F800 para o código deste fragmento. \ cmp eax,0
   Acrescente $0F84 e o endereço deste segundo fragmento para o fragmento. \ je + o endereço do fragmento
 
-Rotina para que se encontre um fragmento usando um segundo fragmento e uma etiqueta:
-  Atribua o segundo fragmento ao fragmento.
-  Itere.
-    Se o fragmento for inexistente, retorne.
-    Se a etiqueta deste fragmento for a etiqueta, retorne.
-    Atribua o próximo fragmento deste fragmento ao fragmento.
-  Reitere.
-
-Rotina para que se acrescente um texto hexadecimal e um endereço para um fragmento:
-  \ Call / Jump
-  Atribua o endereço para um número.
-  Subtraia o endereço deste fragmento desde o número.
-  Subtraia a quantidade de caracteres deste código deste fragmento desde o número.
-  Subtraia a quantidade de caracteres deste texto hexadecimal desde o número.
-  Subtraia 4 desde o número.
-  Acrescente o texto hexadecimal e o número para o código deste fragmento.
-
-Rotina para que se transforme um fragmento em código hexadecimal (negação lógica) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (negação lógica):
   \ deveria ser conjunção lógica?
   Acrescente $83F001 para o código deste fragmento. \ xor eax,1
 
-Rotina para que se transforme um fragmento em código hexadecimal (cláusula de retorno) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de retorno):
   Encontre um segundo fragmento usando o fragmento e a etiqueta de finalização.
   Se o segundo fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
@@ -272,8 +346,8 @@ Rotina para que se transforme um fragmento em código hexadecimal (cláusula de re
   Acrescente $E9 e o endereço deste segundo fragmento para o fragmento. 
   \ jmp + o endereço do fragmento
 
-Rotina para que se transforme um fragmento em código hexadecimal (cláusula de repetição) (x64):
-  Encontre um segundo fragmento usando o fragmento e a etiqueta de laço (regressivamente) (x64).
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de repetição):
+  Encontre um segundo fragmento usando o fragmento e a etiqueta de laço (regressivamente).
   Se o segundo fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
       "Código de Erro #184. A variável '"  junto com o nome desta variável deste segundo fragmento 
@@ -282,22 +356,14 @@ Rotina para que se transforme um fragmento em código hexadecimal (cláusula de re
   Acrescente $E9 e o endereço deste segundo fragmento para o fragmento. 
   \ jmp o endereço do fragmento
 
-Rotina para que se encontre um fragmento usando um segundo fragmento e uma etiqueta (regressivamente) (x64):
-  Atribua o segundo fragmento ao fragmento.
-  Itere.
-    Se o fragmento for inexistente, retorne.
-    Se a etiqueta deste fragmento for a etiqueta, retorne.
-    Atribua o fragmento anterior deste fragmento ao fragmento.
-  Reitere.
-
-Rotina para que se transforme um fragmento em código hexadecimal (cláusula de interrupção) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (cláusula de interrupção):
   Atribua a etiqueta de repetição para uma etiqueta.
   Encontre um segundo fragmento usando o fragmento e a etiqueta.
   Se o segundo fragmento for inexistente, 
     Atribua a etiqueta de finalização para a etiqueta. \ para interromper um loop
   Encontre um terceiro fragmento usando 
     o último fragmento destes fragmentos desta rotina utilizada atualmente e 
-    a etiqueta (regressivamente) (x64).
+    a etiqueta (regressivamente).
   Se o terceiro fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
       "Código de Erro #185. A variável '"  junto com o nome desta variável deste terceiro fragmento 
@@ -313,7 +379,7 @@ Rotina para que se transforme um fragmento em código hexadecimal (cláusula de in
   \Salto próximo, relativo, deslocamento relativo à próxima instrução.
 
 \ O PRÓLOGO DE TODA ROTINA DE INGLÊS SIMPLES COMEÇA SALVANDO O EBP DO CHAMADOR NA PILHA, LOGO ACIMA DO ENDEREÇO DE RETORNO.
-Rotina para que se transforme um fragmento em código hexadecimal (etapa preliminar) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (etapa preliminar):
   Acrescente $55 para o código deste fragmento. \ push ebp
   Acrescente $8BEC para o código deste fragmento. \ mov ebp,esp
   Atribua o tamanho local desta rotina utilizada atualmente dividido por 4 para um número.
@@ -333,7 +399,7 @@ Rotina para que se transforme um fragmento em código hexadecimal (etapa prelimin
 \ O EPÍLOGO DE CADA ROTINA REMOVE AS VARIÁVEIS LOCAIS, 
 \ RESTAURA O EBP E RETORNA AO CHAMADOR, 
 \ POPPING OS PARÂMETROS ASSIM QUE ISSO OCORRE
-Rotina para que se transforme um fragmento em código hexadecimal (etapa conclusiva) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (etapa conclusiva):
   Se o sinalizador de compatibilidade desta rotina utilizada atualmente estiver ativo,
     Acrescente $5F5E5B para o código deste fragmento. \ pop edi; pop esi; pop ebx;
   Acrescente $8BE5 para o código deste fragmento. \ mov esp,ebp -> não seria 89EC?
@@ -341,8 +407,8 @@ Rotina para que se transforme um fragmento em código hexadecimal (etapa conclusi
   Acrescente $C2 e o tamanho do parâmetro desta rotina utilizada atualmente para o código deste fragmento. 
   \ ret + o tamanho do parâmetro da rotina utilizada atualmente
 
-Rotina para que se transforme um fragmento em código hexadecimal (empilhamento de valor) (x64):
-  Acrescente a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento. 
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (empilhamento de valor):
+  Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
   \ Salva o endereço em edx
   Se a variável deste fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
@@ -371,20 +437,20 @@ Rotina para que se transforme um fragmento em código hexadecimal (empilhamento d
     Apresente a mensagem de erro contendo 
     "Código de Erro #189. Tamanho do fragmento inválido" junto com o texto CRLF. \ Erro interno
 
-Rotina para que se transforme um fragmento em código hexadecimal (Demanda Externa) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Externa):
   Acrescente $FF15 [call] e o endereço desta função deste fragmento para o código deste fragmento. 
   \ Call [o endereço desta função deste fragmento ]
   \ O código acima gera o código de máquina para uma chamada ao sistema operacional Windows.
-  \ O código op é especificado em hexadecimal ($FF15) (x64) 
+  \ O código op é especificado em hexadecimal ($FF15) (x64)
   \ O restante da instrução é o endereço da função da rotina de destino, que é anexado ao código da operação
 
-Rotina para que se transforme um fragmento em código hexadecimal (atribuição de EAX) (x64):
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (atribuição de EAX):
   Acrescente $B8 e o sinalizador deste fragmento para o código deste fragmento. \ mov eax,sinalizador
   \ atribui endereço para edx
 
 
-Rotina para que se transforme um fragmento em código hexadecimal (registrador EAX) (x64):
-  Acrescente a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento. 
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (registrador EAX):
+  Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
   \ atribui o endereço para o registrador edx
   Se a variável deste fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
@@ -415,12 +481,12 @@ Rotina para que se transforme um fragmento em código hexadecimal (registrador EA
       "Código de Erro #192. O tipo '" junto com o tipo desta variável deste fragmento \ Erro interno
       seguido de "deste fragmento possui um tamanho inválido".
 
-Rotina para que se transforme um fragmento em código hexadecimal (Demanda Indireta) (x64):
-  Acrescente a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (Demanda Indireta):
+  Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
   Acrescente $FF12 para o código deste fragmento. \ call [edx]
 
-Rotina para que se transforme um fragmento em código hexadecimal (endereço de rotina) (x64):
-  Acrescente a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento. 
+Rotina para que se transforme no backend Windows x64 um fragmento em código hexadecimal (endereço de rotina):
+  Acrescente no backend Windows x64 a instrução de carregamento de endereço para o código deste fragmento usando a variável deste fragmento.
   \ atribui o endereço para o registrador edx
   Se a rotina deste fragmento for inexistente,
     Apresente uma mensagem de erro contendo 
