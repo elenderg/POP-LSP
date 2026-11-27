@@ -1,0 +1,248 @@
+\ Linux x86 uses ELF32 and the System V i386 ABI.
+\ The first runtime strategy is dynamic linking through the system ELF loader.
+\ This file defines ELF records and their initialization helpers; the compiler
+\ pipeline and Linux runtime library must call them before Linux output works.
+
+Um cabeçalho ELF32 é uma estrutura com
+  Um byte denominado e_ident_magic_0,
+  Um byte denominado e_ident_magic_1,
+  Um byte denominado e_ident_magic_2,
+  Um byte denominado e_ident_magic_3,
+  Um byte denominado e_ident_class,
+  Um byte denominado e_ident_data,
+  Um byte denominado e_ident_version,
+  Um byte denominado e_ident_osabi,
+  Um byte denominado e_ident_abiversion,
+  7 bytes denominados e_ident_padding,
+  Uma word denominada e_type,
+  Uma word denominada e_machine,
+  Um número denominado e_version,
+  Um número denominado e_entry,
+  Um número denominado e_phoff,
+  Um número denominado e_shoff,
+  Um número denominado e_flags,
+  Uma word denominada e_ehsize,
+  Uma word denominada e_phentsize,
+  Uma word denominada e_phnum,
+  Uma word denominada e_shentsize,
+  Uma word denominada e_shnum,
+  Uma word denominada e_shstrndx.
+
+Um segmento de programa ELF32 é uma estrutura com
+  Um número denominado p_type,
+  Um número denominado p_offset,
+  Um número denominado p_vaddr,
+  Um número denominado p_paddr,
+  Um número denominado p_filesz,
+  Um número denominado p_memsz,
+  Um número denominado p_flags,
+  Um número denominado p_align.
+
+Uma seção ELF32 é uma estrutura com
+  Um número denominado sh_name,
+  Um número denominado sh_type,
+  Um número denominado sh_flags,
+  Um número denominado sh_addr,
+  Um número denominado sh_offset,
+  Um número denominado sh_size,
+  Um número denominado sh_link,
+  Um número denominado sh_info,
+  Um número denominado sh_addralign,
+  Um número denominado sh_entsize.
+
+Uma entrada dinâmica ELF32 é uma estrutura com
+  Um número denominado d_tag,
+  Um número denominado d_value.
+
+Um símbolo dinâmico ELF32 é uma estrutura com
+  Um número denominado st_name,
+  Um número denominado st_value,
+  Um número denominado st_size,
+  Um byte denominado st_info,
+  Um byte denominado st_other,
+  Uma word denominada st_shndx.
+
+Uma relocação ELF32 é uma estrutura com
+  Um número denominado r_offset,
+  Um número denominado r_info.
+
+Um cabeçalho de tabela hash ELF32 é uma estrutura com
+  Um número denominado nbucket,
+  Um número denominado nchain.
+
+Um interpretador ELF32 é uma string.
+
+Uma tabela de constantes ELF32 é uma estrutura com
+  Um número denominado ET_EXEC,
+  Um número denominado EM_386,
+  Um número denominado EV_CURRENT,
+  Um número denominado PT_LOAD,
+  Um número denominado PT_DYNAMIC,
+  Um número denominado PT_INTERP,
+  Um número denominado PF_X,
+  Um número denominado PF_W,
+  Um número denominado PF_R,
+  Um número denominado SHT_PROGBITS,
+  Um número denominado SHT_STRTAB,
+  Um número denominado SHT_HASH,
+  Um número denominado SHT_DYNAMIC,
+  Um número denominado SHT_REL,
+  Um número denominado SHT_NOBITS,
+  Um número denominado SHT_DYNSYM,
+  Um número denominado DT_NULL,
+  Um número denominado DT_NEEDED,
+  Um número denominado DT_PLTRELSZ,
+  Um número denominado DT_PLTGOT,
+  Um número denominado DT_HASH,
+  Um número denominado DT_STRTAB,
+  Um número denominado DT_SYMTAB,
+  Um número denominado DT_STRSZ,
+  Um número denominado DT_SYMENT,
+  Um número denominado DT_RELSZ,
+  Um número denominado DT_RELENT,
+  Um número denominado DT_REL,
+  Um número denominado DT_PLTREL,
+  Um número denominado DT_JMPREL,
+  Um número denominado R_386_JMP_SLOT,
+  Um número denominado PLT_ENTRY_SIZE,
+  Um número denominado GOT_ENTRY_SIZE.
+
+\ ELF32 uses 32-bit addresses and little-endian fields on i386.
+\ e_entry, p_vaddr and sh_addr are virtual addresses, not file offsets.
+Rotina para que se inicialize uma tabela de constantes ELF32 denominada constantes:
+  Atribua 2 ao ET_EXEC destas constantes.
+  Atribua 3 ao EM_386 destas constantes.
+  Atribua 1 ao EV_CURRENT destas constantes.
+  Atribua 1 ao PT_LOAD destas constantes.
+  Atribua 2 ao PT_DYNAMIC destas constantes.
+  Atribua 3 ao PT_INTERP destas constantes.
+  Atribua 1 ao PF_X destas constantes.
+  Atribua 2 ao PF_W destas constantes.
+  Atribua 4 ao PF_R destas constantes.
+  Atribua 1 ao SHT_PROGBITS destas constantes.
+  Atribua 3 ao SHT_STRTAB destas constantes.
+  Atribua 5 ao SHT_HASH destas constantes.
+  Atribua 6 ao SHT_DYNAMIC destas constantes.
+  Atribua 9 ao SHT_REL destas constantes.
+  Atribua 8 ao SHT_NOBITS destas constantes.
+  Atribua 11 ao SHT_DYNSYM destas constantes.
+  Atribua 0 ao DT_NULL destas constantes.
+  Atribua 1 ao DT_NEEDED destas constantes.
+  Atribua 2 ao DT_PLTRELSZ destas constantes.
+  Atribua 3 ao DT_PLTGOT destas constantes.
+  Atribua 4 ao DT_HASH destas constantes.
+  Atribua 5 ao DT_STRTAB destas constantes.
+  Atribua 6 ao DT_SYMTAB destas constantes.
+  Atribua 10 ao DT_STRSZ destas constantes.
+  Atribua 11 ao DT_SYMENT destas constantes.
+  Atribua 8 ao DT_RELSZ destas constantes.
+  Atribua 9 ao DT_RELENT destas constantes.
+  Atribua 17 ao DT_REL destas constantes.
+  Atribua 20 ao DT_PLTREL destas constantes.
+  Atribua 23 ao DT_JMPREL destas constantes.
+  Atribua 7 ao R_386_JMP_SLOT destas constantes.
+  Atribua 16 ao PLT_ENTRY_SIZE destas constantes.
+  Atribua 4 ao GOT_ENTRY_SIZE destas constantes.
+
+Rotina para que se inicializem os campos de um segmento de programa ELF32 denominado segmento usando um número denominado tipo e um número denominado deslocamento de arquivo e um número denominado endereço virtual e um número denominado tamanho de arquivo e um número denominado tamanho de memória e um número denominado flags e um número denominado alinhamento:
+  Atribua o tipo ao p_type deste segmento.
+  Atribua o deslocamento de arquivo ao p_offset deste segmento.
+  Atribua o endereço virtual ao p_vaddr deste segmento.
+  Atribua o endereço virtual ao p_paddr deste segmento.
+  Atribua o tamanho de arquivo ao p_filesz deste segmento.
+  Atribua o tamanho de memória ao p_memsz deste segmento.
+  Atribua as flags ao p_flags deste segmento.
+  Atribua o alinhamento ao p_align deste segmento.
+
+Rotina para que se inicializem os campos de uma seção ELF32 denominada seção usando um número denominado nome e um número denominado tipo e um número denominado flags e um número denominado endereço e um número denominado deslocamento de arquivo e um número denominado tamanho e um número denominado índice de ligação e um número denominado informação e um número denominado alinhamento e um número denominado tamanho de entrada:
+  Atribua o nome ao sh_name desta seção.
+  Atribua o tipo ao sh_type desta seção.
+  Atribua as flags ao sh_flags desta seção.
+  Atribua o endereço ao sh_addr desta seção.
+  Atribua o deslocamento de arquivo ao sh_offset desta seção.
+  Atribua o tamanho ao sh_size desta seção.
+  Atribua o índice de ligação ao sh_link desta seção.
+  Atribua a informação ao sh_info desta seção.
+  Atribua o alinhamento ao sh_addralign desta seção.
+  Atribua o tamanho de entrada ao sh_entsize desta seção.
+
+Rotina para que se inicializem os campos fixos de um cabeçalho ELF32 denominado cabeçalho:
+  Atribua 127 ao e_ident_magic_0 deste cabeçalho.
+  Atribua 69 ao e_ident_magic_1 deste cabeçalho.
+  Atribua 76 ao e_ident_magic_2 deste cabeçalho.
+  Atribua 70 ao e_ident_magic_3 deste cabeçalho.
+  Atribua 1 ao e_ident_class deste cabeçalho.
+  Atribua 1 ao e_ident_data deste cabeçalho.
+  Atribua 1 ao e_ident_version deste cabeçalho.
+  Atribua 0 ao e_ident_osabi deste cabeçalho.
+  Atribua 0 ao e_ident_abiversion deste cabeçalho.
+  Preencha o e_ident_padding deste cabeçalho com o caractere NULL usando 7.
+  Atribua 2 ao e_type deste cabeçalho.
+  Atribua 3 ao e_machine deste cabeçalho.
+  Atribua 1 ao e_version deste cabeçalho.
+  Atribua 0 ao e_flags deste cabeçalho.
+  Atribua 52 ao e_ehsize deste cabeçalho.
+  Atribua 32 ao e_phentsize deste cabeçalho.
+  Atribua 40 ao e_shentsize deste cabeçalho.
+
+Rotina para que se inicialize um símbolo dinâmico ELF32 denominado símbolo usando um número denominado nome e um número denominado endereço e um número denominado tamanho e um número denominado informação e um número denominado visibilidade e um número denominado índice de seção:
+  Atribua o nome ao st_name deste símbolo.
+  Atribua o endereço ao st_value deste símbolo.
+  Atribua o tamanho ao st_size deste símbolo.
+  Atribua a informação ao st_info deste símbolo.
+  Atribua a visibilidade ao st_other deste símbolo.
+  Atribua o índice de seção ao st_shndx deste símbolo.
+
+Rotina para que se inicialize uma entrada dinâmica ELF32 denominada entrada usando um número denominado tipo e um número denominado valor:
+  Atribua o tipo ao d_tag desta entrada.
+  Atribua o valor ao d_value desta entrada.
+
+Rotina para que se inicialize uma relocação ELF32 denominada relocação usando um número denominado endereço e um número denominado índice de símbolo e um número denominado tipo de relocação:
+  Atribua o endereço ao r_offset desta relocação.
+  Atribua o índice de símbolo multiplicado por 256 mais o tipo de relocação ao r_info desta relocação.
+
+Função para que se atribua a magnitude dum cabeçalho ELF32 para um tamanho:
+  Atribua 52 ao tamanho.
+
+Função para que se atribua a magnitude dum segmento de programa ELF32 para um tamanho:
+  Atribua 32 ao tamanho.
+
+Função para que se atribua a magnitude duma seção ELF32 para um tamanho:
+  Atribua 40 ao tamanho.
+
+Função para que se atribua a magnitude duma entrada dinâmica ELF32 para um tamanho:
+  Atribua 8 ao tamanho.
+
+Função para que se atribua a magnitude dum símbolo dinâmico ELF32 para um tamanho:
+  Atribua 16 ao tamanho.
+
+Função para que se atribua a magnitude duma relocação ELF32 para um tamanho:
+  Atribua 8 ao tamanho.
+
+Rotina para que se calcule o valor r_info ELF32 usando um número denominado índice de símbolo e um número denominado tipo de relocação e um número denominado valor:
+  Atribua o índice de símbolo multiplicado por 256 mais o tipo de relocação ao valor.
+
+\ O endereço da função deve apontar para a entrada PLT calculada pelo vinculador ELF32.
+Rotina para que se transforme um fragmento denominado fragmento em código de chamada externa ELF32 usando um número denominado quantidade de argumentos:
+  Se a função deste fragmento for inexistente,
+    Apresente uma mensagem de erro contendo "Erro: chamada externa ELF32 sem símbolo." junto com o texto CRLF;
+    Retorne.
+  Atribua o endereço deste fragmento mais a quantidade de caracteres do código deste fragmento mais 5 ao endereço de retorno.
+  Atribua o endereço desta função deste fragmento menos o endereço de retorno ao deslocamento relativo.
+  Acrescente $E8 e o deslocamento relativo para o código deste fragmento.
+  Limpe a pilha da chamada externa ELF32 usando o fragmento e a quantidade de argumentos.
+
+Rotina para que se limpe um fragmento denominado fragmento usando um número denominado quantidade de argumentos:
+  Se a quantidade de argumentos for 0, retorne.
+  Multiplique a quantidade de argumentos por 4 para o tamanho dos argumentos.
+  Acrescente $81C4 e o tamanho dos argumentos para o código deste fragmento. \ add esp, imm32; cdecl caller cleanup
+
+\ ABI notes for the later code emitter:
+\ - External C functions use cdecl: push arguments right-to-left; caller restores ESP.
+\ - Internal POP calls may retain their current language convention, but must not
+\   be used as C ABI entry points without an adapter.
+\ - Traditional i386 Linux syscalls use EAX for the syscall number, EBX/ECX/EDX/
+\   ESI/EDI/EBP for arguments, INT 80h, and EAX for the result.
+\ - A dynamically linked executable needs PT_INTERP, PT_DYNAMIC, DT_NEEDED,
+\   dynamic symbol/string tables, a SysV hash table, PLT/GOT and R_386_JMP_SLOT
+\   relocations. The conventional i386 interpreter path is /lib/ld-linux.so.2.

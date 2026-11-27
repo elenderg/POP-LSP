@@ -579,7 +579,7 @@ Rotina para que se extraia uma string denominada path e uma string denominada fl
   Atribua o subtexto path para o path. 
   Atribua o subtexto flags para as flags.
   Se o path estiver em branco,
-    Atribua o path c/ flags para o subtexto path.
+    Lance o subtexto path sobre o path c/ flags.
   Se as flags não estiverem em branco,
     Lance o subtexto path sobre o path.
   Atribua o subtexto path para o path.
