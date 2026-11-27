@@ -246,3 +246,89 @@ Rotina para que se limpe um fragmento denominado fragmento usando um número deno
 \ - A dynamically linked executable needs PT_INTERP, PT_DYNAMIC, DT_NEEDED,
 \   dynamic symbol/string tables, a SysV hash table, PLT/GOT and R_386_JMP_SLOT
 \   relocations. The conventional i386 interpreter path is /lib/ld-linux.so.2.
+
+\ ELF32 dynamic-linking support primitives. These records and code templates are
+\ for fixed-address ET_EXEC images; they do not make the compiler pipeline emit ELF.
+Um cabecalho GOT PLT ELF32 é uma estrutura com
+  Um endereço denominado tabela dinamica,
+  Um endereço denominado mapa de ligacao,
+  Um endereço denominado resolvedor.
+
+Uma tabela de constantes dinamicas ELF32 é uma estrutura com
+  Um número denominado ET_DYN,
+  Um número denominado PT_PHDR,
+  Um número denominado DT_TEXTREL,
+  Um número denominado DT_BIND_NOW,
+  Um número denominado DT_FLAGS,
+  Um número denominado DF_BIND_NOW,
+  Um número denominado STB_GLOBAL,
+  Um número denominado STT_NOTYPE,
+  Um número denominado STT_FUNC,
+  Um número denominado SHN_UNDEF,
+  Um número denominado R_386_NONE,
+  Um número denominado R_386_32,
+  Um número denominado R_386_PC32,
+  Um número denominado R_386_RELATIVE,
+  Um número denominado PLT0_ENTRY_SIZE.
+
+Rotina para que se inicializem as constantes dinamicas ELF32 denominadas constantes:
+  Atribua 3 ao ET_DYN destas constantes.
+  Atribua 6 ao PT_PHDR destas constantes.
+  Atribua 22 ao DT_TEXTREL destas constantes.
+  Atribua 24 ao DT_BIND_NOW destas constantes.
+  Atribua 30 ao DT_FLAGS destas constantes.
+  Atribua 8 ao DF_BIND_NOW destas constantes.
+  Atribua 1 ao STB_GLOBAL destas constantes.
+  Atribua 0 ao STT_NOTYPE destas constantes.
+  Atribua 2 ao STT_FUNC destas constantes.
+  Atribua 0 ao SHN_UNDEF destas constantes.
+  Atribua 0 ao R_386_NONE destas constantes.
+  Atribua 1 ao R_386_32 destas constantes.
+  Atribua 2 ao R_386_PC32 destas constantes.
+  Atribua 8 ao R_386_RELATIVE destas constantes.
+  Atribua 16 ao PLT0_ENTRY_SIZE destas constantes.
+
+Rotina para que se configure o layout de um cabecalho ELF32 denominado cabecalho usando um endereço denominado ponto de entrada e um endereço denominado deslocamento dos segmentos e uma word denominada quantidade de segmentos e um endereço denominado deslocamento das secoes e uma word denominada quantidade de secoes e uma word denominada indice da tabela de nomes:
+  Atribua o ponto de entrada ao e_entry deste cabecalho.
+  Atribua o deslocamento dos segmentos ao e_phoff deste cabecalho.
+  Atribua 32 ao e_phentsize deste cabecalho.
+  Atribua a quantidade de segmentos ao e_phnum deste cabecalho.
+  Atribua o deslocamento das secoes ao e_shoff deste cabecalho.
+  Atribua 40 ao e_shentsize deste cabecalho.
+  Atribua a quantidade de secoes ao e_shnum deste cabecalho.
+  Atribua o indice da tabela de nomes ao e_shstrndx deste cabecalho.
+
+Rotina para que se inicialize um cabecalho GOT PLT ELF32 denominado cabecalho usando um endereço denominado endereco da tabela dinamica:
+  Atribua o endereco da tabela dinamica ao endereco da tabela dinamica deste cabecalho.
+  Atribua 0 ao endereco do mapa de ligacao deste cabecalho.
+  Atribua 0 ao endereco do resolvedor deste cabecalho.
+
+Rotina para que se calcule o campo st_info ELF32 usando um número denominado classe de ligacao e um número denominado tipo do simbolo e um número denominado informacao:
+  Atribua a classe de ligacao multiplicada por 16 mais o tipo do simbolo a informacao.
+
+\ ELF32 PLT0 for a non-PIE executable:
+\ push dword ptr [GOT+4]; jmp dword ptr [GOT+8].
+Rotina para que se acrescente uma entrada PLT inicial ELF32 para um texto hexadecimal denominado codigo usando um endereço denominado endereco GOT:
+  Acrescente $FF35 e o endereco GOT mais 4 para o codigo.
+  Acrescente $FF25 e o endereco GOT mais 8 para o codigo.
+  Acrescente $90909090 para o codigo.
+
+Rotina para que se calcule o valor inicial de um slot GOT PLT ELF32 usando um endereço denominado endereco da entrada PLT e um endereço denominado valor:
+  Atribua o endereco da entrada PLT mais 6 ao valor.
+
+\ A relocation offset is the byte offset within .rel.plt (entry index * 8).
+\ The GOT slot must be the absolute virtual address of this symbol's .got.plt entry.
+Rotina para que se acrescente uma entrada PLT ELF32 para um texto hexadecimal denominado codigo usando um endereço denominado endereco da entrada PLT e um endereço denominado endereco do slot GOT e um endereço denominado deslocamento da relocacao e um endereço denominado endereco da entrada PLT inicial:
+  Acrescente $FF25 e o endereco do slot GOT para o codigo.
+  Acrescente $68 e o deslocamento da relocacao para o codigo.
+  Atribua o endereco da entrada PLT mais 16 ao endereco de retorno.
+  Atribua o endereco da entrada PLT inicial menos o endereco de retorno ao deslocamento relativo.
+  Acrescente $E9 e o deslocamento relativo para o codigo.
+
+\ Use these templates only after the linker assigns final virtual addresses.
+\ For PIE/ASLR, generate position-independent PLT/GOT code and the required
+\ dynamic relocations instead of embedding absolute addresses.
+Um slot GOT PLT ELF32 é um endereço.
+Uma entrada PLT inicial ELF32 é um texto hexadecimal.
+Uma entrada PLT ELF32 é um texto hexadecimal.
+Um cabecalho ELF32 é um cabeçalho ELF32.
