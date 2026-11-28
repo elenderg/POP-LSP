@@ -158,14 +158,15 @@ async function stopCpuProfiler() {
     })();
     return cpuProfilerStopPromise;
 }
+/*
 console.error('[POP-LSP startup]', JSON.stringify({
-    execPath: process.execPath,
-    execArgv: process.execArgv,
-    electronRunAsNode: process.env.ELECTRON_RUN_AS_NODE,
-    cpuProfSupported: process.allowedNodeEnvironmentFlags.has('--cpu-prof'),
-    argv: process.argv,
-    versions: process.versions
-}, null, 2));
+  execPath: process.execPath,
+  execArgv: process.execArgv,
+  electronRunAsNode: process.env.ELECTRON_RUN_AS_NODE,
+  cpuProfSupported: process.allowedNodeEnvironmentFlags.has('--cpu-prof'),
+  argv: process.argv,
+  versions: process.versions
+}, null, 2));*/
 process.on('beforeExit', (code) => {
     console.error('[POP-LSP CPU PROF] beforeExit:', code);
 });

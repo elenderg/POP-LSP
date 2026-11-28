@@ -251,7 +251,7 @@ async function stopCpuProfiler(): Promise<void> {
   return cpuProfilerStopPromise;
 }
 
-
+/*
 console.error('[POP-LSP startup]', JSON.stringify({
   execPath: process.execPath,
   execArgv: process.execArgv,
@@ -259,7 +259,7 @@ console.error('[POP-LSP startup]', JSON.stringify({
   cpuProfSupported: process.allowedNodeEnvironmentFlags.has('--cpu-prof'),
   argv: process.argv,
   versions: process.versions
-}, null, 2));
+}, null, 2));*/
 
 process.on('beforeExit', (code) => {
   console.error('[POP-LSP CPU PROF] beforeExit:', code);

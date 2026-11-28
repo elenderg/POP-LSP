@@ -4287,13 +4287,13 @@ Rotina para que se adicione a rotina de finalização para um tipo (cadeia de cara
   Se existir algum problema de compilação, retorne.
   Adicione uma rotina para as rotinas usando nil.
   Acrescente "~Finalize um " junto com o nome deste tipo para a string do cabeçalho desta rotina.
-  Acrescente "Decodifique $50. " para a string do corpo desta rotina. 
+  Acrescente "Decodifique $50. " para a string do corpo desta rotina. \ push eax
   \ push eax -> Empilha o valor presente no registrador EAX na stack
   \ A instrução push primeiro subtrai 4 do registrador ESP (o ponteiro da pilha)
   \ Depois coloca o operando no conteúdo apontado por ele
   \ A stack no x86 começa com o maior endereço e vai decrescendo, por isso a subtração
   Acrescente "Desassocie o caractere inicial de esta string . " para a string do corpo desta rotina. \ "string"
-  Acrescente "Decodifique $58." para a string do corpo desta rotina.
+  Acrescente "Decodifique $58." para a string do corpo desta rotina. \ pop eax 
   \ pop eax -> Move o elemento do topo da pilha (ESP), transferindo ele para o registrador EAX 
   \ Depois ele adiciona 4 para o valor do ESP
   Lance a cabeçalho de rotina desta rotina sobre a string do cabeçalho desta rotina.
@@ -4305,7 +4305,7 @@ Rotina para que se adicione a rotina de finalização para um tipo (estrutura):
   Se existir algum problema de compilação, retorne.
   Adicione uma rotina para as rotinas usando nil.
   Acrescente "~Finalize um " junto com o nome deste tipo para a string do cabeçalho desta rotina.
-  Acrescente "Decodifique $50. " para a string do corpo desta rotina. \push eax
+  Acrescente "Decodifique $50. " para a string do corpo desta rotina. \ push eax
   Itere.
     Obtenha um campo desde os campos deste tipo.
     Se o campo for inexistente, pare.
